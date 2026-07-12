@@ -129,22 +129,38 @@ function closure(anchor: string, deps: Record<string, string[]>, maxDepth = 8): 
   return dist;
 }
 
+// Low-signal words that must never anchor a task: verbs/adjectives of intent,
+// conversational filler, and generic code nouns. A task made only of these
+// (e.g. "help me", "fix this") has no feature signal and should Widen.
 const STOP = new Set(["the", "a", "an", "is", "are", "in", "on", "of", "to", "fix",
   "bug", "issue", "error", "broken", "wrong", "not", "working", "page", "add", "make",
-  "update", "change", "with", "and", "for", "my", "it", "shows", "show"]);
+  "update", "change", "with", "and", "for", "my", "it", "shows", "show", "help", "me",
+  "please", "hey", "hi", "this", "that", "how", "can", "you", "need", "want", "just",
+  "some", "something", "what", "whats", "why", "where", "when", "who", "which", "does",
+  "doesnt", "cant", "wont", "should", "would", "could", "get", "got", "let", "lets",
+  "app", "code", "file", "files", "thing", "stuff", "please", "now", "here"]);
 
 function taskWords(task: string): Set<string> {
+  // Require length >= 3 so short substrings ("me", "hi") can't false-match
+  // ("me" inside "home"). Feature words are effectively always >= 3 chars.
   return new Set(
-    task.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 1 && !STOP.has(w)),
+    task.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !STOP.has(w)),
   );
 }
 
 function scoreAnchor(words: Set<string>, route: string, rel: string): number {
-  const hay = new Set((route + " " + rel).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  const hay = new Set(
+    (route + " " + rel).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
+  );
   let s = 0;
-  for (const w of words) if (hay.has(w)) s += 2;
-  // partial matches (e.g. "dashboards" ~ "dashboard")
-  for (const w of words) for (const h of hay) if (h.includes(w) || w.includes(h)) s += 0.5;
+  for (const w of words) {
+    for (const h of hay) {
+      if (w === h) s += 2; // exact token match
+      // prefix match for morphology ("dashboards" ~ "dashboard"), min length 4
+      // and prefix-anchored so mid-word substrings never match.
+      else if ((w.length >= 4 && h.startsWith(w)) || (h.length >= 4 && w.startsWith(h))) s += 1;
+    }
+  }
   return s;
 }
 

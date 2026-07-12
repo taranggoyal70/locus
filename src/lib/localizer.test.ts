@@ -37,4 +37,12 @@ describe("locate", () => {
     expect(r.slice.length).toBe(graph.nodes.length);
     expect(r.savedPct).toBe(0);
   });
+
+  it("widens on vague / conversational input instead of inventing an anchor", () => {
+    for (const vague of ["help me", "fix this", "hey", "something is off", "can you help"]) {
+      const r = locate(vague, repo, graph);
+      expect(r.widened, `"${vague}" should widen`).toBe(true);
+      expect(r.savedPct).toBe(0);
+    }
+  });
 });
