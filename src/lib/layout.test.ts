@@ -6,7 +6,7 @@ import { layoutGraph } from "@/lib/layout";
 import { buildGraph } from "@/lib/localizer";
 import type { RepoData } from "@/lib/types";
 
-const repo: RepoData = JSON.parse(readFileSync("public/repos/studentpulse.json", "utf8"));
+const repo: RepoData = JSON.parse(readFileSync("test/fixtures/studentpulse.json", "utf8"));
 const graph = buildGraph(repo);
 
 // Extracting layout from the React component made its geometry testable directly.

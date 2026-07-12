@@ -115,7 +115,7 @@ repo = {
   "files": {f"src/{p}": c for p, c in render(SP).items()},
 }
 
-out_dir = os.path.join(os.path.dirname(__file__), "public", "repos")
+out_dir = os.path.join(os.path.dirname(__file__), "test", "fixtures")
 os.makedirs(out_dir, exist_ok=True)
 with open(os.path.join(out_dir, "studentpulse.json"), "w") as f:
     json.dump(repo, f, indent=1)

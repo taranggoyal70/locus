@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { buildGraph, locate } from "@/lib/localizer";
 import type { RepoData } from "@/lib/types";
 
-const repo: RepoData = JSON.parse(readFileSync("public/repos/studentpulse.json", "utf8"));
+const repo: RepoData = JSON.parse(readFileSync("test/fixtures/studentpulse.json", "utf8"));
 const graph = buildGraph(repo);
 
 // The interface IS the test surface — assert on LocateResult, not internals.
