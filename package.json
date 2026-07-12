@@ -2,6 +2,10 @@
   "name": "locus",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "locus": "bin/locus.mjs",
+    "locus-mcp": "bin/mcp.mjs"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
