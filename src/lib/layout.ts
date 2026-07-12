@@ -1,4 +1,4 @@
-import type { Graph } from "@/lib/types";
+import type { GraphNode } from "@/lib/types";
 
 // Pure layout for the dependency graph: nodes in columns by top-level dir,
 // ordered by dependency flow (routes → components → hooks → libs). Kept out of
@@ -22,14 +22,15 @@ export type GraphLayout = {
   colX: number[]; // x of each column, parallel to cols
 };
 
-export function layoutGraph(graph: Graph): GraphLayout {
-  const cols = [...new Set(graph.nodes.map((n) => n.dir))].sort((a, b) => {
+/** Lay out a set of nodes (usually the Slice, not the whole tree). */
+export function layoutGraph(nodes: GraphNode[]): GraphLayout {
+  const cols = [...new Set(nodes.map((n) => n.dir))].sort((a, b) => {
     const ia = COL_ORDER.indexOf(a), ib = COL_ORDER.indexOf(b);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
   });
-  const byCol: Record<string, typeof graph.nodes> = {};
+  const byCol: Record<string, GraphNode[]> = {};
   for (const c of cols) {
-    byCol[c] = graph.nodes
+    byCol[c] = nodes
       .filter((n) => n.dir === c)
       .sort((a, b) => Number(b.isSurface) - Number(a.isSurface) || a.rel.localeCompare(b.rel));
   }
