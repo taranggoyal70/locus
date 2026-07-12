@@ -18,30 +18,40 @@ function topDir(rel: string): string {
   return first || "root";
 }
 
-/** Resolve an import spec against the repo's flat file map. */
+/** Try a base path against the file map with the usual TS resolution order. */
+function tryPath(base: string, files: Record<string, string>): string | null {
+  for (const c of [`${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`, base]) {
+    if (files[c] !== undefined) return c;
+  }
+  return null;
+}
+
+/**
+ * Resolve an import spec against the repo's flat file map. The `@/` alias maps
+ * to different bases across repos (repo root, or `src/`), and our inferred
+ * `root` can be empty when files live at the top level — so try each plausible
+ * base and take the first hit. This is what lets real repos build a full graph
+ * instead of a sparse one (a sparse graph silently inflates the token saving).
+ */
 function resolve(
   spec: string,
   fromPath: string,
   root: string,
   files: Record<string, string>,
 ): string | null {
-  let base: string;
   if (spec.startsWith("@/")) {
-    base = `${root}/${spec.slice(2)}`;
-  } else if (spec.startsWith(".")) {
-    const dir = fromPath.split("/").slice(0, -1).join("/");
-    base = normalize(`${dir}/${spec}`);
-  } else {
+    const rest = spec.slice(2);
+    const prefixes = [...new Set([root, "src", ""])];
+    for (const p of prefixes) {
+      const hit = tryPath(p ? `${p}/${rest}` : rest, files);
+      if (hit) return hit;
+    }
     return null;
   }
-  const candidates = [
-    `${base}.ts`,
-    `${base}.tsx`,
-    `${base}/index.ts`,
-    `${base}/index.tsx`,
-    base,
-  ];
-  for (const c of candidates) if (files[c] !== undefined) return c;
+  if (spec.startsWith(".")) {
+    const dir = fromPath.split("/").slice(0, -1).join("/");
+    return tryPath(normalize(`${dir}/${spec}`), files);
+  }
   return null;
 }
 
