@@ -2,17 +2,8 @@
 
 import { useMemo } from "react";
 
+import { edgePath, layoutGraph, NODE_H, NODE_W } from "@/lib/layout";
 import type { Graph, LocateResult } from "@/lib/types";
-
-const COL_ORDER = ["app", "components", "hooks", "lib"];
-const NODE_W = 168;
-const NODE_H = 26;
-const COL_W = 220;
-const ROW_H = 38;
-const PAD_X = 20;
-const PAD_Y = 28;
-
-type Pos = { x: number; y: number };
 
 function basename(rel: string): string {
   return rel.split("/").slice(-1)[0];
@@ -29,30 +20,7 @@ export function DependencyGraph({
   selected: string | null;
   onSelect: (rel: string) => void;
 }) {
-  const layout = useMemo(() => {
-    const cols = [...new Set(graph.nodes.map((n) => n.dir))].sort((a, b) => {
-      const ia = COL_ORDER.indexOf(a), ib = COL_ORDER.indexOf(b);
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-    });
-    const byCol: Record<string, typeof graph.nodes> = {};
-    for (const c of cols) {
-      byCol[c] = graph.nodes
-        .filter((n) => n.dir === c)
-        .sort((a, b) => Number(b.isSurface) - Number(a.isSurface) || a.rel.localeCompare(b.rel));
-    }
-    const maxRows = Math.max(...cols.map((c) => byCol[c].length));
-    const H = PAD_Y * 2 + maxRows * ROW_H;
-    const W = PAD_X * 2 + cols.length * COL_W;
-    const pos: Record<string, Pos> = {};
-    cols.forEach((c, ci) => {
-      const list = byCol[c];
-      const offset = (maxRows - list.length) / 2;
-      list.forEach((n, ri) => {
-        pos[n.rel] = { x: PAD_X + ci * COL_W, y: PAD_Y + (offset + ri) * ROW_H };
-      });
-    });
-    return { pos, W, H, cols };
-  }, [graph]);
+  const layout = useMemo(() => layoutGraph(graph), [graph]);
 
   const sliceSet = useMemo(
     () => new Set(result && !result.widened ? result.slice.map((s) => s.rel) : []),
@@ -72,13 +40,6 @@ export function DependencyGraph({
     return "excluded";
   }
 
-  const edgePath = (from: Pos, to: Pos) => {
-    const x1 = from.x + NODE_W, y1 = from.y + NODE_H / 2;
-    const x2 = to.x, y2 = to.y + NODE_H / 2;
-    const dx = Math.max(40, Math.abs(x2 - x1) / 2);
-    return `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
-  };
-
   return (
     <div className="w-full overflow-auto rounded-xl border border-line bg-ink/50">
       <svg viewBox={`0 0 ${layout.W} ${layout.H}`} className="w-full" style={{ minWidth: layout.W }}>
@@ -86,7 +47,7 @@ export function DependencyGraph({
         {layout.cols.map((c, ci) => (
           <text
             key={c}
-            x={PAD_X + ci * COL_W}
+            x={layout.colX[ci]}
             y={16}
             className="fill-[var(--muted)] font-mono text-[11px] uppercase tracking-wider"
           >
