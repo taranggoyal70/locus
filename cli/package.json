@@ -1,0 +1,42 @@
+{
+  "name": "locus-context",
+  "version": "0.1.0",
+  "description": "Show your AI agent only the code it needs. A zero-dependency CLI + MCP server that localizes a coding task to the minimal dependency slice of a repo \u2014 fewer input tokens, quality-safe (it widens when unsure).",
+  "type": "module",
+  "bin": {
+    "locus": "locus.mjs",
+    "locus-mcp": "mcp.mjs",
+    "locus-context": "locus.mjs"
+  },
+  "files": [
+    "*.mjs",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "agent",
+    "coding-agent",
+    "context",
+    "tokens",
+    "codebase",
+    "dependency-graph",
+    "localization",
+    "codex",
+    "claude",
+    "cursor",
+    "llm"
+  ],
+  "license": "MIT",
+  "author": "Tarang Goyal",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taranggoyal70/locus.git",
+    "directory": "cli"
+  },
+  "homepage": "https://locus-five-iota.vercel.app"
+}
