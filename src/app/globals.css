@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+:root {
+  /* Locus — precision-instrument palette: lime "focus" on deep slate. */
+  --ink: #0a0d0f;
+  --surface: #11161a;
+  --surface-raised: #171e23;
+  --line: rgba(160, 190, 200, 0.1);
+  --line-strong: rgba(160, 190, 200, 0.2);
+  --muted: #74838c;
+  --muted-light: #a4b2ba;
+  --paper: #e9f0f2;
+  --accent: #a3e635; /* the slice / kept code / savings */
+  --accent-dim: #4d7c0f;
+  --excluded: #3a444a; /* code the agent doesn't need */
+  --recent: #f5b642; /* recently changed (cross-cutting signal) */
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-muted: var(--muted);
+  --color-muted-light: var(--muted-light);
+  --color-paper: var(--paper);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-excluded: var(--excluded);
+  --color-recent: var(--recent);
+  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-mono: var(--font-geist-mono, ui-monospace, monospace);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  background: var(--ink);
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1000px 500px at 15% -10%, rgba(163, 230, 53, 0.06), transparent 60%),
+    var(--ink);
+  color: var(--paper);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: rgba(163, 230, 53, 0.3);
+  color: var(--ink);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: rgba(160, 190, 200, 0.18);
+  background-clip: padding-box;
+}
