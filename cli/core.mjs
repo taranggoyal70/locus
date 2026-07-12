@@ -25,8 +25,7 @@ function estimateTokens(text) {
 }
 
 function topDir(rel) {
-  const first = rel.split("/")[0];
-  return first || "root";
+  return rel.includes("/") ? rel.split("/")[0] : "(root)";
 }
 
 function tryPath(base, files) {
@@ -193,7 +192,9 @@ export function locate(task, repo, graph) {
   const best = scored[0]?.score ?? 0;
 
   if (!task.trim() || best <= 0) {
-    const all = graph.nodes.map((n) => n.rel);
+    const slice = graph.nodes
+      .map((n) => ({ path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path) }))
+      .sort((a, b) => Number(b.recent) - Number(a.recent) || a.rel.localeCompare(b.rel));
     return {
       task,
       widened: true,
@@ -201,9 +202,7 @@ export function locate(task, repo, graph) {
         ? "no route matched the task — widened to the whole repo (never miss)"
         : "type a task to localize",
       anchors: [],
-      slice: graph.nodes.map((n) => ({
-        path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path),
-      })),
+      slice,
       excluded: [],
       sliceTokens: graph.totalTokens,
       totalTokens: graph.totalTokens,

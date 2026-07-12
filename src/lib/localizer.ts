@@ -14,8 +14,9 @@ function estimateTokens(text: string): number {
 }
 
 function topDir(rel: string): string {
-  const first = rel.split("/")[0];
-  return first || "root";
+  // Loose files with no directory group under one "(root)" column, rather than
+  // each becoming its own fake column headed by the filename.
+  return rel.includes("/") ? rel.split("/")[0] : "(root)";
 }
 
 /** Try a base path against the file map with the usual TS resolution order. */
@@ -190,7 +191,11 @@ export function locate(task: string, repo: RepoData, graph: Graph): LocateResult
   const best = scored[0]?.score ?? 0;
 
   if (!task.trim() || best <= 0) {
-    const all = graph.nodes.map((n) => n.rel);
+    // Widened: still rank recently-changed files first — that's precisely when a
+    // user scanning the whole repo most wants the Recent signal surfaced.
+    const slice = graph.nodes
+      .map((n) => ({ path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path) }))
+      .sort((a, b) => Number(b.recent) - Number(a.recent) || a.rel.localeCompare(b.rel));
     return {
       task,
       widened: true,
@@ -198,9 +203,7 @@ export function locate(task: string, repo: RepoData, graph: Graph): LocateResult
         ? "no route matched the task — widened to the whole repo (never miss)"
         : "type a task to localize",
       anchors: [],
-      slice: graph.nodes.map((n) => ({
-        path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path),
-      })),
+      slice,
       excluded: [],
       sliceTokens: graph.totalTokens,
       totalTokens: graph.totalTokens,
