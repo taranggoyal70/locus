@@ -47,6 +47,40 @@ pnpm dev   # or: next build && next start
 Paste any public GitHub repo (`owner/name`) to localize tasks on real code; a
 `GITHUB_TOKEN` is optional (higher rate limits).
 
+## Use it on your repo
+
+Zero-dependency CLI and MCP server, plain ESM — no build step, `node` v20+.
+
+```bash
+node bin/locus.mjs locate "fix the dashboard" --pack     # paste-ready context block
+node bin/locus.mjs locate "fix the dashboard" --json     # machine LocateResult
+node bin/locus.mjs locate "fix the dashboard"            # human summary + % saved
+```
+
+Or without cloning first: `npx github:taranggoyal70/locus locate "..." --pack`.
+
+### As an MCP server (Codex / Claude Code / Cursor)
+
+```bash
+node bin/locus.mjs mcp        # or: node bin/mcp.mjs
+```
+
+Add to your MCP client config (`mcpServers`):
+
+```json
+{
+  "mcpServers": {
+    "locus": {
+      "command": "node",
+      "args": ["/path/to/locus/bin/mcp.mjs"]
+    }
+  }
+}
+```
+
+The client's agent then calls the `locate` tool (`task`, optional `path`/`pack`)
+before reading files, instead of grepping the whole repo.
+
 ## Stack
 
 Next.js (App Router) · TypeScript · Tailwind CSS v4 · custom inline-SVG graph ·
