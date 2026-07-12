@@ -14,14 +14,15 @@ export interface RepoSource {
 
 export const BUNDLED = [
   {
-    slug: "studentpulse",
-    name: "StudentPulse",
-    description: "Student-success analytics SaaS — dashboard, cohorts, reports, roster.",
+    slug: "taxonomy",
+    name: "Taxonomy",
+    description:
+      "shadcn-ui/taxonomy — a real Next.js App Router app (dashboard, editor, marketing, auth).",
     examples: [
-      "the dashboard chart is broken",
-      "cohort retention numbers look wrong",
-      "add a column to the student roster",
-      "dashboard shows the wrong dates",
+      "fix the dashboard billing",
+      "the blog post editor is broken",
+      "update the marketing pricing page",
+      "the docs sidebar navigation",
     ],
   },
 ] as const;
