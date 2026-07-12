@@ -50,3 +50,13 @@ export type LocateResult = {
   totalTokens: number;
   savedPct: number;
 };
+
+/**
+ * Look up a file's contents by its display `rel`. buildGraph strips `root` from
+ * a file's path to form `rel`, EXCEPT for loose files not under `root` (which
+ * keep their full path). So try `root/rel` first, then the bare `rel` — one
+ * place, instead of each consumer re-guessing the prefix.
+ */
+export function fileContent(repo: RepoData, rel: string): string | undefined {
+  return repo.files[repo.root ? `${repo.root}/${rel}` : rel] ?? repo.files[rel];
+}

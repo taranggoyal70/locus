@@ -1,6 +1,6 @@
 "use client";
 
-import type { LocateResult, RepoData } from "@/lib/types";
+import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
 
 export function FilePanel({
   result,
@@ -15,8 +15,7 @@ export function FilePanel({
 }) {
   if (!result) return null;
 
-  const selectedContent =
-    selected && repo ? repo.files[`${repo.root ? repo.root + "/" : ""}${selected}`] : null;
+  const selectedContent = selected && repo ? fileContent(repo, selected) : null;
 
   return (
     <div className="rounded-xl border border-line bg-surface/60">

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import type { LocateResult, RepoData } from "@/lib/types";
+import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
 
 const BUDGET = 40_000;
 
@@ -12,7 +12,7 @@ function packContext(repo: RepoData, result: LocateResult) {
   let tokens = 0;
   let dropped = 0;
   for (const f of result.slice) {
-    const content = repo.files[`${repo.root ? repo.root + "/" : ""}${f.rel}`];
+    const content = fileContent(repo, f.rel);
     if (content === undefined) continue;
     const t = Math.ceil(content.length / 4);
     if (tokens + t > BUDGET) { dropped += 1; continue; }
