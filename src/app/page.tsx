@@ -1,65 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
 import { TokenMeter } from "@/components/TokenMeter";
-import { buildGraph, locate } from "@/lib/localizer";
-import { BUNDLED, loadBundled, loadGithub } from "@/lib/repos";
-import type { RepoData } from "@/lib/types";
+import { useLocus } from "@/hooks/useLocus";
 
 export default function Home() {
-  const [repo, setRepo] = useState<RepoData | null>(null);
-  const [task, setTask] = useState("the dashboard chart is broken");
-  const [selected, setSelected] = useState<string | null>(null);
-  const [ghUrl, setGhUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadBundled("studentpulse").then(setRepo).catch(() => setError("Could not load the demo repo."));
-  }, []);
-
-  const graph = useMemo(() => (repo ? buildGraph(repo) : null), [repo]);
-  const result = useMemo(
-    () => (repo && graph ? locate(task, repo, graph) : null),
-    [repo, graph, task],
-  );
-
-  const bundledExamples =
-    BUNDLED.find((b) => repo && b.slug === repo.slug)?.examples ?? [];
-
-  async function pickBundled(slug: string) {
-    setLoading(true); setError(null); setNote(null); setSelected(null);
-    try {
-      const r = await loadBundled(slug);
-      setRepo(r);
-      setTask(BUNDLED.find((b) => b.slug === slug)?.examples[0] ?? "");
-    } catch {
-      setError("Could not load that repo.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function analyzeGithub() {
-    if (!ghUrl.trim()) return;
-    setLoading(true); setError(null); setNote(null); setSelected(null);
-    try {
-      const { repo: r, truncated, fileCount } = await loadGithub(ghUrl);
-      setRepo(r);
-      setTask("");
-      setNote(
-        `Loaded ${fileCount} source files from ${r.name}${truncated ? " (capped at 160)" : ""}. Describe a task to localize it.`,
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load repo.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const {
+    repo, graph, result, task, selected, ghUrl, loading, error, note,
+    examples: bundledExamples, bundled: BUNDLED,
+    setTask, setSelected, setGhUrl, pickBundled, loadGithub,
+  } = useLocus();
+  const analyzeGithub = loadGithub;
 
   return (
     <div className="min-h-screen">
