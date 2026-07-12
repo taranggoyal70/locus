@@ -23,10 +23,16 @@ function parseRepo(input: string): { owner: string; repo: string } | null {
   return { owner: m[1], repo: m[2].replace(/\.git$/, "") };
 }
 
-/** Longest common directory prefix — used as the source root. */
+/**
+ * Longest common directory prefix — used as the source root. Top-level loose
+ * files (e.g. next.config.ts, middleware.ts) are EXCLUDED from the computation:
+ * otherwise a single root-level file collapses a real `src/` root to "", which
+ * makes buildGraph find zero Surfaces and silently widen every task. (Mirrors
+ * the CLI's commonDirPrefix in bin/core.mjs — keep in sync.)
+ */
 function commonRoot(paths: string[]): string {
-  if (!paths.length) return "";
-  const split = paths.map((p) => p.split("/").slice(0, -1));
+  const split = paths.map((p) => p.split("/").slice(0, -1)).filter((segs) => segs.length > 0);
+  if (!split.length) return "";
   let prefix = split[0];
   for (const parts of split) {
     let i = 0;
