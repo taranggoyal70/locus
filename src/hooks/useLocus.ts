@@ -34,7 +34,9 @@ export function useLocus() {
   }
 
   useEffect(() => {
-    void open(bundledSource("studentpulse"));
+    // Load the first bundled repo by reference — never a hardcoded slug, so a
+    // rename of the demo can't leave this pointing at a deleted repo.
+    void open(bundledSource(BUNDLED[0].slug));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
