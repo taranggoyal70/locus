@@ -49,34 +49,31 @@ Paste any public GitHub repo (`owner/name`) to localize tasks on real code; a
 
 ## Use it on your repo
 
-Zero-dependency CLI and MCP server, plain ESM — no build step, `node` v20+.
+The CLI + MCP server ship as a standalone **zero-dependency** package
+([`cli/`](./cli), published as `locus-context`) — so anyone can use it with `npx`,
+no clone and no framework install:
 
 ```bash
-node bin/locus.mjs locate "fix the dashboard" --pack     # paste-ready context block
-node bin/locus.mjs locate "fix the dashboard" --json     # machine LocateResult
-node bin/locus.mjs locate "fix the dashboard"            # human summary + % saved
+npx -y locus-context locate "fix the dashboard" --pack   # paste-ready context
+npx -y locus-context locate "fix the dashboard"          # summary + % saved
 ```
-
-Or without cloning first: `npx github:taranggoyal70/locus locate "..." --pack`.
 
 ### As an MCP server (Codex / Claude Code / Cursor)
 
-```bash
-node bin/locus.mjs mcp        # or: node bin/mcp.mjs
-```
-
-Add to your MCP client config (`mcpServers`):
+Add to your MCP client config — the agent then calls the `locate` tool
+(`task`, optional `path`/`pack`) before it reads:
 
 ```json
 {
   "mcpServers": {
-    "locus": {
-      "command": "node",
-      "args": ["/path/to/locus/bin/mcp.mjs"]
-    }
+    "locus": { "command": "npx", "args": ["-y", "locus-context", "mcp"] }
   }
 }
 ```
+
+From a local clone instead of npm: `node bin/locus.mjs mcp` and point the config at
+`bin/mcp.mjs`. The `cli/` package mirrors `bin/` (`pnpm sync-cli`) and is what gets
+published to npm.
 
 The client's agent then calls the `locate` tool (`task`, optional `path`/`pack`)
 before reading files, instead of grepping the whole repo.
