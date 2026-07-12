@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Locus MCP server — JSON-RPC 2.0 over stdio, Content-Length framed (the
+// Locus MCP server — JSON-RPC 2.0 over stdio, newline-delimited JSON (MCP stdio spec) — the
 // framing MCP clients use). No SDK dependency: hand-rolled framing + dispatch.
 // stdout carries ONLY JSON-RPC; all logging goes to stderr.
 import path from "node:path";
@@ -24,9 +24,10 @@ function log(...a) {
 }
 
 function send(obj) {
-  const json = JSON.stringify(obj);
-  const header = `Content-Length: ${Buffer.byteLength(json, "utf8")}\r\n\r\n`;
-  process.stdout.write(header + json);
+  // MCP stdio transport is newline-delimited JSON (one message per line),
+  // NOT LSP-style Content-Length framing. JSON.stringify never emits a raw
+  // newline, so a single trailing "\n" is a safe message delimiter.
+  process.stdout.write(JSON.stringify(obj) + "\n");
 }
 
 const TOOLS = [
