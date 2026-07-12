@@ -112,7 +112,11 @@ export default function Home() {
           <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
             <DependencyGraph graph={graph} result={result} selected={selected} onSelect={setSelected} />
             <div className="space-y-5">
-              <TokenMeter result={result} />
+              <TokenMeter
+                result={result}
+                repo={repo}
+                sparse={graph.edges.length / Math.max(1, graph.nodes.length) < 0.6}
+              />
               <FilePanel result={result} repo={repo} selected={selected} onSelect={setSelected} />
             </div>
           </div>
@@ -150,6 +154,40 @@ export default function Home() {
             the shared file is already in the dependency slice, and a recent-change signal floats
             it to the top — so precision doesn&apos;t mean missing the real cause.
           </p>
+        </div>
+      </section>
+
+      {/* use it on your repo */}
+      <section id="use" className="mx-auto max-w-6xl px-6 py-16">
+        <p className="text-sm font-semibold uppercase tracking-wider text-accent">Use it for real</p>
+        <h2 className="mt-2 max-w-2xl text-2xl font-semibold text-paper">
+          Two ways to actually save tokens — not just look at a graph
+        </h2>
+        <div className="mt-6 grid gap-5 lg:grid-cols-2">
+          <div className="rounded-xl border border-line bg-ink/40 p-5">
+            <h3 className="text-sm font-semibold text-paper">1 · Now, in your browser</h3>
+            <p className="mt-1 text-sm text-muted">
+              Load your repo above, describe the task, and hit{" "}
+              <span className="text-accent">Copy context</span> — you get the minimal slice as a
+              paste-ready block. Give that to ChatGPT / Claude / Cursor instead of your whole repo.
+              Zero install.
+            </p>
+          </div>
+          <div className="rounded-xl border border-line bg-ink/40 p-5">
+            <h3 className="text-sm font-semibold text-paper">2 · In your agent&apos;s loop (CLI + MCP)</h3>
+            <p className="mt-1 text-sm text-muted">
+              A zero-dependency CLI and MCP server run the same localizer on your local repo, so the
+              agent pulls the slice <em>before</em> it reads.
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded-lg border border-line-strong bg-ink p-3 font-mono text-[11px] text-muted-light">{`# one-off, paste-ready context
+npx github:taranggoyal70/locus \\
+  locate "fix the dashboard" --pack
+
+# as an MCP tool (Codex / Claude Code / Cursor)
+{ "mcpServers": {
+    "locus": { "command": "node",
+      "args": ["/path/to/locus/bin/mcp.mjs"] } } }`}</pre>
+          </div>
         </div>
       </section>
 
