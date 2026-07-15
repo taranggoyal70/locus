@@ -66,7 +66,7 @@ Scene 4 (5.2–7.0s): “Focused when there is evidence. Whole repo when there i
 - poster: 7s
 - transition_in: zoom-through
 - scene: A real historical Solum task is typed against the exact pre-fix commit, then each repository signal activates before Locus reveals the ranked context.
-- onscreen: "Solum @ 6a4a3aa. Prevent duplicate signup profile writes. Path match → source match → import graph → recent changes → 8 of 57 files ranked."
+- onscreen: "Solum @ 6a4a3aa. Prevent duplicate signup profile writes. Task matches → imported dependencies → nearby integration → ranked context pack → 8 of 57 files ranked."
 - type: feature_showcase
 - blueprint: device-surface-showcase (Adapt)
 - narrativeRole: Show the real workflow before presenting any result or benchmark.
@@ -75,14 +75,14 @@ Scene 4 (5.2–7.0s): “Focused when there is evidence. Whole repo when there i
 - roles: scroll-000.png = foreground live product window
 - sfx: none
 
-The real captured homepage enters as a floating window. A caption identifies the reproducible repository snapshot, “Solum @ 6a4a3aa,” and types the actual task: “Prevent duplicate signup profile writes.” The camera then pans toward the dependency graph while four analysis stages activate in order: path match, source match, import graph, and recent changes. The frame resolves on “8 of 57 files ranked.”
+The real captured homepage enters as a floating window. A caption identifies the reproducible repository snapshot, “Solum @ 6a4a3aa,” and types the actual task: “Prevent duplicate signup profile writes.” The camera then pans toward the context trace while its readable stages activate in order: task matches, imported dependencies, nearby integration, and the ranked context pack. The frame resolves on “8 of 57 files ranked.”
 
 Adapt: keep the blueprint's floating-window push and screen-tour signature, but use the real captured page with no reconstructed controls or simulated cursor.
 
 Scene 1 (0.0–2.2s): the captured product window establishes at a slight perspective tilt, occupying most of the top 83%; layered-depth framing with a tinted ground and a single lime focus rail.
 Scene 2 (2.2–4.6s): the virtual camera pushes toward the task field while “Prevent duplicate signup profile writes” types letter-by-letter beneath “REAL TASK · SOLUM @ 6A4A3AA”; asymmetric 70/30.
-Scene 3 (4.6–7.8s): the inner screenshot pans downward to the dependency graph while “PATH MATCH” and “SOURCE MATCH” activate in sequence; the window itself stays fixed.
-Scene 4 (7.8–10.0s): “IMPORT GRAPH” and “RECENT CHANGES” complete the evidence rail, then “8 OF 57 FILES RANKED” resolves above it as the camera eases back to the full window.
+Scene 3 (4.6–7.8s): the inner screenshot pans downward to the context trace while “TASK MATCHES” and “IMPORTED DEPS” activate in sequence; the window itself stays fixed.
+Scene 4 (7.8–10.0s): “NEARBY FILES” and “RANKED CONTEXT PACK” complete the evidence rail, then “8 OF 57 FILES RANKED” resolves above it as the camera eases back to the full window.
 
 ## Frame 4 — Focus the context
 
@@ -98,15 +98,15 @@ Scene 4 (7.8–10.0s): “IMPORT GRAPH” and “RECENT CHANGES” complete the 
 - narrativeRole: Translate the mechanism into a concrete result while labeling it as one example.
 - asset_candidates: capture/screenshots/scroll-000.png; capture/screenshots/scroll-042.png
 - focal: capture/screenshots/scroll-042.png
-- roles: scroll-000.png = supporting whole-product view; scroll-042.png = foreground graph and proof handoff
+- roles: scroll-000.png = supporting whole-product view; scroll-042.png = foreground context trace and proof handoff
 - sfx: none
 
-Begin on the real graph. A lime scan follows the included dependency paths. The interface shifts left and the actual replay result enters: 8 selected files, 49 excluded files, and 89% fewer estimated tokens. A ranked-files card names the three anchors, and a historical check identifies `app/(auth)/signup/page.tsx` as the exact file changed next. The word “estimated” stays attached to the token claim.
+Begin on the real three-stage context trace. A lime scan moves from task matches to supporting files. The interface shifts left and the actual replay result enters: 8 selected files, 49 excluded files, and 89% fewer estimated tokens. A ranked-files card names the three anchors, and a historical check identifies `app/(auth)/signup/page.tsx` as the exact file changed next. The word “estimated” stays attached to the token claim.
 
 Adapt: replace the blueprint's product video with a moving crop of the real captured screenshot, preserving the same-anchor surface-to-stat weight-transfer signature.
 
-Scene 1 (0.0–2.5s): the graph crop from the live product fills center and slowly pans along the included lime edges; full-window framing, graph remains the only dominant object.
-Scene 2 (2.5–5.2s): the graph window slides left and scales down as “8 files selected” fills the vacated right-side anchor—the same-anchor weight transfer; asymmetric 60/40, three depth layers.
+Scene 1 (0.0–2.5s): the context-trace crop from the live product fills center and slowly pans across task matches, imported dependencies, and nearby integration; full-window framing, the trace remains the only dominant object.
+Scene 2 (2.5–5.2s): the trace window slides left and scales down as “8 files selected” fills the vacated right-side anchor—the same-anchor weight transfer; asymmetric 60/40, three depth layers.
 Scene 3 (5.2–7.4s): “49 excluded” replaces the first stat while a real ranked-files card names `signup/page.tsx`, `profile/route.ts`, and `privacy/page.tsx`; the first is marked “changed next.”
 Scene 4 (7.4–10.0s): “89% fewer estimated tokens” takes the center in display scale. “REAL SOLUM RUN,” “ESTIMATED,” and “FIX FILE FOUND · signup/page.tsx” remain visibly attached. A final team-impact rail translates the mechanism into three bounded benefits: “LOWER CONTEXT COST,” “LESS IRRELEVANT CODE,” and “CONSERVATIVE FALLBACK.”
 
@@ -124,7 +124,7 @@ Scene 4 (7.4–10.0s): “89% fewer estimated tokens” takes the center in disp
 - narrativeRole: Replace launch hype with reproducible evidence and clearly bounded claims.
 - asset_candidates: capture/screenshots/scroll-042.png; capture/screenshots/scroll-085.png
 - focal: capture/screenshots/scroll-085.png
-- roles: scroll-042.png = background graph-to-proof bridge, dimmed 45%; scroll-085.png = foreground benchmark evidence
+- roles: scroll-042.png = background trace-to-proof bridge, dimmed 45%; scroll-085.png = foreground benchmark evidence
 - sfx: none
 
 The “Measured, not promised” capture fills the background. The camera pushes through 9 / 3, 100%, and 53% in sequence. A final rail states: “Historical replay—not autonomous agent success.”
@@ -167,8 +167,8 @@ Scene 4 (6.2–8.0s): “Tell me where it misses.” lands above the live URL an
 | Asset | Type | Frames | Role |
 |---|---|---|---|
 | capture/assets/favicon.svg | Brand mark | 1, 2, 6 | Recognizable opener, takeover, and closer |
-| capture/screenshots/scroll-000.png | Live product capture | 1, 2, 3, 4 | Hero, workflow, graph, token result |
-| capture/screenshots/scroll-042.png | Live product capture | 4, 5 | Graph-to-proof handoff |
+| capture/screenshots/scroll-000.png | Live product capture | 1, 2, 3, 4 | Hero, workflow, context trace, token result |
+| capture/screenshots/scroll-042.png | Live product capture | 4, 5 | Context-trace-to-proof handoff |
 | capture/screenshots/scroll-085.png | Live product capture | 5 | Full benchmark evidence |
 | capture/screenshots/scroll-100.png | Live product capture | 6 | Real-use workflow under CTA |
 | capture/screenshots/contact-sheet.jpg | Review-only | Skip | Asset review, not final composition |

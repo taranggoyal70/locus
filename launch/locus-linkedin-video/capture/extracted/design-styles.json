@@ -3,139 +3,188 @@
     {
       "role": "display",
       "fontFamily": "Geist",
-      "fontSize": "48px",
+      "fontSize": "72px",
       "fontWeight": "600",
-      "lineHeight": "52.8px",
-      "letterSpacing": "normal",
+      "lineHeight": "70.56px",
+      "letterSpacing": "-3.96px",
       "color": "#E9F0F2",
-      "sampleText": "Show your AI agent only the code it needs."
-    },
-    {
-      "role": "body",
-      "fontFamily": "Geist Mono",
-      "fontSize": "36px",
-      "fontWeight": "600",
-      "lineHeight": "40px",
-      "letterSpacing": "normal",
-      "color": "#A3E635",
-      "sampleText": "−71%"
+      "sampleText": "Give your agent a task-sized view of the codebase."
     },
     {
       "role": "heading",
       "fontFamily": "Geist",
-      "fontSize": "24px",
+      "fontSize": "36px",
       "fontWeight": "600",
-      "lineHeight": "32px",
-      "letterSpacing": "normal",
+      "lineHeight": "45px",
+      "letterSpacing": "-1.44px",
       "color": "#E9F0F2",
-      "sampleText": "Replayed against fixes from real repositories"
+      "sampleText": "Historical replay, with the limits left visible."
     },
     {
-      "role": "code",
+      "role": "heading-2",
+      "fontFamily": "Geist",
+      "fontSize": "30px",
+      "fontWeight": "600",
+      "lineHeight": "36px",
+      "letterSpacing": "-1.2px",
+      "color": "#E9F0F2",
+      "sampleText": "Before the agent reads."
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "Geist",
+      "fontSize": "20px",
+      "fontWeight": "600",
+      "lineHeight": "28px",
+      "letterSpacing": "-0.5px",
+      "color": "#E9F0F2",
+      "sampleText": "How Locus built this context"
+    },
+    {
+      "role": "heading-2",
+      "fontFamily": "Geist",
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "lineHeight": "28px",
+      "letterSpacing": "-0.36px",
+      "color": "#E9F0F2",
+      "sampleText": "Repository first. Task second."
+    },
+    {
+      "role": "body",
+      "fontFamily": "Geist",
+      "fontSize": "18px",
+      "fontWeight": "400",
+      "lineHeight": "28px",
+      "letterSpacing": "normal",
+      "color": "#A4B2BA",
+      "sampleText": "Locus traces a task to matching files, imported dependencies"
+    },
+    {
+      "role": "link",
       "fontFamily": "Geist",
       "fontSize": "16px",
       "fontWeight": "400",
       "lineHeight": "24px",
       "letterSpacing": "normal",
-      "color": "#FFFFFF",
-      "sampleText": "Locus — show your AI agent only the code it needs⊙LocusGitHu"
+      "color": "#E9F0F2",
+      "sampleText": "LocusOpen-source beta"
     },
     {
       "role": "heading-3",
+      "fontFamily": "Geist",
+      "fontSize": "14px",
+      "fontWeight": "600",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "color": "#E9F0F2",
+      "sampleText": "Task matches"
+    },
+    {
+      "role": "code",
       "fontFamily": "Geist Mono",
-      "fontSize": "14px",
-      "fontWeight": "600",
-      "lineHeight": "20px",
-      "letterSpacing": "normal",
-      "color": "#E9F0F2",
-      "sampleText": "1 · Map the graph"
-    },
-    {
-      "role": "heading-3",
-      "fontFamily": "Geist",
-      "fontSize": "14px",
-      "fontWeight": "600",
-      "lineHeight": "20px",
-      "letterSpacing": "normal",
-      "color": "#E9F0F2",
-      "sampleText": "1 · Now, in your browser"
-    },
-    {
-      "role": "link",
-      "fontFamily": "Geist",
-      "fontSize": "14px",
+      "fontSize": "9px",
       "fontWeight": "400",
-      "lineHeight": "20px",
-      "letterSpacing": "normal",
-      "color": "#E9F0F2",
-      "sampleText": "GitHub"
+      "lineHeight": "13.5px",
+      "letterSpacing": "1.26px",
+      "color": "#A4B2BA",
+      "sampleText": "Open-source beta"
     }
   ],
   "spacing": {
     "observed": [
+      1,
       4,
-      6,
       8,
-      10,
       12,
+      14,
       16,
       20,
       24,
-      56,
+      32,
+      40,
       64
     ],
-    "baseUnit": 4
+    "baseUnit": 8
   },
   "radius": [
     "8px",
-    "3.35544e+07px"
+    "12px"
   ],
   "shadows": [],
   "buttons": [
     {
-      "label": "Taxonomy",
-      "background": "oklab(0.849313 -0.130016 0.161481 / 0.1)",
+      "label": "Replay a measured fix",
+      "background": "oklab(0.849313 -0.130016 0.161481 / 0.06)",
       "backgroundImage": "",
       "backdropFilter": "",
       "color": "#A3E635",
-      "padding": "6px 12px",
+      "padding": "8px 12px",
       "borderRadius": "8px",
       "border": "1px solid rgba(160, 190, 200, 0.1)",
       "boxShadow": "none",
       "fontSize": "14px",
-      "fontWeight": "400",
-      "height": "34px"
+      "fontWeight": "500",
+      "height": "38px"
     },
     {
-      "label": "Load",
+      "label": "Analyze",
       "background": "#A3E635",
       "backgroundImage": "",
       "backdropFilter": "",
       "color": "#0A0D0F",
-      "padding": "6px 12px",
-      "borderRadius": "8px",
+      "padding": "12px 16px",
+      "borderRadius": "12px",
       "border": "0px solid rgba(160, 190, 200, 0.1)",
       "boxShadow": "none",
       "fontSize": "14px",
       "fontWeight": "600",
-      "height": "32px"
+      "height": "46px"
     },
     {
-      "label": "fix the dashboard billing",
+      "label": "Taxonomy",
       "background": "transparent",
       "backgroundImage": "",
       "backdropFilter": "",
-      "color": "#74838C",
-      "padding": "4px 12px",
+      "color": "#A4B2BA",
+      "padding": "4px 10px",
       "borderRadius": "3.35544e+07px",
+      "border": "1px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "height": "26.5px"
+    },
+    {
+      "label": "Copy shareable view",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#A4B2BA",
+      "padding": "8px 12px",
+      "borderRadius": "8px",
       "border": "1px solid rgba(160, 190, 200, 0.1)",
       "boxShadow": "none",
       "fontSize": "12px",
       "fontWeight": "400",
-      "height": "26px"
+      "height": "34px"
     },
     {
-      "label": "1lib/auth.tschanged696t",
+      "label": "app/(auth)/signup/page.tsxtask match4,59",
+      "background": "oklab(0.196788 -0.00516705 -0.00987627 / 0.7)",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#E9F0F2",
+      "padding": "12px",
+      "borderRadius": "12px",
+      "border": "1px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "69px"
+    },
+    {
+      "label": "matchapp/(auth)/signup/page.tsxchanged45",
       "background": "transparent",
       "backgroundImage": "",
       "backdropFilter": "",
@@ -152,9 +201,9 @@
   "cards": [],
   "nav": {
     "label": "navigation",
-    "background": "oklab(0.156626 -0.00353008 -0.00546299 / 0.8)",
+    "background": "oklab(0.156626 -0.00353008 -0.00546299 / 0.88)",
     "backgroundImage": "",
-    "backdropFilter": "blur(8px)",
+    "backdropFilter": "blur(24px)",
     "color": "#E9F0F2",
     "padding": "0px",
     "borderRadius": "0px",
@@ -162,20 +211,32 @@
     "boxShadow": "none",
     "fontSize": "16px",
     "fontWeight": "400",
-    "height": "63px"
+    "height": "67px"
   },
   "chips": [
     {
-      "label": "85 excluded — not shown",
+      "label": "Open-source beta",
       "background": "transparent",
-      "color": "#74838C",
-      "padding": "2px 8px",
+      "color": "#A4B2BA",
+      "padding": "4px 8px",
       "borderRadius": "3.35544e+07px",
       "border": "1px solid rgba(160, 190, 200, 0.1)",
       "boxShadow": "none",
-      "fontSize": "11px",
+      "fontSize": "9px",
       "fontWeight": "400",
-      "height": "22.5px"
+      "height": "23.5px"
+    },
+    {
+      "label": "8 selected",
+      "background": "oklab(0.849313 -0.130016 0.161481 / 0.08)",
+      "color": "#A3E635",
+      "padding": "6px 12px",
+      "borderRadius": "3.35544e+07px",
+      "border": "1px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "height": "30px"
     },
     {
       "label": "changed",
@@ -193,7 +254,7 @@
   "statCells": [],
   "tabs": [
     {
-      "label": "16,363 / 56,404 tokens",
+      "label": "7,061 / 66,328 tokens",
       "background": "transparent",
       "color": "#E9F0F2",
       "padding": "0px",
@@ -205,7 +266,7 @@
       "height": "20px"
     },
     {
-      "label": "−71%",
+      "label": "−89%",
       "background": "transparent",
       "color": "#A3E635",
       "padding": "0px",
@@ -217,7 +278,7 @@
       "height": "40px"
     },
     {
-      "label": "696t",
+      "label": "4595t",
       "background": "transparent",
       "color": "#74838C",
       "padding": "0px",
@@ -232,17 +293,17 @@
   "backgrounds": [
     {
       "value": "radial-gradient(1000px 500px at 15% -10%, rgba(163, 230, 53, 0.06), rgba(0, 0, 0, 0) 60%), none",
-      "area": 5502900
+      "area": 4932750
     }
   ],
   "glass": [
     {
-      "backdropFilter": "blur(8px)",
-      "background": "oklab(0.156626 -0.00353008 -0.00546299 / 0.8)",
+      "backdropFilter": "blur(24px)",
+      "background": "oklab(0.156626 -0.00353008 -0.00546299 / 0.88)",
       "border": "",
       "borderRadius": "0px",
       "boxShadow": "",
-      "area": 120960
+      "area": 128640
     }
   ]
 }
