@@ -160,38 +160,61 @@ function taskWords(task) {
   );
 }
 
-function scoreAnchor(words, route, rel) {
-  const hay = new Set(
+function scoreAnchor(words, route, rel, source) {
+  const pathTokens = new Set(
     (route + " " + rel).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
   );
-  let s = 0;
+  const sourceTokens = new Set(
+    source.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
+  );
+  let score = 0;
+  let pathMatches = 0;
+  const matchedWords = new Set();
   for (const w of words) {
-    for (const h of hay) {
-      if (w === h) s += 2; // exact token match
+    for (const h of pathTokens) {
+      if (w === h) {
+        score += 4;
+        pathMatches++;
+        matchedWords.add(w);
+      }
       // prefix match for morphology ("dashboards" ~ "dashboard"), min length 4
       // and prefix-anchored so mid-word substrings never match.
-      else if ((w.length >= 4 && h.startsWith(w)) || (h.length >= 4 && w.startsWith(h))) s += 1;
+      else if ((w.length >= 4 && h.startsWith(w)) || (h.length >= 4 && w.startsWith(h))) {
+        score += 2;
+        pathMatches++;
+        matchedWords.add(w);
+      }
+    }
+    if (sourceTokens.has(w)) {
+      score += 1;
+      matchedWords.add(w);
     }
   }
-  return s;
+  return { score, pathMatches, matchedWords: matchedWords.size };
 }
 
 /**
  * Localize a task to the minimal relevant slice of the repo.
- * Widen-not-narrow: if no surface anchors with confidence, fall back to the
- * whole repo (worst case = baseline, never a silent miss).
+ * Conservative localization: if no file anchors with enough task evidence,
+ * fall back to the whole repo instead of returning a speculative small slice.
  */
 export function locate(task, repo, graph) {
-  const { deps, byPath, surfaces } = graph;
+  const { deps, rdeps, byPath } = graph;
   const recent = new Set(repo.recentlyChanged);
   const words = taskWords(task);
 
-  const scored = surfaces
-    .map((s) => ({ ...s, score: scoreAnchor(words, s.route, byPath[s.path].rel) }))
-    .sort((a, b) => b.score - a.score);
+  const scored = graph.nodes
+    .map((node) => ({
+      path: node.path,
+      route: node.route ?? "",
+      recent: recent.has(node.path),
+      ...scoreAnchor(words, node.route ?? "", node.rel, repo.files[node.path] ?? ""),
+    }))
+    .filter((candidate) => candidate.pathMatches > 0 || candidate.matchedWords >= 2)
+    .sort((a, b) => b.score - a.score || b.matchedWords - a.matchedWords);
   const best = scored[0]?.score ?? 0;
 
-  if (!task.trim() || best <= 0) {
+  if (!task.trim() || best < 3) {
     const slice = graph.nodes
       .map((n) => ({ path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path) }))
       .sort((a, b) => Number(b.recent) - Number(a.recent) || a.rel.localeCompare(b.rel));
@@ -199,7 +222,7 @@ export function locate(task, repo, graph) {
       task,
       widened: true,
       reason: task.trim()
-        ? "no route matched the task — widened to the whole repo (never miss)"
+        ? "no file matched with enough confidence — widened to the whole repo"
         : "type a task to localize",
       anchors: [],
       slice,
@@ -210,11 +233,24 @@ export function locate(task, repo, graph) {
     };
   }
 
-  const anchors = scored.filter((s) => s.score === best);
+  const anchors = scored
+    .filter((s) =>
+      s.score >= Math.max(3, best - 1) ||
+      s.matchedWords >= Math.min(3, words.size) ||
+      (s.recent && s.matchedWords >= 2),
+    )
+    .slice(0, 6);
   const dist = {};
   for (const a of anchors) {
     for (const [f, d] of Object.entries(closure(a.path, deps))) {
       dist[f] = Math.min(dist[f] ?? 99, d);
+    }
+    if (!byPath[a.path].isSurface) {
+      for (const consumer of rdeps[a.path] ?? []) {
+        for (const [f, d] of Object.entries(closure(consumer, deps))) {
+          dist[f] = Math.min(dist[f] ?? 99, d + 1);
+        }
+      }
     }
   }
   const sliceFiles = Object.keys(dist).map((p) => ({
@@ -230,7 +266,7 @@ export function locate(task, repo, graph) {
   return {
     task,
     widened: false,
-    reason: `anchored on ${anchors.map((a) => byPath[a.path].rel).join(", ")}`,
+    reason: `matched ${anchors.map((a) => byPath[a.path].rel).join(", ")}`,
     anchors: anchors.map((a) => byPath[a.path].rel),
     slice: sliceFiles,
     excluded,

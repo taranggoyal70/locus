@@ -15,7 +15,7 @@ export function useLocus() {
   const [task, setTask] = useState("the dashboard chart is broken");
   const [selected, setSelected] = useState<string | null>(null);
   const [ghUrl, setGhUrl] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
@@ -36,8 +36,17 @@ export function useLocus() {
   useEffect(() => {
     // Load the first bundled repo by reference — never a hardcoded slug, so a
     // rename of the demo can't leave this pointing at a deleted repo.
-    void open(bundledSource(BUNDLED[0].slug));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let active = true;
+    bundledSource(BUNDLED[0].slug).load().then(({ repo: initialRepo, note: initialNote }) => {
+      if (!active) return;
+      setRepo(initialRepo);
+      if (initialNote) setNote(initialNote);
+    }).catch((cause: unknown) => {
+      if (active) setError(cause instanceof Error ? cause.message : "Could not load repo.");
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
   }, []);
 
   const graph = useMemo(() => (repo ? buildGraph(repo) : null), [repo]);

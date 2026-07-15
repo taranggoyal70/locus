@@ -45,4 +45,11 @@ describe("locate", () => {
       expect(r.savedPct).toBe(0);
     }
   });
+
+  it("can anchor a concrete task directly on a non-page module", () => {
+    const r = locate("fix date formatting timezone", repo, graph);
+    expect(r.widened).toBe(false);
+    expect(r.anchors).toContain("lib/date.ts");
+    expect(r.slice.some((file) => file.rel === "lib/date.ts")).toBe(true);
+  });
 });
