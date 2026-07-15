@@ -35,7 +35,7 @@ npm run benchmark
 4. Widen to all loaded files when the evidence is insufficient.
 
 The current beta intentionally supports `.ts` and `.tsx` files. The hosted
-GitHub importer accepts public repositories and caps each request at 160 supported
+GitHub importer accepts public repositories and caps each request at 120 supported
 source files. Use the local CLI for larger repositories.
 
 ## Run the web app
@@ -52,8 +52,8 @@ rate limits.
 
 Locus uses Clerk for real account creation, email verification, secure sessions,
 profile management, and sign-out. The main URL is the account gateway: signed-out
-visitors go to login and signed-in users go directly to `/workspace`. The public
-reproducible experience remains available at `/demo`.
+visitors go to login and signed-in users go directly to `/workspace`. Product
+access, repository analysis, and shared workspace views require authentication.
 
 Create a free Clerk resource through the Vercel Marketplace, connect it to the
 project, and provide these variables for local development:
@@ -69,7 +69,7 @@ Authentication routes:
 - `/sign-up` — create an account
 - `/sign-in` — return to an account
 - `/workspace` — authenticated product workspace
-- `/demo` — public, shareable product demo
+- `/demo` — legacy route protected by authentication
 
 ## Use the CLI today
 

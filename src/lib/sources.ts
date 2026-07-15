@@ -49,8 +49,11 @@ export function githubSource(url: string): RepoSource {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Could not load repo.");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Could not load repository. Check the owner/name and try again.");
+      }
+      if (!data?.repo) throw new Error("GitHub returned an incomplete repository response. Please try again.");
       const { repo, truncated, fileCount } = data as {
         repo: RepoData; truncated: boolean; fileCount: number;
       };

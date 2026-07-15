@@ -19,15 +19,18 @@ export function useLocus() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [loadedRepositorySpecifier, setLoadedRepositorySpecifier] = useState<string | null>(null);
   const loadVersion = useRef(0);
 
   async function open(source: RepoSource, nextTask?: string) {
     const version = ++loadVersion.current;
-    setLoading(true); setError(null); setNote(null); setSelected(null);
+    setLoading(true); setError(null); setNote(null); setSelected(null); setRepo(null);
+    setLoadedRepositorySpecifier(null);
     try {
       const { repo: r, note: n } = await source.load();
       if (version !== loadVersion.current) return;
       setRepo(r);
+      setLoadedRepositorySpecifier(source.kind === "github" ? source.label.trim() : null);
       if (nextTask !== undefined) setTask(nextTask);
       if (n) setNote(n);
     } catch (e) {
@@ -50,6 +53,7 @@ export function useLocus() {
         if (!active || version !== loadVersion.current) return;
         setGhUrl(sharedRepositorySpecifier);
         setRepo(sharedRepoData);
+        setLoadedRepositorySpecifier(sharedRepositorySpecifier);
         setTask(sharedTask);
         if (sharedNote) setNote(sharedNote);
       }).catch((cause: unknown) => {
@@ -85,7 +89,7 @@ export function useLocus() {
   );
 
   return {
-    repo, graph, result, task, selected, ghUrl, loading, error, note, examples,
+    repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, examples,
     bundled: BUNDLED,
     setTask, setSelected, setGhUrl,
     pickBundled: (slug: string) =>

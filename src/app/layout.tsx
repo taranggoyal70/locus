@@ -20,6 +20,10 @@ export default function RootLayout({
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       afterSignOutUrl="/"
+      localization={{
+        signIn: { start: { title: "Sign in to Locus" } },
+        signUp: { start: { title: "Create your Locus account" } },
+      }}
     >
       <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
         <body className="min-h-full">{children}</body>

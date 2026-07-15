@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildGraph, locate } from "@/lib/localizer";
-import { BUNDLED } from "@/lib/sources";
+import { BUNDLED, githubSource } from "@/lib/sources";
 import type { RepoData } from "@/lib/types";
 
 // Guards the class of bug where the auto-loaded bundled repo was renamed away
@@ -21,4 +21,16 @@ describe("bundled demo repos", () => {
       expect(anchored.length, `no example anchored for ${b.slug}`).toBeGreaterThan(0);
     });
   }
+});
+
+describe("GitHub repository source", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("returns a useful error when an upstream response is not JSON", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 502 })));
+
+    await expect(githubSource("owner/repo").load()).rejects.toThrow(
+      "Could not load repository. Check the owner/name and try again.",
+    );
+  });
 });

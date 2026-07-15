@@ -21,16 +21,16 @@ type LocusAppProps = {
 
 export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   const {
-    repo, graph, result, task, selected, ghUrl, loading, error, note,
+    repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note,
     examples: bundledExamples, bundled: BUNDLED,
     setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt,
   } = useLocus();
   const [shareCopied, setShareCopied] = useState(false);
 
   async function copyShareView() {
-    if (!ghUrl.trim() || !task.trim()) return;
+    if (!loadedRepositorySpecifier || !task.trim()) return;
     await navigator.clipboard.writeText(buildShareUrl(window.location.origin, {
-      repositorySpecifier: ghUrl,
+      repositorySpecifier: loadedRepositorySpecifier,
       task,
     }));
     setShareCopied(true);
@@ -89,15 +89,15 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
       </header>
 
       <main id="top">
-        <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-10 pt-14 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end">
+        <section className={`mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end ${isWorkspace ? "pb-8 pt-10 sm:pt-12" : "pb-10 pt-14 sm:pt-20"}`}>
           <div>
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
               {isWorkspace ? `Signed in${accountName ? ` as ${accountName}` : ""}` : "Context compiler for coding agents"}
             </p>
-            <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-paper sm:text-6xl lg:text-7xl">
+            <h1 className={`max-w-4xl font-semibold leading-[0.98] tracking-[-0.055em] text-paper ${isWorkspace ? "mt-3 text-4xl sm:text-5xl" : "mt-5 text-5xl sm:text-6xl lg:text-7xl"}`}>
               {isWorkspace ? "Build the context your agent should read first." : "Give your agent a task-sized view of the codebase."}
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
+            <p className={`${isWorkspace ? "mt-4" : "mt-6"} max-w-2xl text-base leading-7 text-muted-light sm:text-lg`}>
               {isWorkspace
                 ? "Load a public repository, describe the engineering task, and copy the focused context pack into your coding workflow."
                 : "Locus traces a task to matching files, imported dependencies, and nearby integration points—before your agent spends tokens reading the repository."}
@@ -107,7 +107,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           <aside className="rounded-[22px] border border-line-strong bg-surface p-5">
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{isWorkspace ? "Account ready" : "Operating rule"}</p>
             <p className="mt-4 text-xl font-semibold leading-7 tracking-[-0.025em] text-paper">
-              {isWorkspace ? "Your session is secure. Locus does not save the repository analysis." : "Focus when evidence is strong. Widen when it is not."}
+              {isWorkspace ? "Public repositories only. Analysis runs in memory and is not stored." : "Focus when evidence is strong. Widen when it is not."}
             </p>
             <div className="mt-6 grid grid-cols-3 gap-2 text-center font-mono text-[10px] uppercase tracking-wide text-muted-light">
               <span className="rounded-lg border border-line bg-ink/60 px-2 py-3">Browser</span>
@@ -118,7 +118,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
         </section>
 
         <section id="workspace" className="mx-auto max-w-7xl px-5 pb-8 sm:px-8">
-          <div className="overflow-hidden rounded-[24px] border border-line-strong bg-surface shadow-[0_40px_120px_rgba(0,0,0,0.24)]">
+          <div className="overflow-hidden rounded-[24px] border border-line-strong bg-surface shadow-[0_40px_120px_rgba(0,0,0,0.24)]" aria-busy={loading}>
             <div className="flex flex-col gap-4 border-b border-line px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <div>
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Build a context pack</p>
@@ -130,7 +130,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                   disabled={loading}
                   className="rounded-lg border border-accent/25 bg-accent/[0.06] px-3 py-2 text-sm font-medium text-accent transition hover:bg-accent/[0.1] disabled:opacity-50"
                 >
-                  Replay a measured fix
+                  Load benchmark example
                 </button>
               )}
             </div>
@@ -138,7 +138,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
             <div className="grid gap-px bg-line lg:grid-cols-2">
               <div className="bg-ink/[0.55] p-5 sm:p-6">
                 <label htmlFor="repo-input" className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                  01 · Repository
+                  01 · Public GitHub repository
                 </label>
                 <div className="mt-3 flex gap-2">
                   <input
@@ -157,8 +157,9 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                     {loading ? "Loading" : "Analyze"}
                   </button>
                 </div>
+                <p className="mt-2 text-[11px] leading-5 text-muted">Public repositories only. Repository contents are analyzed in memory and are not saved.</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] text-muted">Sample</span>
+                  <span className="text-[11px] text-muted">Try a sample</span>
                   {BUNDLED.map((source) => (
                     <button
                       key={source.slug}
@@ -202,7 +203,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
             </div>
 
             {(error || note) && (
-              <div className={`border-t border-line px-6 py-3 text-xs ${error ? "text-recent" : "text-muted-light"}`}>
+              <div role={error ? "alert" : "status"} aria-live="polite" className={`border-t border-line px-6 py-3 text-xs ${error ? "text-recent" : "text-muted-light"}`}>
                 {error ?? note}
               </div>
             )}
@@ -217,7 +218,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                   <p className="truncate font-mono text-xs text-muted-light">{repo?.name}</p>
                   <p className="mt-1 truncate text-sm text-paper">{task || "No task described"}</p>
                 </div>
-                {ghUrl.trim() && task.trim() && (
+                {loadedRepositorySpecifier && task.trim() && (
                   <button
                     onClick={copyShareView}
                     className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper"
@@ -234,13 +235,14 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                 </div>
               </div>
             </>
-          ) : (
-            <div className="rounded-[22px] border border-line bg-surface p-16 text-center text-sm text-muted">
-              {error ?? "Loading repository"}
+          ) : !error ? (
+            <div role={error ? "alert" : "status"} aria-live="polite" className="rounded-[22px] border border-line bg-surface p-16 text-center text-sm text-muted">
+              {loading ? "Loading repository" : "Choose a repository to begin"}
             </div>
-          )}
+          ) : null}
         </section>
 
+        {!isWorkspace && <>
         <section id="method" className="border-y border-line bg-surface/[0.45]">
           <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Measured, not promised</p>
@@ -292,6 +294,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
             </div>
           </div>
         </section>
+        </>}
       </main>
 
       <footer className="border-t border-line">

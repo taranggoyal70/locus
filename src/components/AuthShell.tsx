@@ -11,7 +11,7 @@ type AuthShellProps = {
 
 export function AuthShell({ children, eyebrow, title, description }: AuthShellProps) {
   return (
-    <main className="relative min-h-screen overflow-hidden px-5 py-8 sm:px-8">
+    <main className="relative min-h-screen overflow-x-hidden px-5 py-6 sm:px-8 sm:py-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(163,230,53,0.08),transparent_34%)]" />
       <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col">
         <header className="flex items-center">
@@ -21,13 +21,13 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
           </Link>
         </header>
 
-        <div className="grid flex-1 items-center gap-12 py-14 lg:grid-cols-[minmax(0,1fr)_440px]">
-          <section className="max-w-xl">
+        <div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-8 py-10 sm:gap-12 sm:py-14 lg:grid-cols-[minmax(0,1fr)_440px]">
+          <section className="min-w-0 max-w-xl">
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">{eyebrow}</p>
-            <h1 className="mt-5 text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-paper sm:text-6xl">{title}</h1>
-            <p className="mt-6 max-w-lg text-base leading-7 text-muted-light sm:text-lg">{description}</p>
+            <h1 className="mt-4 text-4xl font-semibold leading-[1.02] tracking-[-0.05em] text-paper sm:mt-5 sm:text-6xl sm:leading-[0.98]">{title}</h1>
+            <p className="mt-4 max-w-lg text-base leading-7 text-muted-light sm:mt-6 sm:text-lg">{description}</p>
 
-            <div className="mt-10 grid gap-3 sm:grid-cols-3">
+            <div className="mt-10 hidden gap-3 sm:grid sm:grid-cols-3">
               {[
                 ["01", "Load a repository"],
                 ["02", "Describe the task"],
@@ -41,10 +41,10 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
             </div>
           </section>
 
-          <section className="flex justify-center lg:justify-end">{children}</section>
+          <section className="flex min-w-0 w-full justify-center lg:justify-end">{children}</section>
         </div>
 
-        <footer className="flex items-center justify-between border-t border-line py-5 text-xs text-muted">
+        <footer className="flex flex-col gap-2 border-t border-line py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
           <span>Open-source beta</span>
           <span>Secure authentication by Clerk</span>
         </footer>

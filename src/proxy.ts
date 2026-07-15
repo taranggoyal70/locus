@@ -10,7 +10,7 @@ export default clerkMiddleware(
   async (auth, request) => {
     if (isProtectedPathname(request.nextUrl.pathname)) await auth.protect();
   },
-  { frontendApiProxy: { enabled: true } },
+  { frontendApiProxy: { enabled: process.env.NODE_ENV === "production" } },
 );
 
 export const config = {
