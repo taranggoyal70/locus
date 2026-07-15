@@ -19,19 +19,24 @@
             </div>
           </div>
 
-          <div data-hf-id="hf-24ld" class="f03-task-copy" aria-label="Describe the task">
+          <div data-hf-id="hf-24ld" class="f03-task-copy" aria-label="Real task being typed">
             <div data-hf-id="hf-ttfv" class="f03-focus-rail" id="f03-input-focus-rail"></div>
-            <div data-hf-id="hf-v1o0" class="f03-task-title" id="f03-input-task-title">Describe the task.</div>
+            <div data-hf-id="hf-v1o0" class="f03-task-block" id="f03-input-task-title">
+              <div class="f03-task-kicker">REAL TASK</div>
+              <div class="f03-task-title" id="f03-input-typed-task"></div>
+            </div>
           </div>
         </div>
       </div>
 
       <div data-hf-id="hf-soo6" class="f03-evidence-rail" aria-label="Task context signals">
-        <div data-hf-id="hf-2cto" class="f03-evidence-card" id="f03-input-card-paths">paths</div>
-        <div data-hf-id="hf-xy7i" class="f03-evidence-card" id="f03-input-card-source">source</div>
-        <div data-hf-id="hf-5l2s" class="f03-evidence-card" id="f03-input-card-imports">imports</div>
-        <div data-hf-id="hf-ymhe" class="f03-evidence-card f03-evidence-wide" id="f03-input-card-recent">recent changes</div>
+        <div data-hf-id="hf-2cto" class="f03-evidence-card" id="f03-input-card-paths"><span>01</span>PATH MATCH</div>
+        <div data-hf-id="hf-xy7i" class="f03-evidence-card" id="f03-input-card-source"><span>02</span>SOURCE MATCH</div>
+        <div data-hf-id="hf-5l2s" class="f03-evidence-card" id="f03-input-card-imports"><span>03</span>IMPORT GRAPH</div>
+        <div data-hf-id="hf-ymhe" class="f03-evidence-card f03-evidence-wide" id="f03-input-card-recent"><span>04</span>RECENT CHANGES</div>
       </div>
+
+      <div class="f03-process-status" id="f03-input-process-status">RANKED CONTEXT READY</div>
 
       <div data-hf-id="hf-7x2i" class="f03-progress" aria-hidden="true"><div data-hf-id="hf-0yhj" class="f03-progress-fill"></div></div>
     </div>
@@ -143,9 +148,9 @@
 
     .f03-task-copy {
       position: absolute;
-      left: 744px;
+      left: 590px;
       top: 344px;
-      width: 260px;
+      width: 340px;
       min-height: 126px;
       display: grid;
       grid-template-columns: 4px 1fr;
@@ -163,14 +168,42 @@
       will-change: transform, opacity;
     }
 
-    .f03-task-title {
-      width: 230px;
-      color: #e9f0f2;
-      font-size: 48px;
-      font-weight: 600;
-      line-height: 1.04;
-      letter-spacing: -0.02em;
+    .f03-task-block {
+      width: 318px;
+      padding: 20px 22px;
+      border: 1.5px solid rgba(163, 230, 53, 0.28);
+      border-radius: 14px;
+      background: rgba(10, 13, 15, 0.92);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
       will-change: transform, opacity;
+    }
+
+    .f03-task-kicker {
+      margin-bottom: 12px;
+      color: #a3e635;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .f03-task-title {
+      min-height: 92px;
+      color: #e9f0f2;
+      font-size: 31px;
+      font-weight: 600;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+    }
+
+    .f03-task-title::after {
+      content: "";
+      display: inline-block;
+      width: 3px;
+      height: 0.9em;
+      margin-left: 5px;
+      border-radius: 2px;
+      background: #a3e635;
+      vertical-align: -0.08em;
     }
 
     .f03-evidence-rail {
@@ -196,15 +229,35 @@
       border: 1.5px solid rgba(163, 230, 53, 0.2);
       background: rgba(163, 230, 53, 0.04);
       color: #9de231;
-      font-size: 22px;
+      gap: 7px;
+      font-size: 15px;
       font-weight: 600;
       line-height: 1.1;
       letter-spacing: -0.01em;
       will-change: transform, opacity;
     }
 
+    .f03-evidence-card span {
+      color: rgba(233, 240, 242, 0.5);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+
     .f03-evidence-wide {
       width: 246px;
+    }
+
+    .f03-process-status {
+      position: absolute;
+      left: 66px;
+      top: 700px;
+      width: 948px;
+      color: #e9f0f2;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-align: center;
+      will-change: transform, opacity;
     }
 
     .f03-progress {
@@ -271,6 +324,22 @@
       2.55,
     );
 
+    const typedTask = "Fix the dashboard billing chart";
+    const typedTaskElement = document.getElementById("f03-input-typed-task");
+    const typingState = { characters: 0 };
+    tl.to(
+      typingState,
+      {
+        characters: typedTask.length,
+        duration: 1.55,
+        ease: "none",
+        onUpdate: () => {
+          typedTaskElement.textContent = typedTask.slice(0, Math.round(typingState.characters));
+        },
+      },
+      2.82,
+    );
+
     tl.fromTo(
       "#f03-input-screenshot",
       { y: -8 },
@@ -311,6 +380,12 @@
       { opacity: 0, y: 22, scale: 0.96 },
       { opacity: 1, y: 0, scale: 1, duration: 0.72, ease: "power3.out" },
       8.55,
+    );
+    tl.fromTo(
+      "#f03-input-process-status",
+      { opacity: 0, y: 12 },
+      { opacity: 1, y: 0, duration: 0.62, ease: "power3.out" },
+      9.02,
     );
 
     tl.to({}, { duration: 0.01 }, 9.99);
