@@ -1,0 +1,56 @@
+[
+  {
+    "repo": "taranggoyal70/locus",
+    "localPath": ".",
+    "commit": "b8d7634",
+    "task": "exclude loose files from GitHub source root inference"
+  },
+  {
+    "repo": "taranggoyal70/locus",
+    "localPath": ".",
+    "commit": "3b1d6c2",
+    "task": "auto-load the first bundled repository instead of a hardcoded slug"
+  },
+  {
+    "repo": "taranggoyal70/locus",
+    "localPath": ".",
+    "commit": "bbdd822",
+    "task": "vague conversational tasks should widen instead of false anchoring"
+  },
+  {
+    "repo": "taranggoyal70/agent-access",
+    "localPath": "../agent-access/platform",
+    "commit": "50a3e9e",
+    "task": "prevent concurrent workspace provisioning from creating duplicates"
+  },
+  {
+    "repo": "taranggoyal70/agent-access",
+    "localPath": "../agent-access/platform",
+    "commit": "071a85f",
+    "task": "serve the Clerk production frontend through the proxy"
+  },
+  {
+    "repo": "taranggoyal70/agent-access",
+    "localPath": "../agent-access/platform",
+    "commit": "fefa329",
+    "task": "stabilize persisted execution receipt signatures"
+  },
+  {
+    "repo": "taranggoyal70/Solum",
+    "localPath": "../Solum",
+    "commit": "ce097b6",
+    "task": "prevent duplicate signup profile writes"
+  },
+  {
+    "repo": "taranggoyal70/Solum",
+    "localPath": "../Solum",
+    "commit": "1497f31",
+    "task": "remove browser theme persistence"
+  },
+  {
+    "repo": "taranggoyal70/Solum",
+    "localPath": "../Solum",
+    "commit": "425bb89",
+    "task": "fix the post-call webhook payload handling"
+  }
+]

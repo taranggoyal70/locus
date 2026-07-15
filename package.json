@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "benchmark": "node scripts/benchmark.mjs --write",
     "sync-cli": "cp bin/*.mjs cli/"
   },
   "dependencies": {

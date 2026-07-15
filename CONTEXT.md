@@ -1,9 +1,9 @@
 # Locus — Context
 
-Locus maps a task ("fix the dashboard") to the **minimal slice** of a codebase an
-AI agent needs to read, instead of the whole tree — fewer input tokens, and it
-**widens** rather than narrows when unsure, so quality can't drop. This file is
-the second-brain: read it once instead of re-crawling the repo.
+Locus maps a task ("fix the dashboard") to a focused **Slice** of a TypeScript
+Repo, instead of always loading the whole tree. It **Widens** when the available
+evidence is weak. This is a conservative fallback, not a quality guarantee. This
+file is the second-brain: read it once instead of re-crawling the repo.
 
 ## Language
 
@@ -22,14 +22,15 @@ structurally (`app/**/page.tsx`), not guessed.
 _Avoid_: route (as the domain concept), endpoint, view.
 
 **Anchor**:
-The Surface a task resolves to; the root of the Slice. A task with no confident
-Anchor triggers **Widen**.
-_Avoid_: entrypoint, seed, match.
+A file whose path or source strongly matches the task. Surfaces are useful
+Anchors, but hooks, API handlers, components, and libraries can anchor directly.
+A task with no confident Anchor triggers **Widen**.
+_Avoid_: seed, guessed file.
 
 **Slice**:
-The minimal set of files a task needs = the Anchor's transitive dependency
-**Closure**, ranked by distance with **Recent** files first. What actually gets
-sent to the agent.
+The focused candidate set built from Anchors, dependency **Closures**, direct
+consumers, and relevant **Recent** files. It is ranked by Recent signal and
+distance. It is not claimed to be mathematically minimal or complete.
 _Avoid_: subset, scope (noun), selection, context (overloaded).
 
 **Closure**:
@@ -43,9 +44,10 @@ files, and the token saving). The whole product in one verb.
 _Avoid_: search, retrieve, query, scope (verb).
 
 **Widen**:
-The safety guarantee: when no Surface anchors a task with confidence, fall back to
-the whole Repo. Worst case = baseline, so Localize can cut reading but never cause
-a miss. A `LocateResult` carries `widened: true`.
+The conservative behavior used when no file anchors a task with enough evidence:
+return the whole loaded Repo instead of a speculative small Slice. A
+`LocateResult` carries `widened: true`. This reduces localization risk but
+does not prove agent success.
 _Avoid_: fallback, default, expand.
 
 **Recent signal**:
@@ -72,9 +74,10 @@ _Avoid_: loader, provider, fetcher.
 
 ## Invariants
 
-- **Widen, never narrow.** `locate` must never return a partial/empty Slice silently; if it can't anchor, it widens to the whole Repo.
+- **Widen on weak evidence.** `locate` must never return a partial/empty Slice silently; if it cannot anchor, it widens to the whole loaded Repo.
 - **Deterministic graph.** The dependency **Graph** comes from parsing imports, never from an LLM.
 - **`buildGraph` is pure and reused.** One Graph per Repo, many Localize calls across task changes.
+- **Claims follow evidence.** `benchmarks/` measures historical fix-file recall and estimated context reduction; it does not claim autonomous task completion.
 
 ## Example dialogue
 
@@ -85,5 +88,5 @@ _Avoid_: loader, provider, fetcher.
 > **Locus:** Shared helpers in the Closure are still in the Slice — and `date.ts`
 > changed recently, so the Recent signal floated it to the top.
 > **Dev:** What if I describe something you don't recognise?
-> **Locus:** Then I Widen — no confident Anchor means I return the whole Repo, so I
-> never hand you a Slice that's missing the real cause.
+> **Locus:** Then I Widen — no confident Anchor means I return the whole loaded
+> Repo rather than pretending a narrow Slice is sufficient.

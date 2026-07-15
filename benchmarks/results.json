@@ -1,0 +1,201 @@
+{
+  "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.",
+  "summary": {
+    "generatedAt": "2026-07-15T00:35:09.449Z",
+    "cases": 9,
+    "repositories": 3,
+    "fixFileRecall": 1,
+    "casesWithFullRecall": 9,
+    "medianContextReductionPct": 53,
+    "widenedCases": 2,
+    "gate": {
+      "fullRecall": true,
+      "medianReductionAtLeast30Pct": true
+    }
+  },
+  "results": [
+    {
+      "repo": "taranggoyal70/locus",
+      "commit": "b8d7634",
+      "task": "exclude loose files from GitHub source root inference",
+      "expected": [
+        "src/app/api/github/route.ts"
+      ],
+      "found": [
+        "src/app/api/github/route.ts"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "12/15",
+      "contextReductionPct": 3,
+      "anchors": [
+        "app/api/github/route.ts",
+        "lib/sources.ts",
+        "lib/types.ts",
+        "app/page.tsx",
+        "hooks/useLocus.ts"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/locus",
+      "commit": "3b1d6c2",
+      "task": "auto-load the first bundled repository instead of a hardcoded slug",
+      "expected": [
+        "src/hooks/useLocus.ts"
+      ],
+      "found": [
+        "src/hooks/useLocus.ts"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "12/15",
+      "contextReductionPct": 3,
+      "anchors": [
+        "app/page.tsx",
+        "lib/sources.ts",
+        "lib/types.ts",
+        "hooks/useLocus.ts"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/locus",
+      "commit": "bbdd822",
+      "task": "vague conversational tasks should widen instead of false anchoring",
+      "expected": [
+        "src/lib/localizer.test.ts",
+        "src/lib/localizer.ts"
+      ],
+      "found": [
+        "src/lib/localizer.test.ts",
+        "src/lib/localizer.ts"
+      ],
+      "recall": 1,
+      "widened": true,
+      "files": "15/15",
+      "contextReductionPct": 0,
+      "anchors": []
+    },
+    {
+      "repo": "taranggoyal70/agent-access",
+      "commit": "50a3e9e",
+      "task": "prevent concurrent workspace provisioning from creating duplicates",
+      "expected": [
+        "src/lib/auth.ts"
+      ],
+      "found": [
+        "src/lib/auth.ts"
+      ],
+      "recall": 1,
+      "widened": true,
+      "files": "59/59",
+      "contextReductionPct": 0,
+      "anchors": []
+    },
+    {
+      "repo": "taranggoyal70/agent-access",
+      "commit": "071a85f",
+      "task": "serve the Clerk production frontend through the proxy",
+      "expected": [
+        "src/proxy.ts"
+      ],
+      "found": [
+        "src/proxy.ts"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "1/59",
+      "contextReductionPct": 99,
+      "anchors": [
+        "src/proxy.ts"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/agent-access",
+      "commit": "fefa329",
+      "task": "stabilize persisted execution receipt signatures",
+      "expected": [
+        "src/lib/execution.ts"
+      ],
+      "found": [
+        "src/lib/execution.ts"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "14/44",
+      "contextReductionPct": 63,
+      "anchors": [
+        "src/lib/execution.ts",
+        "src/app/api/receipts/[receiptId]/route.ts",
+        "src/app/dashboard/receipts/page.tsx",
+        "scripts/smoke.ts",
+        "src/app/api/sandboxes/[sandboxId]/verify/route.ts",
+        "src/app/docs/page.tsx"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/Solum",
+      "commit": "ce097b6",
+      "task": "prevent duplicate signup profile writes",
+      "expected": [
+        "app/(auth)/signup/page.tsx"
+      ],
+      "found": [
+        "app/(auth)/signup/page.tsx"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "8/57",
+      "contextReductionPct": 89,
+      "anchors": [
+        "app/(auth)/signup/page.tsx",
+        "app/api/profile/route.ts",
+        "app/privacy/page.tsx"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/Solum",
+      "commit": "1497f31",
+      "task": "remove browser theme persistence",
+      "expected": [
+        "app/layout.tsx",
+        "components/ThemeToggle.tsx"
+      ],
+      "found": [
+        "app/layout.tsx",
+        "components/ThemeToggle.tsx"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "18/57",
+      "contextReductionPct": 53,
+      "anchors": [
+        "components/ThemeProvider.tsx",
+        "components/ThemeToggle.tsx",
+        "components/landing/TrustSection.tsx"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/Solum",
+      "commit": "425bb89",
+      "task": "fix the post-call webhook payload handling",
+      "expected": [
+        "app/api/webhook/post-call/route.ts",
+        "scripts/setup-elevenlabs-agents.ts"
+      ],
+      "found": [
+        "app/api/webhook/post-call/route.ts",
+        "scripts/setup-elevenlabs-agents.ts"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "9/42",
+      "contextReductionPct": 85,
+      "anchors": [
+        "app/api/webhook/post-call/route.ts",
+        "app/api/call/start/route.ts",
+        "hooks/useCall.ts",
+        "scripts/setup-elevenlabs-agents.ts"
+      ]
+    }
+  ]
+}

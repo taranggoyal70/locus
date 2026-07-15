@@ -1,88 +1,93 @@
 # ⊙ Locus
 
-**Show your AI coding agent only the code it needs.**
+**Focused code context for AI coding agents.**
 
-Every edit doesn't need the whole repo. Locus reads a codebase's real dependency
-graph, and for a given task ("the dashboard chart is broken") returns the
-**minimal relevant slice** — the entry point plus its transitive dependencies —
-so an agent reads a fraction of the tokens instead of the whole tree.
+Locus maps a natural-language task to a focused TypeScript/Next.js code slice:
+matching files, their dependency closure, nearby integration points, and relevant
+recent changes. When the evidence is weak, it returns the whole repo instead of a
+speculative small slice.
 
-Live demo: type a task and watch the irrelevant half of a codebase fade out while
-a token counter drops.
+**Live:** https://locus-five-iota.vercel.app
 
-## Why it works
+## Evidence
 
-In coding agents, **input tokens are the bulk of the cost** — reading files and
-carrying context, re-sent every turn. Prompt caching helps *within* a warm
-session, but every new task re-pays "understand the repo." Locus attacks that:
-give the agent the dependency slice for the task, not the tree.
+The reproducible historical-task benchmark replays Locus on the parent snapshots
+of nine real fixes across Locus, Agent Access, and Solum:
 
-On the bundled StudentPulse demo (29 files, 5 feature areas), "fix the dashboard"
-resolves to a **10-file slice — 67% fewer tokens**, excluding all the
-analytics/reports/roster code entirely.
+- **100% historical fix-file recall** across the nine declared cases
+- **53% median estimated context reduction**
+- **2 conservative whole-repo fallbacks**
 
-## The one rule that keeps quality safe
+This measures whether Locus includes the TypeScript files developers changed next.
+It does not prove autonomous agent completion, guarantee that excluded files are
+unnecessary, or promise unchanged quality. See [the full method and every
+case](./benchmarks/README.md), or run:
 
-**Widen, never narrow.** If a task doesn't confidently match an entry point,
-Locus falls back to the whole repo. Worst case = baseline, so quality can never
-drop — only tokens. Cross-cutting bugs (a shared util that broke the dashboard)
-are caught two ways: the shared file is already in the dependency slice, and a
-recent-change signal floats it to the top.
+```bash
+npm run benchmark
+```
 
 ## How it works
 
-1. **Map the graph** — parse imports into a deterministic dependency graph
-   (routes → components → hooks → libs). No LLM guessing.
-2. **Localize** — match the task to an entry point, take its transitive
-   dependency closure. That slice is what the agent needs.
-3. **Rank** — by dependency distance, with recently-changed files surfaced first.
+1. Parse relative and `@/` imports into a deterministic dependency graph.
+2. Match meaningful task words against TypeScript paths and source text.
+3. Add dependency closures, direct consumers, and recent cross-cutting matches.
+4. Widen to all loaded files when the evidence is insufficient.
 
-## Run it
+The current beta intentionally supports `.ts` and `.tsx` files. The hosted
+GitHub importer accepts public repositories and caps each request at 160 supported
+source files. Use the local CLI for larger repositories.
 
-```bash
-pnpm install
-pnpm dev   # or: next build && next start
-```
-
-Paste any public GitHub repo (`owner/name`) to localize tasks on real code; a
-`GITHUB_TOKEN` is optional (higher rate limits).
-
-## Use it on your repo
-
-The CLI + MCP server ship as a standalone **zero-dependency** package
-([`cli/`](./cli), published as `locus-context`) — so anyone can use it with `npx`,
-no clone and no framework install:
+## Run the web app
 
 ```bash
-npx -y locus-context locate "fix the dashboard" --pack   # paste-ready context
-npx -y locus-context locate "fix the dashboard"          # summary + % saved
+npm install
+npm run dev
 ```
 
-### As an MCP server (Codex / Claude Code / Cursor)
+A `GITHUB_TOKEN` is optional for the hosted importer and increases GitHub API
+rate limits.
 
-Add to your MCP client config — the agent then calls the `locate` tool
-(`task`, optional `path`/`pack`) before it reads:
+## Use the CLI today
+
+Until the npm release is available, run directly from GitHub:
+
+```bash
+npx github:taranggoyal70/locus locate "fix the dashboard billing" --pack
+npx github:taranggoyal70/locus locate "fix the dashboard billing"
+```
+
+The CLI and MCP server have no runtime dependencies. `--pack` emits the selected
+file contents as a token-bounded block.
+
+## MCP server
+
+From a clone:
 
 ```json
 {
   "mcpServers": {
-    "locus": { "command": "npx", "args": ["-y", "locus-context", "mcp"] }
+    "locus": {
+      "command": "node",
+      "args": ["/absolute/path/to/locus/bin/mcp.mjs"]
+    }
   }
 }
 ```
 
-From a local clone instead of npm: `node bin/locus.mjs mcp` and point the config at
-`bin/mcp.mjs`. The `cli/` package mirrors `bin/` (`pnpm sync-cli`) and is what gets
-published to npm.
+The server exposes `locate(task, path?, pack?)`. The standalone publishable
+package lives in [`cli/`](./cli); `npm run sync-cli` mirrors the executable
+files from `bin/`.
 
-The client's agent then calls the `locate` tool (`task`, optional `path`/`pack`)
-before reading files, instead of grepping the whole repo.
+## Validate
 
-## Stack
+```bash
+npm test
+npm run lint
+npm run build
+npm run benchmark
+```
 
-Next.js (App Router) · TypeScript · Tailwind CSS v4 · custom inline-SVG graph ·
-deployed on Vercel. The localizer (`src/lib/localizer.ts`) is a pure, dependency-
-free module — the natural next step is to expose `locate(task)` as an MCP tool so
-Codex / Claude Code / Cursor call it before reading anything.
+Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · Vitest · Vercel
 
 MIT © Tarang Goyal
