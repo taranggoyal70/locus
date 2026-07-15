@@ -6,6 +6,7 @@ This folder contains the founder-led LinkedIn launch package for the Locus open-
 - `locus-linkedin-video/BRIEF.md` — locked video brief
 - `locus-linkedin-video/STORYBOARD.md` — six-scene, 50-second storyboard
 - `locus-linkedin-video/index.html` — assembled silent video composition
+- `locus-linkedin-video/renders/video.mp4` — final 1080×1080 LinkedIn-ready render
 
 ## Preview the video
 
@@ -15,4 +16,3 @@ npm run dev
 ```
 
 The video is square (1080×1080), caption-led, and designed for a muted LinkedIn feed. It uses current product captures and the benchmark results committed in `benchmarks/results.json`.
-

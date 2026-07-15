@@ -144,7 +144,7 @@ Scene 4 (6.8–9.0s): the camera eases back to the complete three-card benchmark
 - poster: 5s
 - transition_in: zoom-through
 - scene: The Locus mark, open-source beta label, and one concrete founder CTA close the film.
-- onscreen: "I'm looking for 10 TypeScript/Next.js developers who use coding agents. Try Locus on a real task. Tell me where it misses."
+- onscreen: "Looking for 10 TypeScript/Next.js developers to become founding design partners. Browser, CLI, and MCP. Try Locus on a real task. Tell me where it misses."
 - type: cta
 - blueprint: logo-assemble-lockup (Adapt)
 - narrativeRole: Turn attention into the exact design-partner behavior needed for the next product milestone.
@@ -153,13 +153,13 @@ Scene 4 (6.8–9.0s): the camera eases back to the complete three-card benchmark
 - roles: favicon.svg = foreground brand lockup; scroll-100.png = background real-use workflow, dimmed 55%
 - sfx: none
 
-The mark assembles at center, then condenses into a lime CTA pill: “Test the open-source beta.” The founder ask appears in two short lines. End held on “locus-five-iota.vercel.app” and “github.com/taranggoyal70/locus.”
+The mark assembles at center, then condenses into a lime CTA pill: “Test it on a real task.” The founder ask recruits ten founding design partners and makes the available surfaces explicit: browser, CLI, and MCP. End held on “locus-five-iota.vercel.app” and “github.com/taranggoyal70/locus.”
 
 Adapt: keep the blueprint's mark-assembly-to-lockup signature, then extend the lockup into a founder CTA without a simulated cursor.
 
 Scene 1 (0.0–1.7s): the real-use capture settles as a dim full-bleed background while the Locus ring self-draws at center; centered closing treatment with concentric brand rings.
-Scene 2 (1.7–3.5s): the wordmark assembles beside the mark and “OPEN-SOURCE BETA” reveals as an eyebrow; the brand lockup becomes the stable eye anchor.
-Scene 3 (3.5–6.2s): “Looking for 10 TypeScript/Next.js developers who use coding agents.” reveals in two lines below the lockup; a lime CTA pill grows from the same center: “TEST IT ON A REAL TASK.”
+Scene 2 (1.7–3.5s): the wordmark assembles beside the mark and “OPEN-SOURCE BETA · BROWSER · CLI · MCP” reveals as an eyebrow; the brand lockup becomes the stable eye anchor.
+Scene 3 (3.5–6.2s): “Looking for 10 TypeScript/Next.js developers to become founding design partners.” reveals in two lines below the lockup; a lime CTA pill grows from the same center: “TEST IT ON A REAL TASK.”
 Scene 4 (6.2–8.0s): “Tell me where it misses.” lands above the live URL and GitHub path; final frame holds without exit motion.
 
 ## Asset audit

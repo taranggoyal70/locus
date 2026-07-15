@@ -31,7 +31,7 @@ That is **historical fix-file recall**, not proof that an autonomous agent will 
 
 Locus is now an open-source beta with a browser workflow, zero-dependency CLI, and MCP server.
 
-I’m looking for **10 TypeScript/Next.js developers who use Codex, Claude Code, Cursor, or another coding agent**.
+I’m looking for **10 TypeScript/Next.js developers who use Codex, Claude Code, Cursor, or another coding agent to become founding design partners**.
 
 Try it on one real task. Then tell me where it misses.
 
