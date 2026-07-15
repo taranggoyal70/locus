@@ -1,14 +1,27 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
+export function isProtectedPagePathname(pathname: string): boolean {
+  return pathname === "/" || ["/workspace", "/demo"].some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 export function isProtectedPathname(pathname: string): boolean {
-  return pathname === "/" || ["/workspace", "/demo", "/api/github", "/repos"].some(
+  return isProtectedPagePathname(pathname) || ["/api/github", "/repos"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
 export default clerkMiddleware(
   async (auth, request) => {
-    if (isProtectedPathname(request.nextUrl.pathname)) await auth.protect();
+    const pathname = request.nextUrl.pathname;
+    if (isProtectedPagePathname(pathname)) {
+      const signInUrl = new URL("/sign-in", request.url);
+      signInUrl.searchParams.set("redirect_url", request.url);
+      await auth.protect({ unauthenticatedUrl: signInUrl.toString() });
+    } else if (isProtectedPathname(pathname)) {
+      await auth.protect();
+    }
   },
   { frontendApiProxy: { enabled: process.env.NODE_ENV === "production" } },
 );
