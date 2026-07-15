@@ -30,7 +30,7 @@ export function useLocus() {
       const { repo: r, note: n } = await source.load();
       if (version !== loadVersion.current) return;
       setRepo(r);
-      setLoadedRepositorySpecifier(source.kind === "github" ? source.label.trim() : null);
+      setLoadedRepositorySpecifier(source.repositorySpecifier ?? null);
       if (nextTask !== undefined) setTask(nextTask);
       if (n) setNote(n);
     } catch (e) {

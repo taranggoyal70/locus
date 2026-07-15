@@ -10,7 +10,7 @@ The core product concept is strong: the context trace is explainable, weak tasks
 | --- | --- | --- |
 | Sign in | Healthy | Mobile form is now fully visible with no horizontal overflow; product branding replaces the Clerk project name. |
 | Sign up | Healthy | Same responsive shell fix; signed-out users can create an account but cannot enter the product. |
-| Reach workspace | Healthy | `/`, `/workspace`, `/demo`, repository data, and GitHub analysis require authentication. |
+| Reach workspace | Needs deployment E2E | Code and route tests protect `/`, `/workspace`, `/demo`, repository data, and GitHub analysis; a real authenticated production session remains to be verified. |
 | Choose repository | Improved | Clearly says public GitHub repositories only, explains in-memory processing, and labels the bundled option as a sample. |
 | Describe task | Healthy | Plain-language task input, example tasks, and live result updates are clear. |
 | Understand selection | Healthy | The three-stage trace clearly separates task matches, dependencies, and nearby integration files. |
@@ -20,7 +20,7 @@ The core product concept is strong: the context trace is explainable, weak tasks
 
 ## Fixed in this pass
 
-1. Removed public-product bypasses and protected repository/API access.
+1. Verified the previously implemented authentication gates remain intact while changing the product journey.
 2. Rebuilt the authentication shell for real mobile widths and moved the form above secondary process cards.
 3. Changed Clerk-facing titles to “Locus” instead of the internal `locus-auth` project name.
 4. Cleared stale repository state immediately when a new load begins or fails.
@@ -56,4 +56,4 @@ The core product concept is strong: the context trace is explainable, weak tasks
 
 ## Evidence limits
 
-The live production demo and signed-out auth screens were inspected on desktop and 390px mobile widths. The repaired implementation was inspected locally at the same widths. A real email verification and authenticated production session were not completed, and this was not a formal WCAG conformance audit.
+The live production demo and signed-out auth screens were inspected on desktop and 390px mobile widths. The repaired implementation was inspected locally at the same widths. Local workspace screenshots use a preview name while the client remains signed out, so they validate layout and state behavior—not authentication. A real email verification, authenticated production session, sign-out, and protected shared-link flow were not completed, and this was not a formal WCAG conformance audit.

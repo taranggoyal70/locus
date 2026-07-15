@@ -26,11 +26,11 @@ describe("bundled demo repos", () => {
 describe("GitHub repository source", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("returns a useful error when an upstream response is not JSON", async () => {
+  it("does not blame repository input when an upstream service fails", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 502 })));
 
     await expect(githubSource("owner/repo").load()).rejects.toThrow(
-      "Could not load repository. Check the owner/name and try again.",
+      "GitHub analysis is temporarily unavailable. Please try again.",
     );
   });
 });

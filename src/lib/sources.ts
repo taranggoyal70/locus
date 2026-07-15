@@ -9,6 +9,7 @@ export type LoadedRepo = { repo: RepoData; note?: string };
 export interface RepoSource {
   readonly kind: "bundled" | "github";
   readonly label: string;
+  readonly repositorySpecifier?: string;
   load(): Promise<LoadedRepo>;
 }
 
@@ -43,6 +44,7 @@ export function githubSource(url: string): RepoSource {
   return {
     kind: "github",
     label: url,
+    repositorySpecifier: url.trim(),
     async load() {
       const res = await fetch("/api/github", {
         method: "POST",
@@ -51,7 +53,10 @@ export function githubSource(url: string): RepoSource {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(data?.error ?? "Could not load repository. Check the owner/name and try again.");
+        const fallback = res.status >= 500
+          ? "GitHub analysis is temporarily unavailable. Please try again."
+          : "Could not load repository. Check the owner/name and try again.";
+        throw new Error(data?.error ?? fallback);
       }
       if (!data?.repo) throw new Error("GitHub returned an incomplete repository response. Please try again.");
       const { repo, truncated, fileCount } = data as {

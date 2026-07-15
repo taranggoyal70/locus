@@ -26,6 +26,27 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt,
   } = useLocus();
   const [shareCopied, setShareCopied] = useState(false);
+  const presentation = isWorkspace ? {
+    badge: "Workspace",
+    eyebrow: `Signed in${accountName ? ` as ${accountName}` : ""}`,
+    title: "Build the context your agent should read first.",
+    description: "Load a public repository, describe the engineering task, and copy the focused context pack into your coding workflow.",
+    heroSpacing: "pb-8 pt-10 sm:pt-12",
+    titleSpacing: "mt-3 text-4xl sm:text-5xl",
+    descriptionSpacing: "mt-4",
+    asideLabel: "Account ready",
+    asideCopy: "Public repositories only. Analysis runs in memory and is not stored.",
+  } : {
+    badge: "Open-source beta",
+    eyebrow: "Context compiler for coding agents",
+    title: "Give your agent a task-sized view of the codebase.",
+    description: "Locus traces a task to matching files, imported dependencies, and nearby integration points—before your agent spends tokens reading the repository.",
+    heroSpacing: "pb-10 pt-14 sm:pt-20",
+    titleSpacing: "mt-5 text-5xl sm:text-6xl lg:text-7xl",
+    descriptionSpacing: "mt-6",
+    asideLabel: "Operating rule",
+    asideCopy: "Focus when evidence is strong. Widen when it is not.",
+  };
 
   async function copyShareView() {
     if (!loadedRepositorySpecifier || !task.trim()) return;
@@ -50,7 +71,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
             <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
             <span className="font-semibold tracking-[-0.02em]">Locus</span>
             <span className="hidden rounded-full border border-line-strong px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-light sm:inline-flex">
-              {isWorkspace ? "Workspace" : "Open-source beta"}
+              {presentation.badge}
             </span>
           </Link>
           <nav className="flex items-center gap-2 text-sm">
@@ -89,25 +110,23 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
       </header>
 
       <main id="top">
-        <section className={`mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end ${isWorkspace ? "pb-8 pt-10 sm:pt-12" : "pb-10 pt-14 sm:pt-20"}`}>
+        <section className={`mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end ${presentation.heroSpacing}`}>
           <div>
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-              {isWorkspace ? `Signed in${accountName ? ` as ${accountName}` : ""}` : "Context compiler for coding agents"}
+              {presentation.eyebrow}
             </p>
-            <h1 className={`max-w-4xl font-semibold leading-[0.98] tracking-[-0.055em] text-paper ${isWorkspace ? "mt-3 text-4xl sm:text-5xl" : "mt-5 text-5xl sm:text-6xl lg:text-7xl"}`}>
-              {isWorkspace ? "Build the context your agent should read first." : "Give your agent a task-sized view of the codebase."}
+            <h1 className={`max-w-4xl font-semibold leading-[0.98] tracking-[-0.055em] text-paper ${presentation.titleSpacing}`}>
+              {presentation.title}
             </h1>
-            <p className={`${isWorkspace ? "mt-4" : "mt-6"} max-w-2xl text-base leading-7 text-muted-light sm:text-lg`}>
-              {isWorkspace
-                ? "Load a public repository, describe the engineering task, and copy the focused context pack into your coding workflow."
-                : "Locus traces a task to matching files, imported dependencies, and nearby integration points—before your agent spends tokens reading the repository."}
+            <p className={`${presentation.descriptionSpacing} max-w-2xl text-base leading-7 text-muted-light sm:text-lg`}>
+              {presentation.description}
             </p>
           </div>
 
           <aside className="rounded-[22px] border border-line-strong bg-surface p-5">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{isWorkspace ? "Account ready" : "Operating rule"}</p>
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{presentation.asideLabel}</p>
             <p className="mt-4 text-xl font-semibold leading-7 tracking-[-0.025em] text-paper">
-              {isWorkspace ? "Public repositories only. Analysis runs in memory and is not stored." : "Focus when evidence is strong. Widen when it is not."}
+              {presentation.asideCopy}
             </p>
             <div className="mt-6 grid grid-cols-3 gap-2 text-center font-mono text-[10px] uppercase tracking-wide text-muted-light">
               <span className="rounded-lg border border-line bg-ink/60 px-2 py-3">Browser</span>
