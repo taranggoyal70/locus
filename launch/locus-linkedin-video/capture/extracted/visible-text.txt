@@ -1,0 +1,238 @@
+[div] Locus
+[a] GitHub
+[p] Context localization for AI coding agents
+[h1] Show your AI agent
+[span] only the code it needs.
+[p] Every edit doesn't need the whole repo. Type a task and watch the irrelevant code fade out — Locus maps it to a focused dependency slice. When the evidence is weak, it conservatively falls back to the whole repo.
+[span] Repo
+[button] Taxonomy
+[button] Load
+[button] fix the dashboard billing
+[button] the blog post editor is broken
+[button] update the marketing pricing page
+[button] the docs sidebar navigation
+[span] Slice · 40 files the agent needs
+[span] excluded
+[span] — not shown
+[text] app
+[text] components
+[text] hooks
+[text] lib
+[text] config
+[title] app/(dashboard)/dashboard/billing/loading.tsx · 117 tok
+[text] billing/loading.tsx
+[title] app/(dashboard)/dashboard/billing/page.tsx · 560 tok
+[text] billing/page.tsx
+[title] app/(dashboard)/dashboard/layout.tsx · 366 tok
+[text] dashboard/layout.tsx
+[title] app/(dashboard)/dashboard/loading.tsx · 172 tok
+[text] dashboard/loading.tsx
+[title] app/(dashboard)/dashboard/page.tsx · 439 tok
+[text] dashboard/page.tsx
+[title] components/billing-form.tsx · 657 tok
+[text] billing-form.tsx
+[title] components/card-skeleton.tsx · 119 tok
+[text] card-skeleton.tsx
+[title] components/empty-placeholder.tsx · 466 tok
+[text] empty-placeholder.tsx
+[title] components/header.tsx · 123 tok
+[text] header.tsx
+[title] components/icons.tsx · 622 tok
+[text] icons.tsx
+[title] components/main-nav.tsx · 481 tok
+[text] main-nav.tsx
+[title] components/mobile-nav.tsx · 371 tok
+[text] mobile-nav.tsx
+[title] components/mode-toggle.tsx · 354 tok
+[text] mode-toggle.tsx
+[title] components/nav.tsx · 299 tok
+[text] nav.tsx
+[title] components/post-create-button.tsx · 462 tok
+[text] post-create-button.tsx
+[title] components/post-item.tsx · 280 tok
+[text] post-item.tsx
+[title] components/post-operations.tsx · 860 tok
+[text] post-operations.tsx
+[title] components/shell.tsx · 90 tok
+[text] shell.tsx
+[title] components/site-footer.tsx · 458 tok
+[text] site-footer.tsx
+[title] components/ui/alert-dialog.tsx · 1098 tok
+[text] alert-dialog.tsx
+[title] components/ui/alert.tsx · 400 tok
+[text] alert.tsx
+[title] components/ui/avatar.tsx · 355 tok
+[text] avatar.tsx
+[title] components/ui/button.tsx · 412 tok
+[text] button.tsx
+[title] components/ui/card.tsx · 469 tok
+[text] card.tsx
+[title] components/ui/dropdown-menu.tsx · 1740 tok
+[text] dropdown-menu.tsx
+[title] components/ui/skeleton.tsx · 65 tok
+[text] skeleton.tsx
+[title] components/ui/toast.tsx · 1208 tok
+[text] toast.tsx
+[title] components/ui/use-toast.ts · 984 tok
+[text] use-toast.ts
+[title] components/user-account-nav.tsx · 491 tok
+[text] user-account-nav.tsx
+[title] components/user-avatar.tsx · 168 tok
+[text] user-avatar.tsx
+[title] config/dashboard.ts · 138 tok
+[text] dashboard.ts
+[title] config/site.ts · 103 tok
+[text] site.ts
+[title] config/subscriptions.ts · 107 tok
+[text] subscriptions.ts
+[title] recently changed — likely relevant
+[title] hooks/use-lock-body.ts · 93 tok
+[text] use-lock-body.ts
+[title] lib/auth.ts · 696 tok
+[text] auth.ts
+[title] recently changed — likely relevant
+[title] lib/db.ts · 96 tok
+[text] db.ts
+[title] lib/session.ts · 54 tok
+[text] session.ts
+[title] lib/stripe.ts · 42 tok
+[text] stripe.ts
+[title] recently changed — likely relevant
+[title] lib/subscription.ts · 225 tok
+[text] subscription.ts
+[title] lib/utils.ts · 123 tok
+[text] utils.ts
+[title] recently changed — likely relevant
+[p] Context sent to the agent
+[p] 16,363
+[span] 56,404
+[span] tokens
+[p] −71%
+[p] fewer tokens
+[p] 40 files in scope · 85 excluded
+[button] Copy context for your agent
+[p] Paste this instead of your whole repo — same task, a fraction of the tokens.
+[p] In scope · ranked by relevance
+[span] lib/auth.ts
+[span] changed
+[span] 696
+[span] lib/stripe.ts
+[span] changed
+[span] config/subscriptions.ts
+[span] changed
+[span] 107
+[span] lib/utils.ts
+[span] changed
+[span] 123
+[span] app/(dashboard)/dashboard/billing/loading.tsx
+[span] 117
+[span] app/(dashboard)/dashboard/billing/page.tsx
+[span] 560
+[span] app/(dashboard)/dashboard/layout.tsx
+[span] 366
+[span] app/(dashboard)/dashboard/loading.tsx
+[span] 172
+[span] app/(dashboard)/dashboard/page.tsx
+[span] 439
+[span] config/dashboard.ts
+[span] 138
+[span] components/billing-form.tsx
+[span] 657
+[span] components/card-skeleton.tsx
+[span] 119
+[span] components/empty-placeholder.tsx
+[span] 466
+[span] components/header.tsx
+[span] 123
+[span] components/icons.tsx
+[span] 622
+[span] components/main-nav.tsx
+[span] 481
+[span] components/nav.tsx
+[span] 299
+[span] components/post-create-button.tsx
+[span] 462
+[span] components/post-item.tsx
+[span] 280
+[span] components/shell.tsx
+[span] components/site-footer.tsx
+[span] 458
+[span] components/ui/alert.tsx
+[span] 400
+[span] components/ui/card.tsx
+[span] 469
+[span] components/user-account-nav.tsx
+[span] 491
+[span] lib/db.ts
+[span] lib/session.ts
+[span] lib/subscription.ts
+[span] 225
+[span] components/mobile-nav.tsx
+[span] 371
+[span] components/mode-toggle.tsx
+[span] 354
+[span] components/post-operations.tsx
+[span] 860
+[span] components/ui/button.tsx
+[span] 412
+[span] components/ui/dropdown-menu.tsx
+[span] 1740
+[span] components/ui/skeleton.tsx
+[span] components/ui/use-toast.ts
+[span] 984
+[span] components/user-avatar.tsx
+[span] 168
+[span] config/site.ts
+[span] 103
+[span] components/ui/alert-dialog.tsx
+[span] 1098
+[span] components/ui/avatar.tsx
+[span] 355
+[span] components/ui/toast.tsx
+[span] 1208
+[span] hooks/use-lock-body.ts
+[span] files excluded
+[p] from this pack:
+[span] app/(auth)/layout.tsx, app/(auth)/login/page.tsx, app/(auth)/register/page.tsx, app/(dashboard)/dashboard/settings/loading.tsx, app/(dashboard)/dashboard/settings/page.tsx, app/(docs)/docs/[[...slug]]/page.tsx, app/(docs)/docs/layout.tsx, app/(docs)/guides/[...slug]/page.tsx
+[span] in scope (sent to agent)
+[span] excluded from this context pack
+[span] recently changed — likely relevant
+[span] anchor (the entry point)
+[p] Measured, not promised
+[h2] Replayed against fixes from real repositories
+[p] 100%
+[p] historical fix-file recall
+[p] 53%
+[p] median estimated context reduction
+[p] 9 / 3
+[p] tasks / repositories
+[p] Historical replay checks whether the context includes files developers changed next. It does not measure autonomous agent completion or guarantee that excluded files are unnecessary.
+[a] Read the method and reproduce it →
+[p] How it works
+[h3] 1 · Map the graph
+[p] Parse imports into a deterministic dependency graph — routes → components → hooks → libs. No LLM guessing.
+[h3] 2 · Localize the task
+[p] Match task language against paths and source, then include dependencies and nearby integration points.
+[h3] 3 · Widen when uncertain
+[p] If no file matches with enough evidence, fall back to the whole repo instead of returning a speculative small slice.
+[p] Cross-cutting bugs (a shared util that broke the dashboard) are caught two ways: the shared file is already in the dependency slice, and a recent-change signal floats it to the top — so precision doesn't mean missing the real cause.
+[p] Use it for real
+[h2] Two ways to actually save tokens — not just look at a graph
+[h3] 1 · Now, in your browser
+[p] Load a supported public TypeScript repo above, describe the task, and hit
+[span] Copy context
+[p] — you get the focused slice as a paste-ready block. Give that to ChatGPT / Claude / Cursor instead of your whole repo. Zero install.
+[h3] 2 · In your agent's loop (CLI + MCP)
+[p] A zero-dependency CLI and MCP server run the same localizer on your local repo, so the agent pulls the slice
+[em] before
+[p] it reads.
+[pre] # one-off, paste-ready context
+npx github:taranggoyal70/locus \
+  locate "fix the dashboard" --pack
+
+# as an MCP tool (Codex / Claude Code / Cursor)
+{ "mcpServers": {
+    "locus": { "command": "node",
+      "args": ["/path/to/locus/bin/mcp.mjs"] } } }
+[span] Locus — less context, measured honestly.
+[a] Source · MIT

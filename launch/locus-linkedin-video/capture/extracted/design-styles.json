@@ -1,0 +1,248 @@
+{
+  "typography": [
+    {
+      "role": "display",
+      "fontFamily": "Geist",
+      "fontSize": "48px",
+      "fontWeight": "600",
+      "lineHeight": "52.8px",
+      "letterSpacing": "normal",
+      "color": "#E9F0F2",
+      "sampleText": "Show your AI agent only the code it needs."
+    },
+    {
+      "role": "body",
+      "fontFamily": "Geist Mono",
+      "fontSize": "36px",
+      "fontWeight": "600",
+      "lineHeight": "40px",
+      "letterSpacing": "normal",
+      "color": "#A3E635",
+      "sampleText": "−71%"
+    },
+    {
+      "role": "heading",
+      "fontFamily": "Geist",
+      "fontSize": "24px",
+      "fontWeight": "600",
+      "lineHeight": "32px",
+      "letterSpacing": "normal",
+      "color": "#E9F0F2",
+      "sampleText": "Replayed against fixes from real repositories"
+    },
+    {
+      "role": "code",
+      "fontFamily": "Geist",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "#FFFFFF",
+      "sampleText": "Locus — show your AI agent only the code it needs⊙LocusGitHu"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Geist Mono",
+      "fontSize": "14px",
+      "fontWeight": "600",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "color": "#E9F0F2",
+      "sampleText": "1 · Map the graph"
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "Geist",
+      "fontSize": "14px",
+      "fontWeight": "600",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "color": "#E9F0F2",
+      "sampleText": "1 · Now, in your browser"
+    },
+    {
+      "role": "link",
+      "fontFamily": "Geist",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "color": "#E9F0F2",
+      "sampleText": "GitHub"
+    }
+  ],
+  "spacing": {
+    "observed": [
+      4,
+      6,
+      8,
+      10,
+      12,
+      16,
+      20,
+      24,
+      56,
+      64
+    ],
+    "baseUnit": 4
+  },
+  "radius": [
+    "8px",
+    "3.35544e+07px"
+  ],
+  "shadows": [],
+  "buttons": [
+    {
+      "label": "Taxonomy",
+      "background": "oklab(0.849313 -0.130016 0.161481 / 0.1)",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#A3E635",
+      "padding": "6px 12px",
+      "borderRadius": "8px",
+      "border": "1px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "height": "34px"
+    },
+    {
+      "label": "Load",
+      "background": "#A3E635",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#0A0D0F",
+      "padding": "6px 12px",
+      "borderRadius": "8px",
+      "border": "0px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "600",
+      "height": "32px"
+    },
+    {
+      "label": "fix the dashboard billing",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#74838C",
+      "padding": "4px 12px",
+      "borderRadius": "3.35544e+07px",
+      "border": "1px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "height": "26px"
+    },
+    {
+      "label": "1lib/auth.tschanged696t",
+      "background": "transparent",
+      "backgroundImage": "",
+      "backdropFilter": "",
+      "color": "#E9F0F2",
+      "padding": "8px 16px",
+      "borderRadius": "0px",
+      "border": "0px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "34px"
+    }
+  ],
+  "cards": [],
+  "nav": {
+    "label": "navigation",
+    "background": "oklab(0.156626 -0.00353008 -0.00546299 / 0.8)",
+    "backgroundImage": "",
+    "backdropFilter": "blur(8px)",
+    "color": "#E9F0F2",
+    "padding": "0px",
+    "borderRadius": "0px",
+    "border": "",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "63px"
+  },
+  "chips": [
+    {
+      "label": "85 excluded — not shown",
+      "background": "transparent",
+      "color": "#74838C",
+      "padding": "2px 8px",
+      "borderRadius": "3.35544e+07px",
+      "border": "1px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "height": "22.5px"
+    },
+    {
+      "label": "changed",
+      "background": "oklab(0.815138 0.0282631 0.143569 / 0.15)",
+      "color": "#F5B642",
+      "padding": "2px 6px",
+      "borderRadius": "3.35544e+07px",
+      "border": "0px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "9px",
+      "fontWeight": "600",
+      "height": "17.5px"
+    }
+  ],
+  "statCells": [],
+  "tabs": [
+    {
+      "label": "16,363 / 56,404 tokens",
+      "background": "transparent",
+      "color": "#E9F0F2",
+      "padding": "0px",
+      "borderRadius": "0px",
+      "border": "0px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "height": "20px"
+    },
+    {
+      "label": "−71%",
+      "background": "transparent",
+      "color": "#A3E635",
+      "padding": "0px",
+      "borderRadius": "0px",
+      "border": "0px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "36px",
+      "fontWeight": "600",
+      "height": "40px"
+    },
+    {
+      "label": "696t",
+      "background": "transparent",
+      "color": "#74838C",
+      "padding": "0px",
+      "borderRadius": "0px",
+      "border": "0px solid rgba(160, 190, 200, 0.1)",
+      "boxShadow": "none",
+      "fontSize": "10px",
+      "fontWeight": "400",
+      "height": "15px"
+    }
+  ],
+  "backgrounds": [
+    {
+      "value": "radial-gradient(1000px 500px at 15% -10%, rgba(163, 230, 53, 0.06), rgba(0, 0, 0, 0) 60%), none",
+      "area": 5502900
+    }
+  ],
+  "glass": [
+    {
+      "backdropFilter": "blur(8px)",
+      "background": "oklab(0.156626 -0.00353008 -0.00546299 / 0.8)",
+      "border": "",
+      "borderRadius": "0px",
+      "boxShadow": "",
+      "area": 120960
+    }
+  ]
+}

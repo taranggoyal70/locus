@@ -1,0 +1,232 @@
+<template>
+  <style>
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      color: #e9f0f2;
+      font-family: Inter, sans-serif;
+      font-synthesis: none;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .ground {
+      z-index: 0;
+      background: #0a0d0f;
+    }
+
+    .proof-layer {
+      z-index: 1;
+      background: #0a0d0f;
+    }
+
+    .product-capture {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 50%;
+      transform-origin: 50% 46%;
+      will-change: transform, opacity;
+    }
+
+    .content-layer {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .mark-shell {
+      position: absolute;
+      top: 150px;
+      left: 502px;
+      width: 76px;
+      height: 76px;
+      display: grid;
+      place-items: center;
+      box-sizing: border-box;
+      border: 1.5px solid rgba(163, 230, 53, 0.2);
+      border-radius: 14px;
+      background: rgba(163, 230, 53, 0.08);
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .mark-shell img {
+      display: block;
+      width: 56px;
+      height: 56px;
+    }
+
+    .copy-stage {
+      position: absolute;
+      top: 320px;
+      left: 54px;
+      width: 972px;
+      height: 430px;
+    }
+
+    .beat {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .beat-one {
+      gap: 24px;
+      font-size: 100px;
+      font-weight: 600;
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+      color: #e9f0f2;
+    }
+
+    .word {
+      display: inline-block;
+      will-change: transform, filter, opacity;
+    }
+
+    .beat-two {
+      font-size: 112px;
+      font-weight: 600;
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+      color: #e9f0f2;
+      will-change: opacity;
+    }
+
+    .beat-final {
+      font-size: 112px;
+      font-weight: 600;
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+      color: #a3e635;
+      will-change: transform, filter, opacity;
+    }
+  </style>
+
+  <div data-hf-id="hf-jgxv" id="root" data-composition-id="01-hook" data-duration="6.6" data-width="1080" data-height="1080">
+    <div data-hf-id="hf-yi3f" id="f01-hook-ground" class="clip ground" data-start="0" data-duration="6.6" data-track-index="0" aria-hidden="true"></div>
+
+    <div data-hf-id="hf-03e8" id="f01-hook-proof-layer" class="clip proof-layer" data-start="0" data-duration="6.6" data-track-index="1" aria-hidden="true">
+      <img data-hf-id="hf-su8s" class="product-capture" src="assets/scroll-000.png" alt="" loading="eager" decoding="sync">
+    </div>
+
+    <div data-hf-id="hf-lo6m" id="f01-hook-content-layer" class="clip content-layer" data-start="0" data-duration="6.6" data-track-index="2">
+      <div data-hf-id="hf-pcan" class="mark-shell" aria-hidden="true">
+        <img data-hf-id="hf-ostw" src="assets/favicon.svg" alt="" loading="eager" decoding="sync">
+      </div>
+
+      <div data-hf-id="hf-fmuy" class="copy-stage">
+        <div data-hf-id="hf-d5uo" class="beat beat-one" aria-label="Your coding agent">
+          <span data-hf-id="hf-54ly" class="word">Your</span>
+          <span data-hf-id="hf-5x4j" class="word">coding</span>
+          <span data-hf-id="hf-tdm2" class="word">agent</span>
+        </div>
+        <div data-hf-id="hf-ea2v" class="beat beat-two">doesn't need</div>
+        <div data-hf-id="hf-qrzf" class="beat beat-final">THE WHOLE REPO.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      window.__timelines = window.__timelines || {};
+
+      const root = document.querySelector('[data-composition-id="01-hook"]');
+      const capture = root.querySelector('.product-capture');
+      const mark = root.querySelector('.mark-shell');
+      const words = Array.from(root.querySelectorAll('.beat-one .word'));
+      const beatTwo = root.querySelector('.beat-two');
+      const finale = root.querySelector('.beat-final');
+
+      const tl = gsap.timeline({ paused: true });
+
+      // Scene 1 — real product proof rises first; the real mark settles by the half-second read.
+      tl.fromTo(
+        capture,
+        { y: 88, scale: 1.04, opacity: 0 },
+        { y: 0, scale: 1, opacity: 0.58, duration: 1.25, ease: 'power3.out' },
+        0
+      );
+      tl.fromTo(
+        mark,
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.55, ease: 'power3.out' },
+        0.08
+      );
+
+      // Scene 2 — one shared pulse grid, three distinct per-word attacks.
+      const BEATS = [1.4, 1.72, 2.04];
+      tl.fromTo(
+        words[0],
+        { scale: 1.45, filter: 'blur(14px)', opacity: 0 },
+        { scale: 1, filter: 'blur(0px)', opacity: 1, duration: 0.5, ease: 'power4.out' },
+        BEATS[0]
+      );
+      tl.fromTo(
+        words[1],
+        { x: -170, filter: 'blur(8px)', opacity: 0 },
+        { x: 0, filter: 'blur(0px)', opacity: 1, duration: 0.46, ease: 'expo.out' },
+        BEATS[1]
+      );
+      tl.fromTo(
+        words[2],
+        { y: 80, rotation: 2.5, filter: 'blur(10px)', opacity: 0 },
+        {
+          y: 0,
+          rotation: 0,
+          filter: 'blur(0px)',
+          opacity: 1,
+          duration: 0.52,
+          ease: 'circ.out'
+        },
+        BEATS[2]
+      );
+
+      // Scene 3 — exact in-place hard cut while the real capture pushes toward its task box.
+      tl.to(words, { opacity: 0, duration: 0.001, ease: 'none' }, 3);
+      tl.fromTo(
+        beatTwo,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.001, ease: 'none' },
+        3
+      );
+      tl.to(
+        capture,
+        { x: -8, y: 16, scale: 1.08, duration: 1.5, ease: 'power2.inOut' },
+        3
+      );
+
+      // Scene 4 — the final claim slams into the same anchor and then holds, fully still.
+      tl.to(beatTwo, { opacity: 0, duration: 0.001, ease: 'none' }, 4.5);
+      tl.fromTo(
+        finale,
+        { scale: 1.38, filter: 'blur(18px)', opacity: 0 },
+        {
+          scale: 1,
+          filter: 'blur(0px)',
+          opacity: 1,
+          duration: 0.55,
+          ease: 'power4.out'
+        },
+        4.5
+      );
+
+      window.__timelines['01-hook'] = tl;
+    })();
+  </script>
+</template>

@@ -1,0 +1,520 @@
+<template>
+  <style>
+    #root {
+      position: relative;
+      width: 1080px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      isolation: isolate;
+      color: #e9f0f2;
+      font-family: sans-serif;
+      font-synthesis: none;
+    }
+
+    #root,
+    #root * {
+      box-sizing: border-box;
+    }
+
+    .clip {
+      position: absolute;
+      inset: 0;
+      width: 1080px;
+      height: 1080px;
+      overflow: hidden;
+    }
+
+    .f06-ground {
+      z-index: 0;
+      background: #0a0d0f;
+    }
+
+    .f06-capture {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 1080px;
+      height: 1080px;
+      object-fit: cover;
+      object-position: 50% 50%;
+      filter: saturate(0.72) contrast(0.9);
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .f06-capture-dim,
+    .f06-capture-vignette {
+      position: absolute;
+      inset: 0;
+    }
+
+    .f06-capture-dim {
+      background: rgba(10, 13, 15, 0.55);
+    }
+
+    .f06-capture-vignette {
+      background:
+        linear-gradient(180deg, rgba(10, 13, 15, 0.08) 0%, rgba(10, 13, 15, 0.34) 72%, #0a0d0f 100%),
+        radial-gradient(circle at 50% 29%, rgba(10, 13, 15, 0.02) 0%, rgba(10, 13, 15, 0.62) 77%);
+    }
+
+    .f06-atmosphere {
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .f06-ring {
+      position: absolute;
+      border: 1px solid rgba(163, 230, 53, 0.18);
+      border-radius: 50%;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .f06-ring-one {
+      left: 405px;
+      top: 125px;
+      width: 270px;
+      height: 270px;
+    }
+
+    .f06-ring-two {
+      left: 335px;
+      top: 55px;
+      width: 410px;
+      height: 410px;
+    }
+
+    .f06-ring-three {
+      left: 260px;
+      top: -20px;
+      width: 560px;
+      height: 560px;
+    }
+
+    .f06-content {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .f06-mark-shell {
+      position: absolute;
+      left: 492px;
+      top: 212px;
+      width: 96px;
+      height: 96px;
+      overflow: hidden;
+      border: 1.5px solid rgba(163, 230, 53, 0.2);
+      border-radius: 14px;
+      background: #0a0d0f;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .f06-mark-image,
+    .f06-mark-trace {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .f06-mark-image {
+      object-fit: cover;
+      will-change: opacity;
+    }
+
+    .f06-mark-trace {
+      overflow: visible;
+      will-change: opacity;
+    }
+
+    .f06-mark-ring-path {
+      fill: none;
+      stroke: #a3e635;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+    }
+
+    .f06-mark-dot {
+      fill: #a3e635;
+      transform-origin: 16px 16px;
+      will-change: transform, opacity;
+    }
+
+    .f06-wordmark {
+      position: absolute;
+      left: 455px;
+      top: 102px;
+      height: 96px;
+      display: flex;
+      align-items: center;
+      color: #e9f0f2;
+      font-size: 92px;
+      font-weight: 600;
+      line-height: 0.92;
+      letter-spacing: -0.055em;
+      white-space: nowrap;
+    }
+
+    .f06-wordmark-letter {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+
+    .f06-beta {
+      position: absolute;
+      left: 290px;
+      top: 220px;
+      width: 500px;
+      color: #a3e635;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.14em;
+      text-align: center;
+      text-transform: uppercase;
+      will-change: transform, opacity;
+    }
+
+    .f06-founder-copy {
+      position: absolute;
+      left: 60px;
+      top: 302px;
+      width: 960px;
+      text-align: center;
+    }
+
+    .f06-founder-line {
+      display: block;
+      color: #e9f0f2;
+      font-weight: 600;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      white-space: nowrap;
+      will-change: transform, opacity, filter;
+    }
+
+    .f06-founder-line-one {
+      font-size: 39px;
+    }
+
+    .f06-founder-line-two {
+      margin-top: 12px;
+      font-size: 45px;
+    }
+
+    .f06-cta-seed {
+      position: absolute;
+      left: 535px;
+      top: 496px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #a3e635;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .f06-cta {
+      position: absolute;
+      left: 285px;
+      top: 463px;
+      width: 510px;
+      height: 76px;
+      display: grid;
+      place-items: center;
+      border-radius: 100px;
+      background: #a3e635;
+      color: #0a0d0f;
+      font-size: 25px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transform-origin: 50% 50%;
+      will-change: transform, opacity;
+    }
+
+    .f06-cta-label {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+
+    .f06-final-ask {
+      position: absolute;
+      left: 190px;
+      top: 598px;
+      width: 700px;
+      color: #e9f0f2;
+      font-size: 36px;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      text-align: center;
+      white-space: nowrap;
+      will-change: transform, opacity;
+    }
+
+    .f06-link-row {
+      position: absolute;
+      left: 78px;
+      top: 672px;
+      width: 924px;
+      height: 62px;
+      display: grid;
+      grid-template-columns: 1fr 1.17fr;
+      gap: 14px;
+    }
+
+    .f06-link {
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      height: 62px;
+      padding: 0 22px;
+      border: 1.5px solid rgba(163, 230, 53, 0.2);
+      border-radius: 100px;
+      background: rgba(163, 230, 53, 0.04);
+      color: #9de231;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      will-change: transform, opacity;
+    }
+
+    .f06-progress {
+      position: absolute;
+      left: 54px;
+      top: 884px;
+      width: 972px;
+      height: 3px;
+      overflow: hidden;
+      background: rgba(163, 230, 53, 0.08);
+    }
+
+    .f06-progress-fill {
+      width: 100%;
+      height: 100%;
+      background: #a3e635;
+    }
+  </style>
+
+  <div data-hf-id="hf-qlgp" id="root" data-composition-id="06-cta" data-start="0" data-duration="8" data-width="1080" data-height="1080" data-fps="30">
+    <div data-hf-id="hf-vgq4" id="f06-cta-ground" class="clip f06-ground" data-start="0" data-duration="8" data-track-index="0" aria-hidden="true">
+      <img data-hf-id="hf-1hjs" class="f06-capture" src="assets/scroll-100.png" alt="" loading="eager" decoding="sync">
+      <div data-hf-id="hf-wlgg" class="f06-capture-dim"></div>
+      <div data-hf-id="hf-lslo" class="f06-capture-vignette"></div>
+    </div>
+
+    <div data-hf-id="hf-32g9" id="f06-cta-atmosphere" class="clip f06-atmosphere" data-start="0" data-duration="8" data-track-index="1" aria-hidden="true">
+      <div data-hf-id="hf-1vix" class="f06-ring f06-ring-one"></div>
+      <div data-hf-id="hf-g0qn" class="f06-ring f06-ring-two"></div>
+      <div data-hf-id="hf-s84d" class="f06-ring f06-ring-three"></div>
+    </div>
+
+    <div data-hf-id="hf-tm07" id="f06-cta-content" class="clip f06-content" data-start="0" data-duration="8" data-track-index="2">
+      <div data-hf-id="hf-rikb" class="f06-mark-shell">
+        <img data-hf-id="hf-vp3z" class="f06-mark-image" src="assets/favicon.svg" alt="Locus" loading="eager" decoding="sync">
+        <svg data-hf-id="hf-erw5" class="f06-mark-trace" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle data-hf-id="hf-ry6b" id="f06-cta-mark-ring-path" class="f06-mark-ring-path" cx="16" cy="16" r="9" />
+          <circle data-hf-id="hf-l1in" id="f06-cta-mark-dot" class="f06-mark-dot" cx="16" cy="16" r="2.5" />
+        </svg>
+      </div>
+
+      <div data-hf-id="hf-8xj7" class="f06-wordmark" aria-label="Locus">
+        <span data-hf-id="hf-fc7s" class="f06-wordmark-letter">L</span><span data-hf-id="hf-1fht" class="f06-wordmark-letter">o</span><span data-hf-id="hf-30px" class="f06-wordmark-letter">c</span><span data-hf-id="hf-z1nn" class="f06-wordmark-letter">u</span><span data-hf-id="hf-wnth" class="f06-wordmark-letter">s</span>
+      </div>
+
+      <div data-hf-id="hf-zemn" class="f06-beta">Open-source beta</div>
+
+      <div data-hf-id="hf-61ok" class="f06-founder-copy">
+        <div data-hf-id="hf-y9o3" class="f06-founder-line f06-founder-line-one">Looking for 10 TypeScript/Next.js developers</div>
+        <div data-hf-id="hf-cb4c" class="f06-founder-line f06-founder-line-two">who use coding agents.</div>
+      </div>
+
+      <div data-hf-id="hf-fvs8" class="f06-cta-seed" aria-hidden="true"></div>
+      <div data-hf-id="hf-6i6h" class="f06-cta">
+        <span data-hf-id="hf-ek4v" class="f06-cta-label">Test it on a real task</span>
+      </div>
+
+      <div data-hf-id="hf-ules" class="f06-final-ask">Tell me where it misses.</div>
+
+      <div data-hf-id="hf-e0ua" class="f06-link-row">
+        <div data-hf-id="hf-pw2o" class="f06-link f06-link-live">locus-five-iota.vercel.app</div>
+        <div data-hf-id="hf-p2qw" class="f06-link f06-link-github">github.com/taranggoyal70/locus</div>
+      </div>
+
+      <div data-hf-id="hf-9bsd" class="f06-progress" aria-hidden="true">
+        <div data-hf-id="hf-2w1u" class="f06-progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (() => {
+      window.__timelines = window.__timelines || {};
+
+      const root = document.querySelector('[data-composition-id="06-cta"]');
+      const capture = root.querySelector('.f06-capture');
+      const rings = Array.from(root.querySelectorAll('.f06-ring'));
+      const markShell = root.querySelector('.f06-mark-shell');
+      const markImage = root.querySelector('.f06-mark-image');
+      const markTrace = root.querySelector('.f06-mark-trace');
+      const markPath = root.querySelector('#f06-cta-mark-ring-path');
+      const markDot = root.querySelector('#f06-cta-mark-dot');
+      const wordmarkLetters = Array.from(root.querySelectorAll('.f06-wordmark-letter'));
+      const beta = root.querySelector('.f06-beta');
+      const founderLineOne = root.querySelector('.f06-founder-line-one');
+      const founderLineTwo = root.querySelector('.f06-founder-line-two');
+      const ctaSeed = root.querySelector('.f06-cta-seed');
+      const cta = root.querySelector('.f06-cta');
+      const ctaLabel = root.querySelector('.f06-cta-label');
+      const finalAsk = root.querySelector('.f06-final-ask');
+      const liveLink = root.querySelector('.f06-link-live');
+      const githubLink = root.querySelector('.f06-link-github');
+
+      const markLength = markPath.getTotalLength();
+      markPath.style.strokeDasharray = String(markLength);
+      markPath.style.strokeDashoffset = String(markLength);
+
+      const tl = gsap.timeline({ paused: true });
+
+      // Scene 1 (0.0–1.7s): real workflow settles; concentric rings and the real mark draw from center.
+      tl.fromTo(
+        capture,
+        { y: 24, scale: 1.055, opacity: 0 },
+        { y: 0, scale: 1, opacity: 0.45, duration: 1.35, ease: 'power3.out' },
+        0
+      );
+      tl.fromTo(
+        markShell,
+        { scale: 0.78, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.48, ease: 'power3.out' },
+        0.04
+      );
+      rings.forEach((ring, index) => {
+        tl.fromTo(
+          ring,
+          { scale: 0.54, opacity: 0 },
+          {
+            scale: 1,
+            opacity: 0.1 - index * 0.018,
+            duration: 1.08 + index * 0.12,
+            ease: 'power3.out'
+          },
+          0.08 + index * 0.1
+        );
+      });
+      tl.to(
+        markPath,
+        { strokeDashoffset: 0, duration: 0.92, ease: 'power2.out' },
+        0.18
+      );
+      tl.fromTo(
+        markDot,
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.42, ease: 'power3.out' },
+        0.66
+      );
+      tl.fromTo(
+        markImage,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: 'power1.out' },
+        0.94
+      );
+      tl.fromTo(
+        markTrace,
+        { opacity: 1 },
+        { opacity: 0, duration: 0.3, ease: 'power1.out' },
+        1.02
+      );
+
+      // Scene 2 (1.7–3.5s): the centered mark condenses upward and the lockup assembles left-to-right.
+      tl.to(
+        markShell,
+        { x: -160, y: -112, duration: 0.88, ease: 'power3.inOut' },
+        1.7
+      );
+      wordmarkLetters.forEach((letter, index) => {
+        tl.fromTo(
+          letter,
+          { x: 30, y: 8, scale: 0.96, opacity: 0 },
+          { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.58, ease: 'power3.out' },
+          1.86 + index * 0.07
+        );
+      });
+      tl.fromTo(
+        beta,
+        { y: 14, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.62, ease: 'power3.out' },
+        2.62
+      );
+
+      // Scene 3 (3.5–6.2s): the founder ask arrives in two beats; the logo's lime center grows into the CTA.
+      tl.fromTo(
+        founderLineOne,
+        { x: 46, filter: 'blur(9px)', opacity: 0 },
+        { x: 0, filter: 'blur(0px)', opacity: 1, duration: 0.72, ease: 'power4.out' },
+        3.5
+      );
+      tl.fromTo(
+        founderLineTwo,
+        { y: 26, filter: 'blur(8px)', opacity: 0 },
+        { y: 0, filter: 'blur(0px)', opacity: 1, duration: 0.72, ease: 'power3.out' },
+        4.06
+      );
+      tl.fromTo(
+        ctaSeed,
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.38, ease: 'power3.out' },
+        4.48
+      );
+      tl.fromTo(
+        cta,
+        { scaleX: 0.02, scaleY: 0.14, opacity: 0 },
+        { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.82, ease: 'power3.out' },
+        4.78
+      );
+      tl.to(
+        ctaSeed,
+        { scale: 0.3, opacity: 0, duration: 0.3, ease: 'power2.out' },
+        4.92
+      );
+      tl.fromTo(
+        ctaLabel,
+        { y: 10, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' },
+        5.12
+      );
+
+      // Scene 4 (6.2–8.0s): feedback request and concrete destinations land, then remain dead-static.
+      tl.fromTo(
+        finalAsk,
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' },
+        6.2
+      );
+      tl.fromTo(
+        liveLink,
+        { x: -24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.55, ease: 'power3.out' },
+        6.45
+      );
+      tl.fromTo(
+        githubLink,
+        { x: 24, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.55, ease: 'power3.out' },
+        6.62
+      );
+      tl.to({}, { duration: 0.01 }, 7.99);
+
+      window.__timelines['06-cta'] = tl;
+    })();
+  </script>
+</template>
