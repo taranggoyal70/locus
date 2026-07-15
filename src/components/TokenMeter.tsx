@@ -79,7 +79,7 @@ export function TokenMeter({
 
       <p className="mt-2 text-[11px] text-muted">
         {result?.widened
-          ? "Whole repo — no confident localization (widen-not-narrow keeps quality safe)."
+          ? "Whole repo — Locus did not find enough evidence for a focused slice."
           : result
             ? `${result.slice.length} files in scope · ${result.excluded.length} excluded`
             : "Pick a repo and describe a task."}

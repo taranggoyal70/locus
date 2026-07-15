@@ -34,7 +34,7 @@ const TOOLS = [
   {
     name: "locate",
     description:
-      "Localize a task to the minimal relevant code slice of a local repo — the task's best-matching entry point plus its transitive dependency closure, ranked with recently-changed files first. Widens to the whole repo if the task doesn't confidently anchor, so quality never drops, only tokens.",
+      "Localize a task to a focused TypeScript code slice using path/source evidence, dependency closure, integration points, and recent changes. Falls back to the whole repo when evidence is weak.",
     inputSchema: {
       type: "object",
       properties: {

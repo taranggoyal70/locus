@@ -1,21 +1,19 @@
 # locus-context
 
-**Show your AI coding agent only the code it needs.** A zero-dependency CLI + MCP
-server that localizes a task to the minimal dependency slice of a repo — fewer
-input tokens, and it *widens* to the whole repo when unsure, so quality never drops.
+A zero-dependency CLI and MCP server that maps coding tasks to focused
+TypeScript/Next.js dependency slices. If task evidence is weak, Locus
+conservatively returns the whole loaded repo.
 
-Live demo & how it works: https://locus-five-iota.vercel.app
+Live demo and reproducible benchmark: https://locus-five-iota.vercel.app
 
 ## CLI
 
 ```bash
-npx -y locus-context locate "fix the dashboard" --pack   # paste-ready context
-npx -y locus-context locate "fix the dashboard"          # summary + % saved
+npx -y locus-context locate "fix the dashboard billing" --pack
+npx -y locus-context locate "fix the dashboard billing"
 ```
 
-## MCP server (Codex / Claude Code / Cursor)
-
-Add to your MCP client config so the agent pulls the slice before it reads:
+## MCP server
 
 ```json
 {
@@ -25,6 +23,8 @@ Add to your MCP client config so the agent pulls the slice before it reads:
 }
 ```
 
-The agent then calls the `locate` tool (`task`, optional `path`, optional `pack`).
+The server exposes `locate(task, path?, pack?)`. Current support is limited to
+`.ts` and `.tsx` files. Historical replay is evidence about fix-file coverage,
+not a guarantee of autonomous agent completion or unchanged quality.
 
 MIT © Tarang Goyal

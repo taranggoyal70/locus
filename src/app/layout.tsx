@@ -8,7 +8,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   title: "Locus — show your AI agent only the code it needs",
   description:
-    "Type a task and watch the irrelevant half of a codebase fade out. Locus localizes any change to its minimal dependency slice — fewer tokens, same or better quality.",
+    "Localize a coding task to a focused TypeScript dependency slice, with conservative whole-repo fallback and a reproducible historical-task benchmark.",
 };
 
 export default function RootLayout({

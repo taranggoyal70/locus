@@ -4,6 +4,7 @@ import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
+import benchmark from "../../benchmarks/results.json";
 
 export default function Home() {
   const {
@@ -41,8 +42,8 @@ export default function Home() {
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-muted-light">
           Every edit doesn&apos;t need the whole repo. Type a task and watch the irrelevant
-          half of the codebase fade out — Locus maps it to the minimal dependency slice.
-          Fewer input tokens, and because it <em>widens</em> when unsure, never a quality hit.
+          code fade out — Locus maps it to a focused dependency slice. When the evidence is
+          weak, it conservatively falls back to the whole repo.
         </p>
       </section>
 
@@ -127,9 +128,40 @@ export default function Home() {
         )}
         <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-muted">
           <span className="flex items-center gap-1.5"><span className="inline-block size-3 rounded bg-accent" /> in scope (sent to agent)</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block size-3 rounded border border-excluded bg-[rgba(58,68,74,0.25)]" /> excluded (never read)</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block size-3 rounded border border-excluded bg-[rgba(58,68,74,0.25)]" /> excluded from this context pack</span>
           <span className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full bg-recent" /> recently changed — likely relevant</span>
           <span className="flex items-center gap-1.5"><span className="text-accent">◎</span> anchor (the entry point)</span>
+        </div>
+      </section>
+
+      <section className="border-t border-line bg-surface/40">
+        <div className="mx-auto max-w-6xl px-6 py-14">
+          <p className="text-sm font-semibold uppercase tracking-wider text-accent">Measured, not promised</p>
+          <h2 className="mt-2 max-w-2xl text-2xl font-semibold text-paper">
+            Replayed against fixes from real repositories
+          </h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            {[
+              { value: `${Math.round(benchmark.summary.fixFileRecall * 100)}%`, label: "historical fix-file recall" },
+              { value: `${benchmark.summary.medianContextReductionPct}%`, label: "median estimated context reduction" },
+              { value: `${benchmark.summary.cases} / ${benchmark.summary.repositories}`, label: "tasks / repositories" },
+            ].map((metric) => (
+              <div key={metric.label} className="rounded-xl border border-line bg-ink/40 p-5">
+                <p className="font-mono text-3xl font-semibold text-accent">{metric.value}</p>
+                <p className="mt-1 text-sm text-muted">{metric.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 max-w-3xl text-xs leading-relaxed text-muted">
+            Historical replay checks whether the context includes files developers changed next.
+            It does not measure autonomous agent completion or guarantee that excluded files are unnecessary.{" "}
+            <a
+              href="https://github.com/taranggoyal70/locus/tree/main/benchmarks"
+              className="text-accent hover:underline"
+            >
+              Read the method and reproduce it →
+            </a>
+          </p>
         </div>
       </section>
 
@@ -140,8 +172,8 @@ export default function Home() {
           <div className="mt-6 grid gap-6 md:grid-cols-3">
             {[
               { t: "1 · Map the graph", d: "Parse imports into a deterministic dependency graph — routes → components → hooks → libs. No LLM guessing." },
-              { t: "2 · Localize the task", d: "Match the task to an entry point (a route/page), then take its transitive dependency closure. That slice is all the agent needs." },
-              { t: "3 · Widen, never narrow", d: "If nothing matches confidently, fall back to the whole repo. Worst case = baseline, so quality can't drop — only tokens." },
+              { t: "2 · Localize the task", d: "Match task language against paths and source, then include dependencies and nearby integration points." },
+              { t: "3 · Widen when uncertain", d: "If no file matches with enough evidence, fall back to the whole repo instead of returning a speculative small slice." },
             ].map((s) => (
               <div key={s.t} className="rounded-xl border border-line bg-ink/40 p-5">
                 <h3 className="font-mono text-sm font-semibold text-paper">{s.t}</h3>
@@ -167,8 +199,8 @@ export default function Home() {
           <div className="rounded-xl border border-line bg-ink/40 p-5">
             <h3 className="text-sm font-semibold text-paper">1 · Now, in your browser</h3>
             <p className="mt-1 text-sm text-muted">
-              Load your repo above, describe the task, and hit{" "}
-              <span className="text-accent">Copy context</span> — you get the minimal slice as a
+              Load a supported public TypeScript repo above, describe the task, and hit{" "}
+              <span className="text-accent">Copy context</span> — you get the focused slice as a
               paste-ready block. Give that to ChatGPT / Claude / Cursor instead of your whole repo.
               Zero install.
             </p>
@@ -194,7 +226,7 @@ npx github:taranggoyal70/locus \\
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-muted sm:flex-row">
           <span className="flex items-center gap-2">
-            <span className="font-mono text-accent">⊙</span> Locus — read less, ship the same.
+            <span className="font-mono text-accent">⊙</span> Locus — less context, measured honestly.
           </span>
           <a href="https://github.com/taranggoyal70/locus" className="hover:text-accent">Source · MIT</a>
         </div>

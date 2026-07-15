@@ -71,7 +71,7 @@ export function FilePanel({
         <div className="border-t border-line px-4 py-3">
           <p className="text-[11px] text-muted">
             <span className="font-semibold text-muted-light">{result.excluded.length} files excluded</span>{" "}
-            (never read): <span className="font-mono">{result.excluded.slice(0, 8).join(", ")}</span>
+            from this pack: <span className="font-mono">{result.excluded.slice(0, 8).join(", ")}</span>
             {result.excluded.length > 8 ? " …" : ""}
           </p>
         </div>
