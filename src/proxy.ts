@@ -1,8 +1,17 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware({
-  frontendApiProxy: { enabled: true },
-});
+export function isProtectedPathname(pathname: string): boolean {
+  return pathname === "/" || ["/workspace", "/demo", "/api/github", "/repos"].some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
+export default clerkMiddleware(
+  async (auth, request) => {
+    if (isProtectedPathname(request.nextUrl.pathname)) await auth.protect();
+  },
+  { frontendApiProxy: { enabled: true } },
+);
 
 export const config = {
   matcher: [

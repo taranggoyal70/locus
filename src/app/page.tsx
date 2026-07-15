@@ -1,21 +1,21 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
+import { buildWorkspacePath, sharedWorkspaceViewFrom } from "@/lib/share";
+
 type HomeProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function Home({ searchParams }: HomeProps) {
-  const params = await searchParams;
-  const repo = typeof params.repo === "string" ? params.repo : undefined;
-  const task = typeof params.task === "string" ? params.task : undefined;
-
-  // Preserve launch links that point to a specific reproducible public replay.
-  if (repo && task) {
-    const query = new URLSearchParams({ repo, task });
-    redirect(`/demo?${query.toString()}`);
-  }
-
   const { userId } = await auth();
-  redirect(userId ? "/workspace" : "/sign-in");
+  if (!userId) redirect("/sign-in");
+
+  const params = await searchParams;
+  const sharedView = sharedWorkspaceViewFrom(params);
+
+  // Preserve old launch links, but only inside the authenticated workspace.
+  if (sharedView) redirect(buildWorkspacePath(sharedView));
+
+  redirect("/workspace");
 }

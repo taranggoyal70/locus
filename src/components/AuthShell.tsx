@@ -14,13 +14,10 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
     <main className="relative min-h-screen overflow-hidden px-5 py-8 sm:px-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(163,230,53,0.08),transparent_34%)]" />
       <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col">
-        <header className="flex items-center justify-between">
+        <header className="flex items-center">
           <Link href="/" className="flex items-center gap-3 text-paper">
             <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
             <span className="font-semibold tracking-[-0.02em]">Locus</span>
-          </Link>
-          <Link href="/demo" className="rounded-lg border border-line-strong px-3 py-2 text-sm text-muted-light transition hover:border-accent/40 hover:text-paper">
-            View public demo
           </Link>
         </header>
 

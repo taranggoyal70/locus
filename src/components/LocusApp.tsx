@@ -9,6 +9,7 @@ import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
+import { buildShareUrl } from "@/lib/share";
 import benchmark from "../../benchmarks/results.json";
 
 const featuredCase = benchmark.results.find((result) => result.featured);
@@ -28,11 +29,10 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
 
   async function copyShareView() {
     if (!ghUrl.trim() || !task.trim()) return;
-    const url = new URL(window.location.href);
-    url.search = "";
-    url.searchParams.set("repo", ghUrl.trim());
-    url.searchParams.set("task", task.trim());
-    await navigator.clipboard.writeText(url.toString());
+    await navigator.clipboard.writeText(buildShareUrl(window.location.origin, {
+      repositorySpecifier: ghUrl,
+      task,
+    }));
     setShareCopied(true);
     window.setTimeout(() => setShareCopied(false), 1800);
   }
@@ -145,7 +145,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                     id="repo-input"
                     value={ghUrl}
                     onChange={(event) => setGhUrl(event.target.value)}
-                    onKeyDown={(event) => event.key === "Enter" && loadGithub()}
+                    onKeyDown={(event) => event.key === "Enter" && !loading && loadGithub()}
                     placeholder="owner/repo or owner/repo@commit"
                     className="min-w-0 flex-1 rounded-xl border border-line-strong bg-ink px-4 py-3 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
                   />
@@ -226,7 +226,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                   </button>
                 )}
               </div>
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+              <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
                 <DependencyGraph graph={graph} result={result} selected={selected} onSelect={setSelected} />
                 <div className="space-y-5">
                   <TokenMeter result={result} repo={repo} sparse={graph.edges.length / Math.max(1, graph.nodes.length) < 0.6} />

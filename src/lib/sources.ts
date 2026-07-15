@@ -56,7 +56,7 @@ export function githubSource(url: string): RepoSource {
       };
       return {
         repo,
-        note: `Loaded ${fileCount} source files from ${repo.name}${truncated ? " (capped at 160)" : ""}. Describe a task to localize it.`,
+        note: `Loaded ${fileCount} source files from ${repo.name}${truncated ? " (capped for safety)" : ""}. Describe a task to localize it.`,
       };
     },
   };

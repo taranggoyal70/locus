@@ -86,7 +86,7 @@ export function DependencyGraph({
 
   if (!result || result.widened || !trace) {
     return (
-      <section className="overflow-hidden rounded-[22px] border border-line-strong bg-surface">
+      <section className="min-w-0 overflow-hidden rounded-[22px] border border-line-strong bg-surface">
         <div className="border-b border-line px-6 py-5">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Context trace</p>
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-paper">
@@ -114,7 +114,7 @@ export function DependencyGraph({
   const hiddenSelected = Math.max(0, result.slice.length - trace.shown);
 
   return (
-    <section className="overflow-hidden rounded-[22px] border border-line-strong bg-surface shadow-[0_30px_100px_rgba(0,0,0,0.2)]">
+    <section className="min-w-0 overflow-hidden rounded-[22px] border border-line-strong bg-surface shadow-[0_30px_100px_rgba(0,0,0,0.2)]">
       <div className="flex flex-col gap-4 border-b border-line px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Context trace</p>
