@@ -51,8 +51,9 @@ rate limits.
 ### Accounts and protected workspace
 
 Locus uses Clerk for real account creation, email verification, secure sessions,
-profile management, and sign-out. The public product and reproducible demo remain
-shareable; `/workspace` requires an authenticated account.
+profile management, and sign-out. The main URL is the account gateway: signed-out
+visitors go to login and signed-in users go directly to `/workspace`. The public
+reproducible experience remains available at `/demo`.
 
 Create a free Clerk resource through the Vercel Marketplace, connect it to the
 project, and provide these variables for local development:
@@ -64,9 +65,11 @@ CLERK_SECRET_KEY=...
 
 Authentication routes:
 
+- `/` — route users to login or their workspace
 - `/sign-up` — create an account
 - `/sign-in` — return to an account
 - `/workspace` — authenticated product workspace
+- `/demo` — public, shareable product demo
 
 ## Use the CLI today
 

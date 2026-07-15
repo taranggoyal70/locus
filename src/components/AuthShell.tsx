@@ -19,8 +19,8 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
             <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
             <span className="font-semibold tracking-[-0.02em]">Locus</span>
           </Link>
-          <Link href="/" className="rounded-lg border border-line-strong px-3 py-2 text-sm text-muted-light transition hover:border-accent/40 hover:text-paper">
-            Back to product
+          <Link href="/demo" className="rounded-lg border border-line-strong px-3 py-2 text-sm text-muted-light transition hover:border-accent/40 hover:text-paper">
+            View public demo
           </Link>
         </header>
 
