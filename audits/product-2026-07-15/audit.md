@@ -8,8 +8,8 @@ The core product concept is strong: the context trace is explainable, weak tasks
 
 | Step | Health after fixes | Evidence and action |
 | --- | --- | --- |
-| Sign in | Healthy | Mobile form is now fully visible with no horizontal overflow; product branding replaces the Clerk project name. |
-| Sign up | Healthy | Same responsive shell fix; signed-out users can create an account but cannot enter the product. |
+| Sign in | UI verified; auth E2E pending | Mobile form is fully visible with no horizontal overflow; product branding replaces the Clerk project name. Session completion still needs preview-deployment testing. |
+| Sign up | UI verified; auth E2E pending | The responsive account-creation form is visible and usable; email verification and post-sign-up routing still need preview-deployment testing. |
 | Reach workspace | Needs deployment E2E | Code and route tests protect `/`, `/workspace`, `/demo`, repository data, and GitHub analysis; a real authenticated production session remains to be verified. |
 | Choose repository | Improved | Clearly says public GitHub repositories only, explains in-memory processing, and labels the bundled option as a sample. |
 | Describe task | Healthy | Plain-language task input, example tasks, and live result updates are clear. |

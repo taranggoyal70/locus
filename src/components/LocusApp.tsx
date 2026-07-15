@@ -27,6 +27,9 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   } = useLocus();
   const [shareCopied, setShareCopied] = useState(false);
   const presentation = isWorkspace ? {
+    homeHref: "/workspace",
+    showLandingNavigation: false,
+    showMarketing: false,
     badge: "Workspace",
     eyebrow: `Signed in${accountName ? ` as ${accountName}` : ""}`,
     title: "Build the context your agent should read first.",
@@ -37,6 +40,9 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     asideLabel: "Account ready",
     asideCopy: "Public repositories only. Analysis runs in memory and is not stored.",
   } : {
+    homeHref: "/",
+    showLandingNavigation: true,
+    showMarketing: true,
     badge: "Open-source beta",
     eyebrow: "Context compiler for coding agents",
     title: "Give your agent a task-sized view of the codebase.",
@@ -67,7 +73,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <Link href={isWorkspace ? "/workspace" : "/"} className="flex items-center gap-3 text-paper">
+          <Link href={presentation.homeHref} className="flex items-center gap-3 text-paper">
             <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
             <span className="font-semibold tracking-[-0.02em]">Locus</span>
             <span className="hidden rounded-full border border-line-strong px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-light sm:inline-flex">
@@ -75,7 +81,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
             </span>
           </Link>
           <nav className="flex items-center gap-2 text-sm">
-            {!isWorkspace && <a href="#method" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Method</a>}
+            {presentation.showLandingNavigation && <a href="#method" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Method</a>}
             <a
               href="https://github.com/taranggoyal70/locus"
               className="hidden rounded-lg border border-line-strong px-3 py-2 text-paper transition hover:border-accent/50 hover:text-accent sm:block"
@@ -91,7 +97,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
               </Link>
             </Show>
             <Show when="signed-in">
-              {!isWorkspace && (
+              {presentation.showLandingNavigation && (
                 <Link href="/workspace" className="rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-2 font-medium text-accent transition hover:bg-accent/[0.1]">
                   Open workspace
                 </Link>
@@ -261,7 +267,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           ) : null}
         </section>
 
-        {!isWorkspace && <>
+        {presentation.showMarketing && <>
         <section id="method" className="border-y border-line bg-surface/[0.45]">
           <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Measured, not promised</p>
