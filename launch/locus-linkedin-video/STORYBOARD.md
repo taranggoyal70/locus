@@ -65,8 +65,8 @@ Scene 4 (5.2–7.0s): “Focused when there is evidence. Whole repo when there i
 - duration: 10s
 - poster: 7s
 - transition_in: zoom-through
-- scene: A developer types a real task, then each repository signal activates before Locus reveals the ranked context.
-- onscreen: "Fix the dashboard billing chart. Path match → source match → import graph → recent changes → ranked context."
+- scene: A real historical Solum task is typed against the exact pre-fix commit, then each repository signal activates before Locus reveals the ranked context.
+- onscreen: "Solum @ 6a4a3aa. Prevent duplicate signup profile writes. Path match → source match → import graph → recent changes → 8 of 57 files ranked."
 - type: feature_showcase
 - blueprint: device-surface-showcase (Adapt)
 - narrativeRole: Show the real workflow before presenting any result or benchmark.
@@ -75,14 +75,14 @@ Scene 4 (5.2–7.0s): “Focused when there is evidence. Whole repo when there i
 - roles: scroll-000.png = foreground live product window
 - sfx: none
 
-The real captured homepage enters as a floating window. A large caption types “Fix the dashboard billing chart” beside the real task field. The camera then pans toward the dependency graph while four analysis stages activate in order: path match, source match, import graph, and recent changes. The frame resolves on “Ranked context ready.”
+The real captured homepage enters as a floating window. A caption identifies the reproducible repository snapshot, “Solum @ 6a4a3aa,” and types the actual task: “Prevent duplicate signup profile writes.” The camera then pans toward the dependency graph while four analysis stages activate in order: path match, source match, import graph, and recent changes. The frame resolves on “8 of 57 files ranked.”
 
 Adapt: keep the blueprint's floating-window push and screen-tour signature, but use the real captured page with no reconstructed controls or simulated cursor.
 
 Scene 1 (0.0–2.2s): the captured product window establishes at a slight perspective tilt, occupying most of the top 83%; layered-depth framing with a tinted ground and a single lime focus rail.
-Scene 2 (2.2–4.6s): the virtual camera pushes toward the real task field while “Fix the dashboard billing chart” types letter-by-letter in a clearly separate caption layer; asymmetric 70/30.
+Scene 2 (2.2–4.6s): the virtual camera pushes toward the task field while “Prevent duplicate signup profile writes” types letter-by-letter beneath “REAL TASK · SOLUM @ 6A4A3AA”; asymmetric 70/30.
 Scene 3 (4.6–7.8s): the inner screenshot pans downward to the dependency graph while “PATH MATCH” and “SOURCE MATCH” activate in sequence; the window itself stays fixed.
-Scene 4 (7.8–10.0s): “IMPORT GRAPH” and “RECENT CHANGES” complete the evidence rail, then “RANKED CONTEXT READY” resolves above it as the camera eases back to the full window.
+Scene 4 (7.8–10.0s): “IMPORT GRAPH” and “RECENT CHANGES” complete the evidence rail, then “8 OF 57 FILES RANKED” resolves above it as the camera eases back to the full window.
 
 ## Frame 4 — Focus the context
 
@@ -91,8 +91,8 @@ Scene 4 (7.8–10.0s): “IMPORT GRAPH” and “RECENT CHANGES” complete the 
 - duration: 10s
 - poster: 7s
 - transition_in: wipe-up
-- scene: The graph and token meter become the hero, then the captured example's numbers take over.
-- onscreen: "This example: 40 files in scope. 85 excluded. 71% fewer estimated tokens. For engineering teams: lower context cost, less irrelevant code, conservative fallback."
+- scene: The real Solum replay result takes over: eight selected files, forty-nine excluded files, the exact future fix file included, and 89% fewer estimated tokens.
+- onscreen: "Real Solum run: 8 of 57 files selected. 49 excluded. signup/page.tsx included—the exact file changed next. 89% fewer estimated tokens."
 - type: benefit_highlight
 - blueprint: video-text-pivot (Adapt)
 - narrativeRole: Translate the mechanism into a concrete result while labeling it as one example.
@@ -101,14 +101,14 @@ Scene 4 (7.8–10.0s): “IMPORT GRAPH” and “RECENT CHANGES” complete the 
 - roles: scroll-000.png = supporting whole-product view; scroll-042.png = foreground graph and proof handoff
 - sfx: none
 
-Begin on the real graph. A lime scan follows the included dependency paths. The interface shifts left and three numerals enter on the right: 40, 85, 71%. The word “estimated” stays attached to the token claim.
+Begin on the real graph. A lime scan follows the included dependency paths. The interface shifts left and the actual replay result enters: 8 selected files, 49 excluded files, and 89% fewer estimated tokens. A ranked-files card names the three anchors, and a historical check identifies `app/(auth)/signup/page.tsx` as the exact file changed next. The word “estimated” stays attached to the token claim.
 
 Adapt: replace the blueprint's product video with a moving crop of the real captured screenshot, preserving the same-anchor surface-to-stat weight-transfer signature.
 
 Scene 1 (0.0–2.5s): the graph crop from the live product fills center and slowly pans along the included lime edges; full-window framing, graph remains the only dominant object.
-Scene 2 (2.5–5.2s): the graph window slides left and scales down as “40 files in scope” fills the vacated right-side anchor—the same-anchor weight transfer; asymmetric 60/40, three depth layers.
-Scene 3 (5.2–7.4s): “85 excluded” replaces the first stat while the supporting capture shifts to the ranked file panel; the number lands first, the label second.
-Scene 4 (7.4–10.0s): “71% fewer estimated tokens” takes the center in display scale; “THIS EXAMPLE” and “ESTIMATED” remain visibly attached. A final team-impact rail translates the mechanism into three bounded benefits: “LOWER CONTEXT COST,” “LESS IRRELEVANT CODE,” and “CONSERVATIVE FALLBACK.”
+Scene 2 (2.5–5.2s): the graph window slides left and scales down as “8 files selected” fills the vacated right-side anchor—the same-anchor weight transfer; asymmetric 60/40, three depth layers.
+Scene 3 (5.2–7.4s): “49 excluded” replaces the first stat while a real ranked-files card names `signup/page.tsx`, `profile/route.ts`, and `privacy/page.tsx`; the first is marked “changed next.”
+Scene 4 (7.4–10.0s): “89% fewer estimated tokens” takes the center in display scale. “REAL SOLUM RUN,” “ESTIMATED,” and “FIX FILE FOUND · signup/page.tsx” remain visibly attached. A final team-impact rail translates the mechanism into three bounded benefits: “LOWER CONTEXT COST,” “LESS IRRELEVANT CODE,” and “CONSERVATIVE FALLBACK.”
 
 ## Frame 5 — Measured, not promised
 

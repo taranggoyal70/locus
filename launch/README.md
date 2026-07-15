@@ -16,3 +16,5 @@ npm run dev
 ```
 
 The video is square (1080×1080), caption-led, and designed for a muted LinkedIn feed. It uses current product captures and the benchmark results committed in `benchmarks/results.json`.
+
+The featured workflow is a reproducible historical replay from `taranggoyal70/Solum` at parent commit `6a4a3aa`. For the task “prevent duplicate signup profile writes,” Locus selected 8 of 57 TypeScript files, included `app/(auth)/signup/page.tsx`, and estimated an 89% context reduction. Commit `ce097b6` changed that exact file next.

@@ -22,7 +22,7 @@
           <div data-hf-id="hf-24ld" class="f03-task-copy" aria-label="Real task being typed">
             <div data-hf-id="hf-ttfv" class="f03-focus-rail" id="f03-input-focus-rail"></div>
             <div data-hf-id="hf-v1o0" class="f03-task-block" id="f03-input-task-title">
-              <div class="f03-task-kicker">REAL TASK</div>
+              <div class="f03-task-kicker">REAL TASK · SOLUM @ 6A4A3AA</div>
               <div class="f03-task-title" id="f03-input-typed-task"></div>
             </div>
           </div>
@@ -36,7 +36,7 @@
         <div data-hf-id="hf-ymhe" class="f03-evidence-card f03-evidence-wide" id="f03-input-card-recent"><span>04</span>RECENT CHANGES</div>
       </div>
 
-      <div class="f03-process-status" id="f03-input-process-status">RANKED CONTEXT READY</div>
+      <div class="f03-process-status" id="f03-input-process-status">8 OF 57 FILES RANKED</div>
 
       <div data-hf-id="hf-7x2i" class="f03-progress" aria-hidden="true"><div data-hf-id="hf-0yhj" class="f03-progress-fill"></div></div>
     </div>
@@ -143,14 +143,15 @@
       height: 720px;
       max-width: none;
       object-fit: contain;
+      filter: brightness(0.44) saturate(0.78);
       will-change: transform;
     }
 
     .f03-task-copy {
       position: absolute;
-      left: 590px;
+      left: 520px;
       top: 344px;
-      width: 340px;
+      width: 430px;
       min-height: 126px;
       display: grid;
       grid-template-columns: 4px 1fr;
@@ -169,7 +170,7 @@
     }
 
     .f03-task-block {
-      width: 318px;
+      width: 408px;
       padding: 20px 22px;
       border: 1.5px solid rgba(163, 230, 53, 0.28);
       border-radius: 14px;
@@ -189,7 +190,7 @@
     .f03-task-title {
       min-height: 92px;
       color: #e9f0f2;
-      font-size: 31px;
+      font-size: 27px;
       font-weight: 600;
       line-height: 1.12;
       letter-spacing: -0.02em;
@@ -324,7 +325,7 @@
       2.55,
     );
 
-    const typedTask = "Fix the dashboard billing chart";
+    const typedTask = "Prevent duplicate signup profile writes";
     const typedTaskElement = document.getElementById("f03-input-typed-task");
     const typingState = { characters: 0 };
     tl.to(
