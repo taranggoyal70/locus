@@ -1,0 +1,57 @@
+import Image from "next/image";
+import Link from "next/link";
+import type { ReactNode } from "react";
+
+type AuthShellProps = {
+  children: ReactNode;
+  eyebrow: string;
+  title: string;
+  description: string;
+};
+
+export function AuthShell({ children, eyebrow, title, description }: AuthShellProps) {
+  return (
+    <main className="relative min-h-screen overflow-hidden px-5 py-8 sm:px-8">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(163,230,53,0.08),transparent_34%)]" />
+      <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col">
+        <header className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 text-paper">
+            <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
+            <span className="font-semibold tracking-[-0.02em]">Locus</span>
+          </Link>
+          <Link href="/" className="rounded-lg border border-line-strong px-3 py-2 text-sm text-muted-light transition hover:border-accent/40 hover:text-paper">
+            Back to product
+          </Link>
+        </header>
+
+        <div className="grid flex-1 items-center gap-12 py-14 lg:grid-cols-[minmax(0,1fr)_440px]">
+          <section className="max-w-xl">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">{eyebrow}</p>
+            <h1 className="mt-5 text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-paper sm:text-6xl">{title}</h1>
+            <p className="mt-6 max-w-lg text-base leading-7 text-muted-light sm:text-lg">{description}</p>
+
+            <div className="mt-10 grid gap-3 sm:grid-cols-3">
+              {[
+                ["01", "Load a repository"],
+                ["02", "Describe the task"],
+                ["03", "Copy focused context"],
+              ].map(([step, label]) => (
+                <div key={step} className="rounded-xl border border-line-strong bg-surface/70 p-4">
+                  <span className="font-mono text-[10px] text-accent">{step}</span>
+                  <p className="mt-3 text-sm leading-5 text-paper">{label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="flex justify-center lg:justify-end">{children}</section>
+        </div>
+
+        <footer className="flex items-center justify-between border-t border-line py-5 text-xs text-muted">
+          <span>Open-source beta</span>
+          <span>Secure authentication by Clerk</span>
+        </footer>
+      </div>
+    </main>
+  );
+}

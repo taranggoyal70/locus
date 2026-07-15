@@ -41,12 +41,32 @@ source files. Use the local CLI for larger repositories.
 ## Run the web app
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 A `GITHUB_TOKEN` is optional for the hosted importer and increases GitHub API
 rate limits.
+
+### Accounts and protected workspace
+
+Locus uses Clerk for real account creation, email verification, secure sessions,
+profile management, and sign-out. The public product and reproducible demo remain
+shareable; `/workspace` requires an authenticated account.
+
+Create a free Clerk resource through the Vercel Marketplace, connect it to the
+project, and provide these variables for local development:
+
+```bash
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
+CLERK_SECRET_KEY=...
+```
+
+Authentication routes:
+
+- `/sign-up` — create an account
+- `/sign-in` — return to an account
+- `/workspace` — authenticated product workspace
 
 ## Use the CLI today
 

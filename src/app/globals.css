@@ -63,6 +63,12 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
+.cl-footerActionLink,
+.cl-formFieldAction,
+.cl-identityPreviewEditButton {
+  color: var(--accent);
+}
+
 .tabular {
   font-variant-numeric: tabular-nums;
 }
