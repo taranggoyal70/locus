@@ -1,7 +1,7 @@
 import { SignUp } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
-import { AuthShell } from "@/components/AuthShell";
+import { AuthLoading, AuthShell } from "@/components/AuthShell";
 
 export const metadata: Metadata = {
   title: "Create an account · Locus",
@@ -42,6 +42,7 @@ export default function SignUpPage() {
     >
       <SignUp
         appearance={appearance}
+        fallback={<AuthLoading label="Preparing account creation" />}
         path="/sign-up"
         routing="path"
         signInUrl="/sign-in"

@@ -55,3 +55,15 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
     </main>
   );
 }
+
+export function AuthLoading({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-80 w-full items-center justify-center rounded-[20px] border border-line-strong bg-surface px-8 text-center shadow-[0_40px_120px_rgba(0,0,0,0.32)]" role="status" aria-live="polite">
+      <div>
+        <Image src="/locus-mark.svg" width={32} height={32} alt="" className="mx-auto" />
+        <p className="mt-5 text-sm font-medium text-paper">{label}</p>
+        <p className="mt-2 text-xs text-muted">Connecting securely…</p>
+      </div>
+    </div>
+  );
+}

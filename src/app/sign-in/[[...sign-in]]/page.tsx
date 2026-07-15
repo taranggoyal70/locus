@@ -1,7 +1,7 @@
 import { SignIn } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
-import { AuthShell } from "@/components/AuthShell";
+import { AuthLoading, AuthShell } from "@/components/AuthShell";
 
 export const metadata: Metadata = {
   title: "Log in · Locus",
@@ -42,6 +42,7 @@ export default function SignInPage() {
     >
       <SignIn
         appearance={appearance}
+        fallback={<AuthLoading label="Loading your account" />}
         path="/sign-in"
         routing="path"
         signUpUrl="/sign-up"
