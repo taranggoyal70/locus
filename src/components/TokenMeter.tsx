@@ -55,10 +55,10 @@ export function TokenMeter({
   }
 
   return (
-    <div className="rounded-xl border border-line-strong bg-surface p-5">
+    <div className="rounded-[20px] border border-line-strong bg-surface p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)]">
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wide text-muted">Context sent to the agent</p>
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Context sent to the agent</p>
           <p className="mt-1 font-mono text-sm text-paper tabular">
             {slice.toLocaleString()} <span className="text-muted">/ {total.toLocaleString()} tokens</span>
           </p>
@@ -96,7 +96,7 @@ export function TokenMeter({
       {result && repo && (
         <button
           onClick={copy}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-accent/90"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
         >
           {copied ?? "Copy context for your agent"}
         </button>

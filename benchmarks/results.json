@@ -1,7 +1,7 @@
 {
   "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.",
   "summary": {
-    "generatedAt": "2026-07-15T01:33:11.841Z",
+    "generatedAt": "2026-07-15T01:47:54.360Z",
     "cases": 9,
     "repositories": 3,
     "fixFileRecall": 1,
@@ -17,7 +17,9 @@
     {
       "repo": "taranggoyal70/locus",
       "commit": "b8d7634",
+      "snapshot": "3b1d6c2",
       "task": "exclude loose files from GitHub source root inference",
+      "featured": false,
       "expected": [
         "src/app/api/github/route.ts"
       ],
@@ -39,7 +41,9 @@
     {
       "repo": "taranggoyal70/locus",
       "commit": "3b1d6c2",
+      "snapshot": "787b32b",
       "task": "auto-load the first bundled repository instead of a hardcoded slug",
+      "featured": false,
       "expected": [
         "src/hooks/useLocus.ts"
       ],
@@ -60,7 +64,9 @@
     {
       "repo": "taranggoyal70/locus",
       "commit": "bbdd822",
+      "snapshot": "1e3331e",
       "task": "vague conversational tasks should widen instead of false anchoring",
+      "featured": false,
       "expected": [
         "src/lib/localizer.test.ts",
         "src/lib/localizer.ts"
@@ -78,7 +84,9 @@
     {
       "repo": "taranggoyal70/agent-access",
       "commit": "50a3e9e",
+      "snapshot": "071a85f",
       "task": "prevent concurrent workspace provisioning from creating duplicates",
+      "featured": false,
       "expected": [
         "src/lib/auth.ts"
       ],
@@ -94,7 +102,9 @@
     {
       "repo": "taranggoyal70/agent-access",
       "commit": "071a85f",
+      "snapshot": "28310d2",
       "task": "serve the Clerk production frontend through the proxy",
+      "featured": false,
       "expected": [
         "src/proxy.ts"
       ],
@@ -112,7 +122,9 @@
     {
       "repo": "taranggoyal70/agent-access",
       "commit": "fefa329",
+      "snapshot": "c1fa46c",
       "task": "stabilize persisted execution receipt signatures",
+      "featured": false,
       "expected": [
         "src/lib/execution.ts"
       ],
@@ -135,7 +147,9 @@
     {
       "repo": "taranggoyal70/Solum",
       "commit": "ce097b6",
+      "snapshot": "6a4a3aa",
       "task": "prevent duplicate signup profile writes",
+      "featured": true,
       "expected": [
         "app/(auth)/signup/page.tsx"
       ],
@@ -155,7 +169,9 @@
     {
       "repo": "taranggoyal70/Solum",
       "commit": "1497f31",
+      "snapshot": "01f7326",
       "task": "remove browser theme persistence",
+      "featured": false,
       "expected": [
         "app/layout.tsx",
         "components/ThemeToggle.tsx"
@@ -177,7 +193,9 @@
     {
       "repo": "taranggoyal70/Solum",
       "commit": "425bb89",
+      "snapshot": "8066b4c",
       "task": "fix the post-call webhook payload handling",
+      "featured": false,
       "expected": [
         "app/api/webhook/post-call/route.ts",
         "scripts/setup-elevenlabs-agents.ts"

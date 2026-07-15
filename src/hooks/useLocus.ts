@@ -34,9 +34,27 @@ export function useLocus() {
   }
 
   useEffect(() => {
+    let active = true;
+    const params = new URLSearchParams(window.location.search);
+    const sharedRepo = params.get("repo")?.trim();
+    const sharedTask = params.get("task")?.trim();
+    if (sharedRepo) {
+      githubSource(sharedRepo).load().then(({ repo: sharedRepoData, note: sharedNote }) => {
+        if (!active) return;
+        setGhUrl(sharedRepo);
+        setRepo(sharedRepoData);
+        setTask(sharedTask ?? "");
+        if (sharedNote) setNote(sharedNote);
+      }).catch((cause: unknown) => {
+        if (active) setError(cause instanceof Error ? cause.message : "Could not load repo.");
+      }).finally(() => {
+        if (active) setLoading(false);
+      });
+      return () => { active = false; };
+    }
+
     // Load the first bundled repo by reference — never a hardcoded slug, so a
     // rename of the demo can't leave this pointing at a deleted repo.
-    let active = true;
     bundledSource(BUNDLED[0].slug).load().then(({ repo: initialRepo, note: initialNote }) => {
       if (!active) return;
       setRepo(initialRepo);
@@ -65,6 +83,10 @@ export function useLocus() {
     setTask, setSelected, setGhUrl,
     pickBundled: (slug: string) =>
       open(bundledSource(slug), BUNDLED.find((b) => b.slug === slug)?.examples[0] ?? ""),
-    loadGithub: () => ghUrl.trim() && open(githubSource(ghUrl), ""),
+    loadGithub: () => ghUrl.trim() && open(githubSource(ghUrl)),
+    loadGithubAt: (url: string, nextTask: string) => {
+      setGhUrl(url);
+      return open(githubSource(url), nextTask);
+    },
   };
 }

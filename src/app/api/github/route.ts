@@ -16,11 +16,35 @@ function ghHeaders() {
   return h;
 }
 
-function parseRepo(input: string): { owner: string; repo: string } | null {
-  const m = input.trim().match(/github\.com[/:]([^/]+)\/([^/#?]+)/) ||
-    input.trim().match(/^([\w.-]+)\/([\w.-]+)$/);
-  if (!m) return null;
-  return { owner: m[1], repo: m[2].replace(/\.git$/, "") };
+function parseRepo(input: string): { owner: string; repo: string; ref?: string } | null {
+  const value = input.trim();
+  const short = value.match(/^([\w.-]+)\/([\w.-]+?)(?:@([\w./-]+))?$/);
+  if (short) {
+    return {
+      owner: short[1],
+      repo: short[2].replace(/\.git$/, ""),
+      ref: short[3],
+    };
+  }
+
+  try {
+    const url = new URL(value.startsWith("http") ? value : `https://${value}`);
+    if (url.hostname !== "github.com" && url.hostname !== "www.github.com") return null;
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (parts.length < 2) return null;
+    const owner = parts[0];
+    const repo = parts[1].replace(/\.git$/, "");
+    const ref = parts[2] === "tree" && parts.length > 3 ? parts.slice(3).join("/") : undefined;
+    if (![owner, repo].every((part) => /^[\w.-]+$/.test(part))) return null;
+    if (ref && !/^[\w./-]+$/.test(ref)) return null;
+    return { owner, repo, ref };
+  } catch {
+    return null;
+  }
+}
+
+function rawPath(path: string): string {
+  return path.split("/").map(encodeURIComponent).join("/");
 }
 
 /**
@@ -47,22 +71,26 @@ export async function POST(request: Request) {
     const { url } = await request.json();
     const parsed = parseRepo(String(url ?? ""));
     if (!parsed) {
-      return NextResponse.json({ error: "Enter a GitHub repo like owner/name or a full URL." }, { status: 400 });
+      return NextResponse.json({ error: "Enter owner/repo, owner/repo@commit, or a GitHub URL." }, { status: 400 });
     }
-    const { owner, repo } = parsed;
+    const { owner, repo, ref } = parsed;
 
     const info = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders() });
     if (info.status === 404) return NextResponse.json({ error: "Repo not found or is private." }, { status: 404 });
     if (!info.ok) return NextResponse.json({ error: `GitHub error (${info.status}). Try again later.` }, { status: 502 });
     const meta = await info.json();
-    const branch = meta.default_branch || "main";
+    const revision = ref || meta.default_branch || "main";
 
     const treeRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+      `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(revision)}?recursive=1`,
       { headers: ghHeaders() },
     );
+    if (treeRes.status === 404) {
+      return NextResponse.json({ error: `Commit or branch “${revision}” was not found.` }, { status: 404 });
+    }
     if (!treeRes.ok) return NextResponse.json({ error: "Could not read the repo file tree." }, { status: 502 });
     const tree = await treeRes.json();
+    const resolvedRevision = String(tree.sha || revision);
 
     let files = (tree.tree as { path: string; type: string; size?: number }[])
       .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) < 200_000)
@@ -76,7 +104,7 @@ export async function POST(request: Request) {
     const entries = await Promise.all(
       files.map(async (path) => {
         try {
-          const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`);
+          const r = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/${resolvedRevision}/${rawPath(path)}`);
           if (!r.ok) return null;
           return [path, await r.text()] as const;
         } catch {
@@ -91,7 +119,7 @@ export async function POST(request: Request) {
     let recentlyChanged: string[] = [];
     try {
       const commits = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/commits?per_page=5&sha=${branch}`,
+        `https://api.github.com/repos/${owner}/${repo}/commits?per_page=5&sha=${encodeURIComponent(resolvedRevision)}`,
         { headers: ghHeaders() },
       ).then((r) => (r.ok ? r.json() : []));
       const detail = await Promise.all(
@@ -115,8 +143,8 @@ export async function POST(request: Request) {
     }
 
     const repoData: RepoData = {
-      name: `${owner}/${repo}`,
-      slug: `${owner}-${repo}`,
+      name: `${owner}/${repo}${ref ? `@${resolvedRevision.slice(0, 7)}` : ""}`,
+      slug: `${owner}-${repo}${ref ? `-${resolvedRevision.slice(0, 7)}` : ""}`,
       description: meta.description || `${owner}/${repo}`,
       root: commonRoot(Object.keys(fileMap)),
       recentlyChanged,

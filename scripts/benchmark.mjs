@@ -86,7 +86,9 @@ for (const entry of cases) {
   results.push({
     repo: entry.repo,
     commit: commit.slice(0, 7),
+    snapshot: git(cwd, ["rev-parse", parent]).slice(0, 7),
     task: entry.task,
+    featured: entry.featured === true,
     expected,
     found,
     recall: found.length / expected.length,

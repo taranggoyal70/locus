@@ -39,7 +39,8 @@
     "repo": "taranggoyal70/Solum",
     "localPath": "../Solum",
     "commit": "ce097b6",
-    "task": "prevent duplicate signup profile writes"
+    "task": "prevent duplicate signup profile writes",
+    "featured": true
   },
   {
     "repo": "taranggoyal70/Solum",

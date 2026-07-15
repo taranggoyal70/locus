@@ -1,234 +1,274 @@
 "use client";
 
+import Image from "next/image";
+import { useState } from "react";
+
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
 import benchmark from "../../benchmarks/results.json";
 
+const featuredCase = benchmark.results.find((result) => result.featured);
+
 export default function Home() {
   const {
     repo, graph, result, task, selected, ghUrl, loading, error, note,
     examples: bundledExamples, bundled: BUNDLED,
-    setTask, setSelected, setGhUrl, pickBundled, loadGithub,
+    setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt,
   } = useLocus();
-  const analyzeGithub = loadGithub;
+  const [shareCopied, setShareCopied] = useState(false);
+
+  async function copyShareView() {
+    if (!ghUrl.trim() || !task.trim()) return;
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("repo", ghUrl.trim());
+    url.searchParams.set("task", task.trim());
+    await navigator.clipboard.writeText(url.toString());
+    setShareCopied(true);
+    window.setTimeout(() => setShareCopied(false), 1800);
+  }
+
+  function replayFeaturedCase() {
+    if (!featuredCase) return;
+    void loadGithubAt(`${featuredCase.repo}@${featuredCase.snapshot}`, featuredCase.task);
+  }
 
   return (
     <div className="min-h-screen">
-      {/* nav */}
-      <header className="sticky top-0 z-20 border-b border-line bg-ink/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
-          <div className="flex items-center gap-2 font-semibold text-paper">
-            <span className="grid size-6 place-items-center rounded bg-accent/15 font-mono text-accent">⊙</span>
-            Locus
-          </div>
-          <a
-            href="https://github.com/taranggoyal70/locus"
-            className="rounded-lg border border-line-strong px-3 py-1.5 text-sm text-paper transition hover:border-accent hover:text-accent"
-          >
-            GitHub
+      <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
+          <a href="#top" className="flex items-center gap-3 text-paper">
+            <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
+            <span className="font-semibold tracking-[-0.02em]">Locus</span>
+            <span className="hidden rounded-full border border-line-strong px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-light sm:inline-flex">
+              Open-source beta
+            </span>
           </a>
+          <nav className="flex items-center gap-2 text-sm">
+            <a href="#method" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Method</a>
+            <a
+              href="https://github.com/taranggoyal70/locus"
+              className="rounded-lg border border-line-strong px-3 py-2 text-paper transition hover:border-accent/50 hover:text-accent"
+            >
+              View source
+            </a>
+          </nav>
         </div>
       </header>
 
-      {/* hero */}
-      <section className="mx-auto max-w-6xl px-6 pt-14 pb-6">
-        <p className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface px-3 py-1 text-xs text-muted-light">
-          <span className="size-1.5 rounded-full bg-accent" /> Context localization for AI coding agents
-        </p>
-        <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.1] text-paper sm:text-5xl">
-          Show your AI agent <span className="text-accent">only the code it needs.</span>
-        </h1>
-        <p className="mt-5 max-w-2xl text-lg text-muted-light">
-          Every edit doesn&apos;t need the whole repo. Type a task and watch the irrelevant
-          code fade out — Locus maps it to a focused dependency slice. When the evidence is
-          weak, it conservatively falls back to the whole repo.
-        </p>
-      </section>
-
-      {/* controls */}
-      <section className="mx-auto max-w-6xl px-6">
-        <div className="rounded-2xl border border-line-strong bg-surface/70 p-4 sm:p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs uppercase tracking-wide text-muted">Repo</span>
-            {BUNDLED.map((b) => (
-              <button
-                key={b.slug}
-                onClick={() => pickBundled(b.slug)}
-                className={`rounded-lg border px-3 py-1.5 text-sm transition ${
-                  repo?.slug === b.slug ? "border-accent bg-accent/10 text-accent" : "border-line text-muted hover:text-paper"
-                }`}
-              >
-                {b.name}
-              </button>
-            ))}
-            <span className="mx-1 text-line-strong">|</span>
-            <input
-              value={ghUrl}
-              onChange={(e) => setGhUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && analyzeGithub()}
-              placeholder="or paste a public GitHub repo — owner/name"
-              className="min-w-[240px] flex-1 rounded-lg border border-line-strong bg-ink px-3 py-1.5 text-sm text-paper placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
-            />
-            <button
-              onClick={analyzeGithub}
-              disabled={loading || !ghUrl.trim()}
-              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-accent/90 disabled:opacity-50"
-            >
-              {loading ? "Loading…" : "Load"}
-            </button>
+      <main id="top">
+        <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-10 pt-14 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end">
+          <div>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+              Context compiler for coding agents
+            </p>
+            <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-paper sm:text-6xl lg:text-7xl">
+              Give your agent a task-sized view of the codebase.
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
+              Locus traces a task to matching files, imported dependencies, and nearby integration points—before your agent spends tokens reading the repository.
+            </p>
           </div>
 
-          <div className="mt-4">
-            <input
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              placeholder="Describe a task — e.g. “the dashboard chart is broken”"
-              className="w-full rounded-lg border border-line-strong bg-ink px-4 py-3 text-paper placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
-            />
-            {bundledExamples.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {bundledExamples.map((ex) => (
+          <aside className="rounded-[22px] border border-line-strong bg-surface p-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">Operating rule</p>
+            <p className="mt-4 text-xl font-semibold leading-7 tracking-[-0.025em] text-paper">
+              Focus when evidence is strong. Widen when it is not.
+            </p>
+            <div className="mt-6 grid grid-cols-3 gap-2 text-center font-mono text-[10px] uppercase tracking-wide text-muted-light">
+              <span className="rounded-lg border border-line bg-ink/60 px-2 py-3">Browser</span>
+              <span className="rounded-lg border border-line bg-ink/60 px-2 py-3">CLI</span>
+              <span className="rounded-lg border border-line bg-ink/60 px-2 py-3">MCP</span>
+            </div>
+          </aside>
+        </section>
+
+        <section id="workspace" className="mx-auto max-w-7xl px-5 pb-8 sm:px-8">
+          <div className="overflow-hidden rounded-[24px] border border-line-strong bg-surface shadow-[0_40px_120px_rgba(0,0,0,0.24)]">
+            <div className="flex flex-col gap-4 border-b border-line px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div>
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Build a context pack</p>
+                <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-paper">Repository first. Task second.</h2>
+              </div>
+              {featuredCase && (
+                <button
+                  onClick={replayFeaturedCase}
+                  disabled={loading}
+                  className="rounded-lg border border-accent/25 bg-accent/[0.06] px-3 py-2 text-sm font-medium text-accent transition hover:bg-accent/[0.1] disabled:opacity-50"
+                >
+                  Replay a measured fix
+                </button>
+              )}
+            </div>
+
+            <div className="grid gap-px bg-line lg:grid-cols-2">
+              <div className="bg-ink/[0.55] p-5 sm:p-6">
+                <label htmlFor="repo-input" className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  01 · Repository
+                </label>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    id="repo-input"
+                    value={ghUrl}
+                    onChange={(event) => setGhUrl(event.target.value)}
+                    onKeyDown={(event) => event.key === "Enter" && loadGithub()}
+                    placeholder="owner/repo or owner/repo@commit"
+                    className="min-w-0 flex-1 rounded-xl border border-line-strong bg-ink px-4 py-3 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+                  />
                   <button
-                    key={ex}
-                    onClick={() => setTask(ex)}
-                    className="rounded-full border border-line px-3 py-1 text-xs text-muted transition hover:border-line-strong hover:text-paper"
+                    onClick={() => loadGithub()}
+                    disabled={loading || !ghUrl.trim()}
+                    className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {ex}
+                    {loading ? "Loading" : "Analyze"}
                   </button>
-                ))}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] text-muted">Sample</span>
+                  {BUNDLED.map((source) => (
+                    <button
+                      key={source.slug}
+                      onClick={() => pickBundled(source.slug)}
+                      className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                        repo?.slug === source.slug
+                          ? "border-accent/40 bg-accent/[0.08] text-accent"
+                          : "border-line-strong text-muted-light hover:text-paper"
+                      }`}
+                    >
+                      {source.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-ink/[0.55] p-5 sm:p-6">
+                <label htmlFor="task-input" className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  02 · Engineering task
+                </label>
+                <input
+                  id="task-input"
+                  value={task}
+                  onChange={(event) => setTask(event.target.value)}
+                  placeholder="Describe the change or bug in plain language"
+                  className="mt-3 w-full rounded-xl border border-line-strong bg-ink px-4 py-3 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {bundledExamples.slice(0, 3).map((example) => (
+                    <button
+                      key={example}
+                      onClick={() => setTask(example)}
+                      className="rounded-full border border-line px-2.5 py-1 text-[11px] text-muted transition hover:border-line-strong hover:text-paper"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                  <span className="self-center text-[11px] text-muted">Results update as you type.</span>
+                </div>
+              </div>
+            </div>
+
+            {(error || note) && (
+              <div className={`border-t border-line px-6 py-3 text-xs ${error ? "text-recent" : "text-muted-light"}`}>
+                {error ?? note}
               </div>
             )}
           </div>
-          {(error || note) && (
-            <p className={`mt-3 text-xs ${error ? "text-recent" : "text-muted"}`}>{error ?? note}</p>
-          )}
-        </div>
-      </section>
+        </section>
 
-      {/* main */}
-      <section className="mx-auto max-w-6xl px-6 py-6">
-        {graph && result ? (
-          <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-            <DependencyGraph graph={graph} result={result} selected={selected} onSelect={setSelected} />
-            <div className="space-y-5">
-              <TokenMeter
-                result={result}
-                repo={repo}
-                sparse={graph.edges.length / Math.max(1, graph.nodes.length) < 0.6}
-              />
-              <FilePanel result={result} repo={repo} selected={selected} onSelect={setSelected} />
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-line bg-surface p-16 text-center text-sm text-muted">
-            {error ?? "Loading…"}
-          </div>
-        )}
-        <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-muted">
-          <span className="flex items-center gap-1.5"><span className="inline-block size-3 rounded bg-accent" /> in scope (sent to agent)</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block size-3 rounded border border-excluded bg-[rgba(58,68,74,0.25)]" /> excluded from this context pack</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block size-2 rounded-full bg-recent" /> recently changed — likely relevant</span>
-          <span className="flex items-center gap-1.5"><span className="text-accent">◎</span> anchor (the entry point)</span>
-        </div>
-      </section>
-
-      <section className="border-t border-line bg-surface/40">
-        <div className="mx-auto max-w-6xl px-6 py-14">
-          <p className="text-sm font-semibold uppercase tracking-wider text-accent">Measured, not promised</p>
-          <h2 className="mt-2 max-w-2xl text-2xl font-semibold text-paper">
-            Replayed against fixes from real repositories
-          </h2>
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            {[
-              { value: `${Math.round(benchmark.summary.fixFileRecall * 100)}%`, label: "historical fix-file recall" },
-              { value: `${benchmark.summary.medianContextReductionPct}%`, label: "median estimated context reduction" },
-              { value: `${benchmark.summary.cases} / ${benchmark.summary.repositories}`, label: "tasks / repositories" },
-            ].map((metric) => (
-              <div key={metric.label} className="rounded-xl border border-line bg-ink/40 p-5">
-                <p className="font-mono text-3xl font-semibold text-accent">{metric.value}</p>
-                <p className="mt-1 text-sm text-muted">{metric.label}</p>
+        <section className="mx-auto max-w-7xl px-5 pb-14 sm:px-8">
+          {graph && result ? (
+            <>
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="truncate font-mono text-xs text-muted-light">{repo?.name}</p>
+                  <p className="mt-1 truncate text-sm text-paper">{task || "No task described"}</p>
+                </div>
+                {ghUrl.trim() && task.trim() && (
+                  <button
+                    onClick={copyShareView}
+                    className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper"
+                  >
+                    {shareCopied ? "View link copied" : "Copy shareable view"}
+                  </button>
+                )}
               </div>
-            ))}
-          </div>
-          <p className="mt-5 max-w-3xl text-xs leading-relaxed text-muted">
-            Historical replay checks whether the context includes files developers changed next.
-            It does not measure autonomous agent completion or guarantee that excluded files are unnecessary.{" "}
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+                <DependencyGraph graph={graph} result={result} selected={selected} onSelect={setSelected} />
+                <div className="space-y-5">
+                  <TokenMeter result={result} repo={repo} sparse={graph.edges.length / Math.max(1, graph.nodes.length) < 0.6} />
+                  <FilePanel result={result} repo={repo} selected={selected} onSelect={setSelected} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-[22px] border border-line bg-surface p-16 text-center text-sm text-muted">
+              {error ?? "Loading repository"}
+            </div>
+          )}
+        </section>
+
+        <section id="method" className="border-y border-line bg-surface/[0.45]">
+          <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Measured, not promised</p>
+            <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-end">
+              <h2 className="max-w-xl text-3xl font-semibold leading-tight tracking-[-0.04em] text-paper sm:text-4xl">
+                Historical replay, with the limits left visible.
+              </h2>
+              <p className="max-w-2xl text-sm leading-6 text-muted-light">
+                The benchmark checks whether Locus includes files developers changed next. It does not measure autonomous-agent completion or prove every excluded file was unnecessary.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-3">
+              {[
+                { value: `${Math.round(benchmark.summary.fixFileRecall * 100)}%`, label: "historical fix-file recall" },
+                { value: `${benchmark.summary.medianContextReductionPct}%`, label: "median estimated context reduction" },
+                { value: `${benchmark.summary.cases} across ${benchmark.summary.repositories}`, label: "tasks and repositories" },
+              ].map((metric) => (
+                <div key={metric.label} className="bg-ink/75 p-6">
+                  <p className="font-mono text-3xl font-semibold tracking-[-0.04em] text-accent">{metric.value}</p>
+                  <p className="mt-2 text-sm text-muted-light">{metric.label}</p>
+                </div>
+              ))}
+            </div>
             <a
               href="https://github.com/taranggoyal70/locus/tree/main/benchmarks"
-              className="text-accent hover:underline"
+              className="mt-6 inline-flex text-sm font-medium text-accent hover:underline"
             >
-              Read the method and reproduce it →
+              Inspect the benchmark and reproduce it
             </a>
-          </p>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* how it works */}
-      <section className="border-t border-line bg-surface/40">
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <p className="text-sm font-semibold uppercase tracking-wider text-accent">How it works</p>
-          <div className="mt-6 grid gap-6 md:grid-cols-3">
-            {[
-              { t: "1 · Map the graph", d: "Parse imports into a deterministic dependency graph — routes → components → hooks → libs. No LLM guessing." },
-              { t: "2 · Localize the task", d: "Match task language against paths and source, then include dependencies and nearby integration points." },
-              { t: "3 · Widen when uncertain", d: "If no file matches with enough evidence, fall back to the whole repo instead of returning a speculative small slice." },
-            ].map((s) => (
-              <div key={s.t} className="rounded-xl border border-line bg-ink/40 p-5">
-                <h3 className="font-mono text-sm font-semibold text-paper">{s.t}</h3>
-                <p className="mt-2 text-sm text-muted">{s.d}</p>
+        <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
+          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+            <div>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Use it for real</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-paper">Before the agent reads.</h2>
+              <p className="mt-4 text-sm leading-6 text-muted-light">
+                Use the browser for a quick context pack, or run the same deterministic localizer inside the agent loop through the CLI or MCP server.
+              </p>
+            </div>
+            <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface">
+              <div className="border-b border-line px-5 py-4 text-sm font-medium text-paper">Local CLI</div>
+              <pre className="overflow-x-auto p-5 font-mono text-xs leading-6 text-muted-light">{`npx github:taranggoyal70/locus \\
+  locate "prevent duplicate signup profile writes" --pack`}</pre>
+              <div className="border-t border-line px-5 py-4 text-xs text-muted">
+                Zero runtime dependencies. TypeScript and Next.js repositories are supported today.
               </div>
-            ))}
+            </div>
           </div>
-          <p className="mt-6 max-w-3xl text-sm text-muted">
-            Cross-cutting bugs (a shared util that broke the dashboard) are caught two ways:
-            the shared file is already in the dependency slice, and a recent-change signal floats
-            it to the top — so precision doesn&apos;t mean missing the real cause.
-          </p>
-        </div>
-      </section>
-
-      {/* use it on your repo */}
-      <section id="use" className="mx-auto max-w-6xl px-6 py-16">
-        <p className="text-sm font-semibold uppercase tracking-wider text-accent">Use it for real</p>
-        <h2 className="mt-2 max-w-2xl text-2xl font-semibold text-paper">
-          Two ways to actually save tokens — not just look at a graph
-        </h2>
-        <div className="mt-6 grid gap-5 lg:grid-cols-2">
-          <div className="rounded-xl border border-line bg-ink/40 p-5">
-            <h3 className="text-sm font-semibold text-paper">1 · Now, in your browser</h3>
-            <p className="mt-1 text-sm text-muted">
-              Load a supported public TypeScript repo above, describe the task, and hit{" "}
-              <span className="text-accent">Copy context</span> — you get the focused slice as a
-              paste-ready block. Give that to ChatGPT / Claude / Cursor instead of your whole repo.
-              Zero install.
-            </p>
-          </div>
-          <div className="rounded-xl border border-line bg-ink/40 p-5">
-            <h3 className="text-sm font-semibold text-paper">2 · In your agent&apos;s loop (CLI + MCP)</h3>
-            <p className="mt-1 text-sm text-muted">
-              A zero-dependency CLI and MCP server run the same localizer on your local repo, so the
-              agent pulls the slice <em>before</em> it reads.
-            </p>
-            <pre className="mt-3 overflow-x-auto rounded-lg border border-line-strong bg-ink p-3 font-mono text-[11px] text-muted-light">{`# one-off, paste-ready context
-npx github:taranggoyal70/locus \\
-  locate "fix the dashboard" --pack
-
-# as an MCP tool (Codex / Claude Code / Cursor)
-{ "mcpServers": {
-    "locus": { "command": "node",
-      "args": ["/path/to/locus/bin/mcp.mjs"] } } }`}</pre>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-muted sm:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <span className="flex items-center gap-2">
-            <span className="font-mono text-accent">⊙</span> Locus — less context, measured honestly.
+            <Image src="/locus-mark.svg" width={20} height={20} alt="" />
+            Locus · task-sized context for coding agents
           </span>
-          <a href="https://github.com/taranggoyal70/locus" className="hover:text-accent">Source · MIT</a>
+          <a href="https://github.com/taranggoyal70/locus" className="hover:text-accent">MIT source on GitHub</a>
         </div>
       </footer>
     </div>

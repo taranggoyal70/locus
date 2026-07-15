@@ -18,14 +18,14 @@ export function FilePanel({
   const selectedContent = selected && repo ? fileContent(repo, selected) : null;
 
   return (
-    <div className="rounded-xl border border-line bg-surface/60">
-      <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+    <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface">
+      <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
           {result.widened ? "All files (widened)" : "In scope · ranked by relevance"}
         </p>
         {selected && (
           <button onClick={() => onSelect(null)} className="text-[11px] text-muted hover:text-paper">
-            ← back to list
+            Back to ranked list
           </button>
         )}
       </div>
@@ -47,11 +47,11 @@ export function FilePanel({
               >
                 {!result.widened && (
                   <span
-                    className={`w-4 shrink-0 text-center font-mono text-[10px] ${
+                    className={`w-12 shrink-0 font-mono text-[9px] uppercase tracking-wide ${
                       result.anchors.includes(f.rel) ? "text-accent" : "text-muted"
                     }`}
                   >
-                    {result.anchors.includes(f.rel) ? "◎" : f.dist}
+                    {result.anchors.includes(f.rel) ? "match" : `${f.dist} hop`}
                   </span>
                 )}
                 <span className="flex-1 truncate font-mono text-[12px] text-paper">{f.rel}</span>
