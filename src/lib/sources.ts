@@ -60,6 +60,17 @@ export const BUNDLED = [
       "the docs sidebar navigation",
     ],
   },
+  {
+    slug: "studentpulse",
+    name: "StudentPulse",
+    description:
+      "A student feedback platform with surveys, analytics dashboard, and auth.",
+    examples: [
+      "the survey creation form",
+      "fix the analytics dashboard",
+      "update the student profile page",
+    ],
+  },
 ] as const;
 
 export function bundledSource(slug: string): RepoSource {
