@@ -7,9 +7,25 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Locus — show your AI agent only the code it needs",
+  title: "Locus — task-sized context for coding agents",
   description:
-    "Localize a coding task to a focused TypeScript dependency slice, with conservative whole-repo fallback and a reproducible historical-task benchmark.",
+    "Map a coding task to the exact files your AI agent needs. Deterministic dependency tracing with conservative whole-repo fallback.",
+  metadataBase: new URL("https://locus-five-iota.vercel.app"),
+  openGraph: {
+    title: "Locus — task-sized context for coding agents",
+    description: "Give your agent a task-sized view of the codebase instead of dumping everything.",
+    siteName: "Locus",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Locus — task-sized context for coding agents",
+    description: "Give your agent a task-sized view of the codebase instead of dumping everything.",
+  },
+  keywords: [
+    "AI coding agent", "context window", "code context", "MCP server",
+    "dependency graph", "TypeScript", "developer tools", "Claude", "Cursor", "Codex",
+  ],
 };
 
 export default function RootLayout({
