@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ApiKeysPanel } from "@/components/ApiKeysPanel";
 import { GitHubConnectionPanel } from "@/components/GitHubConnectionPanel";
 import { SettingsShell } from "@/components/SettingsShell";
+import { TeamsPanel } from "@/components/TeamsPanel";
 import { UsageStats } from "@/components/UsageStats";
 
 export default async function SettingsPage() {
@@ -21,6 +22,15 @@ export default async function SettingsPage() {
           </p>
           <div className="mt-4">
             <GitHubConnectionPanel />
+          </div>
+        </section>
+        <section>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Teams</h2>
+          <p className="mt-1 text-sm text-muted-light">
+            Create teams to share projects and analyses with your colleagues.
+          </p>
+          <div className="mt-4">
+            <TeamsPanel />
           </div>
         </section>
         <section>
