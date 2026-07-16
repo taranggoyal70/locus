@@ -1,7 +1,7 @@
 {
   "name": "locus-context",
-  "version": "0.1.0",
-  "description": "A zero-dependency CLI and MCP server that localizes coding tasks to focused TypeScript dependency slices and widens when evidence is weak.",
+  "version": "0.2.0",
+  "description": "Zero-dependency CLI and MCP server that maps coding tasks to focused JavaScript/TypeScript code slices for AI coding agents.",
   "type": "module",
   "bin": {
     "locus": "locus.mjs",
