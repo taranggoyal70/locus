@@ -15,7 +15,7 @@ const FETCH_TIMEOUT_MS = 8_000;
 const DOWNLOAD_CONCURRENCY = 8;
 const RATE_LIMIT = 6;
 const RATE_WINDOW_MS = 60_000;
-const SRC_RE = /\.(ts|tsx)$/;
+const SRC_RE = /\.(tsx?|jsx?)$/;
 const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__tests__|e2e)\//i;
 
 type RateEntry = { count: number; resetAt: number };
@@ -233,7 +233,7 @@ export async function POST(request: Request) {
       sourceBytes += size;
     }
     if (files.length === 0) {
-      return NextResponse.json({ error: "No TypeScript/TSX source found in that repo." }, { status: 400 });
+      return NextResponse.json({ error: "No JavaScript or TypeScript source found in that repo." }, { status: 400 });
     }
     const truncated = files.length < candidates.length;
 
@@ -278,7 +278,9 @@ export async function POST(request: Request) {
         const fs = (d?.files ?? []) as { filename: string }[];
         // skip bulk commits — not a targeted-change signal
         if (fs.length && fs.length <= Math.max(2, Math.floor(0.4 * Object.keys(fileMap).length))) {
-          for (const f of fs) if (SRC_RE.test(f.filename) && fileMap[f.filename] !== undefined) changed.add(f.filename);
+          for (const f of fs) {
+            if (SRC_RE.test(f.filename) && fileMap[f.filename] !== undefined) changed.add(f.filename);
+          }
         }
       }
       recentlyChanged = [...changed];
