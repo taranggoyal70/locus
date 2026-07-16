@@ -272,9 +272,31 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
               </div>
             </>
           ) : !error ? (
-            <div role={error ? "alert" : "status"} aria-live="polite" className="rounded-[22px] border border-line bg-surface p-16 text-center text-sm text-muted">
-              {loading ? "Loading repository" : "Choose a repository to begin"}
-            </div>
+            loading ? (
+              <div className="space-y-5">
+                <div className="overflow-hidden rounded-[22px] border border-line bg-surface p-6">
+                  <div className="skeleton h-4 w-48 mb-4" />
+                  <div className="skeleton h-6 w-72 mb-6" />
+                  <div className="grid gap-px lg:grid-cols-3">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="p-5">
+                        <div className="skeleton h-3 w-16 mb-4" />
+                        <div className="skeleton h-4 w-32 mb-3" />
+                        <div className="skeleton h-20 w-full" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+                  <div className="skeleton h-48 w-full rounded-[22px]" />
+                  <div className="skeleton h-48 w-full rounded-[20px]" />
+                </div>
+              </div>
+            ) : (
+              <div role="status" aria-live="polite" className="rounded-[22px] border border-line bg-surface p-16 text-center text-sm text-muted">
+                Choose a repository to begin
+              </div>
+            )
           ) : null}
         </section>
 
