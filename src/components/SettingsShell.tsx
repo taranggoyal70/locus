@@ -3,8 +3,17 @@
 import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const NAV_ITEMS = [
+  { href: "/workspace", label: "Workspace" },
+  { href: "/projects", label: "Projects" },
+  { href: "/settings", label: "Settings" },
+];
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
@@ -14,15 +23,19 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
             <span className="font-semibold tracking-[-0.02em]">Locus</span>
           </Link>
           <nav className="flex items-center gap-3 text-sm">
-            <Link href="/workspace" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
-              Workspace
-            </Link>
-            <Link href="/projects" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
-              Projects
-            </Link>
-            <Link href="/settings" className="rounded-lg px-3 py-2 text-accent font-medium">
-              Settings
-            </Link>
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`rounded-lg px-3 py-2 transition ${
+                  pathname === item.href
+                    ? "text-accent font-medium"
+                    : "text-muted-light hover:text-paper"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
             <UserButton
               appearance={{
                 elements: {
