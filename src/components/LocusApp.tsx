@@ -198,9 +198,15 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                   <button
                     onClick={() => loadGithub()}
                     disabled={loading || !ghUrl.trim()}
+                    aria-label={loading ? "Loading repository" : "Analyze repository"}
                     className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {loading ? "Loading" : "Analyze"}
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/30 border-t-ink" />
+                        Loading
+                      </span>
+                    ) : "Analyze"}
                   </button>
                 </div>
                 <p className="mt-2 text-[11px] leading-5 text-muted">Public repositories only. Repository contents are analyzed in memory and are not saved.</p>
