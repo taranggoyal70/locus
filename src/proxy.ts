@@ -1,13 +1,13 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
 export function isProtectedPagePathname(pathname: string): boolean {
-  return pathname === "/" || ["/workspace", "/demo"].some(
+  return pathname === "/" || ["/workspace", "/demo", "/settings", "/projects"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
 export function isProtectedPathname(pathname: string): boolean {
-  return isProtectedPagePathname(pathname) || ["/api/github", "/api/attachments", "/repos"].some(
+  return isProtectedPagePathname(pathname) || ["/api/github", "/api/attachments", "/api/keys", "/api/projects", "/api/usage", "/repos"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
