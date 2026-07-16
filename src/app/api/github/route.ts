@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { track } from "@/lib/analytics";
+import { serviceClient } from "@/lib/supabase";
 import type { RepoData } from "@/lib/types";
 
 // Fetch a public GitHub repo's TypeScript source into the flat {path: content}
@@ -22,9 +23,10 @@ const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__test
 type RateEntry = { count: number; resetAt: number };
 const rateLimits = new Map<string, RateEntry>();
 
-function ghHeaders() {
+function ghHeaders(userToken?: string) {
   const h: Record<string, string> = { Accept: "application/vnd.github+json" };
-  if (process.env.GITHUB_TOKEN) h.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const token = userToken || process.env.GITHUB_TOKEN;
+  if (token) h.Authorization = `Bearer ${token}`;
   return h;
 }
 
@@ -178,6 +180,19 @@ export async function POST(request: Request) {
   }
 
   try {
+    let userToken: string | undefined;
+    try {
+      const db = serviceClient();
+      const { data: conn } = await db
+        .from("github_connections")
+        .select("access_token")
+        .eq("user_id", userId)
+        .single();
+      if (conn?.access_token) userToken = conn.access_token;
+    } catch {
+      // no connection — fall back to server token
+    }
+
     const rawBody = await readLimitedBody(request);
     if (rawBody.tooLarge) {
       return NextResponse.json({ error: "Request body is too large." }, { status: 413, headers: rateHeaders });
@@ -200,8 +215,11 @@ export async function POST(request: Request) {
     }
     const { owner, repo, ref } = parsed;
 
-    const info = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders() });
-    if (info.status === 404) return NextResponse.json({ error: "Repo not found or is private." }, { status: 404 });
+    const info = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders(userToken) });
+    if (info.status === 404) {
+      const hint = userToken ? "Repo not found." : "Repo not found or is private. Connect GitHub in Settings to access private repos.";
+      return NextResponse.json({ error: hint }, { status: 404 });
+    }
     if (!info.ok) return NextResponse.json({ error: `GitHub error (${info.status}). Try again later.` }, { status: 502 });
     const meta = await info.json().catch(() => null);
     if (!meta || typeof meta !== "object") {
@@ -211,7 +229,7 @@ export async function POST(request: Request) {
 
     const treeRes = await fetchWithTimeout(
       `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(revision)}?recursive=1`,
-      { headers: ghHeaders() },
+      { headers: ghHeaders(userToken) },
     );
     if (treeRes.status === 404) {
       return NextResponse.json({ error: `Commit or branch “${revision}” was not found.` }, { status: 404 });
@@ -265,11 +283,11 @@ export async function POST(request: Request) {
     try {
       const commits = await fetchWithTimeout(
         `https://api.github.com/repos/${owner}/${repo}/commits?per_page=5&sha=${encodeURIComponent(resolvedRevision)}`,
-        { headers: ghHeaders() },
+        { headers: ghHeaders(userToken) },
       ).then((r) => (r.ok ? r.json() : []));
       const detail = await Promise.all(
         (commits as { sha: string }[]).slice(0, 5).map((c) =>
-          fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}/commits/${c.sha}`, { headers: ghHeaders() })
+          fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}/commits/${c.sha}`, { headers: ghHeaders(userToken) })
             .then((r) => (r.ok ? r.json() : null))
             .catch(() => null),
         ),
