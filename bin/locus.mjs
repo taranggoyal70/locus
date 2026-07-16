@@ -6,19 +6,21 @@ import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext } f
 const HELP = `Locus — show your AI coding agent only the code it needs.
 
 Usage:
-  locus locate "<task>" [--path .] [--json] [--pack] [--budget <tokens>]
+  locus locate "<task>" [--path .] [--json] [--pack] [--budget <tokens>] [--evidence <text>]
   locus mcp
   locus --help
 
 locate options:
-  --path <dir>    Repo directory to analyze (default: current directory)
-  --json          Print the machine-readable LocateResult as JSON
-  --pack          Print a ready-to-paste context block for the slice
-  --budget <n>    Token budget for --pack (default: 40000)
+  --path <dir>       Repo directory to analyze (default: current directory)
+  --json             Print the machine-readable LocateResult as JSON
+  --pack             Print a ready-to-paste context block for the slice
+  --budget <n>       Token budget for --pack (default: 40000)
+  --evidence <text>  Additional context (error message, stack trace) to improve matching
 
 Examples:
   locus locate "fix the dashboard chart" --pack
   locus locate "the graph visualization" --json
+  locus locate "login error" --evidence "TypeError: Cannot read property 'email' of null"
   locus mcp   # start the MCP stdio server for Codex/Claude Code/Cursor
 `;
 
@@ -31,6 +33,7 @@ function parseLocateArgs(rest) {
   let json = false;
   let pack = false;
   let budget = 40000;
+  let evidence = "";
   const positionals = [];
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
@@ -42,6 +45,8 @@ function parseLocateArgs(rest) {
       pack = true;
     } else if (a === "--budget") {
       budget = Number(rest[++i]);
+    } else if (a === "--evidence") {
+      evidence = rest[++i] || "";
     } else if (a === "-h" || a === "--help") {
       printHelp();
       process.exit(0);
@@ -49,19 +54,19 @@ function parseLocateArgs(rest) {
       positionals.push(a);
     }
   }
-  return { task: positionals.join(" "), dir, json, pack, budget };
+  return { task: positionals.join(" "), dir, json, pack, budget, evidence };
 }
 
 function runLocate(rest) {
-  const { task, dir, json, pack, budget } = parseLocateArgs(rest);
+  const { task, dir, json, pack, budget, evidence } = parseLocateArgs(rest);
   if (!task || !task.trim()) {
-    console.error('Usage: locus locate "<task>" [--path .] [--json] [--pack] [--budget <tokens>]');
+    console.error('Usage: locus locate "<task>" [--path .] [--json] [--pack] [--budget <tokens>] [--evidence <text>]');
     process.exit(1);
   }
   const root = path.resolve(dir || ".");
   const repo = loadLocalRepo(root);
   const graph = buildGraph(repo);
-  const result = locate(task, repo, graph);
+  const result = locate(task, repo, graph, evidence);
 
   if (json) {
     console.log(JSON.stringify(result, null, 2));
