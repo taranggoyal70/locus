@@ -19,9 +19,13 @@ function topDir(rel: string): string {
   return rel.includes("/") ? rel.split("/")[0] : "(root)";
 }
 
-/** Try a base path against the file map with the usual TS resolution order. */
+/** Try a base path against the file map with the usual resolution order. */
 function tryPath(base: string, files: Record<string, string>): string | null {
-  for (const c of [`${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`, base]) {
+  for (const c of [
+    `${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.jsx`,
+    `${base}/index.ts`, `${base}/index.tsx`, `${base}/index.js`, `${base}/index.jsx`,
+    base,
+  ]) {
     if (files[c] !== undefined) return c;
   }
   return null;
@@ -69,7 +73,7 @@ function normalize(p: string): string {
 /** Build the deterministic dependency graph from the file map. */
 export function buildGraph(repo: RepoData): Graph {
   const { files, root } = repo;
-  const paths = Object.keys(files).filter((p) => /\.(ts|tsx)$/.test(p));
+  const paths = Object.keys(files).filter((p) => /\.(tsx?|jsx?)$/.test(p));
   const nodes: GraphNode[] = [];
   const byPath: Record<string, GraphNode> = {};
   const deps: Record<string, string[]> = {};
@@ -84,11 +88,11 @@ export function buildGraph(repo: RepoData): Graph {
 
   for (const p of paths) {
     const rel = p.startsWith(root + "/") ? p.slice(root.length + 1) : p;
-    const isSurface = /^app\/.+\/page\.(ts|tsx)$/.test(rel) || rel === "app/page.tsx";
+    const isSurface = /^app\/.+\/page\.(tsx?|jsx?)$/.test(rel) || /^app\/page\.(tsx?|jsx?)$/.test(rel);
     let route: string | undefined;
     if (isSurface) {
       route =
-        rel.replace(/^app\//, "").replace(/\/page\.(ts|tsx)$/, "").replace(/page\.(ts|tsx)$/, "") ||
+        rel.replace(/^app\//, "").replace(/\/page\.(tsx?|jsx?)$/, "").replace(/page\.(tsx?|jsx?)$/, "") ||
         "home";
       surfaces.push({ route, path: p });
     }
