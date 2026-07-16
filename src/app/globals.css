@@ -84,6 +84,10 @@ input:focus-visible {
   background-clip: padding-box;
 }
 
+@media (max-width: 640px) {
+  .tabular { font-size: 0.75rem; }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

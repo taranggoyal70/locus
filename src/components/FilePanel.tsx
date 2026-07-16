@@ -33,12 +33,12 @@ export function FilePanel({
       {selected && selectedContent ? (
         <div>
           <p className="border-b border-line px-4 py-2 font-mono text-[11px] text-accent">{selected}</p>
-          <pre className="max-h-[420px] overflow-auto p-4 font-mono text-[11px] leading-relaxed text-muted-light">
+          <pre className="max-h-[320px] overflow-auto p-4 font-mono text-[11px] leading-relaxed text-muted-light sm:max-h-[420px]">
             {selectedContent}
           </pre>
         </div>
       ) : (
-        <ul className="max-h-[420px] divide-y divide-line overflow-auto">
+        <ul className="max-h-[320px] divide-y divide-line overflow-auto sm:max-h-[420px]">
           {result.slice.map((f) => (
             <li key={f.rel}>
               <button
