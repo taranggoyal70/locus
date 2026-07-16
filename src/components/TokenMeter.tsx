@@ -59,6 +59,7 @@ export function TokenMeter({
 }) {
   const [copied, setCopied] = useState<string | null>(null);
   const [format, setFormat] = useState<ExportFormat>("generic");
+  const [feedback, setFeedback] = useState<"none" | "up" | "down">("none");
   const total = result?.totalTokens ?? 0;
   const slice = result?.sliceTokens ?? total;
   const pct = result && !result.widened ? result.savedPct : 0;
@@ -140,9 +141,21 @@ export function TokenMeter({
         </>
       )}
       {result && !result.widened && (
-        <p className="mt-2 text-center text-[11px] text-muted">
-          Paste this instead of your whole repo — same task, a fraction of the tokens.
-        </p>
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <span className="text-[11px] text-muted">Was this context useful?</span>
+          <button
+            onClick={() => { setFeedback("up"); trackClient("context_feedback", { rating: "up", files: result.slice.length, savedPct: result.savedPct }); }}
+            className={`rounded-md px-2 py-1 text-xs transition ${feedback === "up" ? "bg-accent/15 text-accent" : "text-muted hover:text-paper"}`}
+          >
+            Yes
+          </button>
+          <button
+            onClick={() => { setFeedback("down"); trackClient("context_feedback", { rating: "down", files: result.slice.length, savedPct: result.savedPct }); }}
+            className={`rounded-md px-2 py-1 text-xs transition ${feedback === "down" ? "bg-recent/15 text-recent" : "text-muted hover:text-paper"}`}
+          >
+            No
+          </button>
+        </div>
       )}
     </div>
   );

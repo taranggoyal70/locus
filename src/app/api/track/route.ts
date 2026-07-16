@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     return NextResponse.json({}, { status: 400 });
   }
 
-  const allowed = ["context_copied", "task_analyzed", "project_saved"];
+  const allowed = ["context_copied", "task_analyzed", "project_saved", "context_feedback"];
   if (!allowed.includes(body.event)) {
     return NextResponse.json({}, { status: 400 });
   }
