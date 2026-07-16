@@ -3,7 +3,7 @@
 import { Show, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
@@ -28,6 +28,18 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt, addEvidence, removeEvidence,
   } = useLocus();
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const taskInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        taskInputRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
   const presentation = isWorkspace ? {
     homeHref: "/workspace",
     showLandingNavigation: false,
@@ -225,14 +237,20 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                 <label htmlFor="task-input" className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
                   02 · Engineering task
                 </label>
-                <input
-                  id="task-input"
-                  value={task}
-                  onChange={(event) => setTask(event.target.value)}
-                  maxLength={500}
-                  placeholder="Describe the change or bug in plain language"
-                  className="mt-3 w-full rounded-xl border border-line-strong bg-ink px-4 py-3 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
-                />
+                <div className="relative mt-3">
+                  <input
+                    ref={taskInputRef}
+                    id="task-input"
+                    value={task}
+                    onChange={(event) => setTask(event.target.value)}
+                    maxLength={500}
+                    placeholder="Describe the change or bug in plain language"
+                    className="w-full rounded-xl border border-line-strong bg-ink px-4 py-3 pr-16 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+                  />
+                  <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line-strong px-1.5 py-0.5 font-mono text-[10px] text-muted">
+                    {"⌘"}K
+                  </kbd>
+                </div>
                 <TaskEvidence evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   {bundledExamples.slice(0, 3).map((example) => (
