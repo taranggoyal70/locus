@@ -80,8 +80,8 @@ Copy context in three formats:
 ## Use the CLI
 
 ```bash
-npx github:taranggoyal70/locus locate "fix the dashboard billing" --pack
-npx github:taranggoyal70/locus locate "login error" --evidence "TypeError: Cannot read property 'email'"
+npx locus-context locate "fix the dashboard billing" --pack
+npx locus-context locate "login error" --evidence "TypeError: Cannot read property 'email'"
 ```
 
 Options:

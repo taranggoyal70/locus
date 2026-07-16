@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { SITE_URL } from "@/lib/config";
+
 export const metadata: Metadata = {
   title: "Terms of Service — Locus",
   description: "Terms governing use of Locus.",
@@ -20,15 +22,14 @@ export default function TermsPage() {
       </header>
       <main className="mx-auto max-w-3xl px-5 py-12">
         <h1 className="text-3xl font-semibold tracking-tight text-paper">Terms of Service</h1>
-        <p className="mt-2 text-sm text-muted">Last updated: July 2026</p>
 
         <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
           <section>
             <h2 className="text-lg font-semibold text-paper">Service</h2>
             <p>
               Locus is an open-source tool that maps coding tasks to focused source-code slices.
-              It is provided as-is, without warranty. The hosted version at locus-five-iota.vercel.app
-              is a convenience deployment of the open-source project.
+              It is provided as-is, without warranty. The hosted version at{" "}
+              {new URL(SITE_URL).hostname} is a convenience deployment of the open-source project.
             </p>
           </section>
 
@@ -81,8 +82,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-paper">Changes</h2>
             <p>
-              We may update these terms as the service evolves. Material changes will be reflected
-              in the &ldquo;Last updated&rdquo; date above.
+              We may update these terms as the service evolves.
             </p>
           </section>
         </div>

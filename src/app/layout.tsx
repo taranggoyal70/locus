@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Locus — task-sized context for coding agents",
   description:
     "Map a coding task to the exact files your AI agent needs. Deterministic dependency tracing with conservative whole-repo fallback.",
-  metadataBase: new URL("https://locus-five-iota.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://locus-five-iota.vercel.app"),
   openGraph: {
     title: "Locus — task-sized context for coding agents",
     description: "Give your agent a task-sized view of the codebase instead of dumping everything.",

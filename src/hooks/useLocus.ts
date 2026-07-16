@@ -1,31 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { buildGraph, locate } from "@/lib/localizer";
 import { sharedWorkspaceViewFrom } from "@/lib/share";
 import { BUNDLED, bundledSource, githubSource, type RepoSource } from "@/lib/sources";
 import type { RepoData, TaskEvidence } from "@/lib/types";
 
-type RecentRepo = { url: string; name: string; timestamp: number };
-const RECENT_KEY = "locus:recent-repos";
-const MAX_RECENT = 5;
-
-function loadRecent(): RecentRepo[] {
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]"); }
-  catch { return []; }
-}
-
-function saveRecent(url: string, name: string) {
-  const list = loadRecent().filter((r) => r.url !== url);
-  list.unshift({ url, name, timestamp: Date.now() });
-  localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, MAX_RECENT)));
-}
-
-// Owns everything the localizer view needs: the current Repo, the task, the
-// selection, and the async loading around a RepoSource. The page renders this;
-// it doesn't manage fetches or derive the graph itself. Localize (buildGraph +
-// locate) is derived here — buildGraph once per Repo, locate on every task.
 export function useLocus() {
   const [repo, setRepo] = useState<RepoData | null>(null);
   const [task, setTask] = useState("the dashboard chart is broken");
@@ -36,11 +17,8 @@ export function useLocus() {
   const [note, setNote] = useState<string | null>(null);
   const [loadedRepositorySpecifier, setLoadedRepositorySpecifier] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<TaskEvidence[]>([]);
-  const [recentRepos, setRecentRepos] = useState<RecentRepo[]>([]);
   const loadVersion = useRef(0);
   const activeRequest = useRef<AbortController | null>(null);
-
-  useEffect(() => { setRecentRepos(loadRecent()); }, []);
 
   async function open(source: RepoSource, nextTask?: string) {
     activeRequest.current?.abort();
@@ -56,10 +34,6 @@ export function useLocus() {
       setLoadedRepositorySpecifier(source.repositorySpecifier ?? null);
       if (nextTask !== undefined) setTask(nextTask);
       if (n) setNote(n);
-      if (source.kind === "github" && source.repositorySpecifier) {
-        saveRecent(source.repositorySpecifier, r.name);
-        setRecentRepos(loadRecent());
-      }
     } catch (e) {
       if (version !== loadVersion.current) return;
       if (e instanceof DOMException && e.name === "AbortError") return;
@@ -97,8 +71,6 @@ export function useLocus() {
       return () => { active = false; controller.abort(); };
     }
 
-    // Load the first bundled repo by reference — never a hardcoded slug, so a
-    // rename of the demo can't leave this pointing at a deleted repo.
     bundledSource(BUNDLED[0].slug).load(controller.signal).then(({ repo: initialRepo, note: initialNote }) => {
       if (!active || version !== loadVersion.current) return;
       setRepo(initialRepo);
@@ -125,14 +97,8 @@ export function useLocus() {
     [repo],
   );
 
-  const clearRecent = useCallback(() => {
-    localStorage.removeItem(RECENT_KEY);
-    setRecentRepos([]);
-  }, []);
-
   return {
     repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, examples, evidence,
-    recentRepos, clearRecent,
     bundled: BUNDLED,
     setTask, setSelected, setGhUrl,
     addEvidence: (item: TaskEvidence) => setEvidence((current) => [...current, item].slice(-3)),

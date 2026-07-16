@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { REPO_URL } from "@/lib/config";
+
 export const metadata: Metadata = {
   title: "Privacy Policy — Locus",
   description: "How Locus handles your data.",
@@ -20,7 +22,6 @@ export default function PrivacyPage() {
       </header>
       <main className="mx-auto max-w-3xl px-5 py-12">
         <h1 className="text-3xl font-semibold tracking-tight text-paper">Privacy Policy</h1>
-        <p className="mt-2 text-sm text-muted">Last updated: July 2026</p>
 
         <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
           <section>
@@ -52,14 +53,6 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Local storage</h2>
-            <p>
-              We store a small list of recently analyzed repositories in your browser&apos;s
-              localStorage to improve your experience. This data never leaves your browser.
-            </p>
-          </section>
-
-          <section>
             <h2 className="text-lg font-semibold text-paper">Analytics</h2>
             <p>
               We do not use third-party analytics or tracking scripts. Server logs may record
@@ -72,7 +65,7 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-paper">Contact</h2>
             <p>
               Questions about this policy? Open an issue on{" "}
-              <a href="https://github.com/taranggoyal70/locus" className="text-accent hover:underline">
+              <a href={REPO_URL} className="text-accent hover:underline">
                 GitHub
               </a>.
             </p>

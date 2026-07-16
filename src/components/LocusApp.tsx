@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { REPO_URL } from "@/lib/config";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
 import { TaskEvidence } from "@/components/TaskEvidence";
@@ -23,7 +24,6 @@ type LocusAppProps = {
 export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   const {
     repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, evidence,
-    recentRepos,
     examples: bundledExamples, bundled: BUNDLED,
     setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt, addEvidence, removeEvidence,
   } = useLocus();
@@ -104,7 +104,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           <nav className="flex items-center gap-2 text-sm">
             {presentation.showLandingNavigation && <a href="#method" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Method</a>}
             <a
-              href="https://github.com/taranggoyal70/locus"
+              href={REPO_URL}
               className="hidden rounded-lg border border-line-strong px-3 py-2 text-paper transition hover:border-accent/50 hover:text-accent sm:block"
             >
               View source
@@ -226,20 +226,6 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                     </button>
                   ))}
                 </div>
-                {recentRepos.length > 0 && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] text-muted">Recent</span>
-                    {recentRepos.map((r) => (
-                      <button
-                        key={r.url}
-                        onClick={() => { setGhUrl(r.url); loadGithubAt(r.url, task); }}
-                        className="truncate max-w-[180px] rounded-full border border-line px-2.5 py-1 text-[11px] text-muted-light transition hover:border-line-strong hover:text-paper"
-                      >
-                        {r.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <div className="bg-ink/[0.55] p-5 sm:p-6">
@@ -367,7 +353,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
               ))}
             </div>
             <a
-              href="https://github.com/taranggoyal70/locus/tree/main/benchmarks"
+              href={`${REPO_URL}/tree/main/benchmarks`}
               className="mt-6 inline-flex text-sm font-medium text-accent hover:underline"
             >
               Inspect the benchmark and reproduce it
@@ -386,7 +372,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
             </div>
             <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface">
               <div className="border-b border-line px-5 py-4 text-sm font-medium text-paper">Local CLI</div>
-              <pre className="overflow-x-auto p-5 font-mono text-xs leading-6 text-muted-light">{`npx github:taranggoyal70/locus \\
+              <pre className="overflow-x-auto p-5 font-mono text-xs leading-6 text-muted-light">{`npx locus-context \\
   locate "prevent duplicate signup profile writes" --pack`}</pre>
               <div className="border-t border-line px-5 py-4 text-xs text-muted">
                 Zero runtime dependencies. JavaScript and TypeScript repositories are supported.
@@ -406,7 +392,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           <nav className="flex items-center gap-4">
             <Link href="/privacy" className="hover:text-accent">Privacy</Link>
             <Link href="/terms" className="hover:text-accent">Terms</Link>
-            <a href="https://github.com/taranggoyal70/locus" className="hover:text-accent">GitHub</a>
+            <a href={REPO_URL} className="hover:text-accent">GitHub</a>
           </nav>
         </div>
       </footer>
