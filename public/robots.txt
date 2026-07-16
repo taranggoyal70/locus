@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /workspace
+Sitemap: https://locus-five-iota.vercel.app/sitemap.xml
