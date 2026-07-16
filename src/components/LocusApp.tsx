@@ -151,10 +151,10 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                 </Link>
               ) : (
                 <>
-                  <Link href="/projects" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">
+                  <Link href="/projects" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
                     Projects
                   </Link>
-                  <Link href="/settings" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">
+                  <Link href="/settings" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
                     Settings
                   </Link>
                 </>
