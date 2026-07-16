@@ -127,6 +127,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           </Link>
           <nav className="flex items-center gap-2 text-sm">
             {presentation.showLandingNavigation && <a href="#method" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Method</a>}
+            <Link href="/docs" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Docs</Link>
             <a
               href={REPO_URL}
               className="hidden rounded-lg border border-line-strong px-3 py-2 text-paper transition hover:border-accent/50 hover:text-accent sm:block"
