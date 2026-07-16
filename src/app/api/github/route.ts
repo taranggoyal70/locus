@@ -7,7 +7,7 @@ import type { RepoData } from "@/lib/types";
 // shape the localizer uses. Tree comes from the API (1 call, GITHUB_TOKEN
 // optional for higher limits); file contents come from raw.githubusercontent
 // (not API-rate-limited). Capped so arbitrary repos stay responsive.
-const MAX_FILES = 120;
+const MAX_FILES = 200;
 const MAX_FILE_BYTES = 100_000;
 const MAX_TOTAL_BYTES = 5_000_000;
 const MAX_BODY_BYTES = 1_024;
