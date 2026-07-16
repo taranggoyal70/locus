@@ -3,7 +3,7 @@
 import { Show, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { REPO_URL } from "@/lib/config";
 import { DependencyGraph } from "@/components/DependencyGraph";
@@ -28,6 +28,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt, addEvidence, removeEvidence,
   } = useLocus();
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const taskInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -90,6 +91,29 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     void loadGithubAt(`${featuredCase.repo}@${featuredCase.snapshot}`, featuredCase.task);
   }
 
+  const saveAnalysis = useCallback(async () => {
+    if (!repo || !result || !task.trim() || saveStatus === "saving") return;
+    setSaveStatus("saving");
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: repo.name,
+          repo_url: loadedRepositorySpecifier ?? repo.name,
+          task,
+          slice_files: result.slice.length,
+          total_files: graph?.nodes.length ?? 0,
+          saved_pct: result.savedPct,
+        }),
+      });
+      setSaveStatus(res.ok ? "saved" : "failed");
+    } catch {
+      setSaveStatus("failed");
+    }
+    setTimeout(() => setSaveStatus("idle"), 2500);
+  }, [repo, result, task, graph, loadedRepositorySpecifier, saveStatus]);
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
@@ -118,10 +142,19 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
               </Link>
             </Show>
             <Show when="signed-in">
-              {presentation.showLandingNavigation && (
+              {presentation.showLandingNavigation ? (
                 <Link href="/workspace" className="rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-2 font-medium text-accent transition hover:bg-accent/[0.1]">
                   Open workspace
                 </Link>
+              ) : (
+                <>
+                  <Link href="/projects" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">
+                    Projects
+                  </Link>
+                  <Link href="/settings" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">
+                    Settings
+                  </Link>
+                </>
               )}
               <UserButton
                 appearance={{
@@ -279,16 +312,27 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                   <p className="mt-1 truncate text-sm text-paper">{task || "No task described"}</p>
                 </div>
                 {loadedRepositorySpecifier && task.trim() && (
-                  <button
-                    onClick={copyShareView}
-                    className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper"
-                  >
-                    {shareStatus === "copied"
-                      ? "View link copied"
-                      : shareStatus === "failed"
-                        ? "Copy failed — try again"
-                        : "Copy shareable view"}
-                  </button>
+                  <div className="flex gap-2">
+                    {isWorkspace && (
+                      <button
+                        onClick={saveAnalysis}
+                        disabled={saveStatus === "saving"}
+                        className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
+                      >
+                        {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "failed" ? "Save failed" : "Save analysis"}
+                      </button>
+                    )}
+                    <button
+                      onClick={copyShareView}
+                      className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper"
+                    >
+                      {shareStatus === "copied"
+                        ? "View link copied"
+                        : shareStatus === "failed"
+                          ? "Copy failed — try again"
+                          : "Copy shareable view"}
+                    </button>
+                  </div>
                 )}
               </div>
               <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
