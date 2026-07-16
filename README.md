@@ -9,6 +9,15 @@ speculative small slice.
 
 **Live:** https://locus-five-iota.vercel.app
 
+## Four delivery surfaces
+
+| Surface | Use case |
+|---------|----------|
+| **Web app** | Paste a public repo, describe a task, copy the context |
+| **REST API** | Programmatic access for CI, agents, and custom tooling |
+| **CLI** | `npx locus-context locate "fix billing" --pack` |
+| **MCP server** | JSON-RPC over stdio for Claude, Cursor, and MCP-enabled agents |
+
 ## Evidence
 
 The reproducible historical-task benchmark replays Locus on the parent snapshots
@@ -18,10 +27,7 @@ of nine real fixes across Locus, Agent Access, and Solum:
 - **53% median estimated context reduction**
 - **2 conservative whole-repo fallbacks**
 
-This measures whether Locus includes the files developers changed next.
-It does not prove autonomous agent completion, guarantee that excluded files are
-unnecessary, or promise unchanged quality. See [the full method and every
-case](./benchmarks/README.md), or run:
+See [the full method and every case](./benchmarks/README.md), or run:
 
 ```bash
 npm run benchmark
@@ -49,25 +55,64 @@ runs in the browser. Attachments are never written to storage.
 The hosted GitHub importer accepts public repositories (up to 200 source files).
 Use the local CLI for larger repositories.
 
+## REST API
+
+Authenticate with an API key (create one in Settings) and call:
+
+```bash
+curl -X POST https://locus-five-iota.vercel.app/api/v1/locate \
+  -H "Authorization: Bearer lk_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"repo": "owner/repo", "task": "fix the login bug"}'
+```
+
+**Request body:**
+- `repo` (string, required) — `owner/repo`, `owner/repo@ref`, or GitHub URL
+- `task` (string, required) — natural language task description
+- `evidence` (string, optional) — error logs, stack traces, etc.
+- `budget` (number, optional) — max tokens for packed context (default: 40,000)
+
+**Response:** JSON with `slice`, `anchors`, `tokens`, and packed `context`.
+
+Rate limit: 30 requests/minute per user. Full reference at [/docs](https://locus-five-iota.vercel.app/docs).
+
 ## Run the web app
 
 ```bash
 pnpm install
+cp .env.example .env.local   # fill in your keys
 pnpm dev
 ```
 
-A `GITHUB_TOKEN` is optional and increases GitHub API rate limits.
+### Required environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk authentication |
+| `CLERK_SECRET_KEY` | Clerk server-side auth |
+
+### Optional environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `GITHUB_TOKEN` | Higher GitHub API rate limits |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side) |
+| `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
+| `NEXT_PUBLIC_REPO_URL` | Source repo URL |
 
 ### Authentication
 
 Locus uses Clerk for account creation, email verification, and secure sessions.
 Signed-out visitors go to login; signed-in users go to `/workspace`.
 
-Create a free Clerk resource through the Vercel Marketplace and provide:
+### Persistence
+
+Supabase stores saved analyses, API keys, and usage analytics. Run the migration:
 
 ```bash
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
-CLERK_SECRET_KEY=...
+psql $DATABASE_URL < supabase/migrations/001_initial_schema.sql
 ```
 
 ### Export formats
@@ -119,6 +164,8 @@ pnpm benchmark
 
 ## Links
 
+- [API Docs](/docs)
+- [Pricing](/pricing)
 - [Privacy Policy](/privacy)
 - [Terms of Service](/terms)
 - [Benchmarks](./benchmarks/README.md)
@@ -126,6 +173,6 @@ pnpm benchmark
 
 ---
 
-Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · Vitest · Vercel
+Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · Supabase · Clerk · Vitest · Vercel
 
 MIT © Tarang Goyal
