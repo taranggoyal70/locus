@@ -60,3 +60,36 @@ describe("locate", () => {
     expect(r.task).toBe("fix this");
   });
 });
+
+describe("buildGraph", () => {
+  it("discovers edges from require() and dynamic import() calls", () => {
+    const jsRepo: RepoData = {
+      name: "test", slug: "test", description: "", root: "",
+      recentlyChanged: [],
+      files: {
+        "app.js": 'const db = require("./db");\nimport("./utils").then(m => m.init());',
+        "db.js": "export const connect = () => {};",
+        "utils.js": "export const init = () => {};",
+      },
+    };
+    const g = buildGraph(jsRepo);
+    expect(g.nodes).toHaveLength(3);
+    expect(g.deps["app.js"]).toContain("db.js");
+    expect(g.deps["app.js"]).toContain("utils.js");
+  });
+
+  it("indexes .js and .jsx files alongside TypeScript", () => {
+    const mixedRepo: RepoData = {
+      name: "mixed", slug: "mixed", description: "", root: "src",
+      recentlyChanged: [],
+      files: {
+        "src/app/page.tsx": 'import { Button } from "@/components/Button";',
+        "src/components/Button.jsx": "export function Button() { return <button />; }",
+        "src/lib/utils.js": "export const clamp = (n) => Math.max(0, n);",
+      },
+    };
+    const g = buildGraph(mixedRepo);
+    expect(g.nodes).toHaveLength(3);
+    expect(g.deps["src/app/page.tsx"]).toContain("src/components/Button.jsx");
+  });
+});
