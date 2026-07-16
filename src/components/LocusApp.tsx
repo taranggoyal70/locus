@@ -29,7 +29,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt, addEvidence, removeEvidence,
   } = useLocus();
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const [saveStatus, setSaveStatus] = useState<string>("idle");
   const taskInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -108,11 +108,16 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           saved_pct: result.savedPct,
         }),
       });
-      setSaveStatus(res.ok ? "saved" : "failed");
+      if (res.ok) {
+        setSaveStatus("saved");
+      } else {
+        const err = await res.json().catch(() => null);
+        setSaveStatus(err?.error ?? "failed");
+      }
     } catch {
       setSaveStatus("failed");
     }
-    setTimeout(() => setSaveStatus("idle"), 2500);
+    setTimeout(() => setSaveStatus("idle"), 3500);
   }, [repo, result, task, graph, loadedRepositorySpecifier, saveStatus]);
 
   return (
@@ -323,7 +328,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                         disabled={saveStatus === "saving"}
                         className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
                       >
-                        {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "failed" ? "Save failed" : "Save analysis"}
+                        {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "idle" ? "Save analysis" : saveStatus}
                       </button>
                     )}
                     <button
