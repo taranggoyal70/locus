@@ -5,6 +5,29 @@ import { authenticateApiKey } from "@/lib/api-auth";
 import { buildGraph, locate } from "@/lib/localizer";
 import type { RepoData } from "@/lib/types";
 
+const API_RATE_LIMIT = 30;
+const API_RATE_WINDOW_MS = 60_000;
+type RateEntry = { count: number; resetAt: number };
+const apiRateLimits = new Map<string, RateEntry>();
+
+function checkApiRateLimit(userId: string): { allowed: boolean; remaining: number; retryAfter: number } {
+  const now = Date.now();
+  const current = apiRateLimits.get(userId);
+  const entry = !current || current.resetAt <= now
+    ? { count: 0, resetAt: now + API_RATE_WINDOW_MS }
+    : current;
+  entry.count += 1;
+  apiRateLimits.set(userId, entry);
+  if (apiRateLimits.size > 10_000) {
+    for (const [k, v] of apiRateLimits) if (v.resetAt <= now) apiRateLimits.delete(k);
+  }
+  return {
+    allowed: entry.count <= API_RATE_LIMIT,
+    remaining: Math.max(0, API_RATE_LIMIT - entry.count),
+    retryAfter: Math.max(1, Math.ceil((entry.resetAt - now) / 1_000)),
+  };
+}
+
 const MAX_FILES = 200;
 const MAX_FILE_BYTES = 100_000;
 const MAX_TOTAL_BYTES = 5_000_000;
@@ -129,6 +152,14 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Invalid or missing API key. Use Authorization: Bearer lk_..." },
       { status: 401 },
+    );
+  }
+
+  const rate = checkApiRateLimit(apiKey.userId);
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfter), "X-RateLimit-Remaining": "0" } },
     );
   }
 
