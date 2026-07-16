@@ -312,7 +312,8 @@ export async function POST(request: Request) {
       { headers: rateHeaders },
     );
   } catch (error) {
-    console.error("GitHub repository load failed", {
+    const { logger } = await import("@/lib/logger");
+    logger.error("GitHub repository load failed", {
       name: error instanceof Error ? error.name : "UnknownError",
       message: error instanceof Error ? error.message : "Unknown failure",
     });
