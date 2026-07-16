@@ -23,6 +23,7 @@ type LocusAppProps = {
 export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   const {
     repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, evidence,
+    recentRepos,
     examples: bundledExamples, bundled: BUNDLED,
     setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt, addEvidence, removeEvidence,
   } = useLocus();
@@ -204,6 +205,20 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                     </button>
                   ))}
                 </div>
+                {recentRepos.length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] text-muted">Recent</span>
+                    {recentRepos.map((r) => (
+                      <button
+                        key={r.url}
+                        onClick={() => { setGhUrl(r.url); loadGithubAt(r.url, task); }}
+                        className="truncate max-w-[180px] rounded-full border border-line px-2.5 py-1 text-[11px] text-muted-light transition hover:border-line-strong hover:text-paper"
+                      >
+                        {r.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="bg-ink/[0.55] p-5 sm:p-6">
