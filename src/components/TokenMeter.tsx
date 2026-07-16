@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { trackClient } from "@/lib/trackClient";
 import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
 
 const BUDGET = 40_000;
@@ -69,6 +70,7 @@ export function TokenMeter({
     try {
       await navigator.clipboard.writeText(packed.text);
       setCopied(`Copied ${packed.files} files · ~${packed.tokens.toLocaleString()} tokens`);
+      trackClient("context_copied", { format, files: packed.files, tokens: packed.tokens });
       setTimeout(() => setCopied(null), 2500);
     } catch {
       setCopied("Copy failed");
