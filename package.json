@@ -13,7 +13,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "benchmark": "node scripts/benchmark.mjs --write",
-    "sync-cli": "cp bin/*.mjs cli/"
+    "sync-cli": "cp bin/*.mjs cli/",
+    "check-sync": "diff bin/core.mjs cli/core.mjs && diff bin/locus.mjs cli/locus.mjs && diff bin/mcp.mjs cli/mcp.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.17",
