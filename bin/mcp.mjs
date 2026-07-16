@@ -46,6 +46,10 @@ const TOOLS = [
           type: "string",
           description: "Repo directory to analyze. Defaults to the server process's cwd.",
         },
+        evidence: {
+          type: "string",
+          description: "Additional context (error messages, stack traces) to improve file matching.",
+        },
         pack: {
           type: "boolean",
           description: "If true, also include a ready-to-paste packed context block of the slice's file contents.",
@@ -62,10 +66,11 @@ function runLocate(args) {
     throw new Error("task (non-empty string) is required");
   }
   const dir = args.path ? path.resolve(String(args.path)) : process.cwd();
+  const evidence = typeof args.evidence === "string" ? args.evidence : "";
   const pack = !!args.pack;
   const repo = loadLocalRepo(dir);
   const graph = buildGraph(repo);
-  const result = locate(task, repo, graph);
+  const result = locate(task, repo, graph, evidence);
   let text = formatResult(result);
   if (pack) {
     const packed = buildPackedContext(result, repo, 40000);
