@@ -68,6 +68,17 @@ type WaitlistRow = {
   created_at: string;
 };
 
+type SubscriptionRow = {
+  id: string;
+  user_id: string;
+  stripe_customer_id: string;
+  stripe_subscription_id: string;
+  plan: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -111,6 +122,12 @@ export type Database = {
         Row: WaitlistRow;
         Insert: Omit<WaitlistRow, "id" | "created_at">;
         Update: never;
+        Relationships: [];
+      };
+      subscriptions: {
+        Row: SubscriptionRow;
+        Insert: Omit<SubscriptionRow, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<SubscriptionRow, "id" | "created_at" | "updated_at">>;
         Relationships: [];
       };
     };
