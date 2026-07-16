@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { track } from "@/lib/analytics";
 import { authenticateApiKey } from "@/lib/api-auth";
 import { buildGraph, locate } from "@/lib/localizer";
-import type { RepoData } from "@/lib/types";
+import { fileContent, type RepoData } from "@/lib/types";
 
 const API_RATE_LIMIT = 30;
 const API_RATE_WINDOW_MS = 60_000;
@@ -186,7 +186,7 @@ export async function POST(request: Request) {
     const packed: string[] = [];
     let tokens = 0;
     for (const f of result.slice) {
-      const content = repo.files[f.path] ?? repo.files[repo.root ? `${repo.root}/${f.rel}` : f.rel];
+      const content = fileContent(repo, f.rel);
       if (!content) continue;
       const t = Math.ceil(content.length / 4);
       if (packed.length > 0 && tokens + t > budget) continue;
