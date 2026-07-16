@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
-export const metadata: Metadata = {
-  title: "Pricing — Locus",
-  description: "Start free with public repos. Upgrade for private repos, team workspaces, and higher API limits.",
-};
+import { WaitlistForm } from "@/components/WaitlistForm";
 
 const tiers = [
   {
@@ -24,6 +23,7 @@ const tiers = [
     ],
     cta: "Get started",
     ctaHref: "/sign-up",
+    action: "link" as const,
     highlighted: false,
   },
   {
@@ -42,7 +42,8 @@ const tiers = [
       "Usage analytics dashboard",
     ],
     cta: "Join waitlist",
-    ctaHref: "mailto:intern@gohighview.com?subject=Locus%20Pro%20waitlist&body=I%27d%20like%20to%20join%20the%20Locus%20Pro%20waitlist.",
+    ctaHref: "",
+    action: "waitlist" as const,
     highlighted: true,
   },
   {
@@ -61,11 +62,14 @@ const tiers = [
     ],
     cta: "Contact us",
     ctaHref: "mailto:intern@gohighview.com",
+    action: "link" as const,
     highlighted: false,
   },
 ];
 
 export default function PricingPage() {
+  const [showWaitlist, setShowWaitlist] = useState(false);
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
@@ -122,7 +126,14 @@ export default function PricingPage() {
               </ul>
 
               <div className="mt-8">
-                {tier.ctaHref ? (
+                {tier.action === "waitlist" ? (
+                  <button
+                    onClick={() => setShowWaitlist(true)}
+                    className="block w-full rounded-xl bg-accent px-4 py-3 text-center text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
+                  >
+                    {tier.cta}
+                  </button>
+                ) : (
                   <Link
                     href={tier.ctaHref}
                     className={`block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition ${
@@ -133,10 +144,6 @@ export default function PricingPage() {
                   >
                     {tier.cta}
                   </Link>
-                ) : (
-                  <span className="block w-full rounded-xl border border-line px-4 py-3 text-center text-sm font-medium text-muted">
-                    {tier.cta}
-                  </span>
                 )}
               </div>
             </div>
@@ -152,6 +159,8 @@ export default function PricingPage() {
           </p>
         </div>
       </main>
+
+      {showWaitlist && <WaitlistForm onClose={() => setShowWaitlist(false)} />}
     </div>
   );
 }
