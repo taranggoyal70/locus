@@ -132,12 +132,32 @@ export function TokenMeter({
               </button>
             ))}
           </div>
-          <button
-            onClick={copy}
-            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
-          >
-            {copied ?? "Copy context for your agent"}
-          </button>
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={copy}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
+            >
+              {copied ?? "Copy context"}
+            </button>
+            <button
+              onClick={() => {
+                if (!repo || !result) return;
+                const packed = packContext(repo, result, format);
+                const ext = format === "claude" ? "xml" : "md";
+                const blob = new Blob([packed.text], { type: "text/plain" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `locus-context.${ext}`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+                trackClient("context_copied", { format, files: packed.files, tokens: packed.tokens, method: "download" });
+              }}
+              className="rounded-xl border border-line-strong px-3 py-3 text-sm text-muted-light transition hover:border-accent/40 hover:text-paper"
+              title="Download as file"
+            >
+              ↓
+            </button>
+          </div>
         </>
       )}
       {result && !result.widened && (
