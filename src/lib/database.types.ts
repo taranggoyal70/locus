@@ -42,7 +42,7 @@ export type Database = {
       };
       api_keys: {
         Row: ApiKeyRow;
-        Insert: Omit<ApiKeyRow, "id" | "created_at">;
+        Insert: Omit<ApiKeyRow, "id" | "created_at" | "last_used_at"> & { last_used_at?: string | null };
         Update: Partial<Omit<ApiKeyRow, "id" | "created_at">>;
         Relationships: [];
       };
