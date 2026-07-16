@@ -179,6 +179,11 @@ export async function POST(request: Request) {
     ));
   }
 
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > 50_000) {
+    return cors(NextResponse.json({ error: "Request body too large." }, { status: 413 }));
+  }
+
   let body: { repo: string; task: string; evidence?: string; budget?: number };
   try {
     body = await request.json();
@@ -186,11 +191,14 @@ export async function POST(request: Request) {
     return cors(NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 }));
   }
 
-  if (!body.repo || typeof body.repo !== "string") {
-    return cors(NextResponse.json({ error: "repo (string) is required." }, { status: 400 }));
+  if (!body.repo || typeof body.repo !== "string" || body.repo.length > 300) {
+    return cors(NextResponse.json({ error: "repo (string, max 300 chars) is required." }, { status: 400 }));
   }
-  if (!body.task || typeof body.task !== "string") {
-    return cors(NextResponse.json({ error: "task (string) is required." }, { status: 400 }));
+  if (!body.task || typeof body.task !== "string" || body.task.length > 1000) {
+    return cors(NextResponse.json({ error: "task (string, max 1000 chars) is required." }, { status: 400 }));
+  }
+  if (body.evidence && (typeof body.evidence !== "string" || body.evidence.length > 50_000)) {
+    return cors(NextResponse.json({ error: "evidence must be a string under 50,000 characters." }, { status: 400 }));
   }
 
   try {
