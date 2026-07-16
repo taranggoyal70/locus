@@ -1,8 +1,8 @@
-# ⊙ Locus
+# Locus
 
-**Focused code context for AI coding agents.**
+**Task-sized context for AI coding agents.**
 
-Locus maps a natural-language task to a focused TypeScript/Next.js code slice:
+Locus maps a natural-language task to a focused JavaScript/TypeScript code slice:
 matching files, their dependency closure, nearby integration points, and relevant
 recent changes. When the evidence is weak, it returns the whole repo instead of a
 speculative small slice.
@@ -18,7 +18,7 @@ of nine real fixes across Locus, Agent Access, and Solum:
 - **53% median estimated context reduction**
 - **2 conservative whole-repo fallbacks**
 
-This measures whether Locus includes the TypeScript files developers changed next.
+This measures whether Locus includes the files developers changed next.
 It does not prove autonomous agent completion, guarantee that excluded files are
 unnecessary, or promise unchanged quality. See [the full method and every
 case](./benchmarks/README.md), or run:
@@ -29,20 +29,25 @@ npm run benchmark
 
 ## How it works
 
-1. Parse relative and `@/` imports into a deterministic dependency graph.
-2. Match meaningful task words against TypeScript paths and source text.
+1. Parse `import`, `require()`, dynamic `import()`, and `@/` aliases into a deterministic dependency graph.
+2. Match meaningful task words against file paths and source text.
 3. Add dependency closures, direct consumers, and recent cross-cutting matches.
 4. Widen to all loaded files when the evidence is insufficient.
 
-Users can also attach task evidence: screenshots, PDFs, DOCX files, Markdown,
-or plain text. Extracted words strengthen task matching while the original task
-remains unchanged in the generated context pack. Documents are processed in
-server memory with `no-store` responses; screenshot OCR runs in the browser with
-OCR caching disabled. Attachments are never written to Locus storage.
+### Task evidence
 
-The current beta intentionally supports `.ts` and `.tsx` files. The hosted
-GitHub importer accepts public repositories and caps each request at 120 supported
-source files. Use the local CLI for larger repositories.
+Attach screenshots, PDFs, DOCX files, or plain text to strengthen task matching.
+Documents are processed in server memory and immediately discarded. Screenshot OCR
+runs in the browser. Attachments are never written to storage.
+
+### Supported files
+
+- `.ts`, `.tsx`, `.js`, `.jsx`
+- Next.js App Router surface detection (any extension)
+- `require()` and dynamic `import()` dependency edges
+
+The hosted GitHub importer accepts public repositories (up to 200 source files).
+Use the local CLI for larger repositories.
 
 ## Run the web app
 
@@ -51,48 +56,42 @@ pnpm install
 pnpm dev
 ```
 
-A `GITHUB_TOKEN` is optional for the hosted importer and increases GitHub API
-rate limits.
+A `GITHUB_TOKEN` is optional and increases GitHub API rate limits.
 
-### Accounts and protected workspace
+### Authentication
 
-Locus uses Clerk for real account creation, email verification, secure sessions,
-profile management, and sign-out. The main URL is the account gateway: signed-out
-visitors go to login and signed-in users go directly to `/workspace`. Product
-access, repository analysis, and shared workspace views require authentication.
+Locus uses Clerk for account creation, email verification, and secure sessions.
+Signed-out visitors go to login; signed-in users go to `/workspace`.
 
-Create a free Clerk resource through the Vercel Marketplace, connect it to the
-project, and provide these variables for local development:
+Create a free Clerk resource through the Vercel Marketplace and provide:
 
 ```bash
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
 CLERK_SECRET_KEY=...
 ```
 
-Authentication routes:
+### Export formats
 
-- `/` — route users to login or their workspace
-- `/sign-up` — create an account
-- `/sign-in` — return to an account
-- `/workspace` — authenticated product workspace
-- `/demo` — legacy route protected by authentication
-- `/api/attachments` — authenticated, in-memory document text extraction
+Copy context in three formats:
+- **Generic** — markdown with `===== file =====` separators
+- **Claude** — XML-wrapped `<context>` blocks
+- **Cursor** — `// File:` comment-style headers
 
-## Use the CLI today
-
-Until the npm release is available, run directly from GitHub:
+## Use the CLI
 
 ```bash
 npx github:taranggoyal70/locus locate "fix the dashboard billing" --pack
-npx github:taranggoyal70/locus locate "fix the dashboard billing"
+npx github:taranggoyal70/locus locate "login error" --evidence "TypeError: Cannot read property 'email'"
 ```
 
-The CLI and MCP server have no runtime dependencies. `--pack` emits the selected
-file contents as a token-bounded block.
+Options:
+- `--pack` — emit the slice as a token-bounded paste block
+- `--json` — machine-readable LocateResult
+- `--evidence <text>` — error messages or stack traces to improve matching
+- `--budget <n>` — token budget for `--pack` (default: 40,000)
+- `--path <dir>` — repo directory (default: cwd)
 
 ## MCP server
-
-From a clone:
 
 ```json
 {
@@ -105,18 +104,27 @@ From a clone:
 }
 ```
 
-The server exposes `locate(task, path?, pack?)`. The standalone publishable
-package lives in [`cli/`](./cli); `npm run sync-cli` mirrors the executable
-files from `bin/`.
+The server exposes `locate(task, path?, evidence?, pack?)`. The publishable
+npm package lives in [`cli/`](./cli); `npm run sync-cli` mirrors files from `bin/`.
 
 ## Validate
 
 ```bash
-npm test
-npm run lint
-npm run build
-npm run benchmark
+pnpm test
+pnpm lint
+pnpm check-sync
+pnpm build
+pnpm benchmark
 ```
+
+## Links
+
+- [Privacy Policy](/privacy)
+- [Terms of Service](/terms)
+- [Benchmarks](./benchmarks/README.md)
+- [Domain Language](./CONTEXT.md)
+
+---
 
 Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · Vitest · Vercel
 
