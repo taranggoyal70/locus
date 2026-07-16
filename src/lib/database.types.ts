@@ -1,48 +1,61 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+type ProjectRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  repo_url: string;
+  task: string;
+  slice_files: number;
+  total_files: number;
+  saved_pct: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type ApiKeyRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  key_hash: string;
+  prefix: string;
+  last_used_at: string | null;
+  created_at: string;
+};
+
+type EventRow = {
+  id: string;
+  user_id: string | null;
+  event: string;
+  properties: Json;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
       projects: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          repo_url: string;
-          task: string;
-          slice_files: number;
-          total_files: number;
-          saved_pct: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Omit<Database["public"]["Tables"]["projects"]["Row"], "id" | "created_at" | "updated_at">;
-        Update: Partial<Database["public"]["Tables"]["projects"]["Insert"]>;
+        Row: ProjectRow;
+        Insert: Omit<ProjectRow, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<ProjectRow, "id" | "created_at" | "updated_at">>;
+        Relationships: [];
       };
       api_keys: {
-        Row: {
-          id: string;
-          user_id: string;
-          name: string;
-          key_hash: string;
-          prefix: string;
-          last_used_at: string | null;
-          created_at: string;
-        };
-        Insert: Omit<Database["public"]["Tables"]["api_keys"]["Row"], "id" | "created_at">;
-        Update: Partial<Database["public"]["Tables"]["api_keys"]["Insert"]>;
+        Row: ApiKeyRow;
+        Insert: Omit<ApiKeyRow, "id" | "created_at">;
+        Update: Partial<Omit<ApiKeyRow, "id" | "created_at">>;
+        Relationships: [];
       };
       events: {
-        Row: {
-          id: string;
-          user_id: string | null;
-          event: string;
-          properties: Json;
-          created_at: string;
-        };
-        Insert: Omit<Database["public"]["Tables"]["events"]["Row"], "id" | "created_at">;
+        Row: EventRow;
+        Insert: Omit<EventRow, "id" | "created_at">;
         Update: never;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };
