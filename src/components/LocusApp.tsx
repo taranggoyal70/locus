@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { REPO_URL } from "@/lib/config";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { TaskEvidence } from "@/components/TaskEvidence";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
@@ -172,6 +173,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
       </header>
 
       <main id="top">
+        {isWorkspace && !loadedRepositorySpecifier && <OnboardingBanner />}
         <section className={`mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end ${presentation.heroSpacing}`}>
           <div>
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
