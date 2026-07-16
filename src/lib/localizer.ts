@@ -153,7 +153,13 @@ const STOP = new Set(["the", "a", "an", "is", "are", "in", "on", "of", "to", "fi
   "please", "hey", "hi", "this", "that", "how", "can", "you", "need", "want", "just",
   "some", "something", "what", "whats", "why", "where", "when", "who", "which", "does",
   "doesnt", "cant", "wont", "should", "would", "could", "get", "got", "let", "lets",
-  "app", "code", "file", "files", "thing", "stuff", "please", "now", "here"]);
+  "app", "code", "file", "files", "thing", "stuff", "please", "now", "here",
+  "also", "like", "look", "looks", "into", "from", "but", "its", "been", "have", "has",
+  "was", "were", "will", "being", "had", "having", "did", "doing", "about", "than",
+  "very", "too", "only", "then", "there", "these", "those", "each", "every", "all",
+  "any", "both", "few", "more", "most", "other", "still", "such", "new", "old",
+  "see", "try", "use", "run", "set", "put", "move", "give", "take", "come", "going",
+  "think", "know", "work", "seems", "seem", "maybe", "sure", "really", "currently"]);
 
 function taskWords(task: string): Set<string> {
   // Require length >= 3 so short substrings ("me", "hi") can't false-match
