@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
+
 import { SITE_URL } from "@/lib/config";
 import Image from "next/image";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "API Reference — Locus",
+  description: "Use the Locus API to get task-sized context from any GitHub repository for your AI coding agents.",
+};
 
 export default function DocsPage() {
   return (
