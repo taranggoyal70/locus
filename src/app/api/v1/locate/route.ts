@@ -146,35 +146,51 @@ async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoDat
   };
 }
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400",
+};
+
+export function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
+function cors(response: NextResponse): NextResponse {
+  for (const [k, v] of Object.entries(CORS_HEADERS)) response.headers.set(k, v);
+  return response;
+}
+
 export async function POST(request: Request) {
   const apiKey = await authenticateApiKey(request);
   if (!apiKey) {
-    return NextResponse.json(
+    return cors(NextResponse.json(
       { error: "Invalid or missing API key. Use Authorization: Bearer lk_..." },
       { status: 401 },
-    );
+    ));
   }
 
   const rate = checkApiRateLimit(apiKey.userId);
   if (!rate.allowed) {
-    return NextResponse.json(
+    return cors(NextResponse.json(
       { error: "Rate limit exceeded. Try again shortly." },
       { status: 429, headers: { "Retry-After": String(rate.retryAfter), "X-RateLimit-Remaining": "0" } },
-    );
+    ));
   }
 
   let body: { repo: string; task: string; evidence?: string; budget?: number };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return cors(NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 }));
   }
 
   if (!body.repo || typeof body.repo !== "string") {
-    return NextResponse.json({ error: "repo (string) is required." }, { status: 400 });
+    return cors(NextResponse.json({ error: "repo (string) is required." }, { status: 400 }));
   }
   if (!body.task || typeof body.task !== "string") {
-    return NextResponse.json({ error: "task (string) is required." }, { status: 400 });
+    return cors(NextResponse.json({ error: "task (string) is required." }, { status: 400 }));
   }
 
   try {
@@ -206,7 +222,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
+    return cors(NextResponse.json({
       task: result.task,
       widened: result.widened,
       reason: result.reason,
@@ -220,11 +236,11 @@ export async function POST(request: Request) {
       excluded: result.excluded,
       tokens: { slice: result.sliceTokens, total: result.totalTokens, savedPct: result.savedPct },
       context: packed.join("\n\n"),
-    });
+    }));
   } catch (error) {
-    return NextResponse.json(
+    return cors(NextResponse.json(
       { error: error instanceof Error ? error.message : "Analysis failed." },
       { status: 422 },
-    );
+    ));
   }
 }
