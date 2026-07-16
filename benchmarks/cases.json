@@ -18,6 +18,24 @@
     "task": "vague conversational tasks should widen instead of false anchoring"
   },
   {
+    "repo": "taranggoyal70/locus",
+    "localPath": ".",
+    "commit": "2ff9895",
+    "task": "show the server error message when saving an analysis fails"
+  },
+  {
+    "repo": "taranggoyal70/locus",
+    "localPath": ".",
+    "commit": "b92d859",
+    "task": "fix the settings shell navigation to highlight the active route"
+  },
+  {
+    "repo": "taranggoyal70/locus",
+    "localPath": ".",
+    "commit": "0831be0",
+    "task": "memoize the origin value in the API keys quick start section"
+  },
+  {
     "repo": "taranggoyal70/agent-access",
     "localPath": "../agent-access/platform",
     "commit": "50a3e9e",
@@ -53,5 +71,23 @@
     "localPath": "../Solum",
     "commit": "425bb89",
     "task": "fix the post-call webhook payload handling"
+  },
+  {
+    "repo": "taranggoyal70/Solum",
+    "localPath": "../Solum",
+    "commit": "6a4a3aa",
+    "task": "clip the auth page decorative elements so they do not overflow"
+  },
+  {
+    "repo": "taranggoyal70/Solum",
+    "localPath": "../Solum",
+    "commit": "e9d4346",
+    "task": "fix the mobile landing page layout to prevent horizontal overflow"
+  },
+  {
+    "repo": "taranggoyal70/Solum",
+    "localPath": "../Solum",
+    "commit": "5c82dff",
+    "task": "update the mood check-in options and improve styling"
   }
 ]

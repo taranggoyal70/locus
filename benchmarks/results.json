@@ -1,12 +1,12 @@
 {
   "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.",
   "summary": {
-    "generatedAt": "2026-07-15T01:47:54.360Z",
-    "cases": 9,
+    "generatedAt": "2026-07-16T19:03:02.282Z",
+    "cases": 15,
     "repositories": 3,
     "fixFileRecall": 1,
-    "casesWithFullRecall": 9,
-    "medianContextReductionPct": 53,
+    "casesWithFullRecall": 15,
+    "medianContextReductionPct": 54,
     "widenedCases": 2,
     "gate": {
       "fullRecall": true,
@@ -32,10 +32,8 @@
       "contextReductionPct": 3,
       "anchors": [
         "app/api/github/route.ts",
-        "lib/sources.ts",
         "lib/types.ts",
-        "app/page.tsx",
-        "hooks/useLocus.ts"
+        "app/page.tsx"
       ]
     },
     {
@@ -80,6 +78,75 @@
       "files": "15/15",
       "contextReductionPct": 0,
       "anchors": []
+    },
+    {
+      "repo": "taranggoyal70/locus",
+      "commit": "2ff9895",
+      "snapshot": "23b888c",
+      "task": "show the server error message when saving an analysis fails",
+      "featured": false,
+      "expected": [
+        "src/components/LocusApp.tsx"
+      ],
+      "found": [
+        "src/components/LocusApp.tsx"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "21/61",
+      "contextReductionPct": 47,
+      "anchors": [
+        "app/api/v1/locate/route.ts",
+        "components/LocusApp.tsx",
+        "app/docs/page.tsx"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/locus",
+      "commit": "b92d859",
+      "snapshot": "9ab6912",
+      "task": "fix the settings shell navigation to highlight the active route",
+      "featured": false,
+      "expected": [
+        "src/components/SettingsShell.tsx"
+      ],
+      "found": [
+        "src/components/SettingsShell.tsx"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "13/60",
+      "contextReductionPct": 79,
+      "anchors": [
+        "app/settings/page.tsx",
+        "app/api/attachments/route.test.ts",
+        "app/api/github/route.test.ts"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/locus",
+      "commit": "0831be0",
+      "snapshot": "e879a03",
+      "task": "memoize the origin value in the API keys quick start section",
+      "featured": false,
+      "expected": [
+        "src/components/ApiKeysPanel.tsx"
+      ],
+      "found": [
+        "src/components/ApiKeysPanel.tsx"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "27/58",
+      "contextReductionPct": 34,
+      "anchors": [
+        "app/api/keys/route.ts",
+        "app/api/v1/locate/route.ts",
+        "app/api/github/route.ts",
+        "components/ApiKeysPanel.tsx",
+        "lib/api-auth.test.ts",
+        "components/LocusApp.tsx"
+      ]
     },
     {
       "repo": "taranggoyal70/agent-access",
@@ -213,6 +280,85 @@
         "app/api/call/start/route.ts",
         "hooks/useCall.ts",
         "scripts/setup-elevenlabs-agents.ts"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/Solum",
+      "commit": "6a4a3aa",
+      "snapshot": "e9d4346",
+      "task": "clip the auth page decorative elements so they do not overflow",
+      "featured": false,
+      "expected": [
+        "app/(auth)/login/page.tsx",
+        "app/(auth)/signup/page.tsx"
+      ],
+      "found": [
+        "app/(auth)/login/page.tsx",
+        "app/(auth)/signup/page.tsx"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "16/57",
+      "contextReductionPct": 54,
+      "anchors": [
+        "app/(auth)/login/page.tsx",
+        "app/(auth)/signup/page.tsx",
+        "app/dashboard/settings/page.tsx",
+        "app/dashboard/page.tsx",
+        "components/landing/FAQ.tsx"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/Solum",
+      "commit": "e9d4346",
+      "snapshot": "e285b2f",
+      "task": "fix the mobile landing page layout to prevent horizontal overflow",
+      "featured": false,
+      "expected": [
+        "app/page.tsx",
+        "components/landing/FAQ.tsx",
+        "components/landing/FinalCTA.tsx",
+        "components/landing/Footer.tsx"
+      ],
+      "found": [
+        "app/page.tsx",
+        "components/landing/FAQ.tsx",
+        "components/landing/FinalCTA.tsx",
+        "components/landing/Footer.tsx"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "10/57",
+      "contextReductionPct": 88,
+      "anchors": [
+        "components/landing/FAQ.tsx",
+        "components/landing/FinalCTA.tsx",
+        "app/layout.tsx",
+        "components/landing/CompanionShowcase.tsx",
+        "components/landing/Footer.tsx",
+        "components/landing/HowItWorks.tsx"
+      ]
+    },
+    {
+      "repo": "taranggoyal70/Solum",
+      "commit": "5c82dff",
+      "snapshot": "e8453c9",
+      "task": "update the mood check-in options and improve styling",
+      "featured": false,
+      "expected": [
+        "components/dashboard/MoodCheckIn.tsx"
+      ],
+      "found": [
+        "components/dashboard/MoodCheckIn.tsx"
+      ],
+      "recall": 1,
+      "widened": false,
+      "files": "7/48",
+      "contextReductionPct": 78,
+      "anchors": [
+        "components/dashboard/MoodCheckIn.tsx",
+        "app/(auth)/signup/page.tsx",
+        "app/dashboard/page.tsx"
       ]
     }
   ]
