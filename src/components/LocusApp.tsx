@@ -36,10 +36,13 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
         e.preventDefault();
         taskInputRef.current?.focus();
       }
+      if (e.key === "Escape" && selected) {
+        setSelected(null);
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [selected, setSelected]);
   const presentation = isWorkspace ? {
     homeHref: "/workspace",
     showLandingNavigation: false,
