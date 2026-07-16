@@ -1,7 +1,7 @@
 # Locus — Context
 
-Locus maps a task ("fix the dashboard") to a focused **Slice** of a TypeScript
-Repo, instead of always loading the whole tree. It **Widens** when the available
+Locus maps a task ("fix the dashboard") to a focused **Slice** of a JavaScript or
+TypeScript Repo, instead of always loading the whole tree. It **Widens** when the available
 evidence is weak. This is a conservative fallback, not a quality guarantee. This
 file is the second-brain: read it once instead of re-crawling the repo.
 
@@ -72,13 +72,13 @@ _Avoid_: knowledge base, document store, uploaded asset.
 - `src/lib/types.ts` — every shape above (**Repo**, `Graph`, **LocateResult**).
 - `src/lib/localizer.ts` — **Localize**: `buildGraph(repo)` then `locate(task, repo, graph)`.
   `buildGraph` is separate on purpose — build once, **Localize** many as the task changes.
-- `src/lib/layout.ts` — pure graph → positions (the **Graph** view's math; testable without React).
+- `src/components/ErrorBoundary.tsx` — React error boundary for graceful crash recovery.
 - `src/lib/sources.ts` — the **RepoSource** interface + Bundled/GitHub adapters.
 - `src/hooks/useLocus.ts` — owns the interaction state (repo, task, selection); the page is a thin view over it.
 - `src/app/api/github/route.ts` — the GitHub transport for the GitHub RepoSource.
 - `src/app/api/attachments/route.ts` — authenticated in-memory document extraction.
 - `src/components/TaskEvidence.tsx` — attachment UI and browser-only screenshot OCR.
-- `src/components/DependencyGraph.tsx` — renders `src/lib/layout.ts`; recolours by **Slice**.
+- `src/components/DependencyGraph.tsx` — three-stage context trace; recolours by **Slice**.
 
 ## Invariants
 
