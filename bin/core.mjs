@@ -29,7 +29,11 @@ function topDir(rel) {
 }
 
 function tryPath(base, files) {
-  for (const c of [`${base}.ts`, `${base}.tsx`, `${base}/index.ts`, `${base}/index.tsx`, base]) {
+  for (const c of [
+    `${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.jsx`,
+    `${base}/index.ts`, `${base}/index.tsx`, `${base}/index.js`, `${base}/index.jsx`,
+    base,
+  ]) {
     if (files[c] !== undefined) return c;
   }
   return null;
@@ -70,7 +74,7 @@ function normalize(p) {
 /** Build the deterministic dependency graph from the file map. */
 export function buildGraph(repo) {
   const { files, root } = repo;
-  const paths = Object.keys(files).filter((p) => /\.(ts|tsx)$/.test(p));
+  const paths = Object.keys(files).filter((p) => /\.(tsx?|jsx?)$/.test(p));
   const nodes = [];
   const byPath = {};
   const deps = {};
@@ -85,11 +89,11 @@ export function buildGraph(repo) {
 
   for (const p of paths) {
     const rel = p.startsWith(root + "/") ? p.slice(root.length + 1) : p;
-    const isSurface = /^app\/.+\/page\.(ts|tsx)$/.test(rel) || rel === "app/page.tsx";
+    const isSurface = /^app\/.+\/page\.(tsx?|jsx?)$/.test(rel) || /^app\/page\.(tsx?|jsx?)$/.test(rel);
     let route;
     if (isSurface) {
       route =
-        rel.replace(/^app\//, "").replace(/\/page\.(ts|tsx)$/, "").replace(/page\.(ts|tsx)$/, "") ||
+        rel.replace(/^app\//, "").replace(/\/page\.(tsx?|jsx?)$/, "").replace(/page\.(tsx?|jsx?)$/, "") ||
         "home";
       surfaces.push({ route, path: p });
     }
@@ -198,10 +202,10 @@ function scoreAnchor(words, route, rel, source) {
  * Conservative localization: if no file anchors with enough task evidence,
  * fall back to the whole repo instead of returning a speculative small slice.
  */
-export function locate(task, repo, graph) {
+export function locate(task, repo, graph, evidence = "") {
   const { deps, rdeps, byPath } = graph;
   const recent = new Set(repo.recentlyChanged);
-  const words = taskWords(task);
+  const words = taskWords(`${task}\n${evidence}`);
 
   const scored = graph.nodes
     .map((node) => ({
@@ -300,7 +304,7 @@ function walk(dir, baseDir, out) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       walk(full, baseDir, out);
-    } else if (entry.isFile() && /\.(ts|tsx)$/.test(entry.name)) {
+    } else if (entry.isFile() && /\.(tsx?|jsx?)$/.test(entry.name)) {
       out.push(toPosix(path.relative(baseDir, full)));
     }
   }
