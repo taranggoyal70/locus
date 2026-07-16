@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type ApiKey = {
   id: string;
@@ -17,6 +17,7 @@ export function ApiKeysPanel() {
   const [newKeyName, setNewKeyName] = useState("");
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const origin = useMemo(() => (typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"), []);
 
   const loadKeys = useCallback(async () => {
     try {
@@ -150,7 +151,7 @@ export function ApiKeysPanel() {
 
       <div className="rounded-xl border border-line bg-surface/50 p-4">
         <p className="text-xs font-medium text-paper">Quick start</p>
-        <pre className="mt-2 overflow-x-auto rounded-lg bg-ink p-3 font-mono text-xs leading-5 text-muted-light">{`curl -X POST ${typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"}/api/v1/locate \\
+        <pre className="mt-2 overflow-x-auto rounded-lg bg-ink p-3 font-mono text-xs leading-5 text-muted-light">{`curl -X POST ${origin}/api/v1/locate \\
   -H "Authorization: Bearer lk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{"repo": "owner/repo", "task": "fix the login bug"}'`}</pre>
