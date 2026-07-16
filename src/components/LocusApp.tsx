@@ -376,7 +376,11 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
             <Image src="/locus-mark.svg" width={20} height={20} alt="" />
             Locus · task-sized context for coding agents
           </span>
-          <a href="https://github.com/taranggoyal70/locus" className="hover:text-accent">MIT source on GitHub</a>
+          <nav className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-accent">Privacy</Link>
+            <Link href="/terms" className="hover:text-accent">Terms</Link>
+            <a href="https://github.com/taranggoyal70/locus" className="hover:text-accent">GitHub</a>
+          </nav>
         </div>
       </footer>
     </div>
