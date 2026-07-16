@@ -6,8 +6,8 @@ import type {
   SliceFile,
 } from "@/lib/types";
 
-// Any relative or alias import spec. We ignore bare package imports (react, …).
-const IMPORT_RE = /['"](@\/[^'"]+|\.[^'"]+)['"]/g;
+// Static/dynamic imports and require() — captures relative and @/ alias specs.
+const IMPORT_RE = /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
 
 function estimateTokens(text: string): number {
   return Math.max(1, Math.round(text.length / 4));
