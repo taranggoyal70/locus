@@ -6,8 +6,9 @@ import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
 
 const BUDGET = 40_000;
 
-/** Assemble the slice into one paste-ready context block, token-bounded. */
-function packContext(repo: RepoData, result: LocateResult) {
+type ExportFormat = "generic" | "claude" | "cursor";
+
+function packContext(repo: RepoData, result: LocateResult, format: ExportFormat = "generic") {
   const parts: string[] = [];
   let tokens = 0;
   let dropped = 0;
@@ -16,15 +17,34 @@ function packContext(repo: RepoData, result: LocateResult) {
     if (content === undefined) continue;
     const t = Math.ceil(content.length / 4);
     if (tokens + t > BUDGET) { dropped += 1; continue; }
-    parts.push(`\n\n===== ${f.rel} =====\n${content}`);
+    if (format === "cursor") {
+      parts.push(`\n\n// File: ${f.rel}\n${content}`);
+    } else {
+      parts.push(`\n\n===== ${f.rel} =====\n${content}`);
+    }
     tokens += t;
   }
-  const head =
-    `# Context for task: ${result.task}\n` +
-    `# ${parts.length} file(s), ~${tokens} tokens — localized by Locus` +
-    (dropped ? ` (${dropped} dropped for a ${BUDGET.toLocaleString()}-token budget)` : "") +
-    `\n`;
-  return { text: head + parts.join(""), files: parts.length, tokens };
+
+  let head: string;
+  if (format === "claude") {
+    head =
+      `<context task="${result.task}">\n` +
+      `<!-- ${parts.length} file(s), ~${tokens} tokens — localized by Locus -->\n`;
+  } else if (format === "cursor") {
+    head =
+      `// Context for: ${result.task}\n` +
+      `// ${parts.length} file(s), ~${tokens} tokens — localized by Locus\n`;
+  } else {
+    head =
+      `# Context for task: ${result.task}\n` +
+      `# ${parts.length} file(s), ~${tokens} tokens — localized by Locus\n`;
+  }
+
+  let tail = "";
+  if (dropped) tail = `\n\n# ${dropped} file(s) omitted — exceeded ${BUDGET.toLocaleString()}-token budget`;
+  if (format === "claude") tail += "\n</context>";
+
+  return { text: head + parts.join("") + tail, files: parts.length, tokens };
 }
 
 export function TokenMeter({
@@ -37,6 +57,7 @@ export function TokenMeter({
   sparse: boolean;
 }) {
   const [copied, setCopied] = useState<string | null>(null);
+  const [format, setFormat] = useState<ExportFormat>("generic");
   const total = result?.totalTokens ?? 0;
   const slice = result?.sliceTokens ?? total;
   const pct = result && !result.widened ? result.savedPct : 0;
@@ -44,7 +65,7 @@ export function TokenMeter({
 
   async function copy() {
     if (!repo || !result) return;
-    const packed = packContext(repo, result);
+    const packed = packContext(repo, result, format);
     try {
       await navigator.clipboard.writeText(packed.text);
       setCopied(`Copied ${packed.files} files · ~${packed.tokens.toLocaleString()} tokens`);
@@ -94,12 +115,27 @@ export function TokenMeter({
       )}
 
       {result && repo && (
-        <button
-          onClick={copy}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
-        >
-          {copied ?? "Copy context for your agent"}
-        </button>
+        <>
+          <div className="mt-4 flex gap-1 rounded-lg border border-line p-1">
+            {([["generic", "Generic"], ["claude", "Claude"], ["cursor", "Cursor"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setFormat(key)}
+                className={`flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium transition ${
+                  format === key ? "bg-accent/15 text-accent" : "text-muted hover:text-paper"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={copy}
+            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
+          >
+            {copied ?? "Copy context for your agent"}
+          </button>
+        </>
       )}
       {result && !result.widened && (
         <p className="mt-2 text-center text-[11px] text-muted">
