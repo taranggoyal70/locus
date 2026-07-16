@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { track } from "@/lib/analytics";
 import type { RepoData } from "@/lib/types";
 
 // Fetch a public GitHub repo's TypeScript source into the flat {path: content}
@@ -296,6 +297,16 @@ export async function POST(request: Request) {
       recentlyChanged,
       files: fileMap,
     };
+    track({
+      event: "repo_loaded",
+      userId,
+      properties: {
+        repo: `${owner}/${repo}`,
+        files: Object.keys(fileMap).length,
+        truncated,
+      },
+    });
+
     return NextResponse.json(
       { repo: repoData, truncated, fileCount: Object.keys(fileMap).length },
       { headers: rateHeaders },
