@@ -35,6 +35,16 @@ export async function POST(request: Request) {
   }
 
   const db = serviceClient();
+
+  const PROJECT_LIMIT = 10;
+  const { count } = await db
+    .from("projects")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+  if ((count ?? 0) >= PROJECT_LIMIT) {
+    return NextResponse.json({ error: `Maximum ${PROJECT_LIMIT} saved analyses on the free plan. Delete older ones to save new.` }, { status: 400 });
+  }
+
   const { data, error } = await db
     .from("projects")
     .insert({

@@ -41,8 +41,9 @@ export async function POST(request: Request) {
     .from("api_keys")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId);
-  if ((count ?? 0) >= 10) {
-    return NextResponse.json({ error: "Maximum 10 API keys allowed." }, { status: 400 });
+  const KEY_LIMIT = 5;
+  if ((count ?? 0) >= KEY_LIMIT) {
+    return NextResponse.json({ error: `Maximum ${KEY_LIMIT} API keys on the free plan.` }, { status: 400 });
   }
 
   const rawKey = generateApiKey();
