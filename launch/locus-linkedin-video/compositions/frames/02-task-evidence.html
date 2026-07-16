@@ -1,0 +1,69 @@
+<template>
+  <div id="root" data-composition-id="02-task-evidence" data-width="1080" data-height="1080" data-duration="9.5" data-fps="30">
+    <div id="f02e-ground" class="clip f02e-ground" data-start="0" data-duration="9.5" data-track-index="0"></div>
+    <div id="f02e-scene" class="clip f02e-scene" data-start="0" data-duration="9.5" data-track-index="1">
+      <div class="f02e-top"><img src="assets/favicon.svg" alt="Locus"><span>task evidence · new</span></div>
+      <div class="f02e-window">
+        <img src="assets/scroll-000.png" alt="Locus task workspace" class="f02e-shot" data-layout-allow-overflow>
+        <div class="f02e-dim"></div>
+        <div class="f02e-panel" id="f02e-panel">
+          <div class="f02e-label">02 · Engineering task</div>
+          <div class="f02e-task">Fix this signup issue</div>
+          <button class="f02e-attach" id="f02e-attach">Attach screenshot or document</button>
+          <span class="f02e-types">PDF, DOCX, text, or image · up to 3</span>
+          <div class="f02e-status" id="f02e-status">Extracting document text…</div>
+          <div class="f02e-evidence" id="f02e-evidence">
+            <div class="f02e-evidence-head"><b>signup-bug-report.pdf</b><span>PDF · 148 characters</span></div>
+            <p>Account created but profile save failed. You can update your profile later.</p>
+            <p>Expected: one profile write after account creation.</p>
+          </div>
+          <div class="f02e-privacy" id="f02e-privacy">Documents are processed in memory. Attachments are not saved.</div>
+        </div>
+      </div>
+      <div class="f02e-annotation" id="f02e-annotation">Sometimes the useful detail isn’t in the prompt.</div>
+      <div class="f02e-cursor" id="f02e-cursor">↖</div>
+      <div class="f02e-subtitle" id="f02e-subtitle"><span id="f02e-subtitle-text">Sometimes the useful context isn’t in the prompt. It’s in the bug report.</span></div>
+    </div>
+  </div>
+  <style>
+    @font-face{font-family:Geist;src:url('capture/assets/fonts/797e433ab948586e-s.p.0r6juujl39pe6.woff2') format('woff2');font-weight:400 700}
+    #root{position:relative;width:1080px;height:1080px;overflow:hidden;container-type:size;color:#e9f0f2;font-family:Geist,sans-serif}
+    .f02e-ground,.f02e-scene{position:absolute;inset:0;width:1080px;height:1080px;overflow:hidden}.f02e-ground{background:#0a0d0f}
+    .f02e-top{position:absolute;left:70px;top:52px;display:flex;align-items:center;gap:13px;color:#9aa4a8;font-size:18px}.f02e-top img{width:28px;height:28px}.f02e-top span{letter-spacing:.02em}
+    .f02e-window{position:absolute;left:54px;top:108px;width:972px;height:758px;overflow:hidden;border:1px solid rgba(163,230,53,.2);border-radius:16px;background:#0a0d0f}
+    .f02e-shot{position:absolute;left:-210px;top:-8px;width:1375px;height:773px;max-width:none;filter:brightness(.34) saturate(.62)}
+    .f02e-dim{position:absolute;inset:0;background:rgba(5,8,9,.24)}
+    .f02e-panel{position:absolute;left:352px;top:116px;width:550px;box-sizing:border-box;padding:25px;border:1px solid rgba(233,240,242,.13);border-radius:15px;background:rgba(10,13,15,.97);box-shadow:0 24px 70px rgba(0,0,0,.36)}
+    .f02e-label{color:#7e898d;font-size:12px;font-weight:650;letter-spacing:.12em;text-transform:uppercase}
+    .f02e-task{margin-top:15px;padding:15px 16px;border:1px solid rgba(233,240,242,.2);border-radius:10px;background:#080b0d;color:#e9f0f2;font-size:18px}
+    .f02e-attach{margin-top:15px;padding:11px 14px;border:1px solid rgba(233,240,242,.22);border-radius:9px;background:transparent;color:#bcc5c8;font:600 13px Geist,sans-serif}
+    .f02e-types{margin-left:10px;color:#7d898d;font-size:11px}
+    .f02e-status{margin-top:13px;color:#a3e635;font-size:12px}
+    .f02e-evidence{margin-top:12px;padding:13px 15px;border:1px solid rgba(163,230,53,.22);border-radius:10px;background:rgba(163,230,53,.035)}
+    .f02e-evidence-head{display:flex;justify-content:space-between;gap:12px}.f02e-evidence-head b{color:#e9f0f2;font-size:13px}.f02e-evidence-head span{color:#738085;font-size:11px}
+    .f02e-evidence p{margin:10px 0 0;color:#b8c0c3;font-size:13px;line-height:1.42}.f02e-evidence p:last-child{color:#a3e635}
+    .f02e-privacy{margin-top:13px;padding:8px 10px;border-left:2px solid transparent;color:#717b80;font-size:11px;line-height:1.4}
+    .f02e-annotation{position:absolute;left:70px;top:888px;color:#dbe1e3;font-size:21px;font-weight:550;letter-spacing:-.015em}
+    .f02e-cursor{position:absolute;left:870px;top:700px;z-index:8;color:#f5f7f7;font-size:38px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7));will-change:transform,opacity}
+    .f02e-subtitle{position:absolute;left:50%;bottom:28px;max-width:900px;transform:translateX(-50%);box-sizing:border-box;padding:13px 21px;border:1px solid rgba(233,240,242,.12);border-radius:12px;background:rgba(5,7,8,.93);color:#f4f7f7;font-size:23px;font-weight:500;line-height:1.26;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});const subtitle=document.getElementById('f02e-subtitle-text');
+    gsap.set(['#f02e-status','#f02e-evidence','#f02e-privacy'],{opacity:0});
+    tl.fromTo('#f02e-panel',{opacity:.3,scale:.985},{opacity:1,scale:1,duration:.7,ease:'power3.out'},0);
+    tl.fromTo('#f02e-annotation',{opacity:0,y:7},{opacity:1,y:0,duration:.55,ease:'power3.out'},.35);
+    tl.fromTo('#f02e-subtitle',{opacity:0,y:7},{opacity:1,y:0,duration:.4,ease:'power3.out'},.4);
+    tl.fromTo('#f02e-cursor',{opacity:0,x:90,y:60},{opacity:1,x:-410,y:-370,duration:1.25,ease:'power3.inOut'},.65);
+    tl.to('#f02e-attach',{scale:.96,duration:.12,ease:'power2.out'},2.25).to('#f02e-attach',{scale:1,duration:.26,ease:'power3.out'},2.37);
+    tl.fromTo('#f02e-status',{opacity:0,y:4},{opacity:1,y:0,duration:.3,ease:'power2.out'},2.45);
+    tl.to('#f02e-status',{opacity:0,duration:.22,ease:'power2.in'},3.75);
+    tl.fromTo('#f02e-evidence',{opacity:0,y:9},{opacity:1,y:0,duration:.62,ease:'power3.out'},3.95);
+    tl.to('#f02e-cursor',{x:-205,y:-165,duration:1.0,ease:'power3.inOut'},4.1);
+    tl.to('#f02e-subtitle',{opacity:0,duration:.18,ease:'power2.in'},4.05);
+    tl.call(()=>subtitle.textContent='So now I can attach it, inspect the text, and use that evidence too.',[],4.3).to('#f02e-subtitle',{opacity:1,duration:.22,ease:'power2.out'},4.3);
+    tl.to('#f02e-cursor',{x:-260,y:5,duration:1.05,ease:'power3.inOut'},6.35);
+    tl.fromTo('#f02e-privacy',{opacity:0,borderLeftColor:'rgba(163,230,53,0)'},{opacity:1,borderLeftColor:'rgba(163,230,53,.8)',duration:.55,ease:'power3.out'},7.0);
+    tl.to({}, {duration:.01},8.99);window.__timelines['02-task-evidence']=tl;
+  </script>
+</template>

@@ -34,6 +34,12 @@ npm run benchmark
 3. Add dependency closures, direct consumers, and recent cross-cutting matches.
 4. Widen to all loaded files when the evidence is insufficient.
 
+Users can also attach task evidence: screenshots, PDFs, DOCX files, Markdown,
+or plain text. Extracted words strengthen task matching while the original task
+remains unchanged in the generated context pack. Documents are processed in
+server memory with `no-store` responses; screenshot OCR runs in the browser with
+OCR caching disabled. Attachments are never written to Locus storage.
+
 The current beta intentionally supports `.ts` and `.tsx` files. The hosted
 GitHub importer accepts public repositories and caps each request at 120 supported
 source files. Use the local CLI for larger repositories.
@@ -70,6 +76,7 @@ Authentication routes:
 - `/sign-in` — return to an account
 - `/workspace` — authenticated product workspace
 - `/demo` — legacy route protected by authentication
+- `/api/attachments` — authenticated, in-memory document text extraction
 
 ## Use the CLI today
 

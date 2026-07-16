@@ -1,0 +1,37 @@
+<template>
+  <div id="root" data-composition-id="04-human-cta" data-width="1080" data-height="1080" data-duration="7" data-fps="30">
+    <div id="f04-human-cta-ground" class="clip f04-ground" data-start="0" data-duration="7" data-track-index="0">
+      <img src="assets/scroll-100.png" alt="Locus real-use workflow" class="f04-shot"><div class="f04-shade"></div>
+    </div>
+    <div id="f04-human-cta-content" class="clip f04-content" data-start="0" data-duration="7" data-track-index="1">
+      <div class="f04-brand"><img src="assets/favicon.svg" alt="Locus"><div><b>Locus</b><span>open-source beta</span></div></div>
+      <div class="f04-ask"><span id="f04-human-cta-text"></span><i id="f04-human-cta-caret"></i></div>
+      <div class="f04-links" id="f04-human-cta-links"><strong>locus-five-iota.vercel.app</strong><span>github.com/taranggoyal70/locus</span></div>
+      <div class="f04-subtitle" id="f04-human-cta-subtitle"><span id="f04-human-cta-subtitle-text">If you use coding agents every day, I’d love for you to try it.</span></div>
+    </div>
+  </div>
+  <style>
+    @font-face{font-family:Geist;src:url('capture/assets/fonts/797e433ab948586e-s.p.0r6juujl39pe6.woff2') format('woff2');font-weight:400 700}
+    #root{position:relative;width:1080px;height:1080px;overflow:hidden;container-type:size;color:#e9f0f2;font-family:Geist,sans-serif}
+    .f04-ground,.f04-content{position:absolute;inset:0;width:1080px;height:1080px;overflow:hidden}.f04-ground{background:#0a0d0f}.f04-shot{position:absolute;inset:0;width:1080px;height:608px;object-fit:cover;object-position:bottom;filter:brightness(.32) saturate(.65)}.f04-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,13,15,.3),#0a0d0f 68%)}
+    .f04-content{box-sizing:border-box;padding:92px 86px}.f04-brand{display:flex;align-items:center;gap:17px}.f04-brand img{width:54px;height:54px}.f04-brand b{display:block;font-size:32px;font-weight:650}.f04-brand span{display:block;margin-top:3px;color:#a3e635;font-size:15px}
+    .f04-ask{width:850px;margin-top:250px;color:#e9f0f2;font-size:50px;font-weight:600;line-height:1.16;letter-spacing:-.035em}.f04-ask i{display:inline-block;width:3px;height:.86em;margin-left:5px;background:#a3e635;vertical-align:-.07em}
+    .f04-links{position:absolute;left:86px;top:800px;display:flex;flex-direction:column;gap:10px}.f04-links strong{color:#a3e635;font-size:25px;font-weight:600}.f04-links span{color:#899398;font-size:19px}
+    .f04-subtitle{position:absolute;left:50%;bottom:34px;max-width:900px;transform:translateX(-50%);box-sizing:border-box;padding:14px 22px;border:1px solid rgba(233,240,242,.12);border-radius:12px;background:rgba(5,7,8,.92);color:#f4f7f7;font-size:24px;font-weight:500;line-height:1.28;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});
+    const line="I'm looking for 10 developers to try Locus on a real task and tell me where it breaks.";const el=document.getElementById('f04-human-cta-text');const st={n:0};const subtitle=document.getElementById('f04-human-cta-subtitle-text');
+    tl.fromTo('.f04-brand',{opacity:0,y:7},{opacity:1,y:0,duration:.65,ease:'power3.out'},0);
+    tl.to(st,{n:58,duration:2.7,ease:'none',onUpdate:()=>el.textContent=line.slice(0,Math.round(st.n))},.75);
+    tl.to({}, {duration:.32},3.45);
+    tl.to(st,{n:line.length,duration:1.15,ease:'none',onUpdate:()=>el.textContent=line.slice(0,Math.round(st.n))},3.77);
+    tl.fromTo('#f04-human-cta-links',{opacity:0,y:8},{opacity:1,y:0,duration:.65,ease:'power3.out'},4.95);
+    tl.fromTo('#f04-human-cta-caret',{opacity:1},{opacity:.18,duration:.18,repeat:3,yoyo:true,ease:'none'},5.75);
+    tl.fromTo('#f04-human-cta-subtitle',{opacity:0,y:7},{opacity:1,y:0,duration:.4,ease:'power3.out'},.5);
+    tl.to('#f04-human-cta-subtitle',{opacity:0,duration:.18,ease:'power2.in'},3.75);
+    tl.call(()=>subtitle.textContent='And honestly, tell me where it breaks.',[],4.0).to('#f04-human-cta-subtitle',{opacity:1,duration:.22,ease:'power2.out'},4.0);
+    tl.to({}, {duration:.01},6.99);window.__timelines['04-human-cta']=tl;
+  </script>
+</template>

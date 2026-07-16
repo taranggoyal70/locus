@@ -52,4 +52,11 @@ describe("locate", () => {
     expect(r.anchors).toContain("lib/date.ts");
     expect(r.slice.some((file) => file.rel === "lib/date.ts")).toBe(true);
   });
+
+  it("uses attached evidence to localize an otherwise vague task", () => {
+    const r = locate("fix this", repo, graph, "The enrollment dashboard chart shows the wrong dates");
+    expect(r.widened).toBe(false);
+    expect(r.anchors).toContain("app/dashboard/page.tsx");
+    expect(r.task).toBe("fix this");
+  });
 });

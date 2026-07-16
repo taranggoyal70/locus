@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=1080, height=1080">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js" integrity="sha384-sG0Hv1tP1lZCk9KQmrIbY/XNwi+OY84GQqhMscbnsoBFqAz8KNCil1kvfL3Hbbk2" crossorigin="anonymous"></script>
     <style>
       * {
@@ -33,18 +33,63 @@
     </style>
   </head>
   <body>
-    <div data-hf-id="hf-e4oq" id="root" data-composition-id="main" data-start="0" data-duration="50" data-width="1080" data-height="1080">
-      <div data-hf-id="hf-l75k" id="el-01-hook" class="scene" data-composition-id="01-hook" data-composition-src="compositions/frames/01-hook.html" data-start="0" data-duration="6.6" data-track-index="0"></div>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="45"
+      data-width="1080"
+      data-height="1080"
+    >
+      <div
+        id="el-01-founder-note"
+        class="scene"
+        data-composition-id="01-founder-note"
+        data-composition-src="compositions/frames/01-founder-note.html"
+        data-start="0"
+        data-duration="4.5"
+        data-track-index="0"
+      ></div>
 
-      <div data-hf-id="hf-kskm" id="el-02-rule" class="scene" data-composition-id="02-rule" data-composition-src="compositions/frames/02-rule.html" data-start="6" data-duration="7.4" data-track-index="1"></div>
+      <div
+        id="el-02-task-evidence"
+        class="scene"
+        data-composition-id="02-task-evidence"
+        data-composition-src="compositions/frames/02-task-evidence.html"
+        data-start="4"
+        data-duration="9.5"
+        data-track-index="1"
+      ></div>
 
-      <div data-hf-id="hf-3gfa" id="el-03-input" class="scene" data-composition-id="03-input" data-composition-src="compositions/frames/03-input.html" data-start="13" data-duration="10.6" data-track-index="0"></div>
+      <div
+        id="el-02-real-workflow"
+        class="scene"
+        data-composition-id="02-real-workflow"
+        data-composition-src="compositions/frames/02-real-workflow.html"
+        data-start="13"
+        data-duration="15"
+        data-track-index="0"
+      ></div>
 
-      <div data-hf-id="hf-bgsr" id="el-04-result" class="scene" data-composition-id="04-result" data-composition-src="compositions/frames/04-result.html" data-start="23" data-duration="10.5" data-track-index="1"></div>
+      <div
+        id="el-03-real-result"
+        class="scene"
+        data-composition-id="03-real-result"
+        data-composition-src="compositions/frames/03-real-result.html"
+        data-start="28"
+        data-duration="10.5"
+        data-track-index="1"
+      ></div>
 
-      <div data-hf-id="hf-w84y" id="el-05-proof" class="scene" data-composition-id="05-proof" data-composition-src="compositions/frames/05-proof.html" data-start="33" data-duration="9.4" data-track-index="0"></div>
-
-      <div data-hf-id="hf-s6wx" id="el-06-cta" class="scene" data-composition-id="06-cta" data-composition-src="compositions/frames/06-cta.html" data-start="42" data-duration="8" data-track-index="1"></div>
+      <div
+        id="el-04-human-cta"
+        class="scene"
+        data-composition-id="04-human-cta"
+        data-composition-src="compositions/frames/04-human-cta.html"
+        data-start="38"
+        data-duration="7"
+        data-track-index="0"
+      ></div>
 
     </div>
 
@@ -53,17 +98,13 @@
       window.__timelines["main"] = gsap.timeline({ paused: true });
       // ── frame transitions (injected by transitions.mjs) ──
       (function () { var tl = window.__timelines["main"];
-        tl.to("#el-01-hook", { filter: "blur(10px)", scale: 1.03, opacity: 0, duration: 0.6, ease: "power2.inOut" }, 6);
-        tl.fromTo("#el-02-rule", { filter: "blur(10px)", scale: 0.97, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.6, ease: "power2.inOut" }, 6);
-        tl.to("#el-02-rule", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 13);
-        tl.fromTo("#el-03-input", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 13);
-        tl.to("#el-03-input", { filter: "blur(10px)", scale: 1.03, opacity: 0, duration: 0.6, ease: "power2.inOut" }, 23);
-        tl.fromTo("#el-04-result", { filter: "blur(10px)", scale: 0.97, opacity: 0 }, { filter: "blur(0px)", scale: 1, opacity: 1, duration: 0.6, ease: "power2.inOut" }, 23);
-        tl.to("#el-04-result", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 33);
-        tl.fromTo("#el-05-proof", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 33);
-        tl.to("#el-05-proof", { scale: 2.5, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in" }, 42);
-        tl.fromTo("#el-06-cta", { scale: 0.5, opacity: 0, filter: "blur(8px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 42);
-        tl.to({}, { duration: 50 }, 0); // full-span anchor — main.duration() == composition total (Studio master duration)
+        tl.to("#el-01-founder-note", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 4);
+        tl.fromTo("#el-02-task-evidence", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 4);
+        tl.to("#el-02-task-evidence", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 13);
+        tl.fromTo("#el-02-real-workflow", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 13);
+        tl.to("#el-03-real-result", { opacity: 0, duration: 0.5, ease: "power2.inOut" }, 38);
+        tl.fromTo("#el-04-human-cta", { opacity: 0 }, { opacity: 1, duration: 0.5, ease: "power2.inOut" }, 38);
+        tl.to({}, { duration: 45 }, 0); // full-span anchor — main.duration() == composition total (Studio master duration)
       })();
     </script>
   </body>

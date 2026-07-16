@@ -52,4 +52,34 @@ describe("GitHub repository API request guards", () => {
     expect(responses[6].status).toBe(429);
     expect(responses[6].headers.get("retry-after")).toBeTruthy();
   });
+
+  it("fails safely when GitHub returns a malformed tree", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ default_branch: "main" }))
+      .mockResolvedValueOnce(Response.json({ sha: "abc123", tree: null }));
+
+    const response = await POST(request('{"url":"owner/repo"}', "198.51.100.20"));
+
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toEqual({ error: "GitHub returned an invalid repository tree." });
+    fetchMock.mockRestore();
+  });
+
+  it("drops a source file when its downloaded body exceeds the safety limit", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ default_branch: "main" }))
+      .mockResolvedValueOnce(Response.json({
+        sha: "abc123",
+        tree: [{ path: "src/page.tsx", type: "blob", size: 10 }],
+      }))
+      .mockResolvedValueOnce(new Response("x".repeat(100_001)));
+
+    const response = await POST(request('{"url":"owner/repo"}', "198.51.100.21"));
+
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toEqual({
+      error: "GitHub returned a file tree, but its source files could not be downloaded.",
+    });
+    fetchMock.mockRestore();
+  });
 });

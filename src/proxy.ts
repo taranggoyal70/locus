@@ -7,7 +7,7 @@ export function isProtectedPagePathname(pathname: string): boolean {
 }
 
 export function isProtectedPathname(pathname: string): boolean {
-  return isProtectedPagePathname(pathname) || ["/api/github", "/repos"].some(
+  return isProtectedPagePathname(pathname) || ["/api/github", "/api/attachments", "/repos"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }

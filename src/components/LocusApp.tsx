@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
+import { TaskEvidence } from "@/components/TaskEvidence";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
 import { buildShareUrl } from "@/lib/share";
@@ -21,11 +22,11 @@ type LocusAppProps = {
 
 export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   const {
-    repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note,
+    repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, evidence,
     examples: bundledExamples, bundled: BUNDLED,
-    setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt,
+    setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt, addEvidence, removeEvidence,
   } = useLocus();
-  const [shareCopied, setShareCopied] = useState(false);
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
   const presentation = isWorkspace ? {
     homeHref: "/workspace",
     showLandingNavigation: false,
@@ -56,12 +57,16 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
 
   async function copyShareView() {
     if (!loadedRepositorySpecifier || !task.trim()) return;
-    await navigator.clipboard.writeText(buildShareUrl(window.location.origin, {
-      repositorySpecifier: loadedRepositorySpecifier,
-      task,
-    }));
-    setShareCopied(true);
-    window.setTimeout(() => setShareCopied(false), 1800);
+    try {
+      await navigator.clipboard.writeText(buildShareUrl(window.location.origin, {
+        repositorySpecifier: loadedRepositorySpecifier,
+        task,
+      }));
+      setShareStatus("copied");
+    } catch {
+      setShareStatus("failed");
+    }
+    window.setTimeout(() => setShareStatus("idle"), 2200);
   }
 
   function replayFeaturedCase() {
@@ -209,9 +214,11 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                   id="task-input"
                   value={task}
                   onChange={(event) => setTask(event.target.value)}
+                  maxLength={500}
                   placeholder="Describe the change or bug in plain language"
                   className="mt-3 w-full rounded-xl border border-line-strong bg-ink px-4 py-3 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
                 />
+                <TaskEvidence evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   {bundledExamples.slice(0, 3).map((example) => (
                     <button
@@ -248,7 +255,11 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                     onClick={copyShareView}
                     className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper"
                   >
-                    {shareCopied ? "View link copied" : "Copy shareable view"}
+                    {shareStatus === "copied"
+                      ? "View link copied"
+                      : shareStatus === "failed"
+                        ? "Copy failed — try again"
+                        : "Copy shareable view"}
                   </button>
                 )}
               </div>

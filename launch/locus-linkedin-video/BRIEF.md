@@ -1,12 +1,13 @@
 # Locus LinkedIn launch brief
 
 - **Mode:** autonomous
-- **Angle:** authentic founder problem → working product → reproducible evidence
-- **Length:** 50 seconds
+- **Angle:** founder-built utility shown through one real task
+- **Length:** 45 seconds
 - **Destination:** LinkedIn feed
 - **Format:** 1080×1080
 - **Language:** English
-- **Audio:** silent; no narration, synthetic voice, music, or paid generation
-- **Message:** Locus reduces coding-agent context with a conservative fallback and evidence anyone can inspect.
-- **Audience:** TypeScript/Next.js developers using coding agents; secondary audience of design partners, YC reviewers, recruiters, and hiring managers.
-- **CTA:** recruit 10 developers to test the open-source beta on real tasks.
+- **Audio:** silent; designed for muted autoplay
+- **Message:** Locus turns a task—and the screenshot or document behind it—into the code context an agent should read first, with the evidence left visible.
+- **Audience:** developers who use coding agents; secondary audience of technical recruiters, founders, and YC reviewers.
+- **CTA:** recruit 10 developers to test the open-source beta on a real task and report where it breaks.
+- **Humanity rule:** first-person language, ordinary cursor timing, real product evidence, and no generic AI-launch vocabulary.

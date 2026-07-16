@@ -10,6 +10,15 @@ export type RepoData = {
   files: Record<string, string>;
 };
 
+export type TaskEvidence = {
+  id: string;
+  name: string;
+  kind: "image" | "pdf" | "docx" | "text";
+  text: string;
+  characters: number;
+  truncated: boolean;
+};
+
 export type GraphNode = {
   path: string; // full path
   rel: string; // path relative to root, for display

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildGraph, locate } from "@/lib/localizer";
-import { BUNDLED, githubSource } from "@/lib/sources";
+import { BUNDLED, githubSource, parseRepoData } from "@/lib/sources";
 import type { RepoData } from "@/lib/types";
 
 // Guards the class of bug where the auto-loaded bundled repo was renamed away
@@ -31,6 +31,23 @@ describe("GitHub repository source", () => {
 
     await expect(githubSource("owner/repo").load()).rejects.toThrow(
       "GitHub analysis is temporarily unavailable. Please try again.",
+    );
+  });
+
+  it("rejects malformed repository data instead of crashing the localizer", () => {
+    expect(() => parseRepoData({ name: "broken", files: null })).toThrow(
+      "Repository response was incomplete.",
+    );
+  });
+
+  it("rejects a successful but incomplete API response", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({
+      repo: { name: "owner/repo", slug: "owner-repo", files: {} },
+      fileCount: 0,
+    })));
+
+    await expect(githubSource("owner/repo").load()).rejects.toThrow(
+      "GitHub returned an incomplete repository response. Please try again.",
     );
   });
 });

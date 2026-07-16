@@ -1,51 +1,43 @@
 # LinkedIn launch post — Locus beta
 
-I built Locus because I kept hitting the same wall with coding agents:
+I didn’t build Locus because I wanted another AI project.
 
-The product worked. The test cases made sense. But as the task grew, the agent kept reading more of the repo, the context window filled up, and the token budget disappeared.
+I built it because I was tired of managing context.
 
-So I asked a simple question:
+I’d start a coding task with an agent, explain the bug, share the important files, and make real progress. Then the conversation would grow, unrelated code would creep in, and the context window would fill up.
 
-**What if the agent saw the codebase through the task—not the whole tree?**
+Eventually, I was spending more time reminding the agent what mattered than solving the problem.
 
-Locus maps a coding task to a focused TypeScript/Next.js context slice using:
+That was the first reason I built Locus: give a coding agent a task-sized view of a repository, and show the developer why each file was selected.
 
-- file-path and source evidence
-- the import dependency graph
-- nearby integration points
-- recently changed files
+But while testing it, I noticed something else.
 
-If the evidence is weak, it widens to the whole repo instead of pretending a narrow answer is safe.
+The complete task is rarely inside the prompt.
 
-I also did not want to launch this with a vague “saves tokens without hurting quality” claim.
+Sometimes it is in a screenshot. Sometimes it is buried in a bug report, PDF, or product document.
 
-So I replayed 9 historical fixes across 3 real repositories.
+One of my own issues started with this message:
 
-On those declared cases, Locus:
+“Account created but profile save failed.”
 
-- included all 12 files developers changed next
-- reduced estimated context by a 53% median
-- widened to the whole repo on 2 ambiguous tasks
+The sentence was useful, but the surrounding evidence explained what the code actually needed to do.
 
-That is **historical fix-file recall**, not proof that an autonomous agent will always finish the task. The benchmark, cases, and failures are open for anyone to inspect.
+So I added task evidence to Locus.
 
-Locus is now an open-source beta with a browser workflow, zero-dependency CLI, and MCP server.
+You can now attach a screenshot, PDF, DOCX, Markdown, or text file. Locus extracts the useful details, keeps them visible for inspection, and uses that evidence when mapping the task to the codebase.
 
-I’m looking for **10 TypeScript/Next.js developers who use Codex, Claude Code, Cursor, or another coding agent to become founding design partners**.
+Nothing is saved. Documents are processed in memory, and screenshot OCR runs inside the browser.
 
-Try it on one real task. Then tell me where it misses.
+I also replayed a real historical fix from one of my projects. For that task, Locus selected 8 of 57 files, left 49 unrelated files out, and included the file changed next in the real fix—using an estimated 89% fewer tokens.
+
+That is a historical replay, not a claim that an agent autonomously solved the task. I would rather be precise about what worked than hide the limitation behind a polished demo.
+
+Locus is still an open-source beta, and I’m looking for 10 developers who regularly use Codex, Claude Code, Cursor, or another coding agent.
+
+Try it on one real task. Attach the messy bug report. Then tell me where it breaks.
 
 Live: https://locus-five-iota.vercel.app
+
 GitHub: https://github.com/taranggoyal70/locus
 
-#opensource #typescript #nextjs #aiagents #buildinpublic
-
-## First comment
-
-If you test it, send me:
-
-1. the task you gave your agent,
-2. the files Locus selected,
-3. whether the missing context—if any—was obvious.
-
-I care more about the failure cases than a flattering demo.
+#BuildInPublic #OpenSource #DeveloperTools #CodingAgents

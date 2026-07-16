@@ -61,6 +61,12 @@ Where a Repo comes from — a **Bundled** demo (`public/repos/*.json`) or a **Gi
 fetch. One interface, two adapters; the app holds a RepoSource, not a fetch branch.
 _Avoid_: loader, provider, fetcher.
 
+**Task Evidence** (`TaskEvidence`):
+Ephemeral text extracted from a screenshot, PDF, DOCX, Markdown, or text file.
+Evidence strengthens Anchor matching but never replaces or mutates the user's
+task. It is held in React memory for the current page only and is not persisted.
+_Avoid_: knowledge base, document store, uploaded asset.
+
 ## Where it lives (read these, don't re-crawl)
 
 - `src/lib/types.ts` — every shape above (**Repo**, `Graph`, **LocateResult**).
@@ -70,6 +76,8 @@ _Avoid_: loader, provider, fetcher.
 - `src/lib/sources.ts` — the **RepoSource** interface + Bundled/GitHub adapters.
 - `src/hooks/useLocus.ts` — owns the interaction state (repo, task, selection); the page is a thin view over it.
 - `src/app/api/github/route.ts` — the GitHub transport for the GitHub RepoSource.
+- `src/app/api/attachments/route.ts` — authenticated in-memory document extraction.
+- `src/components/TaskEvidence.tsx` — attachment UI and browser-only screenshot OCR.
 - `src/components/DependencyGraph.tsx` — renders `src/lib/layout.ts`; recolours by **Slice**.
 
 ## Invariants

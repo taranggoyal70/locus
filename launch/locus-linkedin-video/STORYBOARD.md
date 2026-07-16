@@ -1,189 +1,162 @@
 ---
 format: 1080x1080
-message: "Locus reduces coding-agent context with a conservative fallback and evidence anyone can inspect."
-arc: "Demo Loop — pain → promise → workflow → result → proof → beta CTA"
-audience: "TypeScript and Next.js developers who use coding agents"
+message: "Locus turns a task and its supporting evidence into the code context an agent should read first, with the reasoning left visible."
+arc: "Demo Loop — founder pain → attach real evidence → repository workflow → bounded result → honest invitation"
+audience: "Developers who use coding agents; technical founders, recruiters, and YC reviewers"
 mode: autonomous
 audio: silent
 music: none
 ---
 
-## Frame 1 — The context problem
+## Video direction
+
+- **Register:** a founder screen recording with thoughtful annotations, not a launch trailer.
+- **Format:** 1080×1080 LinkedIn feed; all essential information sits inside the top 83% safe area.
+- **Palette and type:** use the exact Locus tokens from `frame.md`; lime is a focus indicator, never decoration.
+- **Motion grammar:** one cursor, one camera, ordinary pauses. Motion follows the task: type, click, inspect, copy. Smooth long-tail settling only.
+- **Stillness allocation:** hold after the task is typed, after the result resolves, and on the final URL. These pauses should feel like a person checking their work.
+- **Human timing:** cursor paths are slightly asymmetric; include short thinking pauses before Analyze and before inspecting the result. Do not make every beat equally spaced.
+- **Copy:** sentence case, first person, and concrete nouns. No “revolutionary,” “supercharge,” “future of,” “AI-native,” or anonymous marketing voice.
+- **Subtitles:** conversational first-person commentary, written like the founder is sitting beside the viewer. Keep each card to one short thought, use contractions, and time the language to the action rather than restating headings.
+- **Negative list:** no kinetic word slams, no floating glass cards, no count-up spectacle, no fake browser chrome, no purple/blue gradients, no bouncy easing, no breathing loops, no connector diagrams as decoration, no front-load-then-freeze behavior.
+- **Asset discipline:** every visible product surface comes from the captured live Locus page; reconstructed interaction overlays must align to controls visible in that capture.
+- **Claim discipline:** this is one historical Solum replay. Token figures stay labeled “estimated,” and fix-file recall is not described as autonomous task success.
+
+## Frame 1 — Why I built it
 
 - status: animated
-- src: compositions/frames/01-hook.html
-- duration: 6s
-- poster: 4s
+- src: compositions/frames/01-founder-note.html
+- duration: 4s
+- poster: 2.8s
 - transition_in: cut
-- scene: A direct outcome-language hook over the real Locus mark and a cropped product surface.
-- onscreen: "Your coding agent doesn't need the whole repo."
+- scene: A quiet first-person founder note over the real product, written as a normal sentence rather than a slogan.
+- onscreen: "I kept running out of context halfway through coding tasks."
 - type: hook
-- blueprint: kinetic-type-beats (Adapt)
-- narrativeRole: Name the waste in the viewer's language and land the core value immediately.
-- asset_candidates: capture/assets/favicon.svg; capture/screenshots/scroll-000.png
-- focal: capture/screenshots/scroll-000.png
-- roles: favicon.svg = supporting brand mark; scroll-000.png = background live product proof, dimmed 42%
-- sfx: none
-
-The phrase arrives in three deliberate chunks: “Your coding agent” → “doesn't need” → “the whole repo.” The final phrase is the visual weight. No product explanation yet; the real interface sits behind it as proof that this is a working tool, not a concept.
-
-Adapt: keep the blueprint's per-chunk kinetic beat-slam signature, but let the live product capture provide depth instead of a bare type canvas.
-
-Scene 1 (0.0–1.4s): the real product capture rises into a full-bleed background crop while the Locus mark spring-pops into the upper third; layered-depth framing, screenshot dimmed behind the mark, no claim text yet.
-Scene 2 (1.4–3.0s): “Your coding agent” assembles chunk-by-chunk with a per-word staggered reveal across the center; centered hierarchy, display type dominates at more than 3:1 over the mark.
-Scene 3 (3.0–4.5s): “doesn't need” replaces the prior emphasis with an in-place hard-cut word swap while the product surface shifts focus toward the task box; rule-of-thirds framing, two depth layers.
-Scene 4 (4.5–6.0s): “THE WHOLE REPO.” lands as the kinetic beat-slam finale in primary lime and holds; the screenshot settles completely still for the read.
-
-## Frame 2 — The founder pain becomes the rule
-
-- status: animated
-- src: compositions/frames/02-rule.html
-- duration: 7s
-- poster: 5s
-- transition_in: blur-through
-- scene: Context overflow and token waste collapse into Locus's conservative operating rule.
-- onscreen: "Context overflows. Tokens disappear. Locus finds a focused slice—or widens when uncertain."
-- type: product_intro
-- blueprint: ticker-takeover (Reproduce)
-- narrativeRole: Connect the founder's real frustration to the product promise without claiming guaranteed quality.
-- asset_candidates: capture/assets/favicon.svg; capture/screenshots/scroll-000.png
-- focal: capture/assets/favicon.svg
-- roles: favicon.svg = foreground brand takeover; scroll-000.png = background product surface, dimmed 48%
-- sfx: none
-
-“Context overflows” and “Tokens disappear” cycle through one fixed position. “Locus” then takes over the frame, followed by the rule in smaller copy: focused when there is evidence, whole repo when there is not.
-
-Scene 1 (0.0–1.8s): “Context overflows.” types on in the center over the dim live interface; centered low-density framing with the screenshot as a quiet background plane.
-Scene 2 (1.8–3.4s): only the variable line cycles to “Tokens disappear.” using an in-place token swap; the existing baseline stays fixed so the viewer sees one worsening thought, not a new slide.
-Scene 3 (3.4–5.2s): the Locus mark and wordmark crash in from the right and physically displace the pain line—the ticker-takeover signature move; layered-depth framing with the mark as the clear focal.
-Scene 4 (5.2–7.0s): “Focused when there is evidence. Whole repo when there isn't.” reveals in two restrained chunks beneath the stable lockup; holds without ambient motion.
-
-## Frame 3 — Describe the task
-
-- status: animated
-- src: compositions/frames/03-input.html
-- duration: 10s
-- poster: 7s
-- transition_in: zoom-through
-- scene: A real historical Solum task is typed against the exact pre-fix commit, then each repository signal activates before Locus reveals the ranked context.
-- onscreen: "Solum @ 6a4a3aa. Prevent duplicate signup profile writes. Task matches → imported dependencies → nearby integration → ranked context pack → 8 of 57 files ranked."
-- type: feature_showcase
-- blueprint: device-surface-showcase (Adapt)
-- narrativeRole: Show the real workflow before presenting any result or benchmark.
+- blueprint: typewriter-reveal (Adapt)
+- narrativeRole: Name the original frustration in the founder's own voice so the product feels motivated by a real problem.
 - asset_candidates: capture/screenshots/scroll-000.png
 - focal: capture/screenshots/scroll-000.png
-- roles: scroll-000.png = foreground live product window
+- roles: scroll-000.png = real product background, softly dimmed while the founder note is typed
 - sfx: none
 
-The real captured homepage enters as a floating window. A caption identifies the reproducible repository snapshot, “Solum @ 6a4a3aa,” and types the actual task: “Prevent duplicate signup profile writes.” The camera then pans toward the context trace while its readable stages activate in order: task matches, imported dependencies, nearby integration, and the ranked context pack. The frame resolves on “8 of 57 files ranked.”
+Adapt: keep the blueprint's typed everyday thought. Remove the logo pop and promotional reveal; the sentence and real interface are enough.
 
-Adapt: keep the blueprint's floating-window push and screen-tour signature, but use the real captured page with no reconstructed controls or simulated cursor.
+Scene 1 (0.0–0.7s): the live Locus capture appears already open, flat and nearly full-frame; layered-depth layout with the interface as the only background plane. A small “why I built this” note appears at top left via a restrained per-word reveal (`dynamic-content-sequencing`).
+Scene 2 (0.7–3.1s): “I kept running out of context halfway through coding tasks.” types onto a plain note strip with a caret (`discrete-text-sequence`, `context-sensitive-cursor`). The typing includes one brief pause after “context,” then continues.
+Scene 3 (3.1–4.0s): the caret blinks twice and everything holds still. No logo sting and no exit animation.
 
-Scene 1 (0.0–2.2s): the captured product window establishes at a slight perspective tilt, occupying most of the top 83%; layered-depth framing with a tinted ground and a single lime focus rail.
-Scene 2 (2.2–4.6s): the virtual camera pushes toward the task field while “Prevent duplicate signup profile writes” types letter-by-letter beneath “REAL TASK · SOLUM @ 6A4A3AA”; asymmetric 70/30.
-Scene 3 (4.6–7.8s): the inner screenshot pans downward to the context trace while “TASK MATCHES” and “IMPORTED DEPS” activate in sequence; the window itself stays fixed.
-Scene 4 (7.8–10.0s): “NEARBY FILES” and “RANKED CONTEXT PACK” complete the evidence rail, then “8 OF 57 FILES RANKED” resolves above it as the camera eases back to the full window.
+Subtitle (0.35–4.0s): “Honestly, this started because I kept hitting the same wall.”
 
-## Frame 4 — Focus the context
+## Frame 2 — Attach what the prompt leaves out
 
 - status: animated
-- src: compositions/frames/04-result.html
+- src: compositions/frames/02-task-evidence.html
+- duration: 9s
+- poster: 6.4s
+- transition_in: crossfade
+- scene: The real task area gains an attachment, extracts the actual signup failure text, and keeps the evidence inspectable.
+- onscreen: "signup-bug-report.pdf · Account created but profile save failed · attachments are not saved"
+- type: feature_showcase
+- blueprint: cursor-ui-demo (Adapt)
+- narrativeRole: Show that Locus can use the screenshot or document behind a vague task without turning into a generic document chatbot.
+- asset_candidates: capture/screenshots/scroll-000.png
+- focal: capture/screenshots/scroll-000.png
+- roles: scroll-000.png = real Locus task surface behind the implemented attachment control and extracted-evidence state
+- sfx: none
+
+Adapt: keep one ordinary cursor and a single task surface. The attachment control, status, evidence card, privacy copy, and removal action must match the implemented `TaskEvidence` component; do not show a fake operating-system file picker.
+
+Scene 1 (0.0–2.0s): the real task panel is framed at reading size. The task field contains “Fix this signup issue.” A small annotation reads “Sometimes the useful detail isn’t in the prompt.”
+Scene 2 (2.0–4.0s): the cursor clicks “Attach screenshot or document.” The control changes to “Extracting document text…” and holds for a natural beat (`cursor-click-ripple`, `press-release-spring`).
+Scene 3 (4.0–7.2s): an evidence row appears for `signup-bug-report.pdf`. It opens to the extracted sentence: “Account created but profile save failed. You can update your profile later.” A second line reads “Expected: one profile write after account creation.” (`dynamic-content-sequencing`, `viewport-change`).
+Scene 4 (7.2–9.0s): the privacy line receives a quiet focus stroke: “Documents are processed in memory. Attachments are not saved.” Hold still long enough to read.
+
+Subtitles: (0.4–4.2s) “Sometimes the useful context isn’t in the prompt. It’s in the bug report.” (4.3–9.0s) “So now I can attach it, inspect the text, and use that evidence too.”
+
+## Frame 3 — One real repository task
+
+- status: animated
+- src: compositions/frames/02-real-workflow.html
+- duration: 15s
+- poster: 10.2s
+- transition_in: crossfade
+- scene: A cursor performs the actual Locus workflow on the captured product: repository, task, Analyze, then the evidence trail.
+- onscreen: "Solum @ 6a4a3aa · Prevent duplicate signup profile writes · task matches → imports → nearby integration"
+- type: feature_showcase
+- blueprint: cursor-ui-demo (Adapt)
+- narrativeRole: Prove the message through one understandable workflow before making any efficiency claim.
+- asset_candidates: capture/screenshots/scroll-000.png; capture/screenshots/scroll-042.png
+- focal: capture/screenshots/scroll-000.png
+- roles: scroll-000.png = primary live workflow surface; scroll-042.png = real lower-page result state after analysis
+- sfx: none
+
+Adapt: keep the blueprint's cursor-led end-to-end workflow and camera chase. Use only controls and states visible in the captured Locus interface; do not invent menus, modals, or browser chrome.
+
+Scene 1 (0.0–2.2s): the real Locus page fills the frame. A small caption reads “real task · Solum @ 6a4a3aa.” The cursor enters from the lower right, pauses over the task field, and the camera makes one small focus-lock toward that field (`camera-cursor-tracking`, `coordinate-target-zoom`).
+Scene 2 (2.2–6.8s): “Prevent duplicate signup profile writes” types into the visible task field (`discrete-text-sequence`, `context-sensitive-cursor`). Typing is uneven in natural phrase groups, followed by a 0.6s thinking pause.
+Scene 3 (6.8–8.4s): the cursor moves to Analyze and clicks once with a restrained press and ripple (`cursor-click-ripple`, `press-release-spring`). A small status line changes from “ready” to “reading repository evidence”; no spinner spectacle.
+Scene 4 (8.4–12.8s): the product surface shifts to the captured analyzed state using a matched downward cut. The camera follows the cursor through “Task matches,” “Imported dependencies,” and “Nearby integration”; each label receives one quiet lime focus stroke when inspected (`viewport-change`, `asr-keyword-glow`).
+Scene 5 (12.8–15.0s): the cursor stops above the ranked context panel. A plain annotation appears: “Locus shows why each file made the cut.” The camera settles completely still.
+
+Subtitles: (0.6–4.6s) “Then I’ll use a real repository task from Solum.” (4.7–9.4s) “Locus follows what the task actually touches.” (9.5–15.0s) “And I can still see why every file made the cut.”
+
+## Frame 4 — What came back
+
+- status: animated
+- src: compositions/frames/03-real-result.html
 - duration: 10s
-- poster: 7s
-- transition_in: wipe-up
-- scene: The real Solum replay result takes over: eight selected files, forty-nine excluded files, the exact future fix file included, and 89% fewer estimated tokens.
-- onscreen: "Real Solum run: 8 of 57 files selected. 49 excluded. signup/page.tsx included—the exact file changed next. 89% fewer estimated tokens."
+- poster: 7.2s
+- transition_in: cut
+- scene: The actual Solum replay result is inspected without turning the metrics into a spectacle.
+- onscreen: "8 of 57 files selected · 49 left out · signup/page.tsx included · 89% fewer estimated tokens"
 - type: benefit_highlight
 - blueprint: video-text-pivot (Adapt)
-- narrativeRole: Translate the mechanism into a concrete result while labeling it as one example.
-- asset_candidates: capture/screenshots/scroll-000.png; capture/screenshots/scroll-042.png
-- focal: capture/screenshots/scroll-042.png
-- roles: scroll-000.png = supporting whole-product view; scroll-042.png = foreground context trace and proof handoff
-- sfx: none
-
-Begin on the real three-stage context trace. A lime scan moves from task matches to supporting files. The interface shifts left and the actual replay result enters: 8 selected files, 49 excluded files, and 89% fewer estimated tokens. A ranked-files card names the three anchors, and a historical check identifies `app/(auth)/signup/page.tsx` as the exact file changed next. The word “estimated” stays attached to the token claim.
-
-Adapt: replace the blueprint's product video with a moving crop of the real captured screenshot, preserving the same-anchor surface-to-stat weight-transfer signature.
-
-Scene 1 (0.0–2.5s): the context-trace crop from the live product fills center and slowly pans across task matches, imported dependencies, and nearby integration; full-window framing, the trace remains the only dominant object.
-Scene 2 (2.5–5.2s): the trace window slides left and scales down as “8 files selected” fills the vacated right-side anchor—the same-anchor weight transfer; asymmetric 60/40, three depth layers.
-Scene 3 (5.2–7.4s): “49 excluded” replaces the first stat while a real ranked-files card names `signup/page.tsx`, `profile/route.ts`, and `privacy/page.tsx`; the first is marked “changed next.”
-Scene 4 (7.4–10.0s): “89% fewer estimated tokens” takes the center in display scale. “REAL SOLUM RUN,” “ESTIMATED,” and “FIX FILE FOUND · signup/page.tsx” remain visibly attached. A final team-impact rail translates the mechanism into three bounded benefits: “LOWER CONTEXT COST,” “LESS IRRELEVANT CODE,” and “CONSERVATIVE FALLBACK.”
-
-## Frame 5 — Measured, not promised
-
-- status: animated
-- src: compositions/frames/05-proof.html
-- duration: 9s
-- poster: 6s
-- transition_in: crossfade
-- scene: The captured benchmark section resolves into three large proof cards and one honest caveat.
-- onscreen: "9 historical tasks. 3 real repos. 100% fix-file recall. 53% median estimated context reduction."
-- type: social_proof
-- blueprint: dataviz-countup (Adapt)
-- narrativeRole: Replace launch hype with reproducible evidence and clearly bounded claims.
+- narrativeRole: Translate the workflow into a bounded result that a developer can evaluate without overstating what was proven.
 - asset_candidates: capture/screenshots/scroll-042.png; capture/screenshots/scroll-085.png
-- focal: capture/screenshots/scroll-085.png
-- roles: scroll-042.png = background trace-to-proof bridge, dimmed 45%; scroll-085.png = foreground benchmark evidence
+- focal: capture/screenshots/scroll-042.png
+- roles: scroll-042.png = real ranked context and token result; scroll-085.png = supporting historical benchmark evidence, used only as a small verification strip
 - sfx: none
 
-The “Measured, not promised” capture fills the background. The camera pushes through 9 / 3, 100%, and 53% in sequence. A final rail states: “Historical replay—not autonomous agent success.”
+Adapt: keep the real-product-to-result handoff. Remove the frame-filling count-up and animated stat cards; the interface remains dominant and the figures read like annotations.
 
-Adapt: keep the data-viz count-up and camera traversal signature, using the actual deployed benchmark cards rather than reconstructed charts.
+Scene 1 (0.0–3.0s): the analyzed Locus capture fills the canvas. The cursor highlights the selected/excluded summary and a small annotation types: “8 selected · 49 left out” (`camera-cursor-tracking`, `discrete-text-sequence`).
+Scene 2 (3.0–6.6s): the cursor moves to `app/(auth)/signup/page.tsx`. A slim outline appears around the real row and a note reveals beside it: “This was the next file changed in the historical fix.” (`cursor-click-ripple`, `css-marker-patterns`).
+Scene 3 (6.6–8.6s): the cursor shifts to the token meter. “89% fewer estimated tokens in this replay” appears at reading size; “estimated” remains on the same line. No count-up (`dynamic-content-sequencing`).
+Scene 4 (8.6–10.0s): a small footnote appears: “Historical replay, not autonomous task success.” The screen holds still long enough to read.
 
-Scene 1 (0.0–2.0s): “MEASURED, NOT PROMISED” reveals over the real benchmark capture as 9 and 3 count up together; triptych framing begins to form behind the figures.
-Scene 2 (2.0–4.5s): the camera traverses to the first captured metric card and “100% historical fix-file recall” scales into focus; the other cards dim rather than moving independently.
-Scene 3 (4.5–6.8s): focus pans to “53% median estimated context reduction”; the 53 counts up while a lime progress fill resolves beneath it.
-Scene 4 (6.8–9.0s): the camera eases back to the complete three-card benchmark and the evidence rail appears: “Historical replay — not autonomous agent success.” Everything holds still.
+Subtitles: (0.4–3.3s) “Here, it kept 8 files and left 49 out.” (3.4–7.0s) “The next file changed in the real fix was included.” (7.1–10.0s) “It’s a historical replay—not a claim that the agent solved it.”
 
-## Frame 6 — Recruit the beta
+## Frame 5 — Break it
 
 - status: animated
-- src: compositions/frames/06-cta.html
-- duration: 8s
-- poster: 5s
-- transition_in: zoom-through
-- scene: The Locus mark, open-source beta label, and one concrete founder CTA close the film.
-- onscreen: "Looking for 10 TypeScript/Next.js developers to become founding design partners. Browser, CLI, and MCP. Try Locus on a real task. Tell me where it misses."
+- src: compositions/frames/04-human-cta.html
+- duration: 7s
+- poster: 4.8s
+- transition_in: crossfade
+- scene: A restrained founder invitation closes on the product URL and GitHub repository.
+- onscreen: "I'm looking for 10 developers to try Locus on a real task and tell me where it breaks."
 - type: cta
-- blueprint: logo-assemble-lockup (Adapt)
-- narrativeRole: Turn attention into the exact design-partner behavior needed for the next product milestone.
+- blueprint: typewriter-reveal (Adapt)
+- narrativeRole: Convert interest into honest design-partner feedback rather than a generic launch click.
 - asset_candidates: capture/assets/favicon.svg; capture/screenshots/scroll-100.png
 - focal: capture/assets/favicon.svg
-- roles: favicon.svg = foreground brand lockup; scroll-100.png = background real-use workflow, dimmed 55%
+- roles: favicon.svg = real Locus mark; scroll-100.png = quiet real-use background proof
 - sfx: none
 
-The mark assembles at center, then condenses into a lime CTA pill: “Test it on a real task.” The founder ask recruits ten founding design partners and makes the available surfaces explicit: browser, CLI, and MCP. End held on “locus-five-iota.vercel.app” and “github.com/taranggoyal70/locus.”
+Adapt: keep the persistent mark and typed CTA rail. Remove the logo assembly, giant pill, and “founding design partner” pitch language.
 
-Adapt: keep the blueprint's mark-assembly-to-lockup signature, then extend the lockup into a founder CTA without a simulated cursor.
+Scene 1 (0.0–1.2s): the real-use capture sits dimmed behind a small fixed Locus mark and wordmark; no assembly animation. “Open-source beta” fades in beneath it.
+Scene 2 (1.2–4.8s): “I'm looking for 10 developers to try Locus on a real task and tell me where it breaks.” types in two natural lines with a short pause after “real task” (`discrete-text-sequence`, `context-sensitive-cursor`).
+Scene 3 (4.8–7.0s): the URL and GitHub path appear together via a quiet sequential reveal (`dynamic-content-sequencing`): `locus-five-iota.vercel.app` and `github.com/taranggoyal70/locus`. Hold still to the end.
 
-Scene 1 (0.0–1.7s): the real-use capture settles as a dim full-bleed background while the Locus ring self-draws at center; centered closing treatment with concentric brand rings.
-Scene 2 (1.7–3.5s): the wordmark assembles beside the mark and “OPEN-SOURCE BETA · BROWSER · CLI · MCP” reveals as an eyebrow; the brand lockup becomes the stable eye anchor.
-Scene 3 (3.5–6.2s): “Looking for 10 TypeScript/Next.js developers to become founding design partners.” reveals in two lines below the lockup; a lime CTA pill grows from the same center: “TEST IT ON A REAL TASK.”
-Scene 4 (6.2–8.0s): “Tell me where it misses.” lands above the live URL and GitHub path; final frame holds without exit motion.
+Subtitles: (0.5–3.9s) “If you use coding agents every day, I’d love for you to try it.” (4.0–7.0s) “And honestly, tell me where it breaks.”
 
 ## Asset audit
 
 | Asset | Type | Frames | Role |
 |---|---|---|---|
-| capture/assets/favicon.svg | Brand mark | 1, 2, 6 | Recognizable opener, takeover, and closer |
-| capture/screenshots/scroll-000.png | Live product capture | 1, 2, 3, 4 | Hero, workflow, context trace, token result |
-| capture/screenshots/scroll-042.png | Live product capture | 4, 5 | Context-trace-to-proof handoff |
-| capture/screenshots/scroll-085.png | Live product capture | 5 | Full benchmark evidence |
-| capture/screenshots/scroll-100.png | Live product capture | 6 | Real-use workflow under CTA |
-| capture/screenshots/contact-sheet.jpg | Review-only | Skip | Asset review, not final composition |
-
-## Video direction
-
-- **Format:** 1080×1080 LinkedIn feed.
-- **Sound:** intentionally silent. All meaning is carried by large on-screen copy and real interface captures.
-- **Style basis:** `frame.md`; exact Locus palette and Geist typography.
-- **Palette:** `#0A0D0F` universal ground, `#E9F0F2` display text, `#A3E635` as the only high-signal accent, tinted lime cards and borders only; no invented secondary accent.
-- **Motion grammar:** smooth long-tail entrances, one coordinated camera or element-space move per scene, and cue-paced text reveals. No frame front-loads all copy; each phrase arrives across its full duration.
-- **Held rhythm:** Frames 2 and 5 end on deliberate evidence reads; Frame 6 holds the CTA and URLs. During holds, stay still—no perpetual floating, breathing, or screensaver motion.
-- **Camera:** steady push-ins and crop pans over captured product surfaces; no fake UI and no iframe.
-- **Density:** one dominant sentence or number per moment. Product frames may be dense; copy frames stay restrained.
-- **Transitions:** one motion-continuous handoff between every frame; no empty pre-transition exits.
-- **Claim discipline:** “estimated” remains attached to token reduction; historical replay is never described as autonomous-agent success.
-- **Asset discipline:** every product surface is a real capture from the deployed site.
-- **Negative list:** no purple/blue AI gradients, no fake browser chrome, no fake cursors, no synthetic dashboards, no hard shadows, no front-load-then-freeze slideshow behavior, and no independently drifting screensaver layers.
+| capture/assets/favicon.svg | Brand mark | 4 | Real product identity |
+| capture/screenshots/scroll-000.png | Live product capture | 1, 2, 3 | Founder problem, attachment evidence, and task workflow |
+| capture/screenshots/scroll-042.png | Live product capture | 3, 4 | Analyzed state, evidence trail, and ranked result |
+| capture/screenshots/scroll-085.png | Live product capture | 4 | Small historical-proof strip only |
+| capture/screenshots/scroll-100.png | Live product capture | 5 | Real-use background under the invitation |

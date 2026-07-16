@@ -202,7 +202,10 @@ export async function POST(request: Request) {
     const info = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders() });
     if (info.status === 404) return NextResponse.json({ error: "Repo not found or is private." }, { status: 404 });
     if (!info.ok) return NextResponse.json({ error: `GitHub error (${info.status}). Try again later.` }, { status: 502 });
-    const meta = await info.json();
+    const meta = await info.json().catch(() => null);
+    if (!meta || typeof meta !== "object") {
+      return NextResponse.json({ error: "GitHub returned an invalid repository response." }, { status: 502, headers: rateHeaders });
+    }
     const revision = ref || meta.default_branch || "main";
 
     const treeRes = await fetchWithTimeout(
@@ -213,7 +216,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Commit or branch “${revision}” was not found.` }, { status: 404 });
     }
     if (!treeRes.ok) return NextResponse.json({ error: "Could not read the repo file tree." }, { status: 502 });
-    const tree = await treeRes.json();
+    const tree = await treeRes.json().catch(() => null);
+    if (!tree || typeof tree !== "object" || !Array.isArray(tree.tree)) {
+      return NextResponse.json({ error: "GitHub returned an invalid repository tree." }, { status: 502, headers: rateHeaders });
+    }
     const resolvedRevision = String(tree.sha || revision);
 
     const candidates = (tree.tree as { path: string; type: string; size?: number }[])
@@ -235,13 +241,20 @@ export async function POST(request: Request) {
       try {
         const r = await fetchWithTimeout(`https://raw.githubusercontent.com/${owner}/${repo}/${resolvedRevision}/${rawPath(path)}`);
         if (!r.ok) return null;
-        return [path, await r.text()] as const;
+        const bytes = await r.arrayBuffer();
+        if (bytes.byteLength > MAX_FILE_BYTES) return null;
+        return [path, new TextDecoder().decode(bytes), bytes.byteLength] as const;
       } catch {
         return null;
       }
     });
     const fileMap: Record<string, string> = {};
-    for (const e of entries) if (e) fileMap[e[0]] = e[1];
+    let downloadedBytes = 0;
+    for (const e of entries) {
+      if (!e || downloadedBytes + e[2] > MAX_TOTAL_BYTES) continue;
+      fileMap[e[0]] = e[1];
+      downloadedBytes += e[2];
+    }
     if (Object.keys(fileMap).length === 0) {
       return NextResponse.json({ error: "GitHub returned a file tree, but its source files could not be downloaded." }, { status: 502 });
     }

@@ -1,0 +1,67 @@
+<template>
+  <div id="root" data-composition-id="02-real-workflow" data-width="1080" data-height="1080" data-duration="15" data-fps="30">
+    <div id="f02-real-workflow-ground" class="clip f02-ground" data-start="0" data-duration="15" data-track-index="0"></div>
+    <div id="f02-real-workflow-scene" class="clip f02-scene" data-start="0" data-duration="15" data-track-index="1">
+      <div class="f02-top"><img src="assets/favicon.svg" alt="Locus"><span>real task · Solum @ 6a4a3aa</span></div>
+      <div class="f02-window" id="f02-real-workflow-window">
+        <div class="f02-world" id="f02-real-workflow-world" data-layout-allow-overflow>
+          <img id="f02-real-workflow-shot" src="assets/scroll-000.png" alt="Locus live workflow">
+          <div class="f02-field"><span id="f02-real-workflow-task" data-layout-allow-overflow></span><i id="f02-real-workflow-caret" data-layout-allow-overflow></i></div>
+          <div class="f02-analyze" id="f02-real-workflow-analyze">Analyze</div>
+          <div class="f02-status" id="f02-real-workflow-status">ready</div>
+        </div>
+      </div>
+      <div class="f02-cursor" id="f02-real-workflow-cursor">↖</div>
+      <div class="f02-trace" id="f02-real-workflow-trace">
+        <div id="f02-real-workflow-step1"><b>01</b> Task matches</div>
+        <div id="f02-real-workflow-step2"><b>02</b> Imported dependencies</div>
+        <div id="f02-real-workflow-step3"><b>03</b> Nearby integration</div>
+      </div>
+      <div class="f02-note" id="f02-real-workflow-note">Locus shows why each file made the cut.</div>
+      <div class="f02-subtitle" id="f02-real-workflow-subtitle"><span id="f02-real-workflow-subtitle-text">Then I’ll use a real repository task from Solum.</span></div>
+    </div>
+  </div>
+  <style>
+    @font-face{font-family:Geist;src:url('capture/assets/fonts/797e433ab948586e-s.p.0r6juujl39pe6.woff2') format('woff2');font-weight:400 700}
+    #root{position:relative;width:1080px;height:1080px;overflow:hidden;container-type:size;color:#e9f0f2;font-family:Geist,sans-serif}
+    .f02-ground,.f02-scene{position:absolute;inset:0;width:1080px;height:1080px;overflow:hidden}.f02-ground{background:#0a0d0f}
+    .f02-top{position:absolute;left:70px;top:54px;display:flex;gap:14px;align-items:center;color:#9aa4a8;font-size:18px}.f02-top img{width:28px;height:28px}.f02-top span{letter-spacing:.02em}
+    .f02-window{position:absolute;left:54px;top:112px;width:972px;height:690px;overflow:hidden;border:1px solid rgba(163,230,53,.2);border-radius:16px;background:#0a0d0f}
+    .f02-world{position:absolute;inset:0;transform-origin:50% 50%;will-change:transform}.f02-world>img{position:absolute;left:-210px;top:-8px;width:1375px;height:773px;max-width:none;filter:brightness(.62) saturate(.8)}
+    .f02-field{position:absolute;left:346px;top:329px;width:430px;height:58px;box-sizing:border-box;padding:18px;border:1px solid rgba(233,240,242,.2);border-radius:9px;background:#0c1114;color:#e9f0f2;font-size:16px;white-space:nowrap;overflow:hidden}
+    .f02-field i{display:inline-block;width:2px;height:20px;margin-left:3px;background:#a3e635;vertical-align:-4px}
+    .f02-analyze{position:absolute;left:786px;top:329px;width:112px;height:58px;display:grid;place-items:center;border-radius:9px;background:#a3e635;color:#0a0d0f;font-size:18px;font-weight:650;transform-origin:center}
+    .f02-status{position:absolute;left:346px;top:397px;color:#7e898d;font-size:15px}
+    .f02-cursor{position:absolute;left:830px;top:560px;z-index:8;color:#f5f7f7;font-size:38px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7));will-change:transform,opacity}
+    .f02-trace{position:absolute;left:70px;top:832px;width:940px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.f02-trace div{padding:18px;border:1px solid rgba(163,230,53,.15);border-radius:10px;background:rgba(163,230,53,.035);color:#cbd2d4;font-size:18px}.f02-trace b{display:block;margin-bottom:7px;color:#a3e635;font-size:13px;font-weight:600}
+    .f02-note{position:absolute;left:70px;top:928px;color:#e9f0f2;font-size:22px;font-weight:550;letter-spacing:-.015em}
+    .f02-subtitle{position:absolute;left:50%;bottom:30px;max-width:850px;transform:translateX(-50%);box-sizing:border-box;padding:14px 22px;border:1px solid rgba(233,240,242,.12);border-radius:12px;background:rgba(5,7,8,.92);color:#f4f7f7;font-size:24px;font-weight:500;line-height:1.28;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});
+    const line='Prevent duplicate signup profile writes';const task=document.getElementById('f02-real-workflow-task');const st={n:0};
+    const subtitle=document.getElementById('f02-real-workflow-subtitle-text');
+    tl.fromTo('#f02-real-workflow-window',{opacity:.25,scale:.985},{opacity:1,scale:1,duration:.8,ease:'power3.out'},0);
+    tl.fromTo('#f02-real-workflow-cursor',{opacity:0,x:120,y:80},{opacity:1,x:-365,y:-205,duration:1.65,ease:'power3.inOut'},.45);
+    tl.to('#f02-real-workflow-world',{scale:1.13,x:-35,y:25,duration:1.25,ease:'power3.inOut'},1.15);
+    tl.to(st,{n:18,duration:1.45,ease:'none',onUpdate:()=>task.textContent=line.slice(0,Math.round(st.n))},2.2);
+    tl.to({}, {duration:.32},3.65);
+    tl.to(st,{n:line.length,duration:1.85,ease:'none',onUpdate:()=>task.textContent=line.slice(0,Math.round(st.n))},3.97);
+    tl.fromTo('#f02-real-workflow-caret',{opacity:1},{opacity:.2,duration:.18,repeat:3,yoyo:true,ease:'none'},5.82);
+    tl.to('#f02-real-workflow-cursor',{x:115,y:-205,duration:1.15,ease:'power3.inOut'},6.45);
+    tl.to('#f02-real-workflow-analyze',{scale:.94,duration:.12,ease:'power2.out'},7.55).to('#f02-real-workflow-analyze',{scale:1,duration:.3,ease:'power3.out'},7.67);
+    tl.to('#f02-real-workflow-status',{color:'#a3e635',duration:.01,onStart:()=>document.getElementById('f02-real-workflow-status').textContent='reading repository evidence'},7.72);
+    tl.to('#f02-real-workflow-world',{scale:1,x:0,y:-205,duration:1.25,ease:'power3.inOut'},8.35);
+    tl.to('#f02-real-workflow-cursor',{x:-620,y:185,duration:1.25,ease:'power3.inOut'},8.35);
+    ['#f02-real-workflow-step1','#f02-real-workflow-step2','#f02-real-workflow-step3'].forEach((id,i)=>tl.fromTo(id,{opacity:.18,y:8},{opacity:1,y:0,duration:.55,ease:'power3.out'},9.25+i*1.05));
+    tl.to('#f02-real-workflow-cursor',{x:-295,y:255,duration:1.2,ease:'power3.inOut'},12.2);
+    tl.fromTo('#f02-real-workflow-note',{opacity:0,y:8},{opacity:1,y:0,duration:.7,ease:'power3.out'},13.15);
+    tl.fromTo('#f02-real-workflow-subtitle',{opacity:0,y:7},{opacity:1,y:0,duration:.4,ease:'power3.out'},.6);
+    tl.to('#f02-real-workflow-subtitle',{opacity:0,duration:.18,ease:'power2.in'},4.5);
+    tl.call(()=>subtitle.textContent='Locus follows what the task actually touches.',[],4.7).to('#f02-real-workflow-subtitle',{opacity:1,duration:.22,ease:'power2.out'},4.7);
+    tl.to('#f02-real-workflow-subtitle',{opacity:0,duration:.18,ease:'power2.in'},9.2);
+    tl.call(()=>subtitle.textContent='And I can still see why every file made the cut.',[],9.5).to('#f02-real-workflow-subtitle',{opacity:1,duration:.22,ease:'power2.out'},9.5);
+    tl.to({}, {duration:.01},14.99);window.__timelines['02-real-workflow']=tl;
+  </script>
+</template>

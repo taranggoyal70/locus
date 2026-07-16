@@ -199,10 +199,10 @@ function scoreAnchor(words: Set<string>, route: string, rel: string, source: str
  * Conservative localization: if no file anchors with enough task evidence,
  * fall back to the whole repo instead of returning a speculative small slice.
  */
-export function locate(task: string, repo: RepoData, graph: Graph): LocateResult {
+export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""): LocateResult {
   const { deps, rdeps, byPath } = graph;
   const recent = new Set(repo.recentlyChanged);
-  const words = taskWords(task);
+  const words = taskWords(`${task}\n${evidence}`);
 
   const scored = graph.nodes
     .map((node) => ({

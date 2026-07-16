@@ -29,6 +29,12 @@ The core product concept is strong: the context trace is explainable, weak tasks
 7. Compressed the signed-in hero and removed benchmark/CLI marketing sections from the workspace.
 8. Clarified public-repository and data-retention constraints at the decision point.
 9. Updated setup documentation, Clerk environment variables, route access descriptions, and the 120-file hosted limit.
+10. Added client-side repository request cancellation and a 25-second timeout so repeated or stalled loads cannot leave stale work running.
+11. Added runtime validation for bundled and GitHub repository payloads before they reach the graph builder.
+12. Enforced actual downloaded file and total-byte limits even when upstream GitHub metadata is inaccurate.
+13. Added safe clipboard failure feedback and a task-length guard instead of allowing silent UI failures or unbounded input.
+14. Added regression coverage for malformed GitHub trees, oversized source responses, and incomplete repository payloads.
+15. Added ephemeral task evidence for screenshots, PDFs, DOCX, Markdown, and text; document extraction is memory-only and screenshot OCR runs locally with browser caching disabled.
 
 ## Product priorities still worth doing
 
