@@ -389,7 +389,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
               <pre className="overflow-x-auto p-5 font-mono text-xs leading-6 text-muted-light">{`npx github:taranggoyal70/locus \\
   locate "prevent duplicate signup profile writes" --pack`}</pre>
               <div className="border-t border-line px-5 py-4 text-xs text-muted">
-                Zero runtime dependencies. TypeScript and Next.js repositories are supported today.
+                Zero runtime dependencies. JavaScript and TypeScript repositories are supported.
               </div>
             </div>
           </div>
