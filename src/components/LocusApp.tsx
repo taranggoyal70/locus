@@ -27,6 +27,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, evidence,
     examples: bundledExamples, bundled: BUNDLED,
     setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt, addEvidence, removeEvidence,
+    recentRepos, clearRecents, loadRecent,
   } = useLocus();
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [saveStatus, setSaveStatus] = useState<string>("idle");
@@ -268,6 +269,28 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                     </button>
                   ))}
                 </div>
+                {recentRepos.length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] text-muted">Recent</span>
+                    {recentRepos.map((identifier) => (
+                      <button
+                        key={identifier}
+                        onClick={() => loadRecent(identifier)}
+                        disabled={loading}
+                        title={`Re-analyze ${identifier}`}
+                        className="max-w-[220px] truncate rounded-full border border-line-strong px-2.5 py-1 text-[11px] text-muted-light transition hover:text-paper disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {identifier}
+                      </button>
+                    ))}
+                    <button
+                      onClick={clearRecents}
+                      className="text-[11px] text-muted underline-offset-2 transition hover:text-paper hover:underline"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="bg-ink/[0.55] p-5 sm:p-6">
