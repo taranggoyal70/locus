@@ -1,11 +1,61 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { buildGraph, locate } from "@/lib/localizer";
 import { sharedWorkspaceViewFrom } from "@/lib/share";
 import { BUNDLED, bundledSource, githubSource, type RepoSource } from "@/lib/sources";
 import type { RepoData, TaskEvidence } from "@/lib/types";
+
+// Recent repositories are stored locally as identifiers only (e.g. "owner/repo")
+// — never source content — so returning users can re-analyze in one click.
+// Backed by a tiny external store so it reads client-only localStorage without
+// a hydration mismatch or a setState-in-effect.
+const RECENTS_KEY = "locus.recentRepos";
+const MAX_RECENTS = 6;
+const EMPTY_RECENTS: string[] = [];
+
+let recentsCache: string[] = EMPTY_RECENTS;
+let recentsRaw: string | null = null;
+const recentsListeners = new Set<() => void>();
+
+function recentsSnapshot(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENTS_KEY) ?? "[]";
+    if (raw !== recentsRaw) {
+      recentsRaw = raw;
+      const parsed = JSON.parse(raw);
+      recentsCache = Array.isArray(parsed)
+        ? parsed.filter((v): v is string => typeof v === "string").slice(0, MAX_RECENTS)
+        : EMPTY_RECENTS;
+    }
+  } catch {
+    recentsCache = EMPTY_RECENTS;
+  }
+  return recentsCache;
+}
+
+function subscribeRecents(callback: () => void): () => void {
+  recentsListeners.add(callback);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === RECENTS_KEY) callback();
+  };
+  window.addEventListener("storage", onStorage);
+  return () => {
+    recentsListeners.delete(callback);
+    window.removeEventListener("storage", onStorage);
+  };
+}
+
+function writeRecents(next: string[]): void {
+  try {
+    localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
+  } catch {
+    /* storage unavailable — recents are best-effort */
+  }
+  recentsRaw = null; // force the snapshot to recompute on next read
+  recentsListeners.forEach((listener) => listener());
+}
 
 export function useLocus() {
   const [repo, setRepo] = useState<RepoData | null>(null);
@@ -17,8 +67,22 @@ export function useLocus() {
   const [note, setNote] = useState<string | null>(null);
   const [loadedRepositorySpecifier, setLoadedRepositorySpecifier] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<TaskEvidence[]>([]);
+  const recentRepos = useSyncExternalStore(subscribeRecents, recentsSnapshot, () => EMPTY_RECENTS);
   const loadVersion = useRef(0);
   const activeRequest = useRef<AbortController | null>(null);
+
+  function rememberRepo(specifier: string | null | undefined) {
+    const spec = specifier?.trim();
+    if (!spec || typeof window === "undefined") return;
+    const current = recentsSnapshot();
+    writeRecents(
+      [spec, ...current.filter((r) => r.toLowerCase() !== spec.toLowerCase())].slice(0, MAX_RECENTS),
+    );
+  }
+
+  function clearRecents() {
+    if (typeof window !== "undefined") writeRecents(EMPTY_RECENTS);
+  }
 
   async function open(source: RepoSource, nextTask?: string) {
     activeRequest.current?.abort();
@@ -32,6 +96,7 @@ export function useLocus() {
       if (version !== loadVersion.current) return;
       setRepo(r);
       setLoadedRepositorySpecifier(source.repositorySpecifier ?? null);
+      rememberRepo(source.repositorySpecifier);
       if (nextTask !== undefined) setTask(nextTask);
       if (n) setNote(n);
     } catch (e) {
@@ -61,6 +126,7 @@ export function useLocus() {
         setGhUrl(sharedRepositorySpecifier);
         setRepo(sharedRepoData);
         setLoadedRepositorySpecifier(sharedRepositorySpecifier);
+        rememberRepo(sharedRepositorySpecifier);
         setTask(sharedTask);
         if (sharedNote) setNote(sharedNote);
       }).catch((cause: unknown) => {
@@ -100,12 +166,17 @@ export function useLocus() {
   return {
     repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, examples, evidence,
     bundled: BUNDLED,
+    recentRepos, clearRecents,
     setTask, setSelected, setGhUrl,
     addEvidence: (item: TaskEvidence) => setEvidence((current) => [...current, item].slice(-3)),
     removeEvidence: (id: string) => setEvidence((current) => current.filter((item) => item.id !== id)),
     pickBundled: (slug: string) =>
       open(bundledSource(slug), BUNDLED.find((b) => b.slug === slug)?.examples[0] ?? ""),
     loadGithub: () => ghUrl.trim() && open(githubSource(ghUrl)),
+    loadRecent: (specifier: string) => {
+      setGhUrl(specifier);
+      return open(githubSource(specifier));
+    },
     loadGithubAt: (url: string, nextTask: string) => {
       setGhUrl(url);
       return open(githubSource(url), nextTask);
