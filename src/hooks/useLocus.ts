@@ -7,53 +7,29 @@ import { sharedWorkspaceViewFrom } from "@/lib/share";
 import { BUNDLED, bundledSource, githubSource, type RepoSource } from "@/lib/sources";
 import type { RepoData, TaskEvidence } from "@/lib/types";
 
-// Recent repositories are stored locally as identifiers only (e.g. "owner/repo")
-// — never source content — so returning users can re-analyze in one click.
-// Backed by a tiny external store so it reads client-only localStorage without
-// a hydration mismatch or a setState-in-effect.
-const RECENTS_KEY = "locus.recentRepos";
+// Recent repositories are kept as identifiers only (e.g. "owner/repo") — never
+// source content — in an in-memory, session-scoped store. Nothing is persisted
+// to localStorage or disk; they reset on reload. A tiny external store keeps
+// reads hydration-safe without a setState-in-effect.
 const MAX_RECENTS = 6;
 const EMPTY_RECENTS: string[] = [];
 
 let recentsCache: string[] = EMPTY_RECENTS;
-let recentsRaw: string | null = null;
 const recentsListeners = new Set<() => void>();
 
 function recentsSnapshot(): string[] {
-  try {
-    const raw = localStorage.getItem(RECENTS_KEY) ?? "[]";
-    if (raw !== recentsRaw) {
-      recentsRaw = raw;
-      const parsed = JSON.parse(raw);
-      recentsCache = Array.isArray(parsed)
-        ? parsed.filter((v): v is string => typeof v === "string").slice(0, MAX_RECENTS)
-        : EMPTY_RECENTS;
-    }
-  } catch {
-    recentsCache = EMPTY_RECENTS;
-  }
   return recentsCache;
 }
 
 function subscribeRecents(callback: () => void): () => void {
   recentsListeners.add(callback);
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === RECENTS_KEY) callback();
-  };
-  window.addEventListener("storage", onStorage);
   return () => {
     recentsListeners.delete(callback);
-    window.removeEventListener("storage", onStorage);
   };
 }
 
 function writeRecents(next: string[]): void {
-  try {
-    localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
-  } catch {
-    /* storage unavailable — recents are best-effort */
-  }
-  recentsRaw = null; // force the snapshot to recompute on next read
+  recentsCache = next;
   recentsListeners.forEach((listener) => listener());
 }
 
