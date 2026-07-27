@@ -1,14 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export function WaitlistForm({ onClose }: { onClose: () => void }) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const successHeadingRef = useRef<HTMLHeadingElement>(null);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [useCase, setUseCase] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    emailRef.current?.focus();
+    return () => previousFocus?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (result?.ok) successHeadingRef.current?.focus();
+  }, [result?.ok]);
+
+  function handleKeyDown(event: React.KeyboardEvent) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+    if (event.key !== "Tab") return;
+
+    const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), a[href]',
+    ) ?? [])].filter((element) => !element.hasAttribute("hidden"));
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -30,11 +70,23 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-0 py-6 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onKeyDown={handleKeyDown}
     >
-      <div className="relative w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl">
-        <button onClick={onClose} className="absolute right-4 top-4 text-muted hover:text-paper">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        className="relative mx-4 max-h-[calc(100dvh-3rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl"
+      >
+        <button
+          onClick={onClose}
+          aria-label="Close waitlist form"
+          className="absolute right-4 top-4 rounded-md p-1 text-muted hover:text-paper"
+        >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
@@ -47,20 +99,33 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                 <path d="M20 6 9 17l-5-5" />
               </svg>
             </div>
-            <p className="text-lg font-semibold text-paper">{result.message}</p>
+            <h2
+              ref={successHeadingRef}
+              id={titleId}
+              tabIndex={-1}
+              className="text-lg font-semibold text-paper focus:outline-none"
+            >
+              {result.message}
+            </h2>
+            <p id={descriptionId} className="mt-2 text-sm text-muted-light">
+              Thanks for helping shape the next version of Locus.
+            </p>
             <button onClick={onClose} className="mt-4 text-sm text-accent hover:underline">Close</button>
           </div>
         ) : (
           <>
-            <h2 className="text-xl font-semibold tracking-[-0.02em] text-paper">Join the Pro waitlist</h2>
-            <p className="mt-1 text-sm text-muted-light">Private repos, team workspaces, higher limits. We&apos;ll reach out when it&apos;s ready.</p>
+            <h2 id={titleId} className="text-xl font-semibold tracking-[-0.02em] text-paper">Join the Pro waitlist</h2>
+            <p id={descriptionId} className="mt-1 text-sm text-muted-light">Private repos, team workspaces, higher limits. We&apos;ll reach out when it&apos;s ready.</p>
 
             {result && !result.ok && (
-              <div className="mt-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-2 text-xs text-recent">{result.message}</div>
+              <div role="alert" className="mt-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-2 text-xs text-recent">{result.message}</div>
             )}
 
             <form onSubmit={submit} className="mt-5 space-y-3">
+              <label htmlFor={`${titleId}-email`} className="sr-only">Work email</label>
               <input
+                ref={emailRef}
+                id={`${titleId}-email`}
                 type="email"
                 required
                 value={email}
@@ -68,21 +133,27 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                 placeholder="you@company.com"
                 className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
               />
+              <label htmlFor={`${titleId}-name`} className="sr-only">Name, optional</label>
               <input
+                id={`${titleId}-name`}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Name (optional)"
                 maxLength={200}
                 className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
               />
+              <label htmlFor={`${titleId}-company`} className="sr-only">Company, optional</label>
               <input
+                id={`${titleId}-company`}
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 placeholder="Company (optional)"
                 maxLength={200}
                 className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
               />
+              <label htmlFor={`${titleId}-use-case`} className="sr-only">How do you plan to use Locus? Optional</label>
               <textarea
+                id={`${titleId}-use-case`}
                 value={useCase}
                 onChange={(e) => setUseCase(e.target.value)}
                 placeholder="How do you plan to use Locus? (optional)"

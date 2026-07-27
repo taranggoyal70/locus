@@ -82,4 +82,66 @@ describe("GitHub repository API request guards", () => {
     });
     fetchMock.mockRestore();
   });
+
+  it("preserves the app directory when every loaded file is a route surface", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ default_branch: "main" }))
+      .mockResolvedValueOnce(Response.json({
+        sha: "abc123",
+        tree: [
+          { path: "app/page.tsx", type: "blob", size: 10 },
+          { path: "app/dashboard/page.tsx", type: "blob", size: 10 },
+        ],
+      }))
+      .mockResolvedValueOnce(new Response("export default function Home() {}"))
+      .mockResolvedValueOnce(new Response("export default function Dashboard() {}"))
+      .mockResolvedValueOnce(Response.json([]));
+
+    const response = await POST(request('{"url":"owner/repo"}', "198.51.100.22"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.repo.root).toBe("");
+    fetchMock.mockRestore();
+  });
+
+  it("reports truncation when a supported source file exceeds the size cap", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ default_branch: "main" }))
+      .mockResolvedValueOnce(Response.json({
+        sha: "abc123",
+        tree: [
+          { path: "src/page.tsx", type: "blob", size: 10 },
+          { path: "src/generated.ts", type: "blob", size: 100_001 },
+        ],
+      }))
+      .mockResolvedValueOnce(new Response("export default function Page() {}"))
+      .mockResolvedValueOnce(Response.json([]));
+
+    const response = await POST(request('{"url":"owner/repo"}', "198.51.100.23"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.truncated).toBe(true);
+    fetchMock.mockRestore();
+  });
+
+  it("reports truncation when GitHub returns a partial recursive tree", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ default_branch: "main" }))
+      .mockResolvedValueOnce(Response.json({
+        sha: "abc123",
+        truncated: true,
+        tree: [{ path: "src/page.tsx", type: "blob", size: 10 }],
+      }))
+      .mockResolvedValueOnce(new Response("export default function Page() {}"))
+      .mockResolvedValueOnce(Response.json([]));
+
+    const response = await POST(request('{"url":"owner/repo"}', "198.51.100.24"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.truncated).toBe(true);
+    fetchMock.mockRestore();
+  });
 });

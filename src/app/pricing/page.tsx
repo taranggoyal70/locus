@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { WaitlistForm } from "@/components/WaitlistForm";
+import { REPO_URL } from "@/lib/config";
 
 const tiers = [
   {
@@ -16,7 +17,7 @@ const tiers = [
       "Public repositories",
       "Unlimited browser analyses",
       "CLI + MCP server",
-      "10 saved analyses",
+      "10 saved tasks",
       "5 API keys",
       "30 API calls / minute",
       "Community support",
@@ -28,13 +29,13 @@ const tiers = [
   },
   {
     name: "Pro",
-    price: "$29",
-    period: "/ month",
-    description: "For teams shipping with AI agents every day.",
+    price: "Waitlist",
+    period: "",
+    description: "Planned for teams shipping with AI agents every day.",
     features: [
       "Everything in Free",
-      "Private repositories (GitHub OAuth)",
-      "Unlimited saved analyses",
+      "Private repositories (least-privilege GitHub App)",
+      "Unlimited saved tasks",
       "10 API keys",
       "120 API calls / minute",
       "Team workspaces",
@@ -48,9 +49,9 @@ const tiers = [
   },
   {
     name: "Enterprise",
-    price: "Custom",
+    price: "Let’s talk",
     period: "",
-    description: "For organizations with compliance and scale needs.",
+    description: "Help shape the roadmap for compliance and scale.",
     features: [
       "Everything in Pro",
       "Self-hosted option",
@@ -60,8 +61,8 @@ const tiers = [
       "Dedicated support",
       "SLA guarantee",
     ],
-    cta: "Contact us",
-    ctaHref: "mailto:intern@gohighview.com",
+    cta: "Start a conversation",
+    ctaHref: `${REPO_URL}/issues/new`,
     action: "link" as const,
     highlighted: false,
   },
@@ -92,10 +93,10 @@ export default function PricingPage() {
         <div className="text-center">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Pricing</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-paper sm:text-5xl">
-            Start free. Scale when you&apos;re ready.
+            Free public beta. Pro is coming next.
           </h1>
           <p className="mt-4 text-base text-muted-light sm:text-lg">
-            Locus is free for public repositories. Upgrade for private repos, team features, and higher API limits.
+            Today, every account gets the public-repository workflow at no charge. Join the waitlist for planned private-repo, team, and higher-limit features.
           </p>
         </div>
 
@@ -153,7 +154,7 @@ export default function PricingPage() {
         <div className="mt-16 text-center">
           <p className="text-sm text-muted-light">
             Need something specific?{" "}
-            <a href="mailto:intern@gohighview.com" className="text-accent hover:underline">
+            <a href={`${REPO_URL}/issues/new`} className="text-accent hover:underline">
               Get in touch
             </a>
           </p>

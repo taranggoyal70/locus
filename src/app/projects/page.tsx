@@ -10,9 +10,9 @@ export default async function ProjectsPage() {
 
   return (
     <SettingsShell>
-      <h1 className="text-2xl font-semibold tracking-[-0.03em] text-paper">Saved analyses</h1>
+      <h1 className="text-2xl font-semibold tracking-[-0.03em] text-paper">Saved tasks</h1>
       <p className="mt-1 text-sm text-muted-light">
-        Analyses you saved from the workspace. Click one to re-open.
+        Repository and task references saved from the workspace. Opening one runs a fresh analysis against the current repository state.
       </p>
       <div className="mt-6">
         <ProjectsList />

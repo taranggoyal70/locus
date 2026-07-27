@@ -4,7 +4,7 @@
 
 Locus maps a natural-language task to a focused JavaScript/TypeScript code slice:
 matching files, their dependency closure, nearby integration points, and relevant
-recent changes. When the evidence is weak, it returns the whole repo instead of a
+recent changes. When the evidence is weak, it returns every loaded source file instead of a
 speculative small slice and explains which terms were not found, possible starting
 files, and repository language that can refine the task.
 
@@ -24,9 +24,11 @@ files, and repository language that can refine the task.
 The reproducible historical-task benchmark replays Locus on the parent snapshots
 of 15 real fixes across Locus, Agent Access, and Solum:
 
-- **100% historical fix-file recall** across all 15 declared cases
-- **53% median estimated context reduction**
-- **2 conservative whole-repo fallbacks**
+- **87% of tasks localized without Widen** (13 of 15)
+- **100% historical fix-file recall on localized tasks** (19 of 19 files)
+- **86% end-to-end focused fix-file coverage** when Widen fallbacks receive no localization credit
+- **65% median estimated context reduction**
+- **2 conservative all-loaded-file fallbacks**
 
 See [the full method and every case](./benchmarks/README.md), or run:
 
@@ -34,13 +36,15 @@ See [the full method and every case](./benchmarks/README.md), or run:
 pnpm benchmark
 ```
 
-The replay checks whether Locus includes the files developers changed next. It
+The replay checks whether Locus includes the files developers changed next. A
+safe Widen retains every loaded file, but is reported separately and does not
+count as successful localization. The benchmark
 does not prove that an autonomous agent completed the task, that every excluded
 file was unnecessary, or that agent quality cannot regress.
 
 ## How it works
 
-1. Parse `import`, `require()`, dynamic `import()`, and `@/` aliases into a deterministic dependency graph.
+1. Parse static, side-effect, and dynamic `import()` calls, `require()`, NodeNext `.js` specifiers, and `@/` aliases into a deterministic dependency graph.
 2. Match meaningful task words against file paths and source text.
 3. Add dependency closures, direct consumers, and recent cross-cutting matches.
 4. Widen to all loaded files when the evidence is insufficient, then return
@@ -78,8 +82,9 @@ curl -X POST https://locus-five-iota.vercel.app/api/v1/locate \
 - `evidence` (string, optional) — error logs, stack traces, etc.
 - `budget` (number, optional) — max tokens for packed context (default: 40,000)
 
-**Response:** JSON with `slice`, `anchors`, `tokens`, packed `context`, and
-`refinement` guidance when `widened` is `true`.
+**Response:** JSON with `slice`, `anchors`, `tokens`, packed `context`,
+`contextMeta` (budget omissions), `source` (loaded/candidate file counts and
+truncation), and `refinement` guidance when `widened` is `true`.
 
 Rate limit: 30 requests/minute per user. Full reference at [/docs](https://locus-five-iota.vercel.app/docs).
 
@@ -104,7 +109,6 @@ pnpm dev
 |----------|---------|
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side) |
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
@@ -116,10 +120,13 @@ Signed-out visitors go to login; signed-in users go to `/workspace`.
 
 ### Persistence
 
-Supabase stores saved analyses, API keys, and usage analytics. Run the migration:
+Supabase stores saved task references, API keys, and usage analytics. Repository
+source is not stored. Apply every migration in numeric order:
 
 ```bash
-psql $DATABASE_URL < supabase/migrations/001_initial_schema.sql
+for migration in supabase/migrations/*.sql; do
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
+done
 ```
 
 ### Export formats
@@ -140,7 +147,7 @@ Options:
 - `--pack` — emit the slice as a token-bounded paste block
 - `--json` — machine-readable LocateResult
 - `--evidence <text>` — error messages or stack traces to improve matching
-- `--budget <n>` — token budget for `--pack` (default: 40,000)
+- `--budget <n>` — hard token budget for `--pack` (default: 40,000; maximum: 100,000)
 - `--path <dir>` — repo directory (default: cwd)
 
 ## MCP server
@@ -156,17 +163,19 @@ Options:
 }
 ```
 
-The server exposes `locate(task, path?, evidence?, pack?)`. The publishable
+The server exposes `locate(task, path?, evidence?, pack?, budget?)`. The publishable
 npm package lives in [`cli/`](./cli); `pnpm sync-cli` mirrors files from `bin/`.
 
 ## Verification
 
-- **46 automated tests**, including real CLI and MCP stdio process tests
+- **52 automated tests**, including real CLI and MCP stdio process tests
 - GitHub CI runs lint, tests, CLI sync, type-checking, and a production build
 - [`/api/health`](https://locus-five-iota.vercel.app/api/health) reports the
   deployed package version and Git revision
 - The historical benchmark is generated from declared parent snapshots and
-  fails its launch gate if fix-file recall drops below 100%
+  fails its launch gate if focused recall drops below 100%, task localization
+  or end-to-end focused fix-file coverage falls below 80%, or median context
+  reduction falls below 30%
 
 Run the same checks locally:
 

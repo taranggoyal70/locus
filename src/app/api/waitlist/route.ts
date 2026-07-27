@@ -3,11 +3,72 @@ import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_BODY_BYTES = 5_000;
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 15 * 60_000;
+const rateLimits = new Map<string, { count: number; resetAt: number }>();
+
+function clientIp(request: Request): string {
+  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("x-real-ip")
+    || "unknown";
+}
+
+function allowedByRateLimit(request: Request): boolean {
+  const now = Date.now();
+  const key = clientIp(request);
+  const current = rateLimits.get(key);
+  const entry = !current || current.resetAt <= now
+    ? { count: 0, resetAt: now + RATE_WINDOW_MS }
+    : current;
+  entry.count += 1;
+  rateLimits.set(key, entry);
+  return entry.count <= RATE_LIMIT;
+}
+
+async function readLimitedBody(request: Request): Promise<string | null> {
+  if (!request.body) return "";
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
 
 export async function POST(request: Request) {
+  if (!allowedByRateLimit(request)) {
+    return NextResponse.json({ error: "Too many waitlist requests. Try again later." }, { status: 429 });
+  }
+  if (request.headers.get("sec-fetch-site") === "cross-site") {
+    return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
+  }
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+  }
+
   let body: unknown;
+  const rawBody = await readLimitedBody(request);
+  if (rawBody === null) {
+    return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+  }
   try {
-    body = await request.json();
+    body = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }

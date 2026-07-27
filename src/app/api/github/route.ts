@@ -2,7 +2,6 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { track } from "@/lib/analytics";
-import { serviceClient } from "@/lib/supabase";
 import type { RepoData } from "@/lib/types";
 
 // Fetch a public GitHub repo's TypeScript source into the flat {path: content}
@@ -23,9 +22,9 @@ const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__test
 type RateEntry = { count: number; resetAt: number };
 const rateLimits = new Map<string, RateEntry>();
 
-function ghHeaders(userToken?: string) {
+function ghHeaders() {
   const h: Record<string, string> = { Accept: "application/vnd.github+json" };
-  const token = userToken || process.env.GITHUB_TOKEN;
+  const token = process.env.GITHUB_TOKEN;
   if (token) h.Authorization = `Bearer ${token}`;
   return h;
 }
@@ -146,6 +145,10 @@ function commonRoot(paths: string[]): string {
     while (i < prefix.length && i < parts.length && prefix[i] === parts[i]) i++;
     prefix = prefix.slice(0, i);
   }
+  const sourceIndex = prefix.lastIndexOf("src");
+  if (sourceIndex >= 0) return prefix.slice(0, sourceIndex + 1).join("/");
+  const surfaceIndex = prefix.findIndex((part) => part === "app" || part === "pages");
+  if (surfaceIndex >= 0) return prefix.slice(0, surfaceIndex).join("/");
   return prefix.join("/");
 }
 
@@ -180,19 +183,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    let userToken: string | undefined;
-    try {
-      const db = serviceClient();
-      const { data: conn } = await db
-        .from("github_connections")
-        .select("access_token")
-        .eq("user_id", userId)
-        .single();
-      if (conn?.access_token) userToken = conn.access_token;
-    } catch {
-      // no connection — fall back to server token
-    }
-
     const rawBody = await readLimitedBody(request);
     if (rawBody.tooLarge) {
       return NextResponse.json({ error: "Request body is too large." }, { status: 413, headers: rateHeaders });
@@ -215,10 +205,9 @@ export async function POST(request: Request) {
     }
     const { owner, repo, ref } = parsed;
 
-    const info = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders(userToken) });
+    const info = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders() });
     if (info.status === 404) {
-      const hint = userToken ? "Repo not found." : "Repo not found or is private. Connect GitHub in Settings to access private repos.";
-      return NextResponse.json({ error: hint }, { status: 404 });
+      return NextResponse.json({ error: "Repo not found or is private. The public beta supports public repositories only." }, { status: 404 });
     }
     if (!info.ok) return NextResponse.json({ error: `GitHub error (${info.status}). Try again later.` }, { status: 502 });
     const meta = await info.json().catch(() => null);
@@ -229,7 +218,7 @@ export async function POST(request: Request) {
 
     const treeRes = await fetchWithTimeout(
       `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(revision)}?recursive=1`,
-      { headers: ghHeaders(userToken) },
+      { headers: ghHeaders() },
     );
     if (treeRes.status === 404) {
       return NextResponse.json({ error: `Commit or branch “${revision}” was not found.` }, { status: 404 });
@@ -241,8 +230,9 @@ export async function POST(request: Request) {
     }
     const resolvedRevision = String(tree.sha || revision);
 
-    const candidates = (tree.tree as { path: string; type: string; size?: number }[])
-      .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
+    const sourceCandidates = (tree.tree as { path: string; type: string; size?: number }[])
+      .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path));
+    const candidates = sourceCandidates.filter((n) => (n.size ?? 0) <= MAX_FILE_BYTES);
     const files: string[] = [];
     let sourceBytes = 0;
     for (const file of candidates) {
@@ -254,7 +244,10 @@ export async function POST(request: Request) {
     if (files.length === 0) {
       return NextResponse.json({ error: "No JavaScript or TypeScript source found in that repo." }, { status: 400 });
     }
-    const truncated = files.length < candidates.length;
+    let truncated =
+      tree.truncated === true
+      || candidates.length < sourceCandidates.length
+      || files.length < candidates.length;
 
     const entries = await mapConcurrent(files, DOWNLOAD_CONCURRENCY, async (path) => {
       try {
@@ -277,17 +270,18 @@ export async function POST(request: Request) {
     if (Object.keys(fileMap).length === 0) {
       return NextResponse.json({ error: "GitHub returned a file tree, but its source files could not be downloaded." }, { status: 502 });
     }
+    truncated ||= Object.keys(fileMap).length < files.length;
 
     // best-effort recent-change signal from the last few commits
     let recentlyChanged: string[] = [];
     try {
       const commits = await fetchWithTimeout(
         `https://api.github.com/repos/${owner}/${repo}/commits?per_page=5&sha=${encodeURIComponent(resolvedRevision)}`,
-        { headers: ghHeaders(userToken) },
+        { headers: ghHeaders() },
       ).then((r) => (r.ok ? r.json() : []));
       const detail = await Promise.all(
         (commits as { sha: string }[]).slice(0, 5).map((c) =>
-          fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}/commits/${c.sha}`, { headers: ghHeaders(userToken) })
+          fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}/commits/${c.sha}`, { headers: ghHeaders() })
             .then((r) => (r.ok ? r.json() : null))
             .catch(() => null),
         ),

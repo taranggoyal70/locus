@@ -62,9 +62,30 @@ describe("published runtime surfaces", () => {
       { cwd: root, encoding: "utf8" },
     );
 
-    expect(output).toContain("WIDENED to whole repo");
+    expect(output).toContain("WIDENED to all loaded files");
     expect(output).toContain("Unmatched task terms: checkout, flow, faster");
     expect(output).toContain("Refine with a filename, symbol, or repo term:");
+  });
+
+  it("keeps packed context within a hard token budget", () => {
+    const output = execFileSync(
+      process.execPath,
+      [
+        join(root, "bin/locus.mjs"),
+        "locate",
+        "fix date formatting timezone",
+        "--path",
+        fixtureRoot,
+        "--pack",
+        "--budget",
+        "1",
+      ],
+      { cwd: root, encoding: "utf8" },
+    );
+
+    expect(output).toContain("# 0 files, ~0 tokens");
+    expect(output).toContain("file(s) omitted");
+    expect(output).not.toContain("export function");
   });
 
   it("completes the MCP initialize, discovery, and locate call over stdio", () => {
@@ -90,6 +111,8 @@ describe("published runtime surfaces", () => {
           arguments: {
             task: "fix date formatting timezone",
             path: fixtureRoot,
+            pack: true,
+            budget: 1,
           },
         },
       },
@@ -110,6 +133,29 @@ describe("published runtime surfaces", () => {
     expect(responses[0].result.serverInfo).toEqual({ name: "locus", version: "0.2.0" });
     expect(responses[1].result.tools.map((tool: { name: string }) => tool.name)).toContain("locate");
     expect(responses[2].result.content[0].text).toContain("lib/date.ts");
+    expect(responses[2].result.content[0].text).toContain("# 0 files, ~0 tokens");
     expect(responses[2].result.isError).not.toBe(true);
+  });
+
+  it("reports the package version from the published CLI layout", () => {
+    const request = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2024-11-05",
+        capabilities: {},
+        clientInfo: { name: "locus-test", version: "1.0.0" },
+      },
+    };
+    const processResult = spawnSync(process.execPath, [join(root, "cli/mcp.mjs")], {
+      cwd: root,
+      encoding: "utf8",
+      input: `${JSON.stringify(request)}\n`,
+    });
+
+    expect(processResult.status).toBe(0);
+    const response = JSON.parse(processResult.stdout.trim());
+    expect(response.result.serverInfo).toEqual({ name: "locus", version: "0.2.0" });
   });
 });

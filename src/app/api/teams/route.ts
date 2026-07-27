@@ -76,7 +76,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to create team." }, { status: 500 });
   }
 
-  await db.from("team_members").insert({ team_id: team.id, user_id: userId, role: "owner" });
+  const { error: membershipError } = await db
+    .from("team_members")
+    .insert({ team_id: team.id, user_id: userId, role: "owner" });
+  if (membershipError) {
+    // Avoid returning a team the creator cannot access. Supabase REST does not
+    // expose a cross-table transaction here, so compensate before failing.
+    await db.from("teams").delete().eq("id", team.id);
+    return NextResponse.json({ error: "Failed to create team membership." }, { status: 500 });
+  }
 
   return NextResponse.json({ team }, { status: 201 });
 }
@@ -101,6 +109,9 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Only the team owner can delete it." }, { status: 403 });
   }
 
-  await db.from("teams").delete().eq("id", teamId);
+  const { error: deleteError } = await db.from("teams").delete().eq("id", teamId);
+  if (deleteError) {
+    return NextResponse.json({ error: "Failed to delete team." }, { status: 500 });
+  }
   return NextResponse.json({ deleted: true });
 }

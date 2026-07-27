@@ -19,47 +19,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  try {
+    const db = serviceClient();
 
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const session = event.data.object;
-      const userId = session.metadata?.userId ?? session.client_reference_id;
-      if (!userId || !session.subscription || !session.customer) break;
-
-      await db.from("subscriptions").upsert({
-        user_id: userId,
-        stripe_customer_id: String(session.customer),
-        stripe_subscription_id: String(session.subscription),
-        plan: "pro",
-        status: "active",
-      }, { onConflict: "user_id" });
-      break;
-    }
-
-    case "customer.subscription.updated": {
-      const sub = event.data.object;
-      const { data } = await db
-        .from("subscriptions")
-        .select("user_id")
-        .eq("stripe_subscription_id", sub.id)
-        .single();
-      if (data) {
-        await db.from("subscriptions").update({
-          status: sub.status === "active" ? "active" : "inactive",
-        }).eq("user_id", data.user_id);
+    switch (event.type) {
+      case "checkout.session.completed": {
+        // New checkout is closed during the public beta. Do not grant an
+        // entitlement from a previously issued or replayed Checkout Session.
+        break;
       }
-      break;
-    }
 
-    case "customer.subscription.deleted": {
-      const sub = event.data.object;
-      await db.from("subscriptions").update({
-        status: "cancelled",
-        plan: "free",
-      }).eq("stripe_subscription_id", sub.id);
-      break;
+      case "customer.subscription.updated": {
+        const sub = event.data.object;
+        const { data, error: lookupError } = await db
+          .from("subscriptions")
+          .select("user_id")
+          .eq("stripe_subscription_id", sub.id)
+          .maybeSingle();
+        if (lookupError) throw lookupError;
+        if (data) {
+          const { error } = await db.from("subscriptions").update({
+            status: sub.status === "active" ? "active" : "inactive",
+          }).eq("user_id", data.user_id);
+          if (error) throw error;
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const sub = event.data.object;
+        const { error } = await db.from("subscriptions").update({
+          status: "cancelled",
+          plan: "free",
+        }).eq("stripe_subscription_id", sub.id);
+        if (error) throw error;
+        break;
+      }
     }
+  } catch {
+    return NextResponse.json({ error: "Webhook processing failed." }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

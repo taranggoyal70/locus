@@ -31,6 +31,7 @@ function checkApiRateLimit(userId: string): { allowed: boolean; remaining: numbe
 const MAX_FILES = 200;
 const MAX_FILE_BYTES = 100_000;
 const MAX_TOTAL_BYTES = 5_000_000;
+const MAX_BODY_BYTES = 50_000;
 const FETCH_TIMEOUT_MS = 8_000;
 const DOWNLOAD_CONCURRENCY = 8;
 const SRC_RE = /\.(tsx?|jsx?)$/;
@@ -45,6 +46,30 @@ function ghHeaders(token?: string) {
 
 function fetchWithTimeout(url: string, init?: RequestInit) {
   return fetch(url, { ...init, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+}
+
+async function readLimitedBody(request: Request): Promise<{ text?: string; tooLarge: boolean }> {
+  if (!request.body) return { text: "", tooLarge: false };
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return { tooLarge: true };
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return { text: new TextDecoder().decode(bytes), tooLarge: false };
 }
 
 async function mapConcurrent<T, R>(items: T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
@@ -82,6 +107,10 @@ function commonRoot(paths: string[]): string {
     while (i < prefix.length && i < parts.length && prefix[i] === parts[i]) i++;
     prefix = prefix.slice(0, i);
   }
+  const sourceIndex = prefix.lastIndexOf("src");
+  if (sourceIndex >= 0) return prefix.slice(0, sourceIndex + 1).join("/");
+  const surfaceIndex = prefix.findIndex((part) => part === "app" || part === "pages");
+  if (surfaceIndex >= 0) return prefix.slice(0, surfaceIndex).join("/");
   return prefix.join("/");
 }
 
@@ -89,7 +118,17 @@ function rawPath(path: string): string {
   return path.split("/").map(encodeURIComponent).join("/");
 }
 
-async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoData> {
+type FetchedRepo = {
+  repo: RepoData;
+  source: {
+    candidateFiles: number;
+    selectedFiles: number;
+    loadedFiles: number;
+    truncated: boolean;
+  };
+};
+
+async function fetchRepo(repoUrl: string, githubToken?: string): Promise<FetchedRepo> {
   const parsed = parseRepo(repoUrl);
   if (!parsed) throw new Error("Invalid repository. Use owner/repo or a GitHub URL.");
   const { owner, repo, ref } = parsed;
@@ -110,8 +149,9 @@ async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoDat
   if (!Array.isArray(tree.tree)) throw new Error("Invalid repository tree.");
   const resolvedRevision = String(tree.sha || revision);
 
-  const candidates = (tree.tree as { path: string; type: string; size?: number }[])
-    .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
+  const sourceCandidates = (tree.tree as { path: string; type: string; size?: number }[])
+    .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path));
+  const candidates = sourceCandidates.filter((n) => (n.size ?? 0) <= MAX_FILE_BYTES);
   const files: string[] = [];
   let sourceBytes = 0;
   for (const file of candidates) {
@@ -136,13 +176,54 @@ async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoDat
   for (const e of entries) { if (e) fileMap[e[0]] = e[1]; }
   if (Object.keys(fileMap).length === 0) throw new Error("Source files could not be downloaded.");
 
+  const loadedFiles = Object.keys(fileMap).length;
+  let recentlyChanged: string[] = [];
+  try {
+    const commits = await fetchWithTimeout(
+      `https://api.github.com/repos/${owner}/${repo}/commits?per_page=5&sha=${encodeURIComponent(resolvedRevision)}`,
+      { headers },
+    ).then((response) => (response.ok ? response.json() : []));
+    const details = await mapConcurrent(
+      (commits as { sha: string }[]).slice(0, 5),
+      5,
+      (commit) => fetchWithTimeout(
+        `https://api.github.com/repos/${owner}/${repo}/commits/${commit.sha}`,
+        { headers },
+      ).then((response) => (response.ok ? response.json() : null)).catch(() => null),
+    );
+    const changed = new Set<string>();
+    const bulkThreshold = Math.max(2, Math.floor(0.4 * loadedFiles));
+    for (const detail of details) {
+      const changedFiles = (detail?.files ?? []) as { filename: string }[];
+      if (changedFiles.length === 0 || changedFiles.length > bulkThreshold) continue;
+      for (const changedFile of changedFiles) {
+        if (fileMap[changedFile.filename] !== undefined) changed.add(changedFile.filename);
+      }
+    }
+    recentlyChanged = [...changed];
+  } catch {
+    recentlyChanged = [];
+  }
+
   return {
-    name: `${owner}/${repo}`,
-    slug: `${owner}-${repo}`,
-    description: meta.description || `${owner}/${repo}`,
-    root: commonRoot(Object.keys(fileMap)),
-    recentlyChanged: [],
-    files: fileMap,
+    repo: {
+      name: `${owner}/${repo}`,
+      slug: `${owner}-${repo}`,
+      description: meta.description || `${owner}/${repo}`,
+      root: commonRoot(Object.keys(fileMap)),
+      recentlyChanged,
+      files: fileMap,
+    },
+    source: {
+      candidateFiles: sourceCandidates.length,
+      selectedFiles: files.length,
+      loadedFiles,
+      truncated:
+        tree.truncated === true
+        || candidates.length < sourceCandidates.length
+        || files.length < candidates.length
+        || loadedFiles < files.length,
+    },
   };
 }
 
@@ -180,13 +261,17 @@ export async function POST(request: Request) {
   }
 
   const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > 50_000) {
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
     return cors(NextResponse.json({ error: "Request body too large." }, { status: 413 }));
   }
 
   let body: { repo: string; task: string; evidence?: string; budget?: number };
+  const rawBody = await readLimitedBody(request);
+  if (rawBody.tooLarge) {
+    return cors(NextResponse.json({ error: "Request body too large." }, { status: 413 }));
+  }
   try {
-    body = await request.json();
+    body = JSON.parse(rawBody.text ?? "");
   } catch {
     return cors(NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 }));
   }
@@ -200,20 +285,33 @@ export async function POST(request: Request) {
   if (body.evidence && (typeof body.evidence !== "string" || body.evidence.length > 50_000)) {
     return cors(NextResponse.json({ error: "evidence must be a string under 50,000 characters." }, { status: 400 }));
   }
+  if (
+    body.budget !== undefined
+    && (!Number.isInteger(body.budget) || body.budget < 1 || body.budget > 100_000)
+  ) {
+    return cors(NextResponse.json(
+      { error: "budget must be an integer between 1 and 100,000." },
+      { status: 400 },
+    ));
+  }
 
   try {
-    const repo = await fetchRepo(body.repo);
+    const { repo, source } = await fetchRepo(body.repo);
     const graph = buildGraph(repo);
     const result = locate(body.task, repo, graph, body.evidence ?? "");
 
-    const budget = Number(body.budget) > 0 ? Number(body.budget) : 40_000;
+    const budget = body.budget ?? 40_000;
     const packed: string[] = [];
     let tokens = 0;
+    let omittedFiles = 0;
     for (const f of result.slice) {
       const content = fileContent(repo, f.rel);
-      if (!content) continue;
+      if (content === undefined) continue;
       const t = Math.ceil(content.length / 4);
-      if (packed.length > 0 && tokens + t > budget) continue;
+      if (tokens + t > budget) {
+        omittedFiles += 1;
+        continue;
+      }
       packed.push(`===== ${f.rel} =====\n${content}`);
       tokens += t;
     }
@@ -223,10 +321,10 @@ export async function POST(request: Request) {
       userId: apiKey.userId,
       properties: {
         repo: body.repo,
-        task: body.task.slice(0, 200),
         sliceFiles: result.slice.length,
         savedPct: result.savedPct,
         widened: result.widened,
+        sourceTruncated: source.truncated,
       },
     });
 
@@ -245,6 +343,13 @@ export async function POST(request: Request) {
       excluded: result.excluded,
       tokens: { slice: result.sliceTokens, total: result.totalTokens, savedPct: result.savedPct },
       context: packed.join("\n\n"),
+      contextMeta: {
+        includedFiles: packed.length,
+        omittedFiles,
+        tokens,
+        budget,
+      },
+      source,
     }));
   } catch (error) {
     return cors(NextResponse.json(

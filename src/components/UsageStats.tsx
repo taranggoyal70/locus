@@ -42,7 +42,7 @@ export function UsageStats() {
   const stats = [
     { label: "API calls (30d)", value: data.byType["api_locate"] ?? 0 },
     { label: "Repos loaded (30d)", value: data.byType["repo_loaded"] ?? 0 },
-    { label: "Saved analyses", value: data.projectCount },
+    { label: "Saved tasks", value: data.projectCount },
     { label: "API keys", value: data.keyCount },
   ];
 

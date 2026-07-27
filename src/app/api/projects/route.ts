@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId);
   if ((count ?? 0) >= PROJECT_LIMIT) {
-    return NextResponse.json({ error: `Maximum ${PROJECT_LIMIT} saved analyses on the free plan. Delete older ones to save new.` }, { status: 400 });
+    return NextResponse.json({ error: `Maximum ${PROJECT_LIMIT} saved tasks on the free plan. Delete an older task to save a new one.` }, { status: 400 });
   }
 
   const { data, error } = await db

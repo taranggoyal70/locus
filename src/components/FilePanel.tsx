@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
 
 export function FilePanel({
@@ -13,6 +15,31 @@ export function FilePanel({
   selected: string | null;
   onSelect: (rel: string | null) => void;
 }) {
+  const detailHeadingRef = useRef<HTMLParagraphElement>(null);
+  const listHeadingRef = useRef<HTMLParagraphElement>(null);
+  const lastSelectedRef = useRef<string | null>(null);
+  const hadSelectionRef = useRef(false);
+
+  useEffect(() => {
+    if (selected) {
+      hadSelectionRef.current = true;
+      detailHeadingRef.current?.focus();
+      return;
+    }
+    if (!hadSelectionRef.current) return;
+    hadSelectionRef.current = false;
+    if (lastSelectedRef.current) {
+      const previousButton = document.querySelector<HTMLButtonElement>(
+        `[data-file-path="${CSS.escape(lastSelectedRef.current)}"]`,
+      );
+      if (previousButton) {
+        previousButton.focus();
+        return;
+      }
+    }
+    listHeadingRef.current?.focus();
+  }, [selected]);
+
   if (!result) return null;
 
   const selectedContent = selected && repo ? fileContent(repo, selected) : null;
@@ -20,7 +47,11 @@ export function FilePanel({
   return (
     <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface">
       <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+        <p
+          ref={listHeadingRef}
+          tabIndex={-1}
+          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted focus:outline-none"
+        >
           {result.widened ? "All files retained · refine the task" : "In scope · ranked by relevance"}
         </p>
         {selected && (
@@ -32,7 +63,13 @@ export function FilePanel({
 
       {selected && selectedContent ? (
         <div>
-          <p className="border-b border-line px-4 py-2 font-mono text-[11px] text-accent">{selected}</p>
+          <p
+            ref={detailHeadingRef}
+            tabIndex={-1}
+            className="border-b border-line px-4 py-2 font-mono text-[11px] text-accent focus:outline-none"
+          >
+            {selected}
+          </p>
           <pre className="max-h-[320px] overflow-auto p-4 font-mono text-[11px] leading-relaxed text-muted-light sm:max-h-[420px]">
             {selectedContent}
           </pre>
@@ -42,7 +79,11 @@ export function FilePanel({
           {result.slice.map((f) => (
             <li key={f.rel}>
               <button
-                onClick={() => onSelect(f.rel)}
+                data-file-path={f.rel}
+                onClick={() => {
+                  lastSelectedRef.current = f.rel;
+                  onSelect(f.rel);
+                }}
                 className="flex w-full items-center gap-3 px-4 py-2 text-left transition hover:bg-white/[0.03]"
               >
                 {!result.widened && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type ApiKey = {
   id: string;
@@ -24,6 +24,9 @@ export function ApiKeysPanel() {
   const [newKeyName, setNewKeyName] = useState("");
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const revealRef = useRef<HTMLParagraphElement>(null);
   const origin = useMemo(() => (typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"), []);
 
   async function loadKeys() {
@@ -49,6 +52,10 @@ export function ApiKeysPanel() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    if (revealedKey) revealRef.current?.focus();
+  }, [revealedKey]);
+
   async function createKey() {
     setCreating(true);
     setError(null);
@@ -61,6 +68,7 @@ export function ApiKeysPanel() {
       const data = await res.json();
       if (!res.ok) { setError(data.error); return; }
       setRevealedKey(data.key);
+      setCopyStatus("idle");
       setNewKeyName("");
       await loadKeys();
     } catch {
@@ -71,17 +79,28 @@ export function ApiKeysPanel() {
   }
 
   async function deleteKey(id: string) {
+    if (!window.confirm("Revoke this API key? Any integration using it will stop working.")) return;
+    setDeletingId(id);
+    setError(null);
     try {
-      await fetch(`/api/keys?id=${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/keys?id=${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Revoke request failed.");
       setKeys((prev) => prev.filter((k) => k.id !== id));
     } catch {
-      setError("Failed to delete key.");
+      setError("Failed to revoke the API key. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
   async function copyKey() {
     if (!revealedKey) return;
-    await navigator.clipboard.writeText(revealedKey);
+    try {
+      await navigator.clipboard.writeText(revealedKey);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("failed");
+    }
   }
 
   if (loading) {
@@ -101,15 +120,21 @@ export function ApiKeysPanel() {
       )}
 
       {revealedKey && (
-        <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
-          <p className="text-xs font-medium text-accent">Your new API key — copy it now, it won&apos;t be shown again.</p>
+        <div role="status" aria-live="polite" className="rounded-xl border border-accent/30 bg-accent/5 p-4">
+          <p
+            ref={revealRef}
+            tabIndex={-1}
+            className="text-xs font-medium text-accent focus:outline-none"
+          >
+            Your new API key — copy it now, it won&apos;t be shown again.
+          </p>
           <div className="mt-2 flex items-center gap-2">
             <code className="flex-1 overflow-x-auto rounded-lg bg-ink px-3 py-2 font-mono text-xs text-paper">{revealedKey}</code>
             <button
               onClick={copyKey}
               className="shrink-0 rounded-lg border border-accent/30 px-3 py-2 text-xs font-medium text-accent transition hover:bg-accent/10"
             >
-              Copy
+              {copyStatus === "copied" ? "Copied" : copyStatus === "failed" ? "Copy failed" : "Copy"}
             </button>
           </div>
           <button
@@ -123,6 +148,7 @@ export function ApiKeysPanel() {
 
       <div className="flex gap-2">
         <input
+          aria-label="API key name"
           value={newKeyName}
           onChange={(e) => setNewKeyName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !creating && createKey()}
@@ -155,9 +181,11 @@ export function ApiKeysPanel() {
               </div>
               <button
                 onClick={() => deleteKey(key.id)}
-                className="ml-3 shrink-0 rounded-lg px-3 py-1.5 text-xs text-muted transition hover:bg-recent/10 hover:text-recent"
+                disabled={deletingId === key.id}
+                aria-label={`Revoke API key ${key.name}`}
+                className="ml-3 shrink-0 rounded-lg px-3 py-1.5 text-xs text-muted transition hover:bg-recent/10 hover:text-recent disabled:cursor-wait disabled:opacity-50"
               >
-                Revoke
+                {deletingId === key.id ? "Revoking…" : "Revoke"}
               </button>
             </div>
           ))}

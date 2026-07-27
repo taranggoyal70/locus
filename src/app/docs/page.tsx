@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "API Reference — Locus",
-  description: "Use the Locus API to get task-sized context from any GitHub repository for your AI coding agents.",
+  description: "Use the Locus API to get task-sized context from public GitHub repositories for your AI coding agents.",
 };
 
 export default function DocsPage() {
@@ -52,7 +52,7 @@ export default function DocsPage() {
           </p>
 
           <h3 className="mt-6 text-sm font-semibold text-paper">Request body</h3>
-          <div className="mt-2 overflow-hidden rounded-xl border border-line-strong">
+          <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface/50">
@@ -85,7 +85,7 @@ export default function DocsPage() {
                   <td className="px-4 py-2 font-mono text-xs text-paper">budget</td>
                   <td className="px-4 py-2">number</td>
                   <td className="px-4 py-2">No</td>
-                  <td className="px-4 py-2">Max tokens for the packed context (default: 40,000)</td>
+                  <td className="px-4 py-2">Max tokens for the packed context (default: 40,000; maximum: 100,000)</td>
                 </tr>
               </tbody>
             </table>
@@ -120,13 +120,28 @@ export default function DocsPage() {
     "total": 45000,
     "savedPct": 98
   },
-  "context": "===== middleware.ts =====\\n..."
+  "context": "===== middleware.ts =====\\n...",
+  "contextMeta": {
+    "includedFiles": 2,
+    "omittedFiles": 0,
+    "tokens": 770,
+    "budget": 40000
+  },
+  "source": {
+    "candidateFiles": 310,
+    "selectedFiles": 200,
+    "loadedFiles": 200,
+    "truncated": true
+  }
 }`}
           </pre>
           <p className="mt-3 text-sm leading-6 text-muted-light">
-            When <code className="text-accent">widened</code> is true, the full Repo is retained and
+            When <code className="text-accent">widened</code> is true, every loaded source file is retained and
             <code className="text-accent"> refinement</code> contains unmatched task terms, possible
             starting files, and repository terms the caller can use to make the task more specific.
+            Check <code className="text-accent">source.truncated</code> and
+            <code className="text-accent"> contextMeta.omittedFiles</code> before treating the response
+            as complete.
           </p>
         </section>
 
@@ -139,7 +154,7 @@ export default function DocsPage() {
 
         <section className="mt-10">
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Error codes</h2>
-          <div className="mt-2 overflow-hidden rounded-xl border border-line-strong">
+          <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface/50">

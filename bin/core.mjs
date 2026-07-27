@@ -17,8 +17,9 @@ import { execFileSync } from "node:child_process";
 // Ported from src/lib/localizer.ts (buildGraph + locate)
 // ---------------------------------------------------------------------------
 
-// Static/dynamic imports and require() — captures relative and @/ alias specs.
-const IMPORT_RE = /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
+// Static, side-effect, dynamic, and require() imports — captures relative and
+// @/ alias specs.
+const IMPORT_RE = /(?:from\s+|import\s*(?:\(\s*)?|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
 
 function estimateTokens(text) {
   return Math.max(1, Math.round(text.length / 4));
@@ -28,12 +29,22 @@ function topDir(rel) {
   return rel.includes("/") ? rel.split("/")[0] : "(root)";
 }
 
-function tryPath(base, files) {
-  for (const c of [
-    `${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.jsx`,
-    `${base}/index.ts`, `${base}/index.tsx`, `${base}/index.js`, `${base}/index.jsx`,
-    base,
-  ]) {
+function tryPath(base, files, preferTypeScript) {
+  const runtimeExtension = /\.(?:js|jsx)$/.test(base);
+  const extensionless = runtimeExtension ? base.replace(/\.(?:js|jsx)$/, "") : base;
+  const typedCandidates = base.endsWith(".jsx")
+    ? [`${extensionless}.tsx`, `${extensionless}.ts`]
+    : [`${extensionless}.ts`, `${extensionless}.tsx`];
+  const candidates = runtimeExtension
+    ? preferTypeScript
+      ? [...typedCandidates, base, `${extensionless}.js`, `${extensionless}.jsx`]
+      : [base, ...typedCandidates, `${extensionless}.js`, `${extensionless}.jsx`]
+    : [
+        `${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.jsx`,
+        `${base}/index.ts`, `${base}/index.tsx`, `${base}/index.js`, `${base}/index.jsx`,
+        base,
+      ];
+  for (const c of candidates) {
     if (files[c] !== undefined) return c;
   }
   return null;
@@ -49,14 +60,14 @@ function resolve(spec, fromPath, root, files) {
   if (spec.startsWith("@/")) {
     const rest = spec.slice(2);
     for (const p of [...new Set([root, "src", ""])]) {
-      const hit = tryPath(p ? `${p}/${rest}` : rest, files);
+      const hit = tryPath(p ? `${p}/${rest}` : rest, files, /\.tsx?$/.test(fromPath));
       if (hit) return hit;
     }
     return null;
   }
   if (spec.startsWith(".")) {
     const dir = fromPath.split("/").slice(0, -1).join("/");
-    return tryPath(normalize(`${dir}/${spec}`), files);
+    return tryPath(normalize(`${dir}/${spec}`), files, /\.tsx?$/.test(fromPath));
   }
   return null;
 }
@@ -77,6 +88,67 @@ function tokens(text) {
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter((token) => token.length >= 3);
+}
+
+function importSpecs(source) {
+  const code = source.split("");
+  const strings = [];
+  let index = 0;
+  while (index < source.length) {
+    const current = source[index];
+    if (current === "'" || current === '"' || current === "`") {
+      const start = index;
+      const quote = current;
+      index += 1;
+      while (index < source.length) {
+        if (source[index] === "\\") {
+          index += 2;
+          continue;
+        }
+        index += 1;
+        if (source[index - 1] === quote) break;
+      }
+      strings.push([start, index]);
+      continue;
+    }
+    if (current === "/" && source[index + 1] === "/") {
+      code[index] = " ";
+      code[index + 1] = " ";
+      index += 2;
+      while (index < source.length && source[index] !== "\n") code[index++] = " ";
+      continue;
+    }
+    if (current === "/" && source[index + 1] === "*") {
+      code[index] = " ";
+      code[index + 1] = " ";
+      index += 2;
+      while (index < source.length) {
+        if (source[index] === "*" && source[index + 1] === "/") {
+          code[index] = " ";
+          code[index + 1] = " ";
+          index += 2;
+          break;
+        }
+        if (source[index] !== "\n") code[index] = " ";
+        index += 1;
+      }
+      continue;
+    }
+    index += 1;
+  }
+
+  const specs = [];
+  const searchable = code.join("");
+  let rangeIndex = 0;
+  let match;
+  IMPORT_RE.lastIndex = 0;
+  while ((match = IMPORT_RE.exec(searchable))) {
+    while (strings[rangeIndex] && strings[rangeIndex][1] <= match.index) rangeIndex += 1;
+    const range = strings[rangeIndex];
+    if (range && range[0] <= match.index && match.index < range[1]) continue;
+    specs.push(match[1]);
+  }
+  return specs;
 }
 
 /** Build the deterministic dependency graph from the file map. */
@@ -119,10 +191,8 @@ export function buildGraph(repo) {
 
   for (const p of paths) {
     const seen = new Set();
-    let m;
-    IMPORT_RE.lastIndex = 0;
-    while ((m = IMPORT_RE.exec(files[p]))) {
-      const tgt = resolve(m[1], p, root, files);
+    for (const spec of importSpecs(files[p])) {
+      const tgt = resolve(spec, p, root, files);
       if (tgt && tgt !== p && !seen.has(tgt)) {
         seen.add(tgt);
         deps[p].push(tgt);
@@ -233,7 +303,7 @@ function repositoryTerms(graph) {
 /**
  * Localize a task to the minimal relevant slice of the repo.
  * Conservative localization: if no file anchors with enough task evidence,
- * fall back to the whole repo instead of returning a speculative small slice.
+ * fall back to all loaded files instead of returning a speculative small slice.
  */
 export function locate(task, repo, graph, evidence = "") {
   const { deps, rdeps, byPath } = graph;
@@ -261,7 +331,7 @@ export function locate(task, repo, graph, evidence = "") {
       task,
       widened: true,
       reason: task.trim()
-        ? "no file matched with enough confidence — widened to the whole repo"
+        ? "no file matched with enough confidence — widened to all loaded files"
         : "type a task to localize",
       anchors: [],
       slice,
@@ -286,6 +356,7 @@ export function locate(task, repo, graph, evidence = "") {
     .filter((s) =>
       s.score >= Math.max(3, best - 1) ||
       (s.score >= 3 && s.matchedWords >= Math.min(3, words.size)) ||
+      (best >= 8 && s.score >= 2 && s.matchedWords >= 2) ||
       (s.recent && s.matchedWords >= 2),
     )
     .slice(0, 6);
@@ -372,12 +443,16 @@ function commonDirPrefix(relPaths) {
     common = common.slice(0, j);
     if (common.length === 0) break;
   }
+  const sourceIndex = common.lastIndexOf("src");
+  if (sourceIndex >= 0) return common.slice(0, sourceIndex + 1).join("/");
+  const surfaceIndex = common.findIndex((part) => part === "app" || part === "pages");
+  if (surfaceIndex >= 0) return common.slice(0, surfaceIndex).join("/");
   return common.join("/");
 }
 
 /**
  * Best-effort "recent signal" from git history: the files touched by the
- * last 8 commits, skipping bulk commits that touch more than 40% of the
+ * last 5 commits, skipping bulk commits that touch more than 40% of the
  * repo's loaded files (those are low-signal — a rename sweep, a formatter
  * pass, etc — not a targeted recent change). Returns [] on any failure
  * (no git, not a repo, git not installed, …).
@@ -388,7 +463,7 @@ function getRecentlyChanged(dir, knownPaths) {
     const total = knownPaths.length || 1;
     const out = execFileSync(
       "git",
-      ["log", "-n", "8", "--name-only", "--pretty=format:%x01"],
+      ["log", "-n", "5", "--name-only", "--pretty=format:%x01"],
       { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
     );
     const chunks = out.split("\x01").map((s) => s.trim()).filter(Boolean);
@@ -397,7 +472,7 @@ function getRecentlyChanged(dir, knownPaths) {
     for (const chunk of chunks) {
       const files = chunk.split("\n").map((s) => s.trim()).filter(Boolean);
       if (files.length === 0) continue;
-      if (files.length / total > 0.4) continue; // bulk commit — skip
+      if (files.length > Math.max(2, Math.floor(0.4 * total))) continue; // bulk commit — skip
       for (const f of files) {
         const posixF = toPosix(f);
         if (knownSet.has(posixF) && !seen.has(posixF)) {
@@ -444,7 +519,7 @@ export function loadLocalRepo(dir) {
 export function formatResult(result) {
   const lines = [];
   if (result.widened) {
-    lines.push(`WIDENED to whole repo — ${result.reason}`);
+    lines.push(`WIDENED to all loaded files — ${result.reason}`);
     if (result.refinement?.unmatchedTerms.length) {
       lines.push(`Unmatched task terms: ${result.refinement.unmatchedTerms.join(", ")}`);
     }
@@ -472,8 +547,7 @@ export function formatResult(result) {
 /**
  * Build a ready-to-paste context block for a LocateResult's slice, in ranked
  * order, stopping once adding the next file would exceed `budget` tokens
- * (the anchor file itself is always included even if it alone exceeds
- * budget, so --pack never returns empty).
+ * and reporting every omitted file.
  */
 export function buildPackedContext(result, repo, budget = 40000) {
   const budgetN = Number(budget) > 0 ? Number(budget) : 40000;
@@ -481,7 +555,7 @@ export function buildPackedContext(result, repo, budget = 40000) {
   const dropped = [];
   let used = 0;
   for (const f of result.slice) {
-    if (included.length > 0 && used + f.tokens > budgetN) {
+    if (used + f.tokens > budgetN) {
       dropped.push(f.rel);
       continue;
     }

@@ -163,7 +163,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
               ) : (
                 <>
                   <Link href="/projects" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
-                    Projects
+                    Saved tasks
                   </Link>
                   <Link href="/settings" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
                     Settings
@@ -356,7 +356,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                         disabled={saveStatus === "saving"}
                         className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
                       >
-                        {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "idle" ? "Save analysis" : saveStatus}
+                        {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Task saved" : saveStatus === "idle" ? "Save task" : saveStatus}
                       </button>
                     )}
                     <button
@@ -364,14 +364,19 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                       className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper"
                     >
                       {shareStatus === "copied"
-                        ? "View link copied"
+                        ? "Task link copied"
                         : shareStatus === "failed"
                           ? "Copy failed — try again"
-                          : "Copy shareable view"}
+                          : "Copy task link"}
                     </button>
                   </div>
                 )}
               </div>
+              {loadedRepositorySpecifier && task.trim() && (
+                <p className="mb-4 text-xs text-muted">
+                  Saved tasks and links keep the repository reference and task—not a code snapshot. Opening one recalculates against the current repository state.
+                </p>
+              )}
               <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
                 <DependencyGraph
                   graph={graph}
@@ -424,12 +429,13 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                 Historical replay, with the limits left visible.
               </h2>
               <p className="max-w-2xl text-sm leading-6 text-muted-light">
-                The benchmark checks whether Locus includes files developers changed next. It does not measure autonomous-agent completion or prove every excluded file was unnecessary.
+                The benchmark scores localization separately from safety. A Widen keeps every loaded file, but it receives no credit as a focused result. It does not measure autonomous-agent completion or prove every excluded file was unnecessary.
               </p>
             </div>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-3">
+            <div className="mt-10 grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { value: `${Math.round(benchmark.summary.fixFileRecall * 100)}%`, label: "historical fix-file recall" },
+                { value: `${Math.round(benchmark.summary.taskLocalizationRate * 100)}%`, label: "tasks localized without Widen" },
+                { value: `${Math.round(benchmark.summary.focusedFixFileRecall * 100)}%`, label: "fix-file recall on localized tasks" },
                 { value: `${benchmark.summary.medianContextReductionPct}%`, label: "median estimated context reduction" },
                 { value: `${benchmark.summary.cases} across ${benchmark.summary.repositories}`, label: "tasks and repositories" },
               ].map((metric) => (

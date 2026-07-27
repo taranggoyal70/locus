@@ -44,7 +44,12 @@ function parseLocateArgs(rest) {
     } else if (a === "--pack") {
       pack = true;
     } else if (a === "--budget") {
-      budget = Number(rest[++i]);
+      const value = Number(rest[++i]);
+      if (!Number.isInteger(value) || value < 1 || value > 100000) {
+        console.error("--budget must be an integer between 1 and 100000");
+        process.exit(1);
+      }
+      budget = value;
     } else if (a === "--evidence") {
       evidence = rest[++i] || "";
     } else if (a === "-h" || a === "--help") {
