@@ -1,6 +1,6 @@
 # Locus historical-task benchmark
 
-Generated 2026-07-16T19:03:02.282Z. Locus was run on the parent snapshot of 15 real fixes across 3 repositories. The expected set is the TypeScript source files modified by the historical fix.
+Generated 2026-07-27T07:52:21.134Z. Locus was run on the parent snapshot of 15 real fixes across 3 repositories. The expected set is the TypeScript source files modified by the historical fix.
 
 | Repository | Fix | Fix files found | Context reduction | Widened |
 |---|---:|---:|---:|---:|

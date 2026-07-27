@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type UsageData = {
   totalEvents: number;
@@ -13,15 +13,21 @@ export function UsageStats() {
   const [data, setData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/usage");
-      if (res.ok) setData(await res.json());
-    } catch { /* non-critical */ }
-    setLoading(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/usage", { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((nextData) => {
+        if (nextData) setData(nextData);
+      })
+      .catch(() => {
+        // Usage analytics are non-critical.
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, []);
-
-  useEffect(() => { load(); }, [load]);
 
   if (loading) {
     return (
