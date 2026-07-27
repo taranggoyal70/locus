@@ -21,17 +21,21 @@ speculative small slice.
 ## Evidence
 
 The reproducible historical-task benchmark replays Locus on the parent snapshots
-of nine real fixes across Locus, Agent Access, and Solum:
+of 15 real fixes across Locus, Agent Access, and Solum:
 
-- **100% historical fix-file recall** across the nine declared cases
-- **53% median estimated context reduction**
+- **100% historical fix-file recall** across all 15 declared cases
+- **54% median estimated context reduction**
 - **2 conservative whole-repo fallbacks**
 
 See [the full method and every case](./benchmarks/README.md), or run:
 
 ```bash
-npm run benchmark
+pnpm benchmark
 ```
+
+The replay checks whether Locus includes the files developers changed next. It
+does not prove that an autonomous agent completed the task, that every excluded
+file was unnecessary, or that agent quality cannot regress.
 
 ## How it works
 
@@ -125,8 +129,8 @@ Copy context in three formats:
 ## Use the CLI
 
 ```bash
-npx locus-context locate "fix the dashboard billing" --pack
-npx locus-context locate "login error" --evidence "TypeError: Cannot read property 'email'"
+npx -y locus-context locate "fix the dashboard billing" --pack
+npx -y locus-context locate "login error" --evidence "TypeError: Cannot read property 'email'"
 ```
 
 Options:
@@ -142,21 +146,31 @@ Options:
 {
   "mcpServers": {
     "locus": {
-      "command": "node",
-      "args": ["/absolute/path/to/locus/bin/mcp.mjs"]
+      "command": "npx",
+      "args": ["-y", "locus-context", "mcp"]
     }
   }
 }
 ```
 
 The server exposes `locate(task, path?, evidence?, pack?)`. The publishable
-npm package lives in [`cli/`](./cli); `npm run sync-cli` mirrors files from `bin/`.
+npm package lives in [`cli/`](./cli); `pnpm sync-cli` mirrors files from `bin/`.
 
-## Validate
+## Verification
+
+- **41 automated tests**, including real CLI and MCP stdio process tests
+- GitHub CI runs lint, tests, CLI sync, type-checking, and a production build
+- [`/api/health`](https://locus-five-iota.vercel.app/api/health) reports the
+  deployed package version and Git revision
+- The historical benchmark is generated from declared parent snapshots and
+  fails its launch gate if fix-file recall drops below 100%
+
+Run the same checks locally:
 
 ```bash
-pnpm test
 pnpm lint
+pnpm test
+pnpm exec tsc --noEmit
 pnpm check-sync
 pnpm build
 pnpm benchmark
@@ -164,10 +178,10 @@ pnpm benchmark
 
 ## Links
 
-- [API Docs](/docs)
-- [Pricing](/pricing)
-- [Privacy Policy](/privacy)
-- [Terms of Service](/terms)
+- [API Docs](https://locus-five-iota.vercel.app/docs)
+- [Pricing](https://locus-five-iota.vercel.app/pricing)
+- [Privacy Policy](https://locus-five-iota.vercel.app/privacy)
+- [Terms of Service](https://locus-five-iota.vercel.app/terms)
 - [Benchmarks](./benchmarks/README.md)
 - [Domain Language](./CONTEXT.md)
 

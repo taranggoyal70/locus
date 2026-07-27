@@ -1,7 +1,7 @@
 # locus-context
 
 A zero-dependency CLI and MCP server that maps coding tasks to focused
-TypeScript/Next.js dependency slices. If task evidence is weak, Locus
+JavaScript/TypeScript dependency slices. If task evidence is weak, Locus
 conservatively returns the whole loaded repo.
 
 Live demo and reproducible benchmark: https://locus-five-iota.vercel.app
@@ -11,6 +11,7 @@ Live demo and reproducible benchmark: https://locus-five-iota.vercel.app
 ```bash
 npx -y locus-context locate "fix the dashboard billing" --pack
 npx -y locus-context locate "fix the dashboard billing"
+npx -y locus-context locate "login error" --evidence "TypeError: email is undefined"
 ```
 
 ## MCP server
@@ -23,8 +24,9 @@ npx -y locus-context locate "fix the dashboard billing"
 }
 ```
 
-The server exposes `locate(task, path?, pack?)`. Current support is limited to
-`.ts` and `.tsx` files. Historical replay is evidence about fix-file coverage,
-not a guarantee of autonomous agent completion or unchanged quality.
+The server exposes `locate(task, path?, evidence?, pack?)`. Current support
+includes `.ts`, `.tsx`, `.js`, and `.jsx` files. Historical replay is evidence
+about fix-file coverage, not a guarantee of autonomous agent completion or
+unchanged quality.
 
 MIT © Tarang Goyal
