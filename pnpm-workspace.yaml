@@ -9,4 +9,5 @@ onlyBuiltDependencies:
   - sharp
   - unrs-resolver
 overrides:
-  postcss: ^8.5.10
+  postcss: 8.5.23
+  sharp: 0.35.3
