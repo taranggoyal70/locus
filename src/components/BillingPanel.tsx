@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type BillingStatus = {
   plan: string;
@@ -14,27 +14,28 @@ export function BillingPanel() {
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadBilling = useCallback(async () => {
-    try {
-      const res = await fetch("/api/billing/status");
-      if (!res.ok) throw new Error();
-      setBilling(await res.json());
-    } catch {
-      setError("Failed to load billing status.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { loadBilling(); }, [loadBilling]);
-
   useEffect(() => {
+    const controller = new AbortController();
     const params = new URLSearchParams(window.location.search);
     if (params.get("billing") === "success") {
-      loadBilling();
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [loadBilling]);
+    void fetch("/api/billing/status", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Billing request failed.");
+        return response.json();
+      })
+      .then((nextBilling) => setBilling(nextBilling))
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setError("Failed to load billing status.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
 
   async function checkout() {
     setRedirecting(true);

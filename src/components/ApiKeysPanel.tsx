@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type ApiKey = {
   id: string;
@@ -9,6 +9,13 @@ type ApiKey = {
   last_used_at: string | null;
   created_at: string;
 };
+
+async function fetchApiKeys(signal?: AbortSignal): Promise<ApiKey[]> {
+  const response = await fetch("/api/keys", { signal });
+  if (!response.ok) throw new Error("API key request failed.");
+  const data = await response.json();
+  return data.keys;
+}
 
 export function ApiKeysPanel() {
   const [keys, setKeys] = useState<ApiKey[]>([]);
@@ -19,20 +26,28 @@ export function ApiKeysPanel() {
   const [error, setError] = useState<string | null>(null);
   const origin = useMemo(() => (typeof window !== "undefined" ? window.location.origin : "https://your-domain.com"), []);
 
-  const loadKeys = useCallback(async () => {
+  async function loadKeys() {
     try {
-      const res = await fetch("/api/keys");
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setKeys(data.keys);
+      setKeys(await fetchApiKeys());
     } catch {
       setError("Failed to load API keys.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
-  useEffect(() => { loadKeys(); }, [loadKeys]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchApiKeys(controller.signal)
+      .then((nextKeys) => setKeys(nextKeys))
+      .catch(() => {
+        if (!controller.signal.aborted) setError("Failed to load API keys.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
 
   async function createKey() {
     setCreating(true);

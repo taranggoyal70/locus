@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Team = {
   id: string;
@@ -11,6 +11,13 @@ type Team = {
   created_at: string;
 };
 
+async function fetchTeams(signal?: AbortSignal): Promise<Team[]> {
+  const response = await fetch("/api/teams", { signal });
+  if (!response.ok) throw new Error("Teams request failed.");
+  const data = await response.json();
+  return data.teams;
+}
+
 export function TeamsPanel() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,20 +25,28 @@ export function TeamsPanel() {
   const [newName, setNewName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const loadTeams = useCallback(async () => {
+  async function loadTeams() {
     try {
-      const res = await fetch("/api/teams");
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setTeams(data.teams);
+      setTeams(await fetchTeams());
     } catch {
       setError("Failed to load teams.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
-  useEffect(() => { loadTeams(); }, [loadTeams]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchTeams(controller.signal)
+      .then((nextTeams) => setTeams(nextTeams))
+      .catch(() => {
+        if (!controller.signal.aborted) setError("Failed to load teams.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
 
   async function createTeam() {
     if (!newName.trim()) return;

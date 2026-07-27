@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Project = {
   id: string;
@@ -15,25 +15,30 @@ type Project = {
   updated_at: string;
 };
 
+async function fetchProjects(signal?: AbortSignal): Promise<Project[]> {
+  const response = await fetch("/api/projects", { signal });
+  if (!response.ok) throw new Error("Projects request failed.");
+  const data = await response.json();
+  return data.projects;
+}
+
 export function ProjectsList() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch("/api/projects");
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setProjects(data.projects);
-    } catch {
-      setError("Failed to load projects.");
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchProjects(controller.signal)
+      .then((nextProjects) => setProjects(nextProjects))
+      .catch(() => {
+        if (!controller.signal.aborted) setError("Failed to load projects.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, []);
-
-  useEffect(() => { load(); }, [load]);
 
   async function deleteProject(id: string) {
     try {

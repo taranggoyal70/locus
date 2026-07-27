@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 type ConnectionStatus = {
   connected: boolean;
@@ -15,24 +15,10 @@ export function GitHubConnectionPanel() {
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadStatus = useCallback(async () => {
-    try {
-      const res = await fetch("/api/github/status");
-      if (!res.ok) throw new Error();
-      setStatus(await res.json());
-    } catch {
-      setError("Failed to load GitHub connection status.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { loadStatus(); }, [loadStatus]);
-
   useEffect(() => {
+    const controller = new AbortController();
     const params = new URLSearchParams(window.location.search);
     if (params.get("github") === "connected") {
-      loadStatus();
       window.history.replaceState({}, "", window.location.pathname);
     }
     const ghError = params.get("error");
@@ -46,10 +32,28 @@ export function GitHubConnectionPanel() {
         github_token_failed: "Failed to exchange code for a token.",
         github_no_token: "GitHub did not return an access token.",
       };
-      setError(messages[ghError] ?? "GitHub connection failed.");
+      queueMicrotask(() =>
+        setError(messages[ghError] ?? "GitHub connection failed."),
+      );
       window.history.replaceState({}, "", window.location.pathname);
     }
-  }, [loadStatus]);
+
+    void fetch("/api/github/status", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("GitHub status request failed.");
+        return response.json();
+      })
+      .then((nextStatus) => setStatus(nextStatus))
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setError("Failed to load GitHub connection status.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, []);
 
   async function disconnect() {
     setDisconnecting(true);

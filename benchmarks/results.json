@@ -1,7 +1,7 @@
 {
   "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.",
   "summary": {
-    "generatedAt": "2026-07-16T19:03:02.282Z",
+    "generatedAt": "2026-07-27T07:30:21.922Z",
     "cases": 15,
     "repositories": 3,
     "fixFileRecall": 1,
