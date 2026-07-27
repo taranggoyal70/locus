@@ -93,6 +93,11 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     void loadGithubAt(`${featuredCase.repo}@${featuredCase.snapshot}`, featuredCase.task);
   }
 
+  function refineTask(term: string) {
+    setTask((current) => `${current.trim()} ${term}`.trim());
+    taskInputRef.current?.focus();
+  }
+
   const saveAnalysis = useCallback(async () => {
     if (!repo || !result || !task.trim() || saveStatus === "saving") return;
     setSaveStatus("saving");
@@ -368,7 +373,13 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                 )}
               </div>
               <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-                <DependencyGraph graph={graph} result={result} selected={selected} onSelect={setSelected} />
+                <DependencyGraph
+                  graph={graph}
+                  result={result}
+                  selected={selected}
+                  onSelect={setSelected}
+                  onRefineTask={refineTask}
+                />
                 <div className="space-y-5">
                   <TokenMeter result={result} repo={repo} sparse={graph.edges.length / Math.max(1, graph.nodes.length) < 0.6} />
                   <FilePanel result={result} repo={repo} selected={selected} onSelect={setSelected} />

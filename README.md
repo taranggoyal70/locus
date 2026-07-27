@@ -5,7 +5,8 @@
 Locus maps a natural-language task to a focused JavaScript/TypeScript code slice:
 matching files, their dependency closure, nearby integration points, and relevant
 recent changes. When the evidence is weak, it returns the whole repo instead of a
-speculative small slice.
+speculative small slice and explains which terms were not found, possible starting
+files, and repository language that can refine the task.
 
 **Live:** https://locus-five-iota.vercel.app
 
@@ -24,7 +25,7 @@ The reproducible historical-task benchmark replays Locus on the parent snapshots
 of 15 real fixes across Locus, Agent Access, and Solum:
 
 - **100% historical fix-file recall** across all 15 declared cases
-- **54% median estimated context reduction**
+- **53% median estimated context reduction**
 - **2 conservative whole-repo fallbacks**
 
 See [the full method and every case](./benchmarks/README.md), or run:
@@ -42,7 +43,8 @@ file was unnecessary, or that agent quality cannot regress.
 1. Parse `import`, `require()`, dynamic `import()`, and `@/` aliases into a deterministic dependency graph.
 2. Match meaningful task words against file paths and source text.
 3. Add dependency closures, direct consumers, and recent cross-cutting matches.
-4. Widen to all loaded files when the evidence is insufficient.
+4. Widen to all loaded files when the evidence is insufficient, then return
+   unmatched terms and concrete refinement suggestions.
 
 ### Task evidence
 
@@ -76,7 +78,8 @@ curl -X POST https://locus-five-iota.vercel.app/api/v1/locate \
 - `evidence` (string, optional) — error logs, stack traces, etc.
 - `budget` (number, optional) — max tokens for packed context (default: 40,000)
 
-**Response:** JSON with `slice`, `anchors`, `tokens`, and packed `context`.
+**Response:** JSON with `slice`, `anchors`, `tokens`, packed `context`, and
+`refinement` guidance when `widened` is `true`.
 
 Rate limit: 30 requests/minute per user. Full reference at [/docs](https://locus-five-iota.vercel.app/docs).
 
@@ -158,7 +161,7 @@ npm package lives in [`cli/`](./cli); `pnpm sync-cli` mirrors files from `bin/`.
 
 ## Verification
 
-- **41 automated tests**, including real CLI and MCP stdio process tests
+- **46 automated tests**, including real CLI and MCP stdio process tests
 - GitHub CI runs lint, tests, CLI sync, type-checking, and a production build
 - [`/api/health`](https://locus-five-iota.vercel.app/api/health) reports the
   deployed package version and Git revision

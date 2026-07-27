@@ -108,6 +108,7 @@ export default function DocsPage() {
   "task": "fix the middleware redirect loop",
   "widened": false,
   "reason": "Strong anchor match on middleware files",
+  "refinement": null,
   "anchors": ["middleware.ts"],
   "slice": [
     { "path": "middleware.ts", "tokens": 450, "distance": 0, "recent": true },
@@ -122,6 +123,11 @@ export default function DocsPage() {
   "context": "===== middleware.ts =====\\n..."
 }`}
           </pre>
+          <p className="mt-3 text-sm leading-6 text-muted-light">
+            When <code className="text-accent">widened</code> is true, the full Repo is retained and
+            <code className="text-accent"> refinement</code> contains unmatched task terms, possible
+            starting files, and repository terms the caller can use to make the task more specific.
+          </p>
         </section>
 
         <section className="mt-10">

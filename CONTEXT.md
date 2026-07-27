@@ -46,9 +46,16 @@ _Avoid_: search, retrieve, query, scope (verb).
 **Widen**:
 The conservative behavior used when no file anchors a task with enough evidence:
 return the whole loaded Repo instead of a speculative small Slice. A
-`LocateResult` carries `widened: true`. This reduces localization risk but
-does not prove agent success.
+`LocateResult` carries `widened: true` plus **Refinement** guidance: unmatched
+task terms, low-confidence candidate files, and real Repo terms. This reduces
+localization risk but does not prove agent success.
 _Avoid_: fallback, default, expand.
+
+**Refinement** (`LocateRefinement`):
+Actionable guidance returned after Widen so the developer can add a filename,
+symbol, Surface, error, or repository-specific term without guessing. Refinement
+never narrows the Slice by itself.
+_Avoid_: recommendation engine, auto-fix, confidence score.
 
 **Recent signal**:
 Recently-changed files (from git / the GitHub commits API), surfaced to the top of
@@ -97,4 +104,5 @@ _Avoid_: knowledge base, document store, uploaded asset.
 > changed recently, so the Recent signal floated it to the top.
 > **Dev:** What if I describe something you don't recognise?
 > **Locus:** Then I Widen — no confident Anchor means I return the whole loaded
-> Repo rather than pretending a narrow Slice is sufficient.
+> Repo rather than pretending a narrow Slice is sufficient. I also show which
+> words were not found and offer real Repo terms you can add to the task.

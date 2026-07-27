@@ -234,6 +234,7 @@ export async function POST(request: Request) {
       task: result.task,
       widened: result.widened,
       reason: result.reason,
+      refinement: result.refinement,
       anchors: result.anchors,
       slice: result.slice.map((f) => ({
         path: f.rel,

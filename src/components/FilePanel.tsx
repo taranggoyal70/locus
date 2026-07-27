@@ -21,7 +21,7 @@ export function FilePanel({
     <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface">
       <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
         <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
-          {result.widened ? "All files (widened)" : "In scope · ranked by relevance"}
+          {result.widened ? "All files retained · refine the task" : "In scope · ranked by relevance"}
         </p>
         {selected && (
           <button onClick={() => onSelect(null)} className="text-[11px] text-muted hover:text-paper">

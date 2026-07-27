@@ -48,6 +48,12 @@ export type SliceFile = {
   recent: boolean;
 };
 
+export type LocateRefinement = {
+  unmatchedTerms: string[];
+  candidateFiles: string[];
+  repositoryTerms: string[];
+};
+
 export type LocateResult = {
   task: string;
   widened: boolean;
@@ -58,6 +64,7 @@ export type LocateResult = {
   sliceTokens: number;
   totalTokens: number;
   savedPct: number;
+  refinement: LocateRefinement | null;
 };
 
 /**

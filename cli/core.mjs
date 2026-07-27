@@ -71,6 +71,14 @@ function normalize(p) {
   return parts.join("/");
 }
 
+function tokens(text) {
+  return text
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 3);
+}
+
 /** Build the deterministic dependency graph from the file map. */
 export function buildGraph(repo) {
   const { files, root } = repo;
@@ -165,18 +173,12 @@ const STOP = new Set(["the", "a", "an", "is", "are", "in", "on", "of", "to", "fi
 function taskWords(task) {
   // Require length >= 3 so short substrings ("me", "hi") can't false-match
   // ("me" inside "home"). Feature words are effectively always >= 3 chars.
-  return new Set(
-    task.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !STOP.has(w)),
-  );
+  return new Set(tokens(task).filter((word) => !STOP.has(word)));
 }
 
 function scoreAnchor(words, route, rel, source) {
-  const pathTokens = new Set(
-    (route + " " + rel).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
-  );
-  const sourceTokens = new Set(
-    source.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
-  );
+  const pathTokens = new Set(tokens(`${route} ${rel}`));
+  const sourceTokens = new Set(tokens(source));
   let score = 0;
   let pathMatches = 0;
   const matchedWords = new Set();
@@ -200,7 +202,32 @@ function scoreAnchor(words, route, rel, source) {
       matchedWords.add(w);
     }
   }
-  return { score, pathMatches, matchedWords: matchedWords.size };
+  return {
+    score,
+    pathMatches,
+    matchedWords: matchedWords.size,
+    matchedTerms: [...matchedWords],
+  };
+}
+
+const REPOSITORY_TERM_STOP = new Set([
+  ...STOP,
+  "src", "server", "client", "components", "component", "lib", "api",
+  "route", "page", "index", "test", "tests", "spec", "typescript", "javascript",
+]);
+
+function repositoryTerms(graph) {
+  const counts = new Map();
+  for (const node of graph.nodes) {
+    for (const term of new Set(tokens(node.rel))) {
+      if (REPOSITORY_TERM_STOP.has(term)) continue;
+      counts.set(term, (counts.get(term) ?? 0) + 1);
+    }
+  }
+  return [...counts]
+    .sort(([termA, countA], [termB, countB]) => countB - countA || termA.localeCompare(termB))
+    .slice(0, 8)
+    .map(([term]) => term);
 }
 
 /**
@@ -213,15 +240,17 @@ export function locate(task, repo, graph, evidence = "") {
   const recent = new Set(repo.recentlyChanged);
   const words = taskWords(`${task}\n${evidence}`);
 
-  const scored = graph.nodes
+  const ranked = graph.nodes
     .map((node) => ({
       path: node.path,
       route: node.route ?? "",
       recent: recent.has(node.path),
       ...scoreAnchor(words, node.route ?? "", node.rel, repo.files[node.path] ?? ""),
     }))
-    .filter((candidate) => candidate.pathMatches > 0 || candidate.matchedWords >= 2)
     .sort((a, b) => b.score - a.score || b.matchedWords - a.matchedWords);
+  const scored = ranked.filter(
+    (candidate) => candidate.pathMatches > 0 || candidate.matchedWords >= 2,
+  );
   const best = scored[0]?.score ?? 0;
 
   if (!task.trim() || best < 3) {
@@ -240,13 +269,23 @@ export function locate(task, repo, graph, evidence = "") {
       sliceTokens: graph.totalTokens,
       totalTokens: graph.totalTokens,
       savedPct: 0,
+      refinement: {
+        unmatchedTerms: [...words].filter(
+          (word) => !ranked.some((candidate) => candidate.matchedTerms.includes(word)),
+        ),
+        candidateFiles: ranked
+          .filter((candidate) => candidate.score > 0)
+          .slice(0, 3)
+          .map((candidate) => byPath[candidate.path].rel),
+        repositoryTerms: repositoryTerms(graph),
+      },
     };
   }
 
   const anchors = scored
     .filter((s) =>
       s.score >= Math.max(3, best - 1) ||
-      s.matchedWords >= Math.min(3, words.size) ||
+      (s.score >= 3 && s.matchedWords >= Math.min(3, words.size)) ||
       (s.recent && s.matchedWords >= 2),
     )
     .slice(0, 6);
@@ -257,9 +296,7 @@ export function locate(task, repo, graph, evidence = "") {
     }
     if (!byPath[a.path].isSurface) {
       for (const consumer of rdeps[a.path] ?? []) {
-        for (const [f, d] of Object.entries(closure(consumer, deps))) {
-          dist[f] = Math.min(dist[f] ?? 99, d + 1);
-        }
+        dist[consumer] = Math.min(dist[consumer] ?? 99, 1);
       }
     }
   }
@@ -283,6 +320,7 @@ export function locate(task, repo, graph, evidence = "") {
     sliceTokens,
     totalTokens: graph.totalTokens,
     savedPct: Math.round((100 * (graph.totalTokens - sliceTokens)) / graph.totalTokens),
+    refinement: null,
   };
 }
 
@@ -407,6 +445,15 @@ export function formatResult(result) {
   const lines = [];
   if (result.widened) {
     lines.push(`WIDENED to whole repo — ${result.reason}`);
+    if (result.refinement?.unmatchedTerms.length) {
+      lines.push(`Unmatched task terms: ${result.refinement.unmatchedTerms.join(", ")}`);
+    }
+    if (result.refinement?.candidateFiles.length) {
+      lines.push(`Possible starting files: ${result.refinement.candidateFiles.join(", ")}`);
+    }
+    if (result.refinement?.repositoryTerms.length) {
+      lines.push(`Refine with a filename, symbol, or repo term: ${result.refinement.repositoryTerms.join(", ")}`);
+    }
   } else {
     lines.push(`Anchor: ${result.anchors.join(", ")}`);
   }
