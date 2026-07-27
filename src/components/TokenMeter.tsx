@@ -89,9 +89,9 @@ export function TokenMeter({
         </div>
         <div className="text-right">
           <p className={`font-mono text-4xl font-semibold tabular transition-all duration-500 ${sparse && pct > 0 ? "text-muted-light" : "text-accent"}`}>
-            {pct > 0 ? `−${pct}%` : "0%"}
+            {result?.widened ? "Full repo" : pct > 0 ? `−${pct}%` : "0%"}
           </p>
-          <p className="text-[11px] text-muted">fewer tokens</p>
+          <p className="text-[11px] text-muted">{result?.widened ? "safe Widen" : "fewer tokens"}</p>
         </div>
       </div>
       <div className="mt-4 h-3 overflow-hidden rounded-full bg-ink">
@@ -103,7 +103,7 @@ export function TokenMeter({
 
       <p className="mt-2 text-[11px] text-muted">
         {result?.widened
-          ? "Whole repo — Locus did not find enough evidence for a focused slice."
+          ? "No reduction yet—add a file, symbol, route, or error message to focus the Slice."
           : result
             ? `${result.slice.length} files in scope · ${result.excluded.length} excluded`
             : "Pick a repo and describe a task."}
@@ -135,9 +135,13 @@ export function TokenMeter({
           <div className="mt-2 flex gap-2">
             <button
               onClick={copy}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
+              className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                result.widened
+                  ? "border border-line-strong bg-ink text-muted-light hover:border-accent/40 hover:text-paper"
+                  : "bg-accent text-ink hover:bg-[#b5f34a]"
+              }`}
             >
-              {copied ?? "Copy context"}
+              {copied ?? (result.widened ? "Copy full repo context" : "Copy context")}
             </button>
             <button
               onClick={() => {

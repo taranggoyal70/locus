@@ -49,6 +49,24 @@ describe("published runtime surfaces", () => {
     expect(result.savedPct).toBeGreaterThan(0);
   });
 
+  it("gives CLI users concrete refinement guidance after a safe Widen", () => {
+    const output = execFileSync(
+      process.execPath,
+      [
+        join(root, "bin/locus.mjs"),
+        "locate",
+        "make the checkout flow faster",
+        "--path",
+        fixtureRoot,
+      ],
+      { cwd: root, encoding: "utf8" },
+    );
+
+    expect(output).toContain("WIDENED to whole repo");
+    expect(output).toContain("Unmatched task terms: checkout, flow, faster");
+    expect(output).toContain("Refine with a filename, symbol, or repo term:");
+  });
+
   it("completes the MCP initialize, discovery, and locate call over stdio", () => {
     const requests = [
       {

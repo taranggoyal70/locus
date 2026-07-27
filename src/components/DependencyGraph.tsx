@@ -20,11 +20,13 @@ export function DependencyGraph({
   result,
   selected,
   onSelect,
+  onRefineTask,
 }: {
   graph: Graph;
   result: LocateResult | null;
   selected: string | null;
   onSelect: (rel: string) => void;
+  onRefineTask: (term: string) => void;
 }) {
   const trace = useMemo(() => {
     if (!result || result.widened) return null;
@@ -85,28 +87,86 @@ export function DependencyGraph({
   }, [graph, result]);
 
   if (!result || result.widened || !trace) {
+    const refinement = result?.refinement;
+    const unmatched = refinement?.unmatchedTerms ?? [];
+    const candidates = refinement?.candidateFiles ?? [];
+    const repositoryTerms = refinement?.repositoryTerms ?? [];
+
     return (
       <section className="min-w-0 overflow-hidden rounded-[22px] border border-line-strong bg-surface">
         <div className="border-b border-line px-6 py-5">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Context trace</p>
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-paper">
-            {result?.widened ? "Locus widened to the whole repository" : "Describe a task to build the trace"}
+            {result?.widened ? "Locus needs one more detail" : "Describe a task to build the trace"}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">
             {result?.widened
-              ? "The task did not provide enough file-level evidence, so Locus kept every file instead of returning a speculative slice."
+              ? unmatched.length > 0
+                ? `I couldn’t find ${unmatched.map((term) => `“${term}”`).join(" or ")} in the loaded source. Every file remains included so nothing is silently missed.`
+                : "The task did not provide enough file-level evidence. Every file remains included so nothing is silently missed."
               : "Locus will show the task matches, their imported dependencies, and the nearby integration files it keeps for the agent."}
           </p>
         </div>
-        <div className="grid gap-px bg-line md:grid-cols-3">
-          {["Task matches", "Imported dependencies", "Nearby integration"].map((title, index) => (
-            <div key={title} className="min-h-44 bg-ink/70 p-5">
-              <span className="font-mono text-xs text-muted">0{index + 1}</span>
-              <p className="mt-8 text-sm font-medium text-muted-light">{title}</p>
-              <div className="mt-4 h-px bg-line-strong" />
+        {result?.widened ? (
+          <div className="grid gap-px bg-line lg:grid-cols-2">
+            <div className="bg-ink/70 p-5">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+                Make the task specific
+              </p>
+              <p className="mt-3 text-sm leading-6 text-muted-light">
+                Add a filename, component, route, function, error message, or stack trace. Locus will recalculate as you type.
+              </p>
+              {repositoryTerms.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs text-muted">Terms found in this repository</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {repositoryTerms.map((term) => (
+                      <button
+                        key={term}
+                        onClick={() => onRefineTask(term)}
+                        className="rounded-full border border-line-strong px-2.5 py-1 font-mono text-[10px] text-muted-light transition hover:border-accent/40 hover:text-accent"
+                      >
+                        + {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+            <div className="bg-ink/70 p-5">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+                {candidates.length > 0 ? "Possible starting files" : "No supported match yet"}
+              </p>
+              {candidates.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {candidates.map((file) => (
+                    <button
+                      key={file}
+                      onClick={() => onSelect(file)}
+                      className="block w-full rounded-xl border border-line bg-surface/70 px-3 py-2.5 text-left font-mono text-[11px] text-paper transition hover:border-accent/40"
+                    >
+                      {file}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-muted-light">
+                  The current task language does not appear in a supported source file. Refine the task before copying context.
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-px bg-line md:grid-cols-3">
+            {["Task matches", "Imported dependencies", "Nearby integration"].map((title, index) => (
+              <div key={title} className="min-h-44 bg-ink/70 p-5">
+                <span className="font-mono text-xs text-muted">0{index + 1}</span>
+                <p className="mt-8 text-sm font-medium text-muted-light">{title}</p>
+                <div className="mt-4 h-px bg-line-strong" />
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     );
   }

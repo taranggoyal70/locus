@@ -1,12 +1,12 @@
 {
   "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.",
   "summary": {
-    "generatedAt": "2026-07-27T07:52:21.134Z",
+    "generatedAt": "2026-07-27T09:23:23.597Z",
     "cases": 15,
     "repositories": 3,
     "fixFileRecall": 1,
     "casesWithFullRecall": 15,
-    "medianContextReductionPct": 54,
+    "medianContextReductionPct": 53,
     "widenedCases": 2,
     "gate": {
       "fullRecall": true,
@@ -31,6 +31,7 @@
       "files": "12/15",
       "contextReductionPct": 3,
       "anchors": [
+        "lib/sources.ts",
         "app/api/github/route.ts",
         "lib/types.ts",
         "app/page.tsx"
@@ -93,8 +94,8 @@
       ],
       "recall": 1,
       "widened": false,
-      "files": "21/61",
-      "contextReductionPct": 47,
+      "files": "20/61",
+      "contextReductionPct": 48,
       "anchors": [
         "app/api/v1/locate/route.ts",
         "components/LocusApp.tsx",
@@ -115,12 +116,13 @@
       ],
       "recall": 1,
       "widened": false,
-      "files": "13/60",
-      "contextReductionPct": 79,
+      "files": "19/60",
+      "contextReductionPct": 53,
       "anchors": [
+        "components/SettingsShell.tsx",
         "app/settings/page.tsx",
-        "app/api/attachments/route.test.ts",
-        "app/api/github/route.test.ts"
+        "app/projects/page.tsx",
+        "components/LocusApp.tsx"
       ]
     },
     {
@@ -137,13 +139,13 @@
       ],
       "recall": 1,
       "widened": false,
-      "files": "27/58",
-      "contextReductionPct": 34,
+      "files": "24/58",
+      "contextReductionPct": 36,
       "anchors": [
-        "app/api/keys/route.ts",
+        "components/ApiKeysPanel.tsx",
         "app/api/v1/locate/route.ts",
         "app/api/github/route.ts",
-        "components/ApiKeysPanel.tsx",
+        "lib/api-auth.ts",
         "lib/api-auth.test.ts",
         "components/LocusApp.tsx"
       ]
@@ -200,15 +202,15 @@
       ],
       "recall": 1,
       "widened": false,
-      "files": "14/44",
-      "contextReductionPct": 63,
+      "files": "15/44",
+      "contextReductionPct": 53,
       "anchors": [
-        "src/lib/execution.ts",
         "src/app/api/receipts/[receiptId]/route.ts",
+        "src/lib/execution.ts",
         "src/app/dashboard/receipts/page.tsx",
         "scripts/smoke.ts",
         "src/app/api/sandboxes/[sandboxId]/verify/route.ts",
-        "src/app/docs/page.tsx"
+        "src/app/dashboard/sandboxes/[sandboxId]/page.tsx"
       ]
     },
     {
@@ -226,10 +228,11 @@
       "recall": 1,
       "widened": false,
       "files": "8/57",
-      "contextReductionPct": 89,
+      "contextReductionPct": 75,
       "anchors": [
         "app/(auth)/signup/page.tsx",
-        "app/api/profile/route.ts",
+        "app/(auth)/login/page.tsx",
+        "app/dashboard/settings/page.tsx",
         "app/privacy/page.tsx"
       ]
     },
@@ -249,11 +252,12 @@
       ],
       "recall": 1,
       "widened": false,
-      "files": "18/57",
-      "contextReductionPct": 53,
+      "files": "15/57",
+      "contextReductionPct": 56,
       "anchors": [
         "components/ThemeProvider.tsx",
         "components/ThemeToggle.tsx",
+        "app/page.tsx",
         "components/landing/TrustSection.tsx"
       ]
     },
@@ -273,7 +277,7 @@
       ],
       "recall": 1,
       "widened": false,
-      "files": "9/42",
+      "files": "8/42",
       "contextReductionPct": 85,
       "anchors": [
         "app/api/webhook/post-call/route.ts",
@@ -298,8 +302,8 @@
       ],
       "recall": 1,
       "widened": false,
-      "files": "16/57",
-      "contextReductionPct": 54,
+      "files": "10/57",
+      "contextReductionPct": 60,
       "anchors": [
         "app/(auth)/login/page.tsx",
         "app/(auth)/signup/page.tsx",
@@ -328,8 +332,8 @@
       ],
       "recall": 1,
       "widened": false,
-      "files": "10/57",
-      "contextReductionPct": 88,
+      "files": "7/57",
+      "contextReductionPct": 90,
       "anchors": [
         "components/landing/FAQ.tsx",
         "components/landing/FinalCTA.tsx",

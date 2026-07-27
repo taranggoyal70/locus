@@ -70,6 +70,14 @@ function normalize(p: string): string {
   return parts.join("/");
 }
 
+function tokens(text: string): string[] {
+  return text
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length >= 3);
+}
+
 /** Build the deterministic dependency graph from the file map. */
 export function buildGraph(repo: RepoData): Graph {
   const { files, root } = repo;
@@ -164,18 +172,12 @@ const STOP = new Set(["the", "a", "an", "is", "are", "in", "on", "of", "to", "fi
 function taskWords(task: string): Set<string> {
   // Require length >= 3 so short substrings ("me", "hi") can't false-match
   // ("me" inside "home"). Feature words are effectively always >= 3 chars.
-  return new Set(
-    task.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !STOP.has(w)),
-  );
+  return new Set(tokens(task).filter((word) => !STOP.has(word)));
 }
 
 function scoreAnchor(words: Set<string>, route: string, rel: string, source: string) {
-  const pathTokens = new Set(
-    (route + " " + rel).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
-  );
-  const sourceTokens = new Set(
-    source.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3),
-  );
+  const pathTokens = new Set(tokens(`${route} ${rel}`));
+  const sourceTokens = new Set(tokens(source));
   let score = 0;
   let pathMatches = 0;
   const matchedWords = new Set<string>();
@@ -201,7 +203,32 @@ function scoreAnchor(words: Set<string>, route: string, rel: string, source: str
       matchedWords.add(w);
     }
   }
-  return { score, pathMatches, matchedWords: matchedWords.size };
+  return {
+    score,
+    pathMatches,
+    matchedWords: matchedWords.size,
+    matchedTerms: [...matchedWords],
+  };
+}
+
+const REPOSITORY_TERM_STOP = new Set([
+  ...STOP,
+  "src", "server", "client", "components", "component", "lib", "api",
+  "route", "page", "index", "test", "tests", "spec", "typescript", "javascript",
+]);
+
+function repositoryTerms(graph: Graph): string[] {
+  const counts = new Map<string, number>();
+  for (const node of graph.nodes) {
+    for (const term of new Set(tokens(node.rel))) {
+      if (REPOSITORY_TERM_STOP.has(term)) continue;
+      counts.set(term, (counts.get(term) ?? 0) + 1);
+    }
+  }
+  return [...counts]
+    .sort(([termA, countA], [termB, countB]) => countB - countA || termA.localeCompare(termB))
+    .slice(0, 8)
+    .map(([term]) => term);
 }
 
 /**
@@ -214,15 +241,17 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
   const recent = new Set(repo.recentlyChanged);
   const words = taskWords(`${task}\n${evidence}`);
 
-  const scored = graph.nodes
+  const ranked = graph.nodes
     .map((node) => ({
       path: node.path,
       route: node.route ?? "",
       recent: recent.has(node.path),
       ...scoreAnchor(words, node.route ?? "", node.rel, repo.files[node.path] ?? ""),
     }))
-    .filter((candidate) => candidate.pathMatches > 0 || candidate.matchedWords >= 2)
     .sort((a, b) => b.score - a.score || b.matchedWords - a.matchedWords);
+  const scored = ranked.filter(
+    (candidate) => candidate.pathMatches > 0 || candidate.matchedWords >= 2,
+  );
   const best = scored[0]?.score ?? 0;
 
   if (!task.trim() || best < 3) {
@@ -243,15 +272,26 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
       sliceTokens: graph.totalTokens,
       totalTokens: graph.totalTokens,
       savedPct: 0,
+      refinement: {
+        unmatchedTerms: [...words].filter(
+          (word) => !ranked.some((candidate) => candidate.matchedTerms.includes(word)),
+        ),
+        candidateFiles: ranked
+          .filter((candidate) => candidate.score > 0)
+          .slice(0, 3)
+          .map((candidate) => byPath[candidate.path].rel),
+        repositoryTerms: repositoryTerms(graph),
+      },
     };
   }
 
   // Keep a small set of near-tied anchors. This matters for changes such as a
-  // theme bug that legitimately spans a provider, toggle, and layout.
+  // theme bug that legitimately spans a provider, toggle, and layout. A weaker
+  // matching page must not displace a stronger API/library anchor.
   const anchors = scored
     .filter((s) =>
       s.score >= Math.max(3, best - 1) ||
-      s.matchedWords >= Math.min(3, words.size) ||
+      (s.score >= 3 && s.matchedWords >= Math.min(3, words.size)) ||
       (s.recent && s.matchedWords >= 2),
     )
     .slice(0, 6);
@@ -261,12 +301,12 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
       dist[f] = Math.min(dist[f] ?? 99, d);
     }
     // A library/hook/API file's immediate consumers contain the integration
-    // points an agent usually needs. Include those consumers and their deps.
+    // points an agent usually needs. Keep the consumer itself, but do not pull
+    // all of its other dependencies: the anchor closure already supplies the
+    // relevant side of the integration.
     if (!byPath[a.path].isSurface) {
       for (const consumer of rdeps[a.path] ?? []) {
-        for (const [f, d] of Object.entries(closure(consumer, deps))) {
-          dist[f] = Math.min(dist[f] ?? 99, d + 1);
-        }
+        dist[consumer] = Math.min(dist[consumer] ?? 99, 1);
       }
     }
   }
@@ -290,5 +330,6 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
     sliceTokens,
     totalTokens: graph.totalTokens,
     savedPct: Math.round((100 * (graph.totalTokens - sliceTokens)) / graph.totalTokens),
+    refinement: null,
   };
 }
