@@ -2,10 +2,15 @@ packages:
   - .
 
 allowBuilds:
+  '@swc/core': true
+  cbor-extract: false
+  esbuild: true
   sharp: true
   tesseract.js: false
   unrs-resolver: true
 onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild
   - sharp
   - unrs-resolver
 overrides:
