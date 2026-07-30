@@ -71,12 +71,32 @@ const READ_BASE64_SCRIPT = [
   'process.stdout.write(fs.readFileSync(target).toString("base64"));',
 ].join("");
 
+const PREPARE_DEPENDENCIES = [
+  "if [ -f pnpm-lock.yaml ]; then",
+  "corepack enable >/dev/null 2>&1 && pnpm install --frozen-lockfile --ignore-scripts;",
+  "elif [ -f package-lock.json ]; then",
+  "npm ci --ignore-scripts;",
+  "elif [ -f yarn.lock ]; then",
+  "corepack enable >/dev/null 2>&1 && yarn install --immutable --mode=skip-builds;",
+  "elif [ -f bun.lock ] || [ -f bun.lockb ]; then",
+  "bun install --frozen-lockfile --ignore-scripts;",
+  "else echo 'No supported lockfile; dependency install skipped'; fi",
+].join(" ");
+
 export type AgentChange = {
   path: string;
   content: string | null;
 };
 
+export type AgentVerification = {
+  command: string;
+  exitCode: number;
+  evidence: string;
+};
+
 export class WorkspaceController {
+  private readonly checks: AgentVerification[] = [];
+
   constructor(
     private readonly workspace: AgentWorkspace,
     private readonly scope: AgentScope,
@@ -88,6 +108,20 @@ export class WorkspaceController {
 
   listFiles(): AgentScopeLedger {
     return this.scope.ledger();
+  }
+
+  verification(): AgentVerification[] {
+    return [...this.checks];
+  }
+
+  async prepareDependencies(abortSignal?: AbortSignal): Promise<string> {
+    const result = await this.workspace.run({
+      command: PREPARE_DEPENDENCIES,
+      abortSignal,
+      timeoutMs: 300_000,
+    });
+    if (result.exitCode !== 0) throw new Error("Sandbox dependency preparation failed");
+    return evidence(result);
   }
 
   async readFile(input: string, abortSignal?: AbortSignal): Promise<string> {
@@ -150,7 +184,20 @@ export class WorkspaceController {
 
   async writeFile(input: string, content: string, abortSignal?: AbortSignal): Promise<string> {
     const path = validateRepoPath(input);
-    if (!this.scope.canWrite(path)) this.scope.create(path);
+    if (!this.scope.canWrite(path)) {
+      if (this.scope.ledger().excluded.includes(path)) {
+        throw new Error(`${path} already exists outside the Slice; widen it before editing`);
+      }
+      const absent = await this.workspace.run({
+        command: `test ! -e ${shellQuote(path)}`,
+        abortSignal,
+        timeoutMs: 30_000,
+      });
+      if (absent.exitCode !== 0) {
+        throw new Error(`${path} already exists outside the Slice; widen it before editing`);
+      }
+      this.scope.create(path);
+    }
     if (content.length > 50_000) throw new Error("File content exceeds the 50,000 character limit");
     const result = await this.workspace.run({
       command: `node -e ${shellQuote(WRITE_SCRIPT)}`,
@@ -168,15 +215,24 @@ export class WorkspaceController {
       abortSignal,
       timeoutMs: 300_000,
     });
-    return evidence(result);
+    const output = evidence(result);
+    this.checks.push({ command, exitCode: result.exitCode, evidence: output });
+    return output;
   }
 
   async diff(abortSignal?: AbortSignal): Promise<string> {
+    const intent = await this.workspace.run({
+      command: "git add --intent-to-add -- .",
+      abortSignal,
+      timeoutMs: 30_000,
+    });
+    if (intent.exitCode !== 0) throw new Error("Could not prepare a complete review diff");
     const result = await this.workspace.run({
       command: "git diff --no-ext-diff -- .",
       abortSignal,
       timeoutMs: 30_000,
     });
+    if (result.exitCode !== 0) throw new Error("Could not create the review diff");
     return evidence(result);
   }
 
@@ -195,6 +251,15 @@ export class WorkspaceController {
         const [status, ...pathParts] = line.split("\t");
         return { status, path: validateRepoPath(pathParts.join("\t")) };
       });
+    const untracked = await this.workspace.run({
+      command: "git ls-files --others --exclude-standard -- .",
+      abortSignal,
+      timeoutMs: 30_000,
+    });
+    if (untracked.exitCode !== 0) throw new Error("Could not enumerate new files");
+    for (const path of untracked.stdout.split("\n").filter(Boolean)) {
+      changes.push({ status: "A", path: validateRepoPath(path) });
+    }
     if (changes.length > 30) throw new Error("Agent change set exceeds the 30 file limit");
 
     let totalCharacters = 0;

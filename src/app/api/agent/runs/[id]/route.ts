@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { summarizeTokenUsage } from "@/lib/agent/run-state";
+import { calculateTokenLedger } from "@/lib/agent/coding-agent";
 import { serviceClient } from "@/lib/supabase";
 
 type RouteContext = {
@@ -41,17 +41,24 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Could not load complete run evidence." }, { status: 500 });
   }
 
+  const tokenLedger = calculateTokenLedger({
+    baselineContextTokens: run.baseline_tokens,
+    includedContextTokens: run.included_context_tokens,
+    inputTokens: run.input_tokens,
+    outputTokens: run.output_tokens,
+  });
+
   return NextResponse.json({
     run,
     task: taskResult.data,
     steps: stepsResult.data,
     artifacts: artifactsResult.data,
     approvals: approvalsResult.data,
-    tokens: summarizeTokenUsage({
-      baselineTokens: run.baseline_tokens,
-      inputTokens: run.input_tokens,
-      outputTokens: run.output_tokens,
-      cachedInputTokens: run.cached_input_tokens,
-    }),
+    tokens: {
+      ...tokenLedger,
+      baselineTokens: tokenLedger.baselineContextTokens,
+      savedTokens: tokenLedger.contextTokensSaved,
+      savedPct: tokenLedger.contextReductionPercent,
+    },
   });
 }

@@ -5,6 +5,8 @@ import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
 describe("GitHub agent delivery", () => {
   it("creates a commit, branch, and pull request from an approved change set", async () => {
     const responses = [
+      [],
+      null,
       { object: { sha: "base-commit" } },
       { tree: { sha: "base-tree" } },
       { sha: "blob-1" },
@@ -26,6 +28,7 @@ describe("GitHub agent delivery", () => {
         token: "secret",
         repository: "acme/repo",
         baseRef: "main",
+        expectedBaseSha: "base-commit",
         runId: "12345678-abcd-4000-8000-000000000000",
         task: "Fix chart rendering",
         summary: "Corrects the chart data adapter.",
@@ -42,11 +45,41 @@ describe("GitHub agent delivery", () => {
       pullRequestNumber: 12,
       url: "https://github.com/acme/repo/pull/12",
     });
-    expect(fetcher).toHaveBeenCalledTimes(7);
+    expect(fetcher).toHaveBeenCalledTimes(9);
     const calls = fetcher.mock.calls as Array<[string | URL | Request, RequestInit?]>;
-    expect(calls[3]?.[1]?.body).toContain('"sha":null');
+    expect(calls[5]?.[1]?.body).toContain('"sha":null');
     expect(calls[0]?.[1]?.headers).toMatchObject({
       Authorization: "Bearer secret",
     });
+  });
+
+  it("reconciles a branch created before the pull request", async () => {
+    const responses = [
+      [],
+      { object: { sha: "existing-commit" } },
+      { parents: [{ sha: "base-commit" }] },
+      { html_url: "https://github.com/acme/repo/pull/12", number: 12 },
+    ];
+    const fetcher = vi.fn(async () => new Response(JSON.stringify(responses.shift()), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+
+    const result = await createGitHubPullRequest(
+      {
+        token: "secret",
+        repository: "acme/repo",
+        baseRef: "main",
+        expectedBaseSha: "base-commit",
+        runId: "12345678-abcd-4000-8000-000000000000",
+        task: "Fix chart rendering",
+        summary: "Corrects the chart data adapter.",
+        changes: [{ path: "src/chart.ts", content: "export const chart = true;\n" }],
+      },
+      fetcher,
+    );
+
+    expect(result.url).toBe("https://github.com/acme/repo/pull/12");
+    expect(fetcher).toHaveBeenCalledTimes(4);
   });
 });

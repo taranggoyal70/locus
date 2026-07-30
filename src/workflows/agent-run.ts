@@ -113,6 +113,7 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
   await updateRun(runId, {
     status: "planning",
     baseline_tokens: result.totalTokens,
+    included_context_tokens: result.sliceTokens,
     included_files: included,
     excluded_files: excluded,
   });
@@ -188,6 +189,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
 
   try {
     await updateRun(localized.runId, { sandbox_id: workspace.id });
+    await controller.prepareDependencies();
     const prompt = buildAgentPrompt({
       task: localized.task,
       acceptanceCriteria: localized.acceptanceCriteria,
@@ -205,12 +207,30 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       baselineContextTokens: localized.baselineTokens,
       includedContextTokens: localized.includedTokens,
     });
+    if (result.verification.length === 0) {
+      throw new Error("Agent did not run an approved verification command");
+    }
+    const failedChecks = result.verification.filter((check) => check.exitCode !== 0);
+    if (failedChecks.length > 0) {
+      throw new Error(
+        `Verification failed: ${failedChecks.map((check) => check.command).join(", ")}`,
+      );
+    }
+    const widenedTokens = result.ledger.widened.reduce((total, path) => {
+      const content = localized.repo.files[path];
+      return total + (content ? Math.max(1, Math.round(content.length / 4)) : 0);
+    }, 0);
+    const effectiveContextTokens = Math.min(
+      localized.baselineTokens,
+      localized.includedTokens + widenedTokens,
+    );
     const diff = await controller.diff();
     const changeSet = await controller.changeSet();
     if (changeSet.length === 0) throw new Error("Agent completed without repository changes");
 
     await updateRun(localized.runId, {
       status: "verifying",
+      included_context_tokens: effectiveContextTokens,
       input_tokens: result.tokenLedger.inputTokens,
       output_tokens: result.tokenLedger.outputTokens,
       widened_files: result.ledger.widened,
@@ -238,7 +258,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       status: "completed",
       title: "Verification evidence collected",
       detail: {
-        checks: result.output.verification,
+        checks: result.verification,
         risks: result.output.risks,
       },
     });
@@ -250,7 +270,11 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
         user_id: localized.userId,
         kind: "change_set",
         label: "Approval-gated delivery payload",
-        content: JSON.stringify({ version: 1, files: changeSet }),
+        content: JSON.stringify({
+          version: 1,
+          baseCommitSha: localized.revision,
+          files: changeSet,
+        }),
       },
       {
         run_id: localized.runId,

@@ -181,6 +181,7 @@ export async function runCodingTask(input: CodingRunInput) {
     output: result.output,
     finishReason: result.finishReason,
     ledger: input.controller.ledger(),
+    verification: input.controller.verification(),
     tokenLedger: calculateTokenLedger({
       baselineContextTokens: input.baselineContextTokens,
       includedContextTokens: input.includedContextTokens,

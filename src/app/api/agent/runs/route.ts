@@ -3,11 +3,27 @@ import { NextResponse } from "next/server";
 import { start } from "workflow/api";
 
 import { resolveAgentModel } from "@/lib/agent/coding-agent";
+import { agentRunQuotaDecision } from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
 import { serviceClient } from "@/lib/supabase";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
 const MAX_BODY_BYTES = 12_000;
+const startBursts = new Map<string, number[]>();
+
+function allowStartBurst(userId: string): boolean {
+  const cutoff = Date.now() - 60_000;
+  const recent = (startBursts.get(userId) ?? []).filter((timestamp) => timestamp > cutoff);
+  if (recent.length >= 3) return false;
+  recent.push(Date.now());
+  startBursts.set(userId, recent);
+  if (startBursts.size > 10_000) {
+    for (const [key, timestamps] of startBursts) {
+      if (timestamps.every((timestamp) => timestamp <= cutoff)) startBursts.delete(key);
+    }
+  }
+  return true;
+}
 
 export async function GET() {
   const { userId } = await auth();
@@ -51,6 +67,42 @@ export async function POST(request: Request) {
   }
 
   const db = serviceClient();
+  if (!allowStartBurst(userId)) {
+    return NextResponse.json(
+      { error: "Too many agent starts. Wait a minute and try again." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1_000).toISOString();
+  const [activeResult, dailyResult] = await Promise.all([
+    db
+      .from("agent_runs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .in("status", ["queued", "localizing", "planning", "executing", "verifying"]),
+    db
+      .from("agent_runs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", oneDayAgo),
+  ]);
+  if (activeResult.error || dailyResult.error) {
+    return NextResponse.json({ error: "Could not verify agent run quota." }, { status: 503 });
+  }
+  const quota = agentRunQuotaDecision({
+    activeRuns: activeResult.count ?? 0,
+    dailyRuns: dailyResult.count ?? 0,
+  });
+  if (!quota.allowed) {
+    const error = quota.reason === "active"
+      ? "Two agent runs are already active. Wait for one to finish."
+      : "Public-beta daily agent quota reached. Try again tomorrow.";
+    return NextResponse.json(
+      { error },
+      { status: 429, headers: { "Retry-After": String(quota.retryAfterSeconds) } },
+    );
+  }
+
   const { data: task, error: taskError } = await db
     .from("agent_tasks")
     .insert({

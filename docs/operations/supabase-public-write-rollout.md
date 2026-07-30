@@ -5,7 +5,7 @@ Migration `004_harden_public_writes.sql` removes direct writes by `anon` and
 continue through server routes using `service_role`.
 
 Use one operator, capture all output in the change ticket, and do not combine
-`004` with migrations `005`–`008`. Roll out the agent schema separately after
+`004` with migrations `005`–`009`. Roll out the agent schema separately after
 this security boundary is verified.
 
 ## 1. Release identity
@@ -31,12 +31,14 @@ Confirm the linked project is production and inspect history without writes:
 
 ```bash
 supabase migration list --linked
-supabase db push --linked --dry-run
 ```
 
-For the hardening window, migrations `001`–`003` must be present remotely and
-only `004` may be pending. Stop on missing or divergent history. Do not use
-`--include-all` or repair migration history until the live schema is inspected.
+For the hardening window, migrations `001`–`003` must be present remotely.
+Migration `004` and the agent migrations `005`–`009` may be pending in the
+current checkout. Stop on missing or divergent history. Do not run
+`supabase db push` from this checkout during the hardening window because it
+would apply the agent schema too. Do not use `--include-all` or repair migration
+history until the live schema is inspected.
 
 Run these read-only queries against production:
 
@@ -193,19 +195,12 @@ All gates must pass:
 
 ## 3. Safe apply
 
-Preview once more, then apply the one pending migration:
+Apply only the reviewed hardening file with an administrative production
+connection:
 
 ```bash
-supabase db push --linked --dry-run
-supabase db push --linked
-```
+: "${DATABASE_URL:?Set the production direct Postgres connection string}"
 
-Do not include seed data. Stop if the final dry run includes migrations
-`005`–`008`.
-
-If production is intentionally managed by direct `psql`, use this instead:
-
-```bash
 psql "$DATABASE_URL" \
   -X \
   -v ON_ERROR_STOP=1 \
@@ -214,7 +209,11 @@ psql "$DATABASE_URL" \
   -f supabase/migrations/004_harden_public_writes.sql
 ```
 
-Never mix the Supabase CLI and direct-SQL apply paths in one window.
+The command is atomic and intentionally does not advance Supabase migration
+history. In the later agent-schema window, `supabase db push --linked` will
+execute the idempotent `004` checks again before applying `005`–`009` and will
+then record the complete history. Do not repair history or mix apply paths in
+the hardening window.
 
 ## 4. Post-migration verification
 
@@ -391,7 +390,7 @@ cannot remove abusive rows written before hardening.
 - [ ] Only migration `004` is applied in the hardening window.
 - [ ] Public-role denial and service-role write probes pass.
 - [ ] Waitlist and analytics canaries are confirmed in the database.
-- [ ] Agent migrations `005`–`008` pass a separate dry run and change review.
+- [ ] Agent migrations `005`–`009` pass a separate dry run and change review.
 - [ ] API errors, rate limits, workflow failures, and both write streams are
   monitored during initial traffic.
 - [ ] A named operator owns the fix-forward or emergency rollback decision.

@@ -80,9 +80,14 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const parsed = JSON.parse(changeSetResult.data.content) as {
       version?: unknown;
+      baseCommitSha?: unknown;
       files?: unknown;
     };
-    if (parsed.version !== 1 || !Array.isArray(parsed.files)) {
+    if (
+      parsed.version !== 1
+      || typeof parsed.baseCommitSha !== "string"
+      || !Array.isArray(parsed.files)
+    ) {
       throw new Error("Unsupported delivery payload");
     }
     const changes = parsed.files as AgentChange[];
@@ -90,6 +95,7 @@ export async function POST(request: Request, context: RouteContext) {
       token: connectionResult.data.access_token,
       repository: taskResult.data.repo_url,
       baseRef: taskResult.data.base_ref,
+      expectedBaseSha: parsed.baseCommitSha,
       runId: run.id,
       task: taskResult.data.task,
       summary: summaryResult.data?.content ?? "Locus completed the requested engineering task.",

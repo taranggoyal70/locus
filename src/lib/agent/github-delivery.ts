@@ -6,6 +6,7 @@ type DeliveryInput = {
   token: string;
   repository: string;
   baseRef: string;
+  expectedBaseSha: string;
   runId: string;
   task: string;
   summary: string;
@@ -55,6 +56,30 @@ async function githubJson<T>(
   return payload as T;
 }
 
+async function githubJsonIfFound<T>(
+  fetcher: GitHubFetcher,
+  token: string,
+  url: string,
+): Promise<T | null> {
+  const response = await fetcher(url, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  if (response.status === 404) return null;
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = payload && typeof payload === "object" && "message" in payload
+      ? String(payload.message)
+      : `GitHub request failed (${response.status})`;
+    throw new Error(message);
+  }
+  return payload as T;
+}
+
 export async function createGitHubPullRequest(
   input: DeliveryInput,
   fetcher: GitHubFetcher = fetch,
@@ -77,12 +102,64 @@ export async function createGitHubPullRequest(
   const branch = `locus/${branchSlug(input.task)}-${runSuffix || "run"}`;
   const api = `https://api.github.com/repos/${owner}/${repo}`;
   const encodedBase = baseRef.split("/").map(encodeURIComponent).join("/");
+  const encodedBranch = branch.split("/").map(encodeURIComponent).join("/");
+  const openPullRequest = () => githubJson<{ html_url: string; number: number }>(
+    fetcher,
+    input.token,
+    `${api}/pulls`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        title: input.task.trim().slice(0, 120),
+        head: branch,
+        base: baseRef,
+        body: `${input.summary.trim()}\n\nCreated by Locus after explicit approval.`,
+      }),
+    },
+  );
+  const existingPullRequests = await githubJson<Array<{ html_url: string; number: number }>>(
+    fetcher,
+    input.token,
+    `${api}/pulls?state=all&head=${encodeURIComponent(`${owner}:${branch}`)}&base=${encodeURIComponent(baseRef)}`,
+  );
+  if (existingPullRequests[0]) {
+    return {
+      branch,
+      pullRequestNumber: existingPullRequests[0].number,
+      url: existingPullRequests[0].html_url,
+    };
+  }
+
+  const existingBranch = await githubJsonIfFound<{ object: { sha: string } }>(
+    fetcher,
+    input.token,
+    `${api}/git/ref/heads/${encodedBranch}`,
+  );
+  if (existingBranch) {
+    const branchCommit = await githubJson<{ parents: Array<{ sha: string }> }>(
+      fetcher,
+      input.token,
+      `${api}/git/commits/${existingBranch.object.sha}`,
+    );
+    if (branchCommit.parents[0]?.sha !== input.expectedBaseSha) {
+      throw new Error("The existing Locus branch does not match this run's base commit");
+    }
+    const pullRequest = await openPullRequest();
+    return {
+      branch,
+      pullRequestNumber: pullRequest.number,
+      url: pullRequest.html_url,
+    };
+  }
 
   const baseReference = await githubJson<{ object: { sha: string } }>(
     fetcher,
     input.token,
     `${api}/git/ref/heads/${encodedBase}`,
   );
+  if (baseReference.object.sha !== input.expectedBaseSha) {
+    throw new Error("The base branch changed after localization; start a fresh Locus run");
+  }
   const baseCommit = await githubJson<{ tree: { sha: string } }>(
     fetcher,
     input.token,
@@ -147,20 +224,7 @@ export async function createGitHubPullRequest(
       body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: commit.sha }),
     },
   );
-  const pullRequest = await githubJson<{ html_url: string; number: number }>(
-    fetcher,
-    input.token,
-    `${api}/pulls`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        title: input.task.trim().slice(0, 120),
-        head: branch,
-        base: baseRef,
-        body: `${input.summary.trim()}\n\nCreated by Locus after explicit approval.`,
-      }),
-    },
-  );
+  const pullRequest = await openPullRequest();
 
   return {
     branch,

@@ -100,6 +100,7 @@ type AgentRunRow = {
   sandbox_id: string | null;
   branch_name: string | null;
   baseline_tokens: number;
+  included_context_tokens: number;
   input_tokens: number;
   output_tokens: number;
   cached_input_tokens: number;
@@ -224,6 +225,7 @@ export type Database = {
           | "sandbox_id"
           | "branch_name"
           | "baseline_tokens"
+          | "included_context_tokens"
           | "input_tokens"
           | "output_tokens"
           | "cached_input_tokens"

@@ -13,17 +13,30 @@ class FakeWorkspace implements AgentWorkspace {
   readonly description = "isolated test workspace";
   readonly commands: AgentWorkspaceCommand[] = [];
 
+  constructor(private readonly existingPaths = new Set<string>()) {}
+
   async run(command: AgentWorkspaceCommand): Promise<AgentWorkspaceResult> {
     this.commands.push(command);
+    if (command.command.startsWith("test ! -e ")) {
+      const path = command.command.match(/'([^']+)'$/)?.[1] ?? "";
+      return {
+        exitCode: this.existingPaths.has(path) ? 1 : 0,
+        stdout: "",
+        stderr: "",
+      };
+    }
     if (command.command.startsWith("sed ")) {
       return { exitCode: 0, stdout: "export const value = 1;\n", stderr: "" };
     }
     if (command.command.startsWith("git diff --name-status")) {
       return {
         exitCode: 0,
-        stdout: "M\tsrc/included.ts\nA\tsrc/new.test.ts\n",
+        stdout: "M\tsrc/included.ts\n",
         stderr: "",
       };
+    }
+    if (command.command.startsWith("git ls-files --others")) {
+      return { exitCode: 0, stdout: "src/new.test.ts\n", stderr: "" };
     }
     if (command.env?.LOCUS_PATH) {
       return {
@@ -94,6 +107,9 @@ describe("agent workspace", () => {
       command: "pnpm test",
       timeoutMs: 300_000,
     });
+    expect(controller.verification()).toEqual([
+      { command: "pnpm test", exitCode: 0, evidence: "exit 0\n\nstdout:\nok" },
+    ]);
   });
 
   it("creates new files without silently reclassifying excluded files", async () => {
@@ -101,7 +117,7 @@ describe("agent workspace", () => {
 
     await controller.writeFile("src/new.test.ts", "test content");
     expect(controller.ledger().created).toEqual(["src/new.test.ts"]);
-    expect(workspace.commands[0].env).toMatchObject({
+    expect(workspace.commands.find((command) => command.env?.LOCUS_CONTENT)?.env).toMatchObject({
       LOCUS_PATH: "src/new.test.ts",
       LOCUS_CONTENT: "test content",
     });
@@ -109,6 +125,38 @@ describe("agent workspace", () => {
     await expect(controller.writeFile("src/excluded.ts", "replacement")).rejects.toThrow(
       "src/excluded.ts already exists outside the Slice",
     );
+  });
+
+  it("refuses to overwrite an existing file omitted from the source ledger", async () => {
+    const workspace = new FakeWorkspace(new Set(["README.md"]));
+    const controller = new WorkspaceController(
+      workspace,
+      new AgentScope({ included: ["src/included.ts"], excluded: [] }),
+    );
+
+    await expect(controller.writeFile("README.md", "replacement")).rejects.toThrow(
+      "README.md already exists outside the Slice",
+    );
+  });
+
+  it("installs dependencies with lifecycle scripts disabled", async () => {
+    const { controller, workspace } = setup();
+
+    await controller.prepareDependencies();
+
+    expect(workspace.commands[0].command).toContain("pnpm install --frozen-lockfile --ignore-scripts");
+    expect(workspace.commands[0].command).toContain("npm ci --ignore-scripts");
+  });
+
+  it("includes untracked files in the approval diff", async () => {
+    const { controller, workspace } = setup();
+    await controller.writeFile("src/new.test.ts", "test content");
+
+    await controller.diff();
+
+    expect(workspace.commands.some(
+      (command) => command.command === "git add --intent-to-add -- .",
+    )).toBe(true);
   });
 
   it("captures a bounded delivery change set without reading excluded files", async () => {

@@ -219,6 +219,9 @@ export function AgentRunPanel({
   const diff = snapshot?.artifacts.find((artifact) => artifact.kind === "diff");
   const summary = snapshot?.artifacts.find((artifact) => artifact.kind === "summary");
   const pullRequest = snapshot?.artifacts.find((artifact) => artifact.kind === "pull_request");
+  const repositoryTruncated = snapshot?.steps.some(
+    (step) => step.detail.repositoryTruncated === true,
+  ) ?? false;
 
   return (
     <section className="overflow-hidden rounded-[22px] border border-line-strong bg-surface">
@@ -277,6 +280,15 @@ export function AgentRunPanel({
                 {snapshot.tokens.savedPct}% saved
               </span>
             </div>
+            {repositoryTruncated && (
+              <p
+                role="alert"
+                className="mt-4 rounded-xl border border-recent/40 bg-recent/10 px-3 py-3 text-xs leading-5 text-recent"
+              >
+                The repository scan reached the public-beta file cap. Some files are outside both
+                the included and excluded lists; review the diff carefully or start a narrower run.
+              </p>
+            )}
             {summary?.content && <p className="mt-4 text-sm leading-6 text-muted-light">{summary.content}</p>}
             {diff?.content && (
               <details className="mt-4 rounded-xl border border-line">

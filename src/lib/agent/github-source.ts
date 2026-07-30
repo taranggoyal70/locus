@@ -100,8 +100,22 @@ export async function fetchAgentRepository(
 
   const metadata = await info.json() as { default_branch?: string; description?: string };
   const revision = requestedRevision?.trim() || metadata.default_branch || "main";
+  const commitResponse = await fetchWithTimeout(
+    `https://api.github.com/repos/${owner}/${repo}/commits/${encodeURIComponent(revision)}`,
+    { headers },
+  );
+  if (!commitResponse.ok) {
+    throw new Error(`GitHub revision ${revision} could not be resolved (${commitResponse.status})`);
+  }
+  const commit = await commitResponse.json() as {
+    sha?: string;
+    commit?: { tree?: { sha?: string } };
+  };
+  if (!commit.sha || !commit.commit?.tree?.sha) {
+    throw new Error("GitHub returned an invalid commit");
+  }
   const treeResponse = await fetchWithTimeout(
-    `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(revision)}?recursive=1`,
+    `https://api.github.com/repos/${owner}/${repo}/git/trees/${commit.commit.tree.sha}?recursive=1`,
     { headers },
   );
   if (!treeResponse.ok) {
@@ -114,7 +128,7 @@ export async function fetchAgentRepository(
     tree?: Array<{ path: string; type: string; size?: number }>;
   };
   if (!Array.isArray(tree.tree)) throw new Error("GitHub returned an invalid repository tree");
-  const resolvedRevision = tree.sha || revision;
+  const resolvedRevision = commit.sha;
   const candidates = tree.tree.filter(
     (entry) =>
       entry.type === "blob"
