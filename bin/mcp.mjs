@@ -10,12 +10,18 @@ import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext } f
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 function pkgVersion() {
-  try {
-    const pkg = JSON.parse(readFileSync(path.join(here, "..", "package.json"), "utf8"));
-    return pkg.version || "0.1.0";
-  } catch {
-    return "0.1.0";
+  for (const candidate of [
+    path.join(here, "package.json"),
+    path.join(here, "..", "package.json"),
+  ]) {
+    try {
+      const pkg = JSON.parse(readFileSync(candidate, "utf8"));
+      if (pkg.version) return pkg.version;
+    } catch {
+      // Try the next package layout.
+    }
   }
+  return "0.1.0";
 }
 const VERSION = pkgVersion();
 
@@ -34,7 +40,7 @@ const TOOLS = [
   {
     name: "locate",
     description:
-      "Localize a task to a focused TypeScript code slice using path/source evidence, dependency closure, integration points, and recent changes. Falls back to the whole repo when evidence is weak.",
+      "Localize a task to a focused TypeScript code slice using path/source evidence, dependency closure, integration points, and recent changes. Falls back to all loaded files when evidence is weak.",
     inputSchema: {
       type: "object",
       properties: {
@@ -54,6 +60,12 @@ const TOOLS = [
           type: "boolean",
           description: "If true, also include a ready-to-paste packed context block of the slice's file contents.",
         },
+        budget: {
+          type: "integer",
+          minimum: 1,
+          maximum: 100000,
+          description: "Maximum estimated tokens in the packed context. Defaults to 40000.",
+        },
       },
       required: ["task"],
     },
@@ -68,12 +80,16 @@ function runLocate(args) {
   const dir = args.path ? path.resolve(String(args.path)) : process.cwd();
   const evidence = typeof args.evidence === "string" ? args.evidence : "";
   const pack = !!args.pack;
+  const budget = args.budget === undefined ? 40000 : Number(args.budget);
+  if (!Number.isInteger(budget) || budget < 1 || budget > 100000) {
+    throw new Error("budget must be an integer between 1 and 100000");
+  }
   const repo = loadLocalRepo(dir);
   const graph = buildGraph(repo);
   const result = locate(task, repo, graph, evidence);
   let text = formatResult(result);
   if (pack) {
-    const packed = buildPackedContext(result, repo, 40000);
+    const packed = buildPackedContext(result, repo, budget);
     text += `\n\n${packed.text}`;
   }
   return text;

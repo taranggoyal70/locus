@@ -26,6 +26,7 @@ export function ProjectsList() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -41,11 +42,17 @@ export function ProjectsList() {
   }, []);
 
   async function deleteProject(id: string) {
+    if (!window.confirm("Delete this saved task? This cannot be undone.")) return;
+    setDeletingId(id);
+    setError(null);
     try {
-      await fetch(`/api/projects?id=${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/projects?id=${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Delete request failed.");
       setProjects((prev) => prev.filter((p) => p.id !== id));
     } catch {
-      setError("Failed to delete project.");
+      setError("Failed to delete the saved task. Please try again.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -57,7 +64,7 @@ export function ProjectsList() {
     );
   }
 
-  if (error) {
+  if (error && projects.length === 0) {
     return (
       <div className="rounded-lg border border-recent/30 bg-recent/5 px-4 py-3 text-xs text-recent">
         {error}
@@ -68,9 +75,9 @@ export function ProjectsList() {
   if (projects.length === 0) {
     return (
       <div className="rounded-[22px] border border-line bg-surface p-12 text-center">
-        <p className="text-sm text-muted">No saved analyses yet.</p>
+        <p className="text-sm text-muted">No saved tasks yet.</p>
         <p className="mt-2 text-xs text-muted-light">
-          Use the &quot;Save analysis&quot; button in the workspace to keep results here.
+          Use &quot;Save task&quot; in the workspace to keep repository and task details here.
         </p>
         <Link
           href="/workspace"
@@ -83,9 +90,15 @@ export function ProjectsList() {
   }
 
   return (
-    <div className="divide-y divide-line overflow-hidden rounded-xl border border-line-strong">
-      {projects.map((project) => (
-        <div key={project.id} className="flex items-start justify-between gap-4 px-5 py-4">
+    <div>
+      {error && (
+        <div role="alert" className="mb-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-3 text-xs text-recent">
+          {error}
+        </div>
+      )}
+      <div className="divide-y divide-line overflow-hidden rounded-xl border border-line-strong">
+        {projects.map((project) => (
+          <div key={project.id} className="flex items-start justify-between gap-4 px-5 py-4">
           <Link
             href={`/workspace?repo=${encodeURIComponent(project.repo_url)}&task=${encodeURIComponent(project.task)}`}
             className="min-w-0 group"
@@ -93,19 +106,25 @@ export function ProjectsList() {
             <p className="truncate text-sm font-medium text-paper group-hover:text-accent transition">{project.name}</p>
             <p className="mt-0.5 truncate text-xs text-muted-light">{project.task}</p>
             <div className="mt-1 flex items-center gap-3 text-xs text-muted">
-              <span>{project.slice_files}/{project.total_files} files</span>
-              <span>{project.saved_pct}% saved</span>
+              <span>{project.slice_files}/{project.total_files} files when saved</span>
+              <span>{project.saved_pct}% reduction when saved</span>
               <span>{new Date(project.updated_at).toLocaleDateString()}</span>
             </div>
           </Link>
-          <button
-            onClick={() => deleteProject(project.id)}
-            className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs text-muted transition hover:bg-recent/10 hover:text-recent"
-          >
-            Delete
-          </button>
-        </div>
-      ))}
+            <button
+              onClick={() => deleteProject(project.id)}
+              disabled={deletingId === project.id}
+              aria-label={`Delete saved task ${project.name}`}
+              className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs text-muted transition hover:bg-recent/10 hover:text-recent disabled:cursor-wait disabled:opacity-50"
+            >
+              {deletingId === project.id ? "Deleting…" : "Delete"}
+            </button>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-muted">
+        Opening a saved task recalculates it against the repository&apos;s current state.
+      </p>
     </div>
   );
 }

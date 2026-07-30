@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { trackClient } from "@/lib/trackClient";
 import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
@@ -8,6 +8,15 @@ import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
 const BUDGET = 40_000;
 
 type ExportFormat = "generic" | "claude" | "cursor";
+
+function escapeXml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
 
 function packContext(repo: RepoData, result: LocateResult, format: ExportFormat = "generic") {
   const parts: string[] = [];
@@ -18,7 +27,10 @@ function packContext(repo: RepoData, result: LocateResult, format: ExportFormat 
     if (content === undefined) continue;
     const t = Math.ceil(content.length / 4);
     if (tokens + t > BUDGET) { dropped += 1; continue; }
-    if (format === "cursor") {
+    if (format === "claude") {
+      const cdata = content.replaceAll("]]>", "]]]]><![CDATA[>");
+      parts.push(`\n    <document path="${escapeXml(f.rel)}"><![CDATA[\n${cdata}\n]]></document>`);
+    } else if (format === "cursor") {
       parts.push(`\n\n// File: ${f.rel}\n${content}`);
     } else {
       parts.push(`\n\n===== ${f.rel} =====\n${content}`);
@@ -29,8 +41,9 @@ function packContext(repo: RepoData, result: LocateResult, format: ExportFormat 
   let head: string;
   if (format === "claude") {
     head =
-      `<context task="${result.task}">\n` +
-      `<!-- ${parts.length} file(s), ~${tokens} tokens — localized by Locus -->\n`;
+      `<context>\n` +
+      `  <task>${escapeXml(result.task)}</task>\n` +
+      `  <documents count="${parts.length}" estimated-tokens="${tokens}">`;
   } else if (format === "cursor") {
     head =
       `// Context for: ${result.task}\n` +
@@ -41,11 +54,15 @@ function packContext(repo: RepoData, result: LocateResult, format: ExportFormat 
       `# ${parts.length} file(s), ~${tokens} tokens — localized by Locus\n`;
   }
 
-  let tail = "";
-  if (dropped) tail = `\n\n# ${dropped} file(s) omitted — exceeded ${BUDGET.toLocaleString()}-token budget`;
+  let tail = format === "claude" ? "\n  </documents>" : "";
+  if (dropped) {
+    const prefix = format === "claude" ? "<!--" : format === "cursor" ? "//" : "#";
+    const suffix = format === "claude" ? " -->" : "";
+    tail += `\n\n${prefix} ${dropped} file(s) omitted — exceeded ${BUDGET.toLocaleString()}-token budget${suffix}`;
+  }
   if (format === "claude") tail += "\n</context>";
 
-  return { text: head + parts.join("") + tail, files: parts.length, tokens };
+  return { text: head + parts.join("") + tail, files: parts.length, tokens, dropped };
 }
 
 export function TokenMeter({
@@ -64,14 +81,27 @@ export function TokenMeter({
   const slice = result?.sliceTokens ?? total;
   const pct = result && !result.widened ? result.savedPct : 0;
   const sliceFrac = total ? (slice / total) * 100 : 100;
+  const exportPreview = useMemo(
+    () => (repo && result ? packContext(repo, result, format) : null),
+    [format, repo, result],
+  );
 
   async function copy() {
     if (!repo || !result) return;
     const packed = packContext(repo, result, format);
     try {
       await navigator.clipboard.writeText(packed.text);
-      setCopied(`Copied ${packed.files} files · ~${packed.tokens.toLocaleString()} tokens`);
-      trackClient("context_copied", { format, files: packed.files, tokens: packed.tokens });
+      setCopied(
+        packed.dropped
+          ? `Copied ${packed.files} files · ${packed.dropped} omitted`
+          : `Copied ${packed.files} files · ~${packed.tokens.toLocaleString()} tokens`,
+      );
+      trackClient("context_copied", {
+        format,
+        files: packed.files,
+        tokens: packed.tokens,
+        dropped: packed.dropped,
+      });
       setTimeout(() => setCopied(null), 2500);
     } catch {
       setCopied("Copy failed");
@@ -82,14 +112,14 @@ export function TokenMeter({
     <div className="rounded-[20px] border border-line-strong bg-surface p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)]">
       <div className="flex items-end justify-between">
         <div>
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Context sent to the agent</p>
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Context selected</p>
           <p className="mt-1 font-mono text-sm text-paper tabular">
             {slice.toLocaleString()} <span className="text-muted">/ {total.toLocaleString()} tokens</span>
           </p>
         </div>
         <div className="text-right">
           <p className={`font-mono text-4xl font-semibold tabular transition-all duration-500 ${sparse && pct > 0 ? "text-muted-light" : "text-accent"}`}>
-            {result?.widened ? "Full repo" : pct > 0 ? `−${pct}%` : "0%"}
+            {result?.widened ? "All loaded" : pct > 0 ? `−${pct}%` : "0%"}
           </p>
           <p className="text-[11px] text-muted">{result?.widened ? "safe Widen" : "fewer tokens"}</p>
         </div>
@@ -98,6 +128,11 @@ export function TokenMeter({
         <div
           className={`h-full rounded-full transition-all duration-700 ${sparse ? "bg-muted" : "bg-accent"}`}
           style={{ width: `${Math.max(2, sliceFrac)}%` }}
+          role="progressbar"
+          aria-label="Repository context included"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(Math.min(100, sliceFrac))}
         />
       </div>
 
@@ -124,6 +159,7 @@ export function TokenMeter({
               <button
                 key={key}
                 onClick={() => setFormat(key)}
+                aria-pressed={format === key}
                 className={`flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium transition ${
                   format === key ? "bg-accent/15 text-accent" : "text-muted hover:text-paper"
                 }`}
@@ -132,6 +168,12 @@ export function TokenMeter({
               </button>
             ))}
           </div>
+          {exportPreview && (
+            <p className="mt-2 text-[11px] text-muted">
+              Export: {exportPreview.files} file{exportPreview.files === 1 ? "" : "s"} · ~{exportPreview.tokens.toLocaleString()} tokens
+              {exportPreview.dropped > 0 ? ` · ${exportPreview.dropped} omitted by the ${BUDGET.toLocaleString()}-token budget` : ""}
+            </p>
+          )}
           <div className="mt-2 flex gap-2">
             <button
               onClick={copy}
@@ -141,7 +183,12 @@ export function TokenMeter({
                   : "bg-accent text-ink hover:bg-[#b5f34a]"
               }`}
             >
-              {copied ?? (result.widened ? "Copy full repo context" : "Copy context")}
+              {copied ??
+                (exportPreview?.dropped
+                  ? `Copy ${exportPreview.files} of ${exportPreview.files + exportPreview.dropped} files`
+                  : result.widened
+                    ? "Copy all loaded files"
+                    : "Copy context")}
             </button>
             <button
               onClick={() => {
@@ -154,10 +201,17 @@ export function TokenMeter({
                 a.download = `locus-context.${ext}`;
                 a.click();
                 URL.revokeObjectURL(a.href);
-                trackClient("context_copied", { format, files: packed.files, tokens: packed.tokens, method: "download" });
+                trackClient("context_copied", {
+                  format,
+                  files: packed.files,
+                  tokens: packed.tokens,
+                  dropped: packed.dropped,
+                  method: "download",
+                });
               }}
               className="rounded-xl border border-line-strong px-3 py-3 text-sm text-muted-light transition hover:border-accent/40 hover:text-paper"
               title="Download as file"
+              aria-label="Download context as a file"
             >
               ↓
             </button>
@@ -169,12 +223,14 @@ export function TokenMeter({
           <span className="text-[11px] text-muted">Was this context useful?</span>
           <button
             onClick={() => { setFeedback("up"); trackClient("context_feedback", { rating: "up", files: result.slice.length, savedPct: result.savedPct }); }}
+            aria-pressed={feedback === "up"}
             className={`rounded-md px-2 py-1 text-xs transition ${feedback === "up" ? "bg-accent/15 text-accent" : "text-muted hover:text-paper"}`}
           >
             Yes
           </button>
           <button
             onClick={() => { setFeedback("down"); trackClient("context_feedback", { rating: "down", files: result.slice.length, savedPct: result.savedPct }); }}
+            aria-pressed={feedback === "down"}
             className={`rounded-md px-2 py-1 text-xs transition ${feedback === "down" ? "bg-recent/15 text-recent" : "text-muted hover:text-paper"}`}
           >
             No

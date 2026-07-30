@@ -6,8 +6,9 @@ import type {
   SliceFile,
 } from "@/lib/types";
 
-// Static/dynamic imports and require() — captures relative and @/ alias specs.
-const IMPORT_RE = /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
+// Static, side-effect, dynamic, and require() imports — captures relative and
+// @/ alias specs.
+const IMPORT_RE = /(?:from\s+|import\s*(?:\(\s*)?|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
 
 function estimateTokens(text: string): number {
   return Math.max(1, Math.round(text.length / 4));
@@ -20,12 +21,22 @@ function topDir(rel: string): string {
 }
 
 /** Try a base path against the file map with the usual resolution order. */
-function tryPath(base: string, files: Record<string, string>): string | null {
-  for (const c of [
-    `${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.jsx`,
-    `${base}/index.ts`, `${base}/index.tsx`, `${base}/index.js`, `${base}/index.jsx`,
-    base,
-  ]) {
+function tryPath(base: string, files: Record<string, string>, preferTypeScript: boolean): string | null {
+  const runtimeExtension = /\.(?:js|jsx)$/.test(base);
+  const extensionless = runtimeExtension ? base.replace(/\.(?:js|jsx)$/, "") : base;
+  const typedCandidates = base.endsWith(".jsx")
+    ? [`${extensionless}.tsx`, `${extensionless}.ts`]
+    : [`${extensionless}.ts`, `${extensionless}.tsx`];
+  const candidates = runtimeExtension
+    ? preferTypeScript
+      ? [...typedCandidates, base, `${extensionless}.js`, `${extensionless}.jsx`]
+      : [base, ...typedCandidates, `${extensionless}.js`, `${extensionless}.jsx`]
+    : [
+        `${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.jsx`,
+        `${base}/index.ts`, `${base}/index.tsx`, `${base}/index.js`, `${base}/index.jsx`,
+        base,
+      ];
+  for (const c of candidates) {
     if (files[c] !== undefined) return c;
   }
   return null;
@@ -48,14 +59,14 @@ function resolve(
     const rest = spec.slice(2);
     const prefixes = [...new Set([root, "src", ""])];
     for (const p of prefixes) {
-      const hit = tryPath(p ? `${p}/${rest}` : rest, files);
+      const hit = tryPath(p ? `${p}/${rest}` : rest, files, /\.tsx?$/.test(fromPath));
       if (hit) return hit;
     }
     return null;
   }
   if (spec.startsWith(".")) {
     const dir = fromPath.split("/").slice(0, -1).join("/");
-    return tryPath(normalize(`${dir}/${spec}`), files);
+    return tryPath(normalize(`${dir}/${spec}`), files, /\.tsx?$/.test(fromPath));
   }
   return null;
 }
@@ -76,6 +87,67 @@ function tokens(text: string): string[] {
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter((token) => token.length >= 3);
+}
+
+function importSpecs(source: string): string[] {
+  const code = source.split("");
+  const strings: Array<[number, number]> = [];
+  let index = 0;
+  while (index < source.length) {
+    const current = source[index];
+    if (current === "'" || current === '"' || current === "`") {
+      const start = index;
+      const quote = current;
+      index += 1;
+      while (index < source.length) {
+        if (source[index] === "\\") {
+          index += 2;
+          continue;
+        }
+        index += 1;
+        if (source[index - 1] === quote) break;
+      }
+      strings.push([start, index]);
+      continue;
+    }
+    if (current === "/" && source[index + 1] === "/") {
+      code[index] = " ";
+      code[index + 1] = " ";
+      index += 2;
+      while (index < source.length && source[index] !== "\n") code[index++] = " ";
+      continue;
+    }
+    if (current === "/" && source[index + 1] === "*") {
+      code[index] = " ";
+      code[index + 1] = " ";
+      index += 2;
+      while (index < source.length) {
+        if (source[index] === "*" && source[index + 1] === "/") {
+          code[index] = " ";
+          code[index + 1] = " ";
+          index += 2;
+          break;
+        }
+        if (source[index] !== "\n") code[index] = " ";
+        index += 1;
+      }
+      continue;
+    }
+    index += 1;
+  }
+
+  const specs: string[] = [];
+  const searchable = code.join("");
+  let rangeIndex = 0;
+  let match: RegExpExecArray | null;
+  IMPORT_RE.lastIndex = 0;
+  while ((match = IMPORT_RE.exec(searchable))) {
+    while (strings[rangeIndex] && strings[rangeIndex][1] <= match.index) rangeIndex += 1;
+    const range = strings[rangeIndex];
+    if (range && range[0] <= match.index && match.index < range[1]) continue;
+    specs.push(match[1]);
+  }
+  return specs;
 }
 
 /** Build the deterministic dependency graph from the file map. */
@@ -118,10 +190,8 @@ export function buildGraph(repo: RepoData): Graph {
 
   for (const p of paths) {
     const seen = new Set<string>();
-    let m: RegExpExecArray | null;
-    IMPORT_RE.lastIndex = 0;
-    while ((m = IMPORT_RE.exec(files[p]))) {
-      const tgt = resolve(m[1], p, root, files);
+    for (const spec of importSpecs(files[p])) {
+      const tgt = resolve(spec, p, root, files);
       if (tgt && tgt !== p && !seen.has(tgt)) {
         seen.add(tgt);
         deps[p].push(tgt);
@@ -234,7 +304,7 @@ function repositoryTerms(graph: Graph): string[] {
 /**
  * Localize a task to the minimal relevant slice of the repo.
  * Conservative localization: if no file anchors with enough task evidence,
- * fall back to the whole repo instead of returning a speculative small slice.
+ * fall back to all loaded files instead of returning a speculative small slice.
  */
 export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""): LocateResult {
   const { deps, rdeps, byPath } = graph;
@@ -256,7 +326,7 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
 
   if (!task.trim() || best < 3) {
     // Widened: still rank recently-changed files first — that's precisely when a
-    // user scanning the whole repo most wants the Recent signal surfaced.
+    // user scanning every loaded file most wants the Recent signal surfaced.
     const slice = graph.nodes
       .map((n) => ({ path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path) }))
       .sort((a, b) => Number(b.recent) - Number(a.recent) || a.rel.localeCompare(b.rel));
@@ -264,7 +334,7 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
       task,
       widened: true,
       reason: task.trim()
-        ? "no file matched with enough confidence — widened to the whole repo"
+        ? "no file matched with enough confidence — widened to all loaded files"
         : "type a task to localize",
       anchors: [],
       slice,
@@ -292,6 +362,7 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
     .filter((s) =>
       s.score >= Math.max(3, best - 1) ||
       (s.score >= 3 && s.matchedWords >= Math.min(3, words.size)) ||
+      (best >= 8 && s.score >= 2 && s.matchedWords >= 2) ||
       (s.recent && s.matchedWords >= 2),
     )
     .slice(0, 6);

@@ -127,7 +127,7 @@ describe("locate", () => {
       slug: "webhook",
       description: "",
       root: "",
-      recentlyChanged: ["scripts/setup-elevenlabs-agents.ts"],
+      recentlyChanged: [],
       files: {
         "app/call/page.tsx": "export default function CallPage() { return null; }",
         "app/api/webhook/post-call/route.ts":
@@ -173,6 +173,32 @@ describe("buildGraph", () => {
     expect(g.nodes).toHaveLength(3);
     expect(g.deps["app.js"]).toContain("db.js");
     expect(g.deps["app.js"]).toContain("utils.js");
+  });
+
+  it("discovers side-effect imports and resolves NodeNext .js specifiers to TypeScript", () => {
+    const nodeNextRepo: RepoData = {
+      name: "nodenext", slug: "nodenext", description: "", root: "src",
+      recentlyChanged: [],
+      files: {
+        "src/app.ts": [
+          '// import "./retired.js";',
+          'const example = \'import "./example.js"\';',
+          'import "./instrumentation.js";',
+          'export { run } from "./runner.js";',
+        ].join("\n"),
+        "src/example.ts": "export const example = true;",
+        "src/instrumentation.ts": "export const ready = true;",
+        "src/runner.ts": "export function run() {}",
+        "src/runner.js": "export function run() { throw new Error('generated'); }",
+        "src/retired.ts": "export const retired = true;",
+      },
+    };
+    const g = buildGraph(nodeNextRepo);
+    expect(g.deps["src/app.ts"]).toContain("src/instrumentation.ts");
+    expect(g.deps["src/app.ts"]).toContain("src/runner.ts");
+    expect(g.deps["src/app.ts"]).not.toContain("src/runner.js");
+    expect(g.deps["src/app.ts"]).not.toContain("src/retired.ts");
+    expect(g.deps["src/app.ts"]).not.toContain("src/example.ts");
   });
 
   it("indexes .js and .jsx files alongside TypeScript", () => {

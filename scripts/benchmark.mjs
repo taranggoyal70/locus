@@ -44,6 +44,10 @@ function commonDirPrefix(files) {
     common = common.slice(0, index);
     if (!common.length) break;
   }
+  const sourceIndex = common.lastIndexOf("src");
+  if (sourceIndex >= 0) return common.slice(0, sourceIndex + 1).join("/");
+  const surfaceIndex = common.findIndex((part) => part === "app" || part === "pages");
+  if (surfaceIndex >= 0) return common.slice(0, surfaceIndex).join("/");
   return common.join("/");
 }
 
@@ -51,8 +55,21 @@ function snapshotRepo(cwd, ref, repoName) {
   const paths = git(cwd, ["ls-tree", "-r", "--name-only", ref]).split("\n").filter(isSourceFile);
   const files = {};
   for (const file of paths) files[file] = git(cwd, ["show", `${ref}:${file}`]);
-  const recent = git(cwd, ["log", "-n", "8", "--name-only", "--pretty=format:", ref])
-    .split("\n").map((file) => file.trim()).filter((file) => files[file] !== undefined);
+  const chunks = git(cwd, ["log", "-n", "5", "--name-only", "--pretty=format:%x01", ref])
+    .split("\x01").map((chunk) => chunk.trim()).filter(Boolean);
+  const recent = [];
+  const seen = new Set();
+  const bulkThreshold = Math.max(2, Math.floor(0.4 * paths.length));
+  for (const chunk of chunks) {
+    const changed = chunk.split("\n").map((file) => file.trim()).filter(Boolean);
+    if (changed.length === 0 || changed.length > bulkThreshold) continue;
+    for (const file of changed) {
+      if (files[file] !== undefined && !seen.has(file)) {
+        seen.add(file);
+        recent.push(file);
+      }
+    }
+  }
   return {
     name: repoName,
     slug: repoName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
@@ -81,6 +98,7 @@ for (const entry of cases) {
   const expected = changedExistingSourceFiles(cwd, commit, repo.files);
   if (!expected.length) throw new Error(`${entry.repo}@${entry.commit} has no modified source files in its parent snapshot`);
   const result = locate(entry.task, repo, buildGraph(repo));
+  const localized = !result.widened && result.slice.length < Object.keys(repo.files).length;
   const selected = new Set(result.slice.map((file) => file.path));
   const found = expected.filter((file) => selected.has(file));
   results.push({
@@ -91,7 +109,9 @@ for (const entry of cases) {
     featured: entry.featured === true,
     expected,
     found,
-    recall: found.length / expected.length,
+    safeRecall: found.length / expected.length,
+    focusedRecall: localized ? found.length / expected.length : null,
+    localized,
     widened: result.widened,
     files: `${result.slice.length}/${Object.keys(repo.files).length}`,
     contextReductionPct: result.savedPct,
@@ -100,37 +120,53 @@ for (const entry of cases) {
 }
 
 const reductions = results.map((result) => result.contextReductionPct).sort((a, b) => a - b);
+const focusedResults = results.filter((result) => result.localized);
+const focusedFilesFound = focusedResults.reduce((sum, result) => sum + result.found.length, 0);
+const focusedFilesExpected = focusedResults.reduce((sum, result) => sum + result.expected.length, 0);
+const allFilesExpected = results.reduce((sum, result) => sum + result.expected.length, 0);
 const summary = {
   generatedAt: new Date().toISOString(),
   cases: results.length,
   repositories: new Set(results.map((result) => result.repo)).size,
-  fixFileRecall: results.reduce((sum, result) => sum + result.found.length, 0) /
-    results.reduce((sum, result) => sum + result.expected.length, 0),
-  casesWithFullRecall: results.filter((result) => result.recall === 1).length,
+  localizedCases: focusedResults.length,
+  taskLocalizationRate: focusedResults.length / results.length,
+  focusedFixFileRecall: focusedFilesFound / focusedFilesExpected,
+  focusedFilesFound,
+  focusedFilesExpected,
+  effectiveFixFileCoverage: focusedFilesFound / allFilesExpected,
+  focusedCasesWithFullRecall: focusedResults.filter((result) => result.focusedRecall === 1).length,
   medianContextReductionPct: reductions[Math.floor(reductions.length / 2)],
   widenedCases: results.filter((result) => result.widened).length,
   gate: {
-    fullRecall: results.every((result) => result.recall === 1),
+    focusedRecallIsPerfect: focusedFilesFound === focusedFilesExpected,
+    taskLocalizationAtLeast80Pct: focusedResults.length / results.length >= 0.8,
+    effectiveCoverageAtLeast80Pct: focusedFilesFound / allFilesExpected >= 0.8,
     medianReductionAtLeast30Pct: reductions[Math.floor(reductions.length / 2)] >= 30,
   },
 };
 
-const output = { methodology: "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.", summary, results };
+const output = {
+  methodology: "Historical parent snapshots; expected files are modified TypeScript source files from each next commit. Safe Widen fallbacks are reported separately and never counted as successful localization.",
+  summary,
+  results,
+};
 const json = `${JSON.stringify(output, null, 2)}\n`;
 const table = results.map((result) =>
-  `| ${result.repo.split("/")[1]} | \`${result.commit}\` | ${result.found.length}/${result.expected.length} | ${result.contextReductionPct}% | ${result.widened ? "yes" : "no"} |`,
+  `| ${result.repo.split("/")[1]} | \`${result.commit}\` | ${result.localized ? `${result.found.length}/${result.expected.length}` : "not scored"} | ${result.contextReductionPct}% | ${result.widened ? "yes" : "no"} |`,
 ).join("\n");
 const markdown = `# Locus historical-task benchmark\n\n` +
   `Generated ${summary.generatedAt}. Locus was run on the parent snapshot of ${summary.cases} real fixes across ${summary.repositories} repositories. ` +
-  `The expected set is the TypeScript source files modified by the historical fix.\n\n` +
-  `| Repository | Fix | Fix files found | Context reduction | Widened |\n|---|---:|---:|---:|---:|\n${table}\n\n` +
-  `## Launch gate\n\n- Fix-file recall: **${Math.round(summary.fixFileRecall * 100)}%** (${summary.casesWithFullRecall}/${summary.cases} cases with full recall)\n` +
-  `- Median estimated context reduction: **${summary.medianContextReductionPct}%**\n- Conservative full-repo fallbacks: **${summary.widenedCases}**\n` +
-  `- Gate: **${summary.gate.fullRecall && summary.gate.medianReductionAtLeast30Pct ? "PASS" : "FAIL"}**\n\n` +
+  `The expected set is the TypeScript source files modified by the historical fix. A safe Widen retains every loaded file, but it is not counted as a successful localization.\n\n` +
+  `| Repository | Fix | Focused fix files found | Context reduction | Safe Widen |\n|---|---:|---:|---:|---:|\n${table}\n\n` +
+  `## Launch gate\n\n- Tasks localized without Widen: **${Math.round(summary.taskLocalizationRate * 100)}%** (${summary.localizedCases}/${summary.cases})\n` +
+  `- Fix-file recall on localized tasks: **${Math.round(summary.focusedFixFileRecall * 100)}%** (${summary.focusedFilesFound}/${summary.focusedFilesExpected} files; ${summary.focusedCasesWithFullRecall}/${summary.localizedCases} cases with full recall)\n` +
+  `- End-to-end focused fix-file coverage: **${Math.round(summary.effectiveFixFileCoverage * 100)}%** (Widen fallbacks receive no localization credit)\n` +
+  `- Median estimated context reduction: **${summary.medianContextReductionPct}%**\n- Conservative all-loaded-file fallbacks: **${summary.widenedCases}**\n` +
+  `- Gate: **${summary.gate.focusedRecallIsPerfect && summary.gate.taskLocalizationAtLeast80Pct && summary.gate.effectiveCoverageAtLeast80Pct && summary.gate.medianReductionAtLeast30Pct ? "PASS" : "FAIL"}**\n\n` +
   `## What this does—and does not—show\n\nThis replay measures whether Locus includes the files humans actually changed next, while estimating how much TypeScript context it excludes. ` +
   `It does **not** prove that an autonomous agent completed the task, that the excluded files were unnecessary, or that quality cannot regress. Token estimates use the existing character-based heuristic. ` +
   `Agent completion rate is a beta-study outcome, not a benchmark claim.\n\n` +
-  `Cases are declared in [\`benchmarks/cases.json\`](./cases.json); run \`npm run benchmark\` to reproduce them.\n`;
+  `Cases are declared in [\`benchmarks/cases.json\`](./cases.json); run \`pnpm benchmark\` to reproduce them.\n`;
 
 if (shouldWrite) {
   fs.writeFileSync(path.join(projectRoot, "benchmarks/results.json"), json);
@@ -138,4 +174,9 @@ if (shouldWrite) {
 }
 
 console.log(markdown);
-if (!summary.gate.fullRecall || !summary.gate.medianReductionAtLeast30Pct) process.exitCode = 1;
+if (
+  !summary.gate.focusedRecallIsPerfect
+  || !summary.gate.taskLocalizationAtLeast80Pct
+  || !summary.gate.effectiveCoverageAtLeast80Pct
+  || !summary.gate.medianReductionAtLeast30Pct
+) process.exitCode = 1;

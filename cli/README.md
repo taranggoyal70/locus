@@ -24,7 +24,7 @@ npx -y locus-context locate "login error" --evidence "TypeError: email is undefi
 }
 ```
 
-The server exposes `locate(task, path?, evidence?, pack?)`. Current support
+The server exposes `locate(task, path?, evidence?, pack?, budget?)`. Current support
 includes `.ts`, `.tsx`, `.js`, and `.jsx` files. Historical replay is evidence
 about fix-file coverage, not a guarantee of autonomous agent completion or
 unchanged quality.

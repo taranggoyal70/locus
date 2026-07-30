@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type BillingStatus = {
@@ -36,20 +37,6 @@ export function BillingPanel() {
       });
     return () => controller.abort();
   }, []);
-
-  async function checkout() {
-    setRedirecting(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/billing/checkout", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error); setRedirecting(false); return; }
-      if (data.url) window.location.href = data.url;
-    } catch {
-      setError("Failed to start checkout.");
-      setRedirecting(false);
-    }
-  }
 
   async function openPortal() {
     setRedirecting(true);
@@ -90,7 +77,7 @@ export function BillingPanel() {
           <p className="mt-0.5 text-xs text-muted">
             {isPro
               ? `Active since ${new Date(billing!.subscribedAt!).toLocaleDateString()}`
-              : "Upgrade for private repos, team workspaces, and higher limits"}
+              : "Pro is waitlist-only while private repos and team entitlements are completed."}
           </p>
         </div>
         {isPro ? (
@@ -102,13 +89,12 @@ export function BillingPanel() {
             {redirecting ? "Opening..." : "Manage subscription"}
           </button>
         ) : (
-          <button
-            onClick={checkout}
-            disabled={redirecting}
-            className="ml-3 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink transition hover:bg-[#b5f34a] disabled:opacity-40"
+          <Link
+            href="/pricing"
+            className="ml-3 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
           >
-            {redirecting ? "Redirecting..." : "Upgrade to Pro"}
-          </button>
+            View Pro waitlist
+          </Link>
         )}
       </div>
     </div>

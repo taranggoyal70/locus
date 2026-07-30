@@ -63,11 +63,11 @@ export async function POST(request: Request) {
     .single();
   if (existing) return NextResponse.json({ error: "Already a member." }, { status: 409 });
 
-  const { data: memberCount } = await db
+  const { count: memberCount } = await db
     .from("team_members")
     .select("id", { count: "exact", head: true })
     .eq("team_id", teamId);
-  if ((memberCount as unknown as number) >= 10) {
+  if ((memberCount ?? 0) >= 10) {
     return NextResponse.json({ error: "Team is at capacity (10 members on free plan)." }, { status: 403 });
   }
 
@@ -115,6 +115,9 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Cannot remove the team owner." }, { status: 403 });
   }
 
-  await db.from("team_members").delete().eq("id", memberId);
+  const { error: deleteError } = await db.from("team_members").delete().eq("id", memberId);
+  if (deleteError) {
+    return NextResponse.json({ error: "Failed to remove member." }, { status: 500 });
+  }
   return NextResponse.json({ removed: true });
 }

@@ -1,15 +1,22 @@
 {
-  "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.",
+  "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit. Safe Widen fallbacks are reported separately and never counted as successful localization.",
   "summary": {
-    "generatedAt": "2026-07-27T09:23:23.597Z",
+    "generatedAt": "2026-07-27T10:16:29.744Z",
     "cases": 15,
     "repositories": 3,
-    "fixFileRecall": 1,
-    "casesWithFullRecall": 15,
-    "medianContextReductionPct": 53,
+    "localizedCases": 13,
+    "taskLocalizationRate": 0.8666666666666667,
+    "focusedFixFileRecall": 1,
+    "focusedFilesFound": 19,
+    "focusedFilesExpected": 19,
+    "effectiveFixFileCoverage": 0.8636363636363636,
+    "focusedCasesWithFullRecall": 13,
+    "medianContextReductionPct": 65,
     "widenedCases": 2,
     "gate": {
-      "fullRecall": true,
+      "focusedRecallIsPerfect": true,
+      "taskLocalizationAtLeast80Pct": true,
+      "effectiveCoverageAtLeast80Pct": true,
       "medianReductionAtLeast30Pct": true
     }
   },
@@ -26,7 +33,9 @@
       "found": [
         "src/app/api/github/route.ts"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
       "files": "12/15",
       "contextReductionPct": 3,
@@ -49,7 +58,9 @@
       "found": [
         "src/hooks/useLocus.ts"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
       "files": "12/15",
       "contextReductionPct": 3,
@@ -74,7 +85,9 @@
         "src/lib/localizer.test.ts",
         "src/lib/localizer.ts"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": null,
+      "localized": false,
       "widened": true,
       "files": "15/15",
       "contextReductionPct": 0,
@@ -92,14 +105,15 @@
       "found": [
         "src/components/LocusApp.tsx"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
-      "files": "20/61",
-      "contextReductionPct": 48,
+      "files": "19/61",
+      "contextReductionPct": 52,
       "anchors": [
         "app/api/v1/locate/route.ts",
-        "components/LocusApp.tsx",
-        "app/docs/page.tsx"
+        "components/LocusApp.tsx"
       ]
     },
     {
@@ -114,14 +128,17 @@
       "found": [
         "src/components/SettingsShell.tsx"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
-      "files": "19/60",
-      "contextReductionPct": 53,
+      "files": "21/60",
+      "contextReductionPct": 52,
       "anchors": [
         "components/SettingsShell.tsx",
         "app/settings/page.tsx",
         "app/projects/page.tsx",
+        "app/demo/page.test.ts",
         "components/LocusApp.tsx"
       ]
     },
@@ -137,17 +154,19 @@
       "found": [
         "src/components/ApiKeysPanel.tsx"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
-      "files": "24/58",
-      "contextReductionPct": 36,
+      "files": "16/58",
+      "contextReductionPct": 65,
       "anchors": [
         "components/ApiKeysPanel.tsx",
+        "app/api/keys/route.ts",
         "app/api/v1/locate/route.ts",
         "app/api/github/route.ts",
         "lib/api-auth.ts",
-        "lib/api-auth.test.ts",
-        "components/LocusApp.tsx"
+        "app/api/attachments/route.test.ts"
       ]
     },
     {
@@ -162,7 +181,9 @@
       "found": [
         "src/lib/auth.ts"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": null,
+      "localized": false,
       "widened": true,
       "files": "59/59",
       "contextReductionPct": 0,
@@ -180,7 +201,9 @@
       "found": [
         "src/proxy.ts"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
       "files": "1/59",
       "contextReductionPct": 99,
@@ -200,17 +223,15 @@
       "found": [
         "src/lib/execution.ts"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
-      "files": "15/44",
-      "contextReductionPct": 53,
+      "files": "9/44",
+      "contextReductionPct": 75,
       "anchors": [
         "src/app/api/receipts/[receiptId]/route.ts",
-        "src/lib/execution.ts",
-        "src/app/dashboard/receipts/page.tsx",
-        "scripts/smoke.ts",
-        "src/app/api/sandboxes/[sandboxId]/verify/route.ts",
-        "src/app/dashboard/sandboxes/[sandboxId]/page.tsx"
+        "src/lib/execution.ts"
       ]
     },
     {
@@ -225,7 +246,9 @@
       "found": [
         "app/(auth)/signup/page.tsx"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
       "files": "8/57",
       "contextReductionPct": 75,
@@ -250,15 +273,15 @@
         "app/layout.tsx",
         "components/ThemeToggle.tsx"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
-      "files": "15/57",
-      "contextReductionPct": 56,
+      "files": "8/57",
+      "contextReductionPct": 64,
       "anchors": [
         "components/ThemeProvider.tsx",
-        "components/ThemeToggle.tsx",
-        "app/page.tsx",
-        "components/landing/TrustSection.tsx"
+        "components/ThemeToggle.tsx"
       ]
     },
     {
@@ -275,14 +298,18 @@
         "app/api/webhook/post-call/route.ts",
         "scripts/setup-elevenlabs-agents.ts"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
-      "files": "8/42",
-      "contextReductionPct": 85,
+      "files": "10/42",
+      "contextReductionPct": 83,
       "anchors": [
         "app/api/webhook/post-call/route.ts",
         "app/api/call/start/route.ts",
+        "app/api/webhook/elevenlabs/route.ts",
         "hooks/useCall.ts",
+        "app/api/call/link/route.ts",
         "scripts/setup-elevenlabs-agents.ts"
       ]
     },
@@ -300,15 +327,16 @@
         "app/(auth)/login/page.tsx",
         "app/(auth)/signup/page.tsx"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
-      "files": "10/57",
-      "contextReductionPct": 60,
+      "files": "8/57",
+      "contextReductionPct": 71,
       "anchors": [
         "app/(auth)/login/page.tsx",
         "app/(auth)/signup/page.tsx",
         "app/dashboard/settings/page.tsx",
-        "app/dashboard/page.tsx",
         "components/landing/FAQ.tsx"
       ]
     },
@@ -330,7 +358,9 @@
         "components/landing/FinalCTA.tsx",
         "components/landing/Footer.tsx"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
       "files": "7/57",
       "contextReductionPct": 90,
@@ -355,7 +385,9 @@
       "found": [
         "components/dashboard/MoodCheckIn.tsx"
       ],
-      "recall": 1,
+      "safeRecall": 1,
+      "focusedRecall": 1,
+      "localized": true,
       "widened": false,
       "files": "7/48",
       "contextReductionPct": 78,

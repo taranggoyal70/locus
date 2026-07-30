@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type ConnectionStatus = {
   connected: boolean;
@@ -31,6 +32,7 @@ export function GitHubConnectionPanel() {
         github_not_configured: "GitHub OAuth is not configured on this server.",
         github_token_failed: "Failed to exchange code for a token.",
         github_no_token: "GitHub did not return an access token.",
+        github_unavailable: "Private repository connections are not open yet.",
       };
       queueMicrotask(() =>
         setError(messages[ghError] ?? "GitHub connection failed."),
@@ -82,15 +84,14 @@ export function GitHubConnectionPanel() {
       )}
 
       {status?.connected ? (
-        <div className="flex items-center justify-between rounded-xl border border-line-strong px-4 py-3">
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-recent/30 bg-recent/5 px-4 py-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-accent" />
-              <p className="text-sm font-medium text-paper">Connected as {status.username}</p>
+              <span className="inline-block h-2 w-2 rounded-full bg-recent" />
+              <p className="text-sm font-medium text-paper">Legacy connection: {status.username}</p>
             </div>
-            <p className="mt-0.5 text-xs text-muted">
-              Connected {status.connectedAt ? new Date(status.connectedAt).toLocaleDateString() : "recently"}
-              {status.scopes ? ` · Scopes: ${status.scopes}` : ""}
+            <p className="mt-1 text-xs leading-5 text-muted-light">
+              Private imports are paused while Locus moves to least-privilege access. This connection is not used for analysis; disconnect it to remove the stored token.
             </p>
           </div>
           <button
@@ -104,19 +105,14 @@ export function GitHubConnectionPanel() {
       ) : (
         <div className="rounded-xl border border-line-strong p-4">
           <p className="text-sm text-muted-light">
-            Connect your GitHub account to analyze private repositories.
-            Locus requests <code className="rounded bg-ink px-1.5 py-0.5 font-mono text-xs">repo</code> scope
-            to read your repository contents.
+            Private repository access is not available in the public beta. Locus is moving this flow to a least-privilege GitHub App before opening it.
           </p>
-          <a
-            href="/api/github/connect"
-            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-paper px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-paper/90"
+          <Link
+            href="/pricing"
+            className="mt-3 inline-flex rounded-xl border border-accent/30 bg-accent/[0.06] px-4 py-2.5 text-sm font-semibold text-accent transition hover:bg-accent/[0.1]"
           >
-            <svg viewBox="0 0 16 16" className="h-4 w-4" fill="currentColor">
-              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-            </svg>
-            Connect GitHub
-          </a>
+            Join the Pro waitlist
+          </Link>
         </div>
       )}
     </div>
