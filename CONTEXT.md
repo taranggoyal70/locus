@@ -74,6 +74,33 @@ Evidence strengthens Anchor matching but never replaces or mutates the user's
 task. It is held in React memory for the current page only and is not persisted.
 _Avoid_: knowledge base, document store, uploaded asset.
 
+**Agent Task**:
+A user-owned engineering outcome: Repo reference, base ref, task description,
+acceptance criteria, and one or more execution **Runs**. It describes what should
+change; it does not contain mutable execution state.
+_Avoid_: saved analysis, prompt, chat.
+
+**Run**:
+One durable attempt to complete an Agent Task. A Run owns its status, model,
+Sandbox identity, Slice ledger, Steps, Artifacts, Approvals, and token usage.
+_Avoid_: session, conversation, request.
+
+**Step**:
+An ordered, auditable unit inside a Run: Localize, plan, tool, Widen, verify,
+approval, or delivery. Steps are append-only evidence of what the agent did.
+_Avoid_: message, log line.
+
+**Artifact**:
+A reviewable Run output such as a plan, diff, test result, build result, pull
+request, preview, or final summary.
+_Avoid_: attachment, output blob.
+
+**Token ledger**:
+The complete input and output token usage for a Run, compared with a declared
+whole-context baseline. Cached input is reported but never double-counted.
+Savings are claimed only for a verified task outcome.
+_Avoid_: prompt tokens (too narrow), estimated savings without an outcome.
+
 ## Where it lives (read these, don't re-crawl)
 
 - `src/lib/types.ts` — every shape above (**Repo**, `Graph`, **LocateResult**).
@@ -86,6 +113,10 @@ _Avoid_: knowledge base, document store, uploaded asset.
 - `src/app/api/attachments/route.ts` — authenticated in-memory document extraction.
 - `src/components/TaskEvidence.tsx` — attachment UI and browser-only screenshot OCR.
 - `src/components/DependencyGraph.tsx` — three-stage context trace; recolours by **Slice**.
+- `src/lib/agent/run-state.ts` — valid **Run** lifecycle transitions and the
+  end-to-end token ledger.
+- `supabase/migrations/005_agent_runs.sql` — durable Agent Tasks, Runs, Steps,
+  Artifacts, and Approvals.
 
 ## Invariants
 
@@ -93,6 +124,10 @@ _Avoid_: knowledge base, document store, uploaded asset.
 - **Deterministic graph.** The dependency **Graph** comes from parsing imports, never from an LLM.
 - **`buildGraph` is pure and reused.** One Graph per Repo, many Localize calls across task changes.
 - **Claims follow evidence.** `benchmarks/` measures historical fix-file recall and estimated context reduction; it does not claim autonomous task completion.
+- **No skipped gates.** A Run cannot complete without verification and explicit
+  approval; terminal Runs cannot be rewritten.
+- **Measure the whole loop.** The USP is total tokens per verified task—not the
+  size of the initial prompt alone.
 
 ## Example dialogue
 
