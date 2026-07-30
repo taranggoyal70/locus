@@ -8,7 +8,7 @@ export function isProtectedPagePathname(pathname: string): boolean {
 
 export function isProtectedPathname(pathname: string): boolean {
   if (pathname === "/api/billing/webhook") return false;
-  return isProtectedPagePathname(pathname) || ["/api/github", "/api/attachments", "/api/keys", "/api/projects", "/api/usage", "/api/track", "/api/teams", "/api/billing", "/repos"].some(
+  return isProtectedPagePathname(pathname) || ["/api/github", "/api/agent", "/api/attachments", "/api/keys", "/api/projects", "/api/usage", "/api/track", "/api/teams", "/api/billing", "/repos"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
@@ -30,7 +30,7 @@ export default clerkMiddleware(
 export const config = {
   matcher: [
     "/__clerk(.*)",
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|\\.well-known/workflow/|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
   ],
 };

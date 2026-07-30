@@ -96,6 +96,7 @@ type AgentRunRow = {
   user_id: string;
   status: string;
   model: string;
+  workflow_run_id: string | null;
   sandbox_id: string | null;
   branch_name: string | null;
   baseline_tokens: number;
@@ -219,6 +220,7 @@ export type Database = {
           | "created_at"
           | "updated_at"
           | "status"
+          | "workflow_run_id"
           | "sandbox_id"
           | "branch_name"
           | "baseline_tokens"
