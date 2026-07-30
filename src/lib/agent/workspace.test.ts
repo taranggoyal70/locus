@@ -18,6 +18,20 @@ class FakeWorkspace implements AgentWorkspace {
     if (command.command.startsWith("sed ")) {
       return { exitCode: 0, stdout: "export const value = 1;\n", stderr: "" };
     }
+    if (command.command.startsWith("git diff --name-status")) {
+      return {
+        exitCode: 0,
+        stdout: "M\tsrc/included.ts\nA\tsrc/new.test.ts\n",
+        stderr: "",
+      };
+    }
+    if (command.env?.LOCUS_PATH) {
+      return {
+        exitCode: 0,
+        stdout: Buffer.from(`contents:${command.env.LOCUS_PATH}`).toString("base64"),
+        stderr: "",
+      };
+    }
     return { exitCode: 0, stdout: "ok\n", stderr: "" };
   }
 
@@ -95,5 +109,15 @@ describe("agent workspace", () => {
     await expect(controller.writeFile("src/excluded.ts", "replacement")).rejects.toThrow(
       "src/excluded.ts already exists outside the Slice",
     );
+  });
+
+  it("captures a bounded delivery change set without reading excluded files", async () => {
+    const { controller } = setup();
+    await controller.writeFile("src/new.test.ts", "test content");
+
+    await expect(controller.changeSet()).resolves.toEqual([
+      { path: "src/included.ts", content: "contents:src/included.ts" },
+      { path: "src/new.test.ts", content: "contents:src/new.test.ts" },
+    ]);
   });
 });

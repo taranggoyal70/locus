@@ -124,6 +124,7 @@ export function AgentRunPanel({
   const [runId, setRunId] = useState<string | null>(null);
   const [snapshot, setSnapshot] = useState<AgentRunResponse | null>(null);
   const [launching, setLaunching] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const status = snapshot?.run.status ?? null;
   const terminal = status === "completed" || status === "failed" || status === "cancelled";
@@ -195,9 +196,29 @@ export function AgentRunPanel({
     }
   }
 
+  async function approveDelivery() {
+    if (!runId || snapshot?.run.status !== "awaiting_approval" || approving) return;
+    setApproving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/agent/runs/${runId}/approve`, { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error ?? "Could not deliver the change.");
+      const refreshed = await fetch(`/api/agent/runs/${runId}`, { cache: "no-store" });
+      const refreshedData = await refreshed.json();
+      if (!refreshed.ok) throw new Error(refreshedData?.error ?? "Could not refresh the run.");
+      setSnapshot(refreshedData);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not deliver the change.");
+    } finally {
+      setApproving(false);
+    }
+  }
+
   const canLaunch = Boolean(repository) && task.trim().length >= 10;
   const diff = snapshot?.artifacts.find((artifact) => artifact.kind === "diff");
   const summary = snapshot?.artifacts.find((artifact) => artifact.kind === "summary");
+  const pullRequest = snapshot?.artifacts.find((artifact) => artifact.kind === "pull_request");
 
   return (
     <section className="overflow-hidden rounded-[22px] border border-line-strong bg-surface">
@@ -266,6 +287,28 @@ export function AgentRunPanel({
                   {diff.content}
                 </pre>
               </details>
+            )}
+            {snapshot.run.status === "awaiting_approval" && (
+              <button
+                type="button"
+                onClick={approveDelivery}
+                disabled={approving}
+                className="mt-4 flex w-full items-center justify-between rounded-xl bg-paper px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent disabled:opacity-40"
+              >
+                <span>{approving ? "Opening pull request…" : "Approve & open GitHub PR"}</span>
+                <span aria-hidden>↗</span>
+              </button>
+            )}
+            {pullRequest?.url && (
+              <a
+                href={pullRequest.url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink"
+              >
+                <span>{pullRequest.label}</span>
+                <span aria-hidden>↗</span>
+              </a>
             )}
             {snapshot.run.error && (
               <p role="alert" className="mt-4 text-xs leading-5 text-recent">{snapshot.run.error}</p>

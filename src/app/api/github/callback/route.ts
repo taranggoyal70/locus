@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { verifyGitHubOAuthState } from "@/lib/github-oauth-state";
 import { serviceClient } from "@/lib/supabase";
 
 export async function GET(request: Request) {
@@ -15,22 +16,13 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/settings?error=github_missing_code", request.url));
   }
 
-  try {
-    const parsed = JSON.parse(Buffer.from(state, "base64url").toString());
-    if (parsed.userId !== userId) {
-      return NextResponse.redirect(new URL("/settings?error=github_state_mismatch", request.url));
-    }
-    if (Date.now() - parsed.ts > 600_000) {
-      return NextResponse.redirect(new URL("/settings?error=github_expired", request.url));
-    }
-  } catch {
-    return NextResponse.redirect(new URL("/settings?error=github_invalid_state", request.url));
-  }
-
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(new URL("/settings?error=github_not_configured", request.url));
+  }
+  if (!verifyGitHubOAuthState(state, userId, clientSecret)) {
+    return NextResponse.redirect(new URL("/settings?error=github_invalid_state", request.url));
   }
 
   const tokenRes = await fetch("https://github.com/login/oauth/access_token", {

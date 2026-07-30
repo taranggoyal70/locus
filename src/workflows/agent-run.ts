@@ -206,6 +206,8 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       includedContextTokens: localized.includedTokens,
     });
     const diff = await controller.diff();
+    const changeSet = await controller.changeSet();
+    if (changeSet.length === 0) throw new Error("Agent completed without repository changes");
 
     await updateRun(localized.runId, {
       status: "verifying",
@@ -221,7 +223,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       status: "completed",
       title: "Repository changes prepared",
       detail: {
-        changedFiles: result.output.changedFiles,
+        changedFiles: changeSet.map((change) => change.path),
         createdFiles: result.ledger.created,
         widenedFiles: result.ledger.widened,
       },
@@ -246,6 +248,13 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       {
         run_id: localized.runId,
         user_id: localized.userId,
+        kind: "change_set",
+        label: "Approval-gated delivery payload",
+        content: JSON.stringify({ version: 1, files: changeSet }),
+      },
+      {
+        run_id: localized.runId,
+        user_id: localized.userId,
         kind: "diff",
         label: "Proposed repository diff",
         content: diff,
@@ -267,7 +276,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       payload: {
         repository: localized.cloneUrl,
         revision: localized.revision,
-        changedFiles: result.output.changedFiles,
+        changedFiles: changeSet.map((change) => change.path),
       },
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });

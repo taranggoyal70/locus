@@ -64,6 +64,18 @@ const REPLACE_SCRIPT = [
   'process.stdout.write(`updated ${target}\\n`);',
 ].join("");
 
+const READ_BASE64_SCRIPT = [
+  'const fs=require("node:fs");',
+  "const target=process.env.LOCUS_PATH;",
+  'if(!target)throw new Error("missing read input");',
+  'process.stdout.write(fs.readFileSync(target).toString("base64"));',
+].join("");
+
+export type AgentChange = {
+  path: string;
+  content: string | null;
+};
+
 export class WorkspaceController {
   constructor(
     private readonly workspace: AgentWorkspace,
@@ -166,5 +178,50 @@ export class WorkspaceController {
       timeoutMs: 30_000,
     });
     return evidence(result);
+  }
+
+  async changeSet(abortSignal?: AbortSignal): Promise<AgentChange[]> {
+    const names = await this.workspace.run({
+      command: "git diff --name-status --diff-filter=AMD -- .",
+      abortSignal,
+      timeoutMs: 30_000,
+    });
+    if (names.exitCode !== 0) throw new Error("Could not enumerate changed files");
+
+    const changes = names.stdout
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        const [status, ...pathParts] = line.split("\t");
+        return { status, path: validateRepoPath(pathParts.join("\t")) };
+      });
+    if (changes.length > 30) throw new Error("Agent change set exceeds the 30 file limit");
+
+    let totalCharacters = 0;
+    const output: AgentChange[] = [];
+    for (const change of changes) {
+      if (!this.scope.canWrite(change.path)) {
+        throw new Error(`${change.path} changed outside the active Slice`);
+      }
+      if (change.status === "D") {
+        output.push({ path: change.path, content: null });
+        continue;
+      }
+
+      const result = await this.workspace.run({
+        command: `node -e ${shellQuote(READ_BASE64_SCRIPT)}`,
+        env: { LOCUS_PATH: change.path },
+        abortSignal,
+        timeoutMs: 30_000,
+      });
+      if (result.exitCode !== 0) throw new Error(`Could not capture ${change.path}`);
+      const content = Buffer.from(result.stdout.trim(), "base64").toString("utf8");
+      totalCharacters += content.length;
+      if (content.length > 200_000 || totalCharacters > 1_500_000) {
+        throw new Error("Agent change set exceeds the delivery size limit");
+      }
+      output.push({ path: change.path, content });
+    }
+    return output;
   }
 }
