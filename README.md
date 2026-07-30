@@ -121,13 +121,18 @@ Signed-out visitors go to login; signed-in users go to `/workspace`.
 ### Persistence
 
 Supabase stores saved task references, API keys, and usage analytics. Repository
-source is not stored. Apply every migration in numeric order:
+source is not stored. Use the Supabase CLI so every applied migration is
+recorded in migration history:
 
 ```bash
-for migration in supabase/migrations/*.sql; do
-  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
-done
+supabase db push --db-url "$DATABASE_URL" --dry-run
+supabase db push --db-url "$DATABASE_URL"
 ```
+
+The dry run must list only the migrations intended for that release. Never
+replay the full directory manually against a populated database. Before
+promoting a public beta, follow the
+[production public-write rollout](./docs/operations/supabase-public-write-rollout.md).
 
 ### Export formats
 
