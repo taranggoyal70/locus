@@ -7,20 +7,20 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Locus — task-sized context for coding agents",
+  title: "Locus — the token-efficient coding agent",
   description:
-    "Map a coding task to the exact files your AI agent needs. Deterministic dependency tracing with conservative whole-repo fallback.",
+    "Give Locus an engineering task. It finds the smallest safe context, implements the change in an isolated sandbox, and verifies the result.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://locus-five-iota.vercel.app"),
   openGraph: {
-    title: "Locus — task-sized context for coding agents",
-    description: "Give your agent a task-sized view of the codebase instead of dumping everything.",
+    title: "Locus — the token-efficient coding agent",
+    description: "Ship the task, not the repository. Focus context, implement, and verify.",
     siteName: "Locus",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Locus — task-sized context for coding agents",
-    description: "Give your agent a task-sized view of the codebase instead of dumping everything.",
+    title: "Locus — the token-efficient coding agent",
+    description: "Ship the task, not the repository. Focus context, implement, and verify.",
   },
   keywords: [
     "AI coding agent", "context window", "code context", "MCP server",

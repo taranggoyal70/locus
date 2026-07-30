@@ -1,21 +1,18 @@
 "use client";
 
-import { Show, UserButton } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { REPO_URL } from "@/lib/config";
+import { AgentRunPanel } from "@/components/AgentRunPanel";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
-import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { TaskEvidence } from "@/components/TaskEvidence";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
+import { REPO_URL } from "@/lib/config";
 import { buildShareUrl } from "@/lib/share";
-import benchmark from "../../benchmarks/results.json";
-
-const featuredCase = benchmark.results.find((result) => result.featured);
 
 type LocusAppProps = {
   accountName?: string;
@@ -24,55 +21,50 @@ type LocusAppProps = {
 
 export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   const {
-    repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, evidence,
-    examples: bundledExamples, bundled: BUNDLED,
-    setTask, setSelected, setGhUrl, pickBundled, loadGithub, loadGithubAt, addEvidence, removeEvidence,
-    recentRepos, clearRecents, loadRecent,
+    repo,
+    graph,
+    result,
+    task,
+    selected,
+    ghUrl,
+    loadedRepositorySpecifier,
+    loading,
+    error,
+    note,
+    evidence,
+    examples,
+    bundled,
+    setTask,
+    setSelected,
+    setGhUrl,
+    pickBundled,
+    loadGithub,
+    addEvidence,
+    removeEvidence,
+    recentRepos,
+    clearRecents,
+    loadRecent,
   } = useLocus();
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
-  const [saveStatus, setSaveStatus] = useState<string>("idle");
-  const taskInputRef = useRef<HTMLInputElement>(null);
+  const [saveStatus, setSaveStatus] = useState("idle");
+  const taskInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
+    function handleKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
         taskInputRef.current?.focus();
       }
-      if (e.key === "Escape" && selected) {
-        setSelected(null);
-      }
+      if (event.key === "Escape" && selected) setSelected(null);
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selected, setSelected]);
-  const presentation = isWorkspace ? {
-    homeHref: "/workspace",
-    showLandingNavigation: false,
-    showMarketing: false,
-    badge: "Workspace",
-    eyebrow: `Signed in${accountName ? ` as ${accountName}` : ""}`,
-    title: "Build the context your agent should read first.",
-    description: "Load a public repository, describe the engineering task, and copy the focused context pack into your coding workflow.",
-    heroSpacing: "pb-8 pt-10 sm:pt-12",
-    titleSpacing: "mt-3 text-4xl sm:text-5xl",
-    descriptionSpacing: "mt-4",
-    asideLabel: "Account ready",
-    asideCopy: "Public repositories only. Analysis runs in memory and is not stored.",
-  } : {
-    homeHref: "/",
-    showLandingNavigation: true,
-    showMarketing: true,
-    badge: "Open-source beta",
-    eyebrow: "Context compiler for coding agents",
-    title: "Give your agent a task-sized view of the codebase.",
-    description: "Locus traces a task to matching files, imported dependencies, and nearby integration points—before your agent spends tokens reading the repository.",
-    heroSpacing: "pb-10 pt-14 sm:pt-20",
-    titleSpacing: "mt-5 text-5xl sm:text-6xl lg:text-7xl",
-    descriptionSpacing: "mt-6",
-    asideLabel: "Operating rule",
-    asideCopy: "Focus when evidence is strong. Widen when it is not.",
-  };
+
+  function refineTask(term: string) {
+    setTask((current) => `${current.trim()} ${term}`.trim());
+    taskInputRef.current?.focus();
+  }
 
   async function copyShareView() {
     if (!loadedRepositorySpecifier || !task.trim()) return;
@@ -85,24 +77,14 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
     } catch {
       setShareStatus("failed");
     }
-    window.setTimeout(() => setShareStatus("idle"), 2200);
-  }
-
-  function replayFeaturedCase() {
-    if (!featuredCase) return;
-    void loadGithubAt(`${featuredCase.repo}@${featuredCase.snapshot}`, featuredCase.task);
-  }
-
-  function refineTask(term: string) {
-    setTask((current) => `${current.trim()} ${term}`.trim());
-    taskInputRef.current?.focus();
+    window.setTimeout(() => setShareStatus("idle"), 2_200);
   }
 
   const saveAnalysis = useCallback(async () => {
     if (!repo || !result || !task.trim() || saveStatus === "saving") return;
     setSaveStatus("saving");
     try {
-      const res = await fetch("/api/projects", {
+      const response = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -114,372 +96,329 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           saved_pct: result.savedPct,
         }),
       });
-      if (res.ok) {
+      if (response.ok) {
         setSaveStatus("saved");
       } else {
-        const err = await res.json().catch(() => null);
-        setSaveStatus(err?.error ?? "failed");
+        const payload = await response.json().catch(() => null);
+        setSaveStatus(payload?.error ?? "failed");
       }
     } catch {
       setSaveStatus("failed");
     }
-    setTimeout(() => setSaveStatus("idle"), 3500);
+    window.setTimeout(() => setSaveStatus("idle"), 3_500);
   }, [repo, result, task, graph, loadedRepositorySpecifier, saveStatus]);
 
+  const includedCount = result?.slice.length ?? 0;
+  const excludedCount = result?.excluded.length ?? 0;
+  const reduction = result?.widened ? 0 : result?.savedPct ?? 0;
+
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <Link href={presentation.homeHref} className="flex items-center gap-3 text-paper">
-            <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
-            <span className="font-semibold tracking-[-0.02em]">Locus</span>
-            <span className="hidden rounded-full border border-line-strong px-2 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-muted-light sm:inline-flex">
-              {presentation.badge}
+    <div className="min-h-screen bg-ink">
+      <header className="sticky top-0 z-40 border-b border-line-strong bg-ink/[0.94] backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-[1480px] items-center justify-between px-4 sm:px-7">
+          <Link href="/workspace" className="flex items-center gap-3 text-paper">
+            <span className="grid h-9 w-9 place-items-center rounded-xl border border-line-strong bg-surface">
+              <Image src="/locus-mark.svg" width={22} height={22} alt="" priority />
+            </span>
+            <span>
+              <span className="block text-sm font-semibold tracking-[-0.02em]">Locus</span>
+              <span className="block font-mono text-[8px] uppercase tracking-[0.18em] text-muted">
+                token-efficient agent
+              </span>
             </span>
           </Link>
-          <nav className="flex items-center gap-2 text-sm">
-            {presentation.showLandingNavigation && <a href="#method" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Method</a>}
-            <Link href="/docs" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Docs</Link>
-            <Link href="/pricing" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:text-paper sm:block">Pricing</Link>
-            <a
-              href={REPO_URL}
-              className="hidden rounded-lg border border-line-strong px-3 py-2 text-paper transition hover:border-accent/50 hover:text-accent sm:block"
-            >
-              View source
+
+          <nav className="flex items-center gap-1 text-xs">
+            <Link href="/workspace" className="hidden rounded-lg bg-surface px-3 py-2 font-medium text-paper sm:block">
+              Workspace
+            </Link>
+            <Link href="/projects" className="hidden rounded-lg px-3 py-2 text-muted-light hover:text-paper sm:block">
+              Runs
+            </Link>
+            <Link href="/settings" className="hidden rounded-lg px-3 py-2 text-muted-light hover:text-paper sm:block">
+              Settings
+            </Link>
+            <a href={REPO_URL} className="hidden rounded-lg px-3 py-2 text-muted-light hover:text-paper md:block">
+              GitHub
             </a>
-            <Show when="signed-out">
-              <Link href="/sign-in" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
-                Log in
-              </Link>
-              <Link href="/sign-up" className="rounded-lg bg-accent px-3.5 py-2 font-semibold text-ink transition hover:bg-[#b5f34a]">
-                Create account
-              </Link>
-            </Show>
-            <Show when="signed-in">
-              {presentation.showLandingNavigation ? (
-                <Link href="/workspace" className="rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-2 font-medium text-accent transition hover:bg-accent/[0.1]">
-                  Open workspace
-                </Link>
-              ) : (
-                <>
-                  <Link href="/projects" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
-                    Projects
-                  </Link>
-                  <Link href="/settings" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
-                    Settings
-                  </Link>
-                </>
-              )}
-              <UserButton
-                appearance={{
-                  elements: {
-                    avatarBox: "h-9 w-9 border border-line-strong",
-                    userButtonPopoverCard: "border border-line-strong bg-surface text-paper shadow-2xl",
-                  },
-                }}
-              />
-            </Show>
+            <span className="mx-2 hidden h-5 w-px bg-line-strong sm:block" />
+            {accountName && (
+              <span className="mr-2 hidden max-w-36 truncate text-muted sm:block">{accountName}</span>
+            )}
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "h-8 w-8 border border-line-strong",
+                  userButtonPopoverCard: "border border-line-strong bg-surface text-paper shadow-2xl",
+                },
+              }}
+            />
           </nav>
         </div>
       </header>
 
-      <main id="top">
-        {isWorkspace && !loadedRepositorySpecifier && <OnboardingBanner />}
-        <section className={`mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end ${presentation.heroSpacing}`}>
+      <main className="mx-auto max-w-[1480px] px-4 pb-16 sm:px-7">
+        <section className="grid gap-8 border-b border-line-strong py-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end lg:py-14">
           <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-              {presentation.eyebrow}
-            </p>
-            <h1 className={`max-w-4xl font-semibold leading-[0.98] tracking-[-0.055em] text-paper ${presentation.titleSpacing}`}>
-              {presentation.title}
+            <div className="mb-5 flex items-center gap-3">
+              <span className="rounded-full bg-accent px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.15em] text-ink">
+                {isWorkspace ? "Agent workspace" : "Public beta"}
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
+                Slice → implement → verify
+              </span>
+            </div>
+            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.92] tracking-[-0.065em] text-paper sm:text-6xl lg:text-[76px]">
+              Ship the task.
+              <span className="block text-accent">Not the repository.</span>
             </h1>
-            <p className={`${presentation.descriptionSpacing} max-w-2xl text-base leading-7 text-muted-light sm:text-lg`}>
-              {presentation.description}
+            <p className="mt-6 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
+              Locus finds the smallest safe context, works inside it as an isolated coding agent,
+              and shows exactly what stayed out.
             </p>
           </div>
 
-          <aside className="rounded-[22px] border border-line-strong bg-surface p-5">
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{presentation.asideLabel}</p>
-            <p className="mt-4 text-xl font-semibold leading-7 tracking-[-0.025em] text-paper">
-              {presentation.asideCopy}
-            </p>
-            <div className="mt-6 grid grid-cols-3 gap-2 text-center font-mono text-[10px] uppercase tracking-wide text-muted-light">
-              <span className="rounded-lg border border-line bg-ink/60 px-2 py-3">Browser</span>
-              <span className="rounded-lg border border-line bg-ink/60 px-2 py-3">CLI</span>
-              <span className="rounded-lg border border-line bg-ink/60 px-2 py-3">MCP</span>
+          <div className="border-l-2 border-accent pl-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Live scope ledger</p>
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              <div>
+                <p className="font-mono text-3xl font-semibold tracking-[-0.05em] text-paper tabular">
+                  {includedCount}
+                </p>
+                <p className="mt-1 text-xs text-muted">included</p>
+              </div>
+              <div>
+                <p className="font-mono text-3xl font-semibold tracking-[-0.05em] text-muted-light tabular">
+                  {excludedCount}
+                </p>
+                <p className="mt-1 text-xs text-muted">excluded</p>
+              </div>
+              <div>
+                <p className="font-mono text-3xl font-semibold tracking-[-0.05em] text-accent tabular">
+                  −{reduction}%
+                </p>
+                <p className="mt-1 text-xs text-muted">context</p>
+              </div>
             </div>
-          </aside>
+            <div className="mt-5 flex h-2 overflow-hidden rounded-full bg-excluded">
+              <span
+                className="h-full bg-accent transition-[width] duration-500"
+                style={{
+                  width: `${includedCount + excludedCount > 0
+                    ? Math.max(3, (includedCount / (includedCount + excludedCount)) * 100)
+                    : 0}%`,
+                }}
+              />
+            </div>
+          </div>
         </section>
 
-        <section id="workspace" className="mx-auto max-w-7xl px-5 pb-8 sm:px-8">
-          <div className="overflow-hidden rounded-[24px] border border-line-strong bg-surface shadow-[0_40px_120px_rgba(0,0,0,0.24)]" aria-busy={loading}>
-            <div className="flex flex-col gap-4 border-b border-line px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <div>
-                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Build a context pack</p>
-                <h2 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-paper">Repository first. Task second.</h2>
+        <section className="grid gap-6 py-7 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
+          <aside className="self-start lg:sticky lg:top-23">
+            <div className="overflow-hidden rounded-[22px] border border-line-strong bg-surface">
+              <div className="border-b border-line px-5 py-4">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+                  Task brief
+                </p>
+                <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-paper">
+                  What should the agent change?
+                </h2>
               </div>
-              {featuredCase && (
-                <button
-                  onClick={replayFeaturedCase}
-                  disabled={loading}
-                  className="rounded-lg border border-accent/25 bg-accent/[0.06] px-3 py-2 text-sm font-medium text-accent transition hover:bg-accent/[0.1] disabled:opacity-50"
-                >
-                  Load benchmark example
-                </button>
-              )}
-            </div>
 
-            <div className="grid gap-px bg-line lg:grid-cols-2">
-              <div className="bg-ink/[0.55] p-5 sm:p-6">
-                <label htmlFor="repo-input" className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                  01 · Public GitHub repository
-                </label>
-                <div className="mt-3 flex gap-2">
-                  <input
-                    id="repo-input"
-                    value={ghUrl}
-                    onChange={(event) => setGhUrl(event.target.value)}
-                    onKeyDown={(event) => event.key === "Enter" && !loading && loadGithub()}
-                    placeholder="owner/repo or owner/repo@commit"
-                    className="min-w-0 flex-1 rounded-xl border border-line-strong bg-ink px-4 py-3 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
-                  />
-                  <button
-                    onClick={() => loadGithub()}
-                    disabled={loading || !ghUrl.trim()}
-                    aria-label={loading ? "Loading repository" : "Analyze repository"}
-                    className="rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-ink/30 border-t-ink" />
-                        Loading
-                      </span>
-                    ) : "Analyze"}
-                  </button>
-                </div>
-                <p className="mt-2 text-[11px] leading-5 text-muted">Public repositories only. Repository contents are analyzed in memory and are not saved.</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] text-muted">Try a sample</span>
-                  {BUNDLED.map((source) => (
+              <div className="space-y-6 p-5">
+                <div>
+                  <label htmlFor="repo-input" className="flex items-center justify-between text-xs font-medium text-paper">
+                    <span>GitHub repository</span>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">01</span>
+                  </label>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      id="repo-input"
+                      value={ghUrl}
+                      onChange={(event) => setGhUrl(event.target.value)}
+                      onKeyDown={(event) => event.key === "Enter" && !loading && loadGithub()}
+                      placeholder="owner/repository"
+                      className="min-w-0 flex-1 rounded-xl border border-line-strong bg-ink px-3 py-3 text-sm text-paper placeholder:text-muted focus:border-accent focus:outline-none"
+                    />
                     <button
-                      key={source.slug}
-                      onClick={() => pickBundled(source.slug)}
-                      className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
-                        repo?.slug === source.slug
-                          ? "border-accent/40 bg-accent/[0.08] text-accent"
-                          : "border-line-strong text-muted-light hover:text-paper"
-                      }`}
+                      type="button"
+                      onClick={() => loadGithub()}
+                      disabled={loading || !ghUrl.trim()}
+                      className="rounded-xl bg-paper px-3.5 py-3 text-xs font-semibold text-ink transition hover:bg-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-35"
                     >
-                      {source.name}
-                    </button>
-                  ))}
-                </div>
-                {recentRepos.length > 0 && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] text-muted">Recent</span>
-                    {recentRepos.map((identifier) => (
-                      <button
-                        key={identifier}
-                        onClick={() => loadRecent(identifier)}
-                        disabled={loading}
-                        title={`Re-analyze ${identifier}`}
-                        className="max-w-[220px] truncate rounded-full border border-line-strong px-2.5 py-1 text-[11px] text-muted-light transition hover:text-paper disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        {identifier}
-                      </button>
-                    ))}
-                    <button
-                      onClick={clearRecents}
-                      className="text-[11px] text-muted underline-offset-2 transition hover:text-paper hover:underline"
-                    >
-                      Clear
+                      {loading ? "…" : "Load"}
                     </button>
                   </div>
-                )}
-              </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {bundled.map((source) => (
+                      <button
+                        type="button"
+                        key={source.slug}
+                        onClick={() => pickBundled(source.slug)}
+                        className={`rounded-full border px-2.5 py-1 text-[10px] transition ${
+                          repo?.slug === source.slug
+                            ? "border-accent bg-accent text-ink"
+                            : "border-line-strong text-muted hover:text-paper"
+                        }`}
+                      >
+                        {source.name}
+                      </button>
+                    ))}
+                  </div>
+                  {recentRepos.length > 0 && (
+                    <div className="mt-3 border-t border-line pt-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">Recent</span>
+                        <button type="button" onClick={clearRecents} className="text-[10px] text-muted hover:text-paper">
+                          Clear
+                        </button>
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        {recentRepos.slice(0, 3).map((identifier) => (
+                          <button
+                            type="button"
+                            key={identifier}
+                            onClick={() => loadRecent(identifier)}
+                            className="block w-full truncate text-left font-mono text-[10px] text-muted-light hover:text-accent"
+                          >
+                            {identifier}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-              <div className="bg-ink/[0.55] p-5 sm:p-6">
-                <label htmlFor="task-input" className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-                  02 · Engineering task
-                </label>
-                <div className="relative mt-3">
-                  <input
+                <div>
+                  <label htmlFor="task-input" className="flex items-center justify-between text-xs font-medium text-paper">
+                    <span>Engineering task</span>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">02 · ⌘K</span>
+                  </label>
+                  <textarea
                     ref={taskInputRef}
                     id="task-input"
                     value={task}
                     onChange={(event) => setTask(event.target.value)}
-                    maxLength={500}
-                    placeholder="Describe the change or bug in plain language"
-                    className="w-full rounded-xl border border-line-strong bg-ink px-4 py-3 pr-16 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+                    maxLength={5_000}
+                    rows={5}
+                    placeholder="Describe the bug, desired behavior, and what proves it is fixed."
+                    className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-ink px-3 py-3 text-sm leading-6 text-paper placeholder:text-muted focus:border-accent focus:outline-none"
                   />
-                  <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-line-strong px-1.5 py-0.5 font-mono text-[10px] text-muted">
-                    {"⌘"}K
-                  </kbd>
-                </div>
-                <TaskEvidence evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {bundledExamples.slice(0, 3).map((example) => (
+                  {examples.length > 0 && (
                     <button
-                      key={example}
-                      onClick={() => setTask(example)}
-                      className="rounded-full border border-line px-2.5 py-1 text-[11px] text-muted transition hover:border-line-strong hover:text-paper"
+                      type="button"
+                      onClick={() => setTask(examples[0])}
+                      className="mt-2 text-left text-[10px] leading-4 text-muted transition hover:text-accent"
                     >
-                      {example}
+                      Try: “{examples[0]}”
                     </button>
-                  ))}
-                  <span className="self-center text-[11px] text-muted">Results update as you type.</span>
+                  )}
+                  <TaskEvidence evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
                 </div>
               </div>
-            </div>
 
-            {(error || note) && (
-              <div role={error ? "alert" : "status"} aria-live="polite" className={`border-t border-line px-6 py-3 text-xs ${error ? "text-recent" : "text-muted-light"}`}>
-                {error ?? note}
+              {(error || note) && (
+                <div
+                  role={error ? "alert" : "status"}
+                  className={`border-t border-line px-5 py-3 text-xs leading-5 ${
+                    error ? "text-recent" : "text-muted-light"
+                  }`}
+                >
+                  {error ?? note}
+                </div>
+              )}
+            </div>
+          </aside>
+
+          <div className="min-w-0 space-y-6">
+            {graph && result ? (
+              <>
+                <section className="overflow-hidden rounded-[22px] border border-line-strong bg-surface">
+                  <div className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+                        Scope aperture
+                      </p>
+                      <p className="mt-1 truncate text-sm font-semibold text-paper">{repo?.name}</p>
+                    </div>
+                    {loadedRepositorySpecifier && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={saveAnalysis}
+                          disabled={saveStatus === "saving"}
+                          className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-paper disabled:opacity-40"
+                        >
+                          {saveStatus === "idle" ? "Save" : saveStatus}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={copyShareView}
+                          className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-paper"
+                        >
+                          {shareStatus === "idle" ? "Share view" : shareStatus}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid gap-px bg-line xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
+                    <div className="min-w-0 bg-surface p-4 sm:p-5">
+                      <DependencyGraph
+                        graph={graph}
+                        result={result}
+                        selected={selected}
+                        onSelect={setSelected}
+                        onRefineTask={refineTask}
+                      />
+                    </div>
+                    <div className="min-w-0 bg-surface p-4 sm:p-5">
+                      <FilePanel
+                        result={result}
+                        repo={repo}
+                        selected={selected}
+                        onSelect={setSelected}
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
+                  <AgentRunPanel
+                    repository={loadedRepositorySpecifier}
+                    task={task}
+                    sliceCount={includedCount}
+                    excludedCount={excludedCount}
+                    estimatedSavedPct={reduction}
+                  />
+                  <TokenMeter
+                    result={result}
+                    repo={repo}
+                    sparse={graph.edges.length / Math.max(1, graph.nodes.length) < 0.6}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="grid min-h-[520px] place-items-center rounded-[22px] border border-dashed border-line-strong bg-surface p-10 text-center">
+                <div>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Waiting for a repository</p>
+                  <p className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-paper">
+                    {loading ? "Reading the code graph…" : "Load a repository to open the scope ledger."}
+                  </p>
+                </div>
               </div>
             )}
           </div>
         </section>
-
-        <section className="mx-auto max-w-7xl px-5 pb-14 sm:px-8">
-          {graph && result ? (
-            <>
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="truncate font-mono text-xs text-muted-light">{repo?.name}</p>
-                  <p className="mt-1 truncate text-sm text-paper">{task || "No task described"}</p>
-                </div>
-                {loadedRepositorySpecifier && task.trim() && (
-                  <div className="flex gap-2">
-                    {isWorkspace && (
-                      <button
-                        onClick={saveAnalysis}
-                        disabled={saveStatus === "saving"}
-                        className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper disabled:opacity-40"
-                      >
-                        {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : saveStatus === "idle" ? "Save analysis" : saveStatus}
-                      </button>
-                    )}
-                    <button
-                      onClick={copyShareView}
-                      className="shrink-0 rounded-lg border border-line-strong px-3 py-2 text-xs text-muted-light transition hover:border-accent/40 hover:text-paper"
-                    >
-                      {shareStatus === "copied"
-                        ? "View link copied"
-                        : shareStatus === "failed"
-                          ? "Copy failed — try again"
-                          : "Copy shareable view"}
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-                <DependencyGraph
-                  graph={graph}
-                  result={result}
-                  selected={selected}
-                  onSelect={setSelected}
-                  onRefineTask={refineTask}
-                />
-                <div className="space-y-5">
-                  <TokenMeter result={result} repo={repo} sparse={graph.edges.length / Math.max(1, graph.nodes.length) < 0.6} />
-                  <FilePanel result={result} repo={repo} selected={selected} onSelect={setSelected} />
-                </div>
-              </div>
-            </>
-          ) : !error ? (
-            loading ? (
-              <div className="space-y-5">
-                <div className="overflow-hidden rounded-[22px] border border-line bg-surface p-6">
-                  <div className="skeleton h-4 w-48 mb-4" />
-                  <div className="skeleton h-6 w-72 mb-6" />
-                  <div className="grid gap-px lg:grid-cols-3">
-                    {[0, 1, 2].map((i) => (
-                      <div key={i} className="p-5">
-                        <div className="skeleton h-3 w-16 mb-4" />
-                        <div className="skeleton h-4 w-32 mb-3" />
-                        <div className="skeleton h-20 w-full" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
-                  <div className="skeleton h-48 w-full rounded-[22px]" />
-                  <div className="skeleton h-48 w-full rounded-[20px]" />
-                </div>
-              </div>
-            ) : (
-              <div role="status" aria-live="polite" className="rounded-[22px] border border-line bg-surface p-16 text-center text-sm text-muted">
-                Choose a repository to begin
-              </div>
-            )
-          ) : null}
-        </section>
-
-        {presentation.showMarketing && <>
-        <section id="method" className="border-y border-line bg-surface/[0.45]">
-          <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Measured, not promised</p>
-            <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-end">
-              <h2 className="max-w-xl text-3xl font-semibold leading-tight tracking-[-0.04em] text-paper sm:text-4xl">
-                Historical replay, with the limits left visible.
-              </h2>
-              <p className="max-w-2xl text-sm leading-6 text-muted-light">
-                The benchmark checks whether Locus includes files developers changed next. It does not measure autonomous-agent completion or prove every excluded file was unnecessary.
-              </p>
-            </div>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-[20px] border border-line bg-line sm:grid-cols-3">
-              {[
-                { value: `${Math.round(benchmark.summary.fixFileRecall * 100)}%`, label: "historical fix-file recall" },
-                { value: `${benchmark.summary.medianContextReductionPct}%`, label: "median estimated context reduction" },
-                { value: `${benchmark.summary.cases} across ${benchmark.summary.repositories}`, label: "tasks and repositories" },
-              ].map((metric) => (
-                <div key={metric.label} className="bg-ink/75 p-6">
-                  <p className="font-mono text-3xl font-semibold tracking-[-0.04em] text-accent">{metric.value}</p>
-                  <p className="mt-2 text-sm text-muted-light">{metric.label}</p>
-                </div>
-              ))}
-            </div>
-            <a
-              href={`${REPO_URL}/tree/main/benchmarks`}
-              className="mt-6 inline-flex text-sm font-medium text-accent hover:underline"
-            >
-              Inspect the benchmark and reproduce it
-            </a>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
-          <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
-            <div>
-              <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Use it for real</p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-paper">Before the agent reads.</h2>
-              <p className="mt-4 text-sm leading-6 text-muted-light">
-                Use the browser for a quick context pack, or run the same deterministic localizer inside the agent loop through the CLI or MCP server.
-              </p>
-            </div>
-            <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface">
-              <div className="border-b border-line px-5 py-4 text-sm font-medium text-paper">Local CLI</div>
-              <pre className="overflow-x-auto p-5 font-mono text-xs leading-6 text-muted-light">{`npx locus-context \\
-  locate "prevent duplicate signup profile writes" --pack`}</pre>
-              <div className="border-t border-line px-5 py-4 text-xs text-muted">
-                Zero runtime dependencies. JavaScript and TypeScript repositories are supported.
-              </div>
-            </div>
-          </div>
-        </section>
-        </>}
       </main>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <span className="flex items-center gap-2">
-            <Image src="/locus-mark.svg" width={20} height={20} alt="" />
-            Locus · task-sized context for coding agents
-          </span>
-          <nav className="flex items-center gap-4">
+      <footer className="border-t border-line-strong bg-surface">
+        <div className="mx-auto flex max-w-[1480px] flex-col gap-3 px-4 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-7">
+          <span>Locus · less context, complete work</span>
+          <nav className="flex gap-4">
+            <Link href="/docs" className="hover:text-accent">Docs</Link>
             <Link href="/privacy" className="hover:text-accent">Privacy</Link>
             <Link href="/terms" className="hover:text-accent">Terms</Link>
-            <a href={REPO_URL} className="hover:text-accent">GitHub</a>
           </nav>
         </div>
       </footer>

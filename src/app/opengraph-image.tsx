@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
-export const alt = "Locus — task-sized context for coding agents";
+export const alt = "Locus — the token-efficient coding agent";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -16,7 +16,7 @@ export default function OgImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)",
+          background: "#f1eee6",
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -26,18 +26,18 @@ export default function OgImage() {
               width: 48,
               height: 48,
               borderRadius: "12px",
-              background: "#a3e635",
+              background: "#2457ff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: "24px",
               fontWeight: 800,
-              color: "#0a0a0a",
+              color: "#f1eee6",
             }}
           >
             L
           </div>
-          <span style={{ fontSize: "28px", color: "#a3e635", fontWeight: 600, letterSpacing: "-0.02em" }}>
+          <span style={{ fontSize: "28px", color: "#111d2b", fontWeight: 600, letterSpacing: "-0.02em" }}>
             Locus
           </span>
         </div>
@@ -46,24 +46,24 @@ export default function OgImage() {
             marginTop: "32px",
             fontSize: "64px",
             fontWeight: 700,
-            color: "#fafafa",
+            color: "#111d2b",
             lineHeight: 1.05,
             letterSpacing: "-0.04em",
             maxWidth: "800px",
           }}
         >
-          Task-sized context for coding agents.
+          Ship the task. Not the repository.
         </h1>
         <p
           style={{
             marginTop: "24px",
             fontSize: "24px",
-            color: "#a1a1aa",
+            color: "#48525e",
             maxWidth: "700px",
             lineHeight: 1.4,
           }}
         >
-          Map any task to the focused set of files your AI agent needs. Deterministic. No LLM in the loop.
+          Focus context, implement in an isolated sandbox, verify the change, and approve delivery.
         </p>
         <div
           style={{
@@ -72,14 +72,14 @@ export default function OgImage() {
             gap: "12px",
           }}
         >
-          {["Browser", "CLI", "MCP", "API"].map((label) => (
+          {["Locate", "Implement", "Verify", "Approve"].map((label) => (
             <div
               key={label}
               style={{
                 padding: "8px 20px",
                 borderRadius: "8px",
-                border: "1px solid #333",
-                color: "#a1a1aa",
+                border: "1px solid rgba(17, 29, 43, 0.2)",
+                color: "#48525e",
                 fontSize: "14px",
                 fontWeight: 500,
                 textTransform: "uppercase",
