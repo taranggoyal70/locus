@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  /* Mineral graphite: softer than black, quieter than a neon AI dashboard. */
-  --ink: #171b20;
-  --surface: #1f242a;
-  --surface-raised: #292f36;
-  --line: rgba(240, 238, 233, 0.08);
-  --line-strong: rgba(240, 238, 233, 0.15);
-  --muted: #7f8994;
-  --muted-light: #b4bcc5;
-  --paper: #f0eee9;
-  --accent: #8da3e6;
-  --accent-dim: #7188cf;
-  --excluded: #353c44;
-  --recent: #d98068;
+  /* Flight-deck navy with clear, semantic signal colors. */
+  --ink: #14233b;
+  --surface: #1d3150;
+  --surface-raised: #294263;
+  --line: rgba(237, 245, 247, 0.09);
+  --line-strong: rgba(237, 245, 247, 0.18);
+  --muted: #8296ad;
+  --muted-light: #bdcad8;
+  --paper: #f0f6f7;
+  --accent: #8ef0c0;
+  --accent-dim: #69d6a2;
+  --excluded: #3b506c;
+  --recent: #ff896e;
 }
 
 @theme inline {
@@ -44,7 +44,7 @@ html {
 
 body {
   min-height: 100vh;
-  background: linear-gradient(180deg, #1c2127 0, var(--ink) 34rem);
+  background: linear-gradient(180deg, #1a2b48 0, var(--ink) 34rem);
   color: var(--paper);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
@@ -96,18 +96,18 @@ summary:focus-visible {
   inset: -30%;
   z-index: 0;
   content: "";
-  background: radial-gradient(circle at 66% 48%, rgba(141, 163, 230, 0.1), transparent 24%);
+  background: radial-gradient(circle at 60% 48%, rgba(142, 240, 192, 0.22), transparent 25%);
   transform: translate(var(--lens-x), var(--lens-y));
   transition: transform 500ms cubic-bezier(.2,.8,.2,1);
 }
 
 .context-lens__grid {
-  opacity: .22;
+  opacity: .32;
   background-image:
-    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: linear-gradient(to bottom, black, transparent 85%);
+    linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, black, rgba(0, 0, 0, .5) 78%, transparent);
 }
 
 .context-lens__scene {
@@ -129,6 +129,26 @@ summary:focus-visible {
 
 .context-node--excluded {
   animation-duration: 12s;
+}
+
+.locus-shell {
+  color: #13243c;
+  background-color: #b9c7d3;
+  background-image:
+    linear-gradient(rgba(20, 35, 59, .08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 35, 59, .08) 1px, transparent 1px),
+    radial-gradient(circle at 18% 8%, rgba(240, 246, 247, .76), transparent 28%);
+  background-size: 32px 32px, 32px 32px, 100% 100%;
+}
+
+.locus-rail {
+  background: rgba(239, 245, 246, .9);
+  box-shadow: 12px 0 40px rgba(20, 35, 59, .08);
+  backdrop-filter: blur(18px);
+}
+
+.locus-stage {
+  box-shadow: 0 32px 90px rgba(20, 35, 59, .18);
 }
 
 @keyframes context-drift {

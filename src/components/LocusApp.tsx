@@ -114,82 +114,68 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   const reduction = result?.widened ? 0 : result?.savedPct ?? 0;
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-ink/[0.82] backdrop-blur-2xl">
-        <div className="mx-auto flex h-[72px] max-w-[1480px] items-center justify-between px-4 sm:px-7">
-          <Link href="/workspace" className="flex items-center gap-3 text-paper">
-            <span className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+    <div className="locus-shell min-h-screen lg:grid lg:grid-cols-[92px_minmax(0,1fr)]">
+      <header className="locus-rail sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#14233b]/15 px-4 lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:px-0 lg:py-5">
+          <Link href="/workspace" aria-label="Locus workspace" className="flex items-center gap-2.5 text-[#14233b] lg:flex-col">
+            <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#14233b] shadow-[0_8px_20px_rgba(20,35,59,.18)]">
               <Image src="/locus-mark.svg" width={22} height={22} alt="" priority />
             </span>
-            <span>
-              <span className="block text-sm font-semibold tracking-[-0.03em]">Locus</span>
-              <span className="block font-mono text-[8px] uppercase tracking-[0.18em] text-muted">
-                context-native agent
-              </span>
-            </span>
+            <span className="text-sm font-bold tracking-[-0.04em] lg:text-[11px]">LOCUS</span>
           </Link>
 
-          <nav className="flex items-center gap-1 text-xs">
-            <Link href="/workspace" className="hidden rounded-lg bg-white/[0.06] px-3 py-2 font-medium text-paper sm:block">
-              Workspace
+          <nav className="flex items-center gap-1 text-[10px] font-semibold text-[#52647a] lg:flex-col lg:gap-2">
+            <Link href="/workspace" className="rounded-xl bg-[#14233b] px-3 py-2.5 text-white lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+              Map
             </Link>
-            <Link href="/projects" className="hidden rounded-lg px-3 py-2 text-muted-light hover:text-paper sm:block">
+            <Link href="/projects" className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
               Runs
             </Link>
-            <Link href="/settings" className="hidden rounded-lg px-3 py-2 text-muted-light hover:text-paper sm:block">
-              Settings
+            <Link href="/settings" className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+              Setup
             </Link>
-            <a href={REPO_URL} className="hidden rounded-lg px-3 py-2 text-muted-light hover:text-paper md:block">
-              GitHub
+            <a href={REPO_URL} className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] md:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+              Code
             </a>
-            <span className="mx-2 hidden h-5 w-px bg-line-strong sm:block" />
-            {accountName && (
-              <span className="mr-2 hidden max-w-36 truncate text-muted sm:block">{accountName}</span>
-            )}
+          </nav>
+
+          <div className="flex items-center gap-2 lg:flex-col">
+            {accountName && <span className="hidden max-w-16 truncate text-[9px] font-medium text-[#52647a] lg:block">{accountName}</span>}
             <UserButton
               appearance={{
                 elements: {
-                  avatarBox: "h-8 w-8 border border-line-strong",
+                  avatarBox: "h-8 w-8 border border-[#14233b]/20",
                   userButtonPopoverCard: "border border-line-strong bg-surface text-paper shadow-2xl",
                 },
               }}
             />
-          </nav>
-        </div>
+          </div>
       </header>
 
-      <main className="mx-auto max-w-[1480px] px-4 pb-16 sm:px-7">
-        <section className="grid gap-8 border-b border-line-strong py-9 lg:grid-cols-[minmax(0,1fr)_minmax(440px,0.78fr)] lg:items-center lg:gap-12 lg:py-12">
-          <div className="relative">
-            <div className="mb-7 flex flex-wrap items-center gap-3">
-              <span className="rounded-full border border-accent/30 bg-accent/[0.08] px-3 py-1.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">
-                {isWorkspace ? "Agent workspace" : "Public beta"}
+      <div className="min-w-0">
+      <main className="mx-auto max-w-[1580px] px-4 pb-16 sm:px-7 lg:px-9">
+        <section className="grid gap-7 py-8 lg:grid-cols-[minmax(360px,0.72fr)_minmax(560px,1.28fr)] lg:items-center lg:gap-9 lg:py-10">
+          <div className="relative py-2">
+            <div className="mb-5 flex flex-wrap items-center gap-3">
+              <span className="rounded-full bg-[#14233b] px-3 py-1.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">
+                {isWorkspace ? "Mission workspace" : "Public beta"}
               </span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-                Localize / Implement / Prove
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#52647a]">
+                Scope → Run → Evidence
               </span>
             </div>
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.94] tracking-[-0.06em] text-paper sm:text-6xl lg:text-[68px]">
-              Less code in.
-              <span className="block text-muted-light">
-                Complete work out.
-              </span>
+            <h1 className="max-w-2xl text-5xl font-bold leading-[0.9] tracking-[-0.065em] text-[#14233b] sm:text-6xl lg:text-[72px]">
+              Map less.
+              <span className="block text-[#314fd1]">Ship the task.</span>
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
-              Locus turns a repository into the smallest safe working set, completes the task
-              in an isolated agent, and proves exactly what changed—and what never entered context.
+            <p className="mt-6 max-w-xl text-base font-medium leading-7 text-[#40546b]">
+              Locus routes only the code an agent needs, keeps every excluded file visible,
+              then implements and verifies the work in an isolated run.
             </p>
-            <div className="mt-8 grid max-w-xl gap-px overflow-hidden rounded-2xl border border-line-strong bg-line sm:grid-cols-3">
-              {[
-                ["01", "Context localized"],
-                ["02", "Agent implements"],
-                ["03", "Checks verified"],
-              ].map(([step, label]) => (
-                <div key={step} className="bg-surface/80 px-4 py-3.5">
-                  <p className="font-mono text-[9px] text-accent">{step}</p>
-                  <p className="mt-1 text-xs font-medium text-paper">{label}</p>
-                </div>
-              ))}
+            <div className="mt-7 flex max-w-xl items-center gap-4 border-t border-[#14233b]/20 pt-4">
+              <span className="h-2.5 w-2.5 rounded-sm bg-[#314fd1]" />
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.13em] text-[#52647a]">
+                Included is a decision. Excluded is evidence.
+              </p>
             </div>
           </div>
 
@@ -201,9 +187,20 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           />
         </section>
 
-        <section className="grid gap-6 py-8 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
+        <section className="locus-stage overflow-hidden rounded-[30px] border border-white/20 bg-[#14233b] p-3 sm:p-4">
+          <div className="flex flex-col gap-2 px-2 pb-4 pt-1 sm:flex-row sm:items-center sm:justify-between sm:px-3">
+            <div>
+              <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">Active mission</p>
+              <p className="mt-1 text-sm font-semibold text-paper">{repo?.name ?? "Repository standby"}</p>
+            </div>
+            <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-light">
+              <span className="h-2 w-2 rounded-sm bg-accent" />
+              Context engine online
+            </div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
           <aside className="self-start lg:sticky lg:top-23">
-            <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface/95 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
+            <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface/95">
               <div className="border-b border-line px-5 py-4">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
                   Task brief
@@ -397,19 +394,21 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
               </div>
             )}
           </div>
+          </div>
         </section>
       </main>
 
-      <footer className="border-t border-line-strong bg-surface">
-        <div className="mx-auto flex max-w-[1480px] flex-col gap-3 px-4 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-7">
-          <span>Locus · less context, complete work</span>
+      <footer className="border-t border-[#14233b]/15">
+        <div className="mx-auto flex max-w-[1580px] flex-col gap-3 px-4 py-6 text-xs font-medium text-[#52647a] sm:flex-row sm:items-center sm:justify-between sm:px-9">
+          <span>Locus · scoped context, complete work</span>
           <nav className="flex gap-4">
-            <Link href="/docs" className="hover:text-accent">Docs</Link>
-            <Link href="/privacy" className="hover:text-accent">Privacy</Link>
-            <Link href="/terms" className="hover:text-accent">Terms</Link>
+            <Link href="/docs" className="hover:text-[#14233b]">Docs</Link>
+            <Link href="/privacy" className="hover:text-[#14233b]">Privacy</Link>
+            <Link href="/terms" className="hover:text-[#14233b]">Terms</Link>
           </nav>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
