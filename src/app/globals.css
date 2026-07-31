@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  /* Daylight instrument panel: cool paper, carbon ink, calibrated blue. */
-  --ink: #edf2f7;
-  --surface: #fbfcfe;
-  --surface-raised: #e3eaf2;
-  --line: rgba(19, 36, 60, 0.09);
-  --line-strong: rgba(19, 36, 60, 0.18);
-  --muted: #748196;
-  --muted-light: #46566d;
-  --paper: #13243c;
-  --accent: #2457d6;
-  --accent-dim: #183eaa;
-  --excluded: #cbd5e1;
-  --recent: #d95f49;
+  /* Precision optics: deep navy, polar white, spectral mint. */
+  --ink: #071326;
+  --surface: #0c1a31;
+  --surface-raised: #132541;
+  --line: rgba(207, 221, 255, 0.08);
+  --line-strong: rgba(207, 221, 255, 0.16);
+  --muted: #71809b;
+  --muted-light: #a9b6ce;
+  --paper: #f3f7ff;
+  --accent: #6ce5ca;
+  --accent-dim: #29a98f;
+  --excluded: #263854;
+  --recent: #ff7a62;
 }
 
 @theme inline {
@@ -39,13 +39,14 @@
 
 html {
   background: var(--ink);
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent 32rem),
+    radial-gradient(circle at 18% -10%, rgba(102, 135, 255, 0.15), transparent 33rem),
+    radial-gradient(circle at 92% 18%, rgba(108, 229, 202, 0.07), transparent 28rem),
     var(--ink);
   color: var(--paper);
   font-family: var(--font-sans);
@@ -83,7 +84,7 @@ summary:focus-visible {
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: rgba(19, 36, 60, 0.18);
+  background: rgba(207, 221, 255, 0.18);
   background-clip: padding-box;
 }
 
@@ -99,17 +100,17 @@ summary:focus-visible {
   z-index: 0;
   content: "";
   background:
-    radial-gradient(circle at 68% 48%, rgba(36, 87, 214, 0.1), transparent 18%),
-    radial-gradient(circle at 32% 42%, rgba(36, 87, 214, 0.06), transparent 30%);
+    radial-gradient(circle at 68% 48%, rgba(108, 229, 202, 0.12), transparent 18%),
+    radial-gradient(circle at 32% 42%, rgba(102, 135, 255, 0.13), transparent 30%);
   transform: translate(var(--lens-x), var(--lens-y));
   transition: transform 500ms cubic-bezier(.2,.8,.2,1);
 }
 
 .context-lens__grid {
-  opacity: .62;
+  opacity: .3;
   background-image:
-    linear-gradient(rgba(19,36,60,.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(19,36,60,.055) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
   background-size: 32px 32px;
   mask-image: linear-gradient(to bottom, black, transparent 85%);
 }
@@ -120,6 +121,7 @@ summary:focus-visible {
 }
 
 .context-lens__readout {
+  text-shadow: 0 8px 35px rgba(0, 0, 0, .55);
   transform: translate(calc(var(--lens-x) * -.45), calc(var(--lens-y) * -.45));
   transition: transform 550ms cubic-bezier(.2,.8,.2,1);
 }
