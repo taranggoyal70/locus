@@ -79,7 +79,7 @@ export function TokenMeter({
   }
 
   return (
-    <div className="rounded-[20px] border border-line-strong bg-surface p-5 shadow-[0_24px_80px_rgba(0,0,0,0.16)]">
+    <div className="rounded-[20px] border border-line-strong bg-surface p-5 shadow-[0_18px_50px_rgba(0,0,0,0.14)]">
       <div className="flex items-end justify-between">
         <div>
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Context sent to the agent</p>
@@ -138,7 +138,7 @@ export function TokenMeter({
               className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
                 result.widened
                   ? "border border-line-strong bg-ink text-muted-light hover:border-accent/40 hover:text-paper"
-                  : "bg-accent text-ink shadow-[0_12px_30px_rgba(108,229,202,0.16)] hover:bg-[#8cebd7]"
+                  : "bg-accent text-ink shadow-[0_10px_24px_rgba(113,136,207,0.14)] hover:bg-accent-dim"
               }`}
             >
               {copied ?? (result.widened ? "Copy full repo context" : "Copy context")}

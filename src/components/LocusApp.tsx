@@ -159,7 +159,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
       </header>
 
       <main className="mx-auto max-w-[1480px] px-4 pb-16 sm:px-7">
-        <section className="grid gap-8 border-b border-line-strong py-10 lg:grid-cols-[minmax(0,1fr)_minmax(440px,0.78fr)] lg:items-center lg:gap-14 lg:py-16">
+        <section className="grid gap-8 border-b border-line-strong py-9 lg:grid-cols-[minmax(0,1fr)_minmax(440px,0.78fr)] lg:items-center lg:gap-12 lg:py-12">
           <div className="relative">
             <div className="mb-7 flex flex-wrap items-center gap-3">
               <span className="rounded-full border border-accent/30 bg-accent/[0.08] px-3 py-1.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">
@@ -169,9 +169,9 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                 Localize / Implement / Prove
               </span>
             </div>
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.9] tracking-[-0.07em] text-paper sm:text-6xl lg:text-[78px]">
+            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.94] tracking-[-0.06em] text-paper sm:text-6xl lg:text-[68px]">
               Less code in.
-              <span className="block bg-gradient-to-r from-accent via-[#91d6ff] to-[#8b9fff] bg-clip-text text-transparent">
+              <span className="block text-muted-light">
                 Complete work out.
               </span>
             </h1>
@@ -203,7 +203,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
 
         <section className="grid gap-6 py-8 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
           <aside className="self-start lg:sticky lg:top-23">
-            <div className="overflow-hidden rounded-[24px] border border-line-strong bg-surface/90 shadow-[0_28px_90px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+            <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface/95 shadow-[0_20px_60px_rgba(0,0,0,0.16)]">
               <div className="border-b border-line px-5 py-4">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
                   Task brief
