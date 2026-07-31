@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AgentRunPanel } from "@/components/AgentRunPanel";
+import { ContextLens } from "@/components/ContextLens";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
 import { TaskEvidence } from "@/components/TaskEvidence";
@@ -113,23 +114,23 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   const reduction = result?.widened ? 0 : result?.savedPct ?? 0;
 
   return (
-    <div className="min-h-screen bg-ink">
-      <header className="sticky top-0 z-40 border-b border-line-strong bg-ink/[0.94] backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1480px] items-center justify-between px-4 sm:px-7">
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-ink/[0.82] backdrop-blur-2xl">
+        <div className="mx-auto flex h-[72px] max-w-[1480px] items-center justify-between px-4 sm:px-7">
           <Link href="/workspace" className="flex items-center gap-3 text-paper">
-            <span className="grid h-9 w-9 place-items-center rounded-xl border border-line-strong bg-surface">
+            <span className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
               <Image src="/locus-mark.svg" width={22} height={22} alt="" priority />
             </span>
             <span>
-              <span className="block text-sm font-semibold tracking-[-0.02em]">Locus</span>
+              <span className="block text-sm font-semibold tracking-[-0.03em]">Locus</span>
               <span className="block font-mono text-[8px] uppercase tracking-[0.18em] text-muted">
-                token-efficient agent
+                context-native agent
               </span>
             </span>
           </Link>
 
           <nav className="flex items-center gap-1 text-xs">
-            <Link href="/workspace" className="hidden rounded-lg bg-surface px-3 py-2 font-medium text-paper sm:block">
+            <Link href="/workspace" className="hidden rounded-lg bg-white/[0.06] px-3 py-2 font-medium text-paper sm:block">
               Workspace
             </Link>
             <Link href="/projects" className="hidden rounded-lg px-3 py-2 text-muted-light hover:text-paper sm:block">
@@ -158,64 +159,51 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
       </header>
 
       <main className="mx-auto max-w-[1480px] px-4 pb-16 sm:px-7">
-        <section className="grid gap-8 border-b border-line-strong py-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-end lg:py-14">
-          <div>
-            <div className="mb-5 flex items-center gap-3">
-              <span className="rounded-full bg-accent px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.15em] text-ink">
+        <section className="grid gap-8 border-b border-line-strong py-10 lg:grid-cols-[minmax(0,1fr)_minmax(440px,0.78fr)] lg:items-center lg:gap-14 lg:py-16">
+          <div className="relative">
+            <div className="mb-7 flex flex-wrap items-center gap-3">
+              <span className="rounded-full border border-accent/30 bg-accent/[0.08] px-3 py-1.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-accent">
                 {isWorkspace ? "Agent workspace" : "Public beta"}
               </span>
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-                Slice → implement → verify
+                Localize / Implement / Prove
               </span>
             </div>
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.92] tracking-[-0.065em] text-paper sm:text-6xl lg:text-[76px]">
-              Ship the task.
-              <span className="block text-accent">Not the repository.</span>
+            <h1 className="max-w-4xl text-5xl font-semibold leading-[0.9] tracking-[-0.07em] text-paper sm:text-6xl lg:text-[78px]">
+              Less code in.
+              <span className="block bg-gradient-to-r from-accent via-[#91d6ff] to-[#8b9fff] bg-clip-text text-transparent">
+                Complete work out.
+              </span>
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
-              Locus finds the smallest safe context, works inside it as an isolated coding agent,
-              and shows exactly what stayed out.
+              Locus turns a repository into the smallest safe working set, completes the task
+              in an isolated agent, and proves exactly what changed—and what never entered context.
             </p>
+            <div className="mt-8 grid max-w-xl gap-px overflow-hidden rounded-2xl border border-line-strong bg-line sm:grid-cols-3">
+              {[
+                ["01", "Context localized"],
+                ["02", "Agent implements"],
+                ["03", "Checks verified"],
+              ].map(([step, label]) => (
+                <div key={step} className="bg-surface/80 px-4 py-3.5">
+                  <p className="font-mono text-[9px] text-accent">{step}</p>
+                  <p className="mt-1 text-xs font-medium text-paper">{label}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="border-l-2 border-accent pl-5">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Live scope ledger</p>
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div>
-                <p className="font-mono text-3xl font-semibold tracking-[-0.05em] text-paper tabular">
-                  {includedCount}
-                </p>
-                <p className="mt-1 text-xs text-muted">included</p>
-              </div>
-              <div>
-                <p className="font-mono text-3xl font-semibold tracking-[-0.05em] text-muted-light tabular">
-                  {excludedCount}
-                </p>
-                <p className="mt-1 text-xs text-muted">excluded</p>
-              </div>
-              <div>
-                <p className="font-mono text-3xl font-semibold tracking-[-0.05em] text-accent tabular">
-                  −{reduction}%
-                </p>
-                <p className="mt-1 text-xs text-muted">context</p>
-              </div>
-            </div>
-            <div className="mt-5 flex h-2 overflow-hidden rounded-full bg-excluded">
-              <span
-                className="h-full bg-accent transition-[width] duration-500"
-                style={{
-                  width: `${includedCount + excludedCount > 0
-                    ? Math.max(3, (includedCount / (includedCount + excludedCount)) * 100)
-                    : 0}%`,
-                }}
-              />
-            </div>
-          </div>
+          <ContextLens
+            included={includedCount}
+            excluded={excludedCount}
+            reduction={reduction}
+            active={Boolean(result)}
+          />
         </section>
 
-        <section className="grid gap-6 py-7 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
+        <section className="grid gap-6 py-8 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
           <aside className="self-start lg:sticky lg:top-23">
-            <div className="overflow-hidden rounded-[22px] border border-line-strong bg-surface">
+            <div className="overflow-hidden rounded-[24px] border border-line-strong bg-surface/90 shadow-[0_28px_90px_rgba(0,0,0,0.22)] backdrop-blur-xl">
               <div className="border-b border-line px-5 py-4">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
                   Task brief

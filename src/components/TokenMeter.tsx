@@ -138,7 +138,7 @@ export function TokenMeter({
               className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
                 result.widened
                   ? "border border-line-strong bg-ink text-muted-light hover:border-accent/40 hover:text-paper"
-                  : "bg-accent text-ink hover:bg-[#b5f34a]"
+                  : "bg-accent text-ink shadow-[0_12px_30px_rgba(108,229,202,0.16)] hover:bg-[#8cebd7]"
               }`}
             >
               {copied ?? (result.widened ? "Copy full repo context" : "Copy context")}

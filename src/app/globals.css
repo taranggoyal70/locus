@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  /* Warm technical paper, cobalt focus, coral intervention. */
-  --ink: #f1eee6;
-  --surface: #fffdf8;
-  --surface-raised: #e8e4da;
-  --line: rgba(17, 29, 43, 0.1);
-  --line-strong: rgba(17, 29, 43, 0.2);
-  --muted: #747b84;
-  --muted-light: #48525e;
-  --paper: #111d2b;
-  --accent: #2457ff;
-  --accent-dim: #173bb8;
-  --excluded: #c9cbd0;
-  --recent: #e95532;
+  /* Precision optics: deep navy, polar white, spectral mint. */
+  --ink: #071326;
+  --surface: #0c1a31;
+  --surface-raised: #132541;
+  --line: rgba(207, 221, 255, 0.08);
+  --line-strong: rgba(207, 221, 255, 0.16);
+  --muted: #71809b;
+  --muted-light: #a9b6ce;
+  --paper: #f3f7ff;
+  --accent: #6ce5ca;
+  --accent-dim: #29a98f;
+  --excluded: #263854;
+  --recent: #ff7a62;
 }
 
 @theme inline {
@@ -39,14 +39,18 @@
 
 html {
   background: var(--ink);
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   min-height: 100vh;
-  background: var(--ink);
+  background:
+    radial-gradient(circle at 18% -10%, rgba(102, 135, 255, 0.15), transparent 33rem),
+    radial-gradient(circle at 92% 18%, rgba(108, 229, 202, 0.07), transparent 28rem),
+    var(--ink);
   color: var(--paper);
   font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
@@ -80,8 +84,61 @@ summary:focus-visible {
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: rgba(17, 29, 43, 0.2);
+  background: rgba(207, 221, 255, 0.18);
   background-clip: padding-box;
+}
+
+.context-lens {
+  --lens-x: 0px;
+  --lens-y: 0px;
+  isolation: isolate;
+}
+
+.context-lens::before {
+  position: absolute;
+  inset: -30%;
+  z-index: 0;
+  content: "";
+  background:
+    radial-gradient(circle at 68% 48%, rgba(108, 229, 202, 0.12), transparent 18%),
+    radial-gradient(circle at 32% 42%, rgba(102, 135, 255, 0.13), transparent 30%);
+  transform: translate(var(--lens-x), var(--lens-y));
+  transition: transform 500ms cubic-bezier(.2,.8,.2,1);
+}
+
+.context-lens__grid {
+  opacity: .3;
+  background-image:
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.context-lens__scene {
+  transform: translate(var(--lens-x), var(--lens-y)) scale(1.025);
+  transition: transform 550ms cubic-bezier(.2,.8,.2,1);
+}
+
+.context-lens__readout {
+  text-shadow: 0 8px 35px rgba(0, 0, 0, .55);
+  transform: translate(calc(var(--lens-x) * -.45), calc(var(--lens-y) * -.45));
+  transition: transform 550ms cubic-bezier(.2,.8,.2,1);
+}
+
+.context-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: context-drift 5s ease-in-out infinite;
+}
+
+.context-node--excluded {
+  animation-duration: 8s;
+}
+
+@keyframes context-drift {
+  0%, 100% { transform: translateY(-2px); opacity: .72; }
+  50% { transform: translateY(3px); opacity: 1; }
 }
 
 @media (max-width: 640px) {
