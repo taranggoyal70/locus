@@ -24,7 +24,7 @@ export function ExcludedFileList({
           <button
             data-file-path={rel}
             onClick={() => onSelect(rel)}
-            className="group flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-white/[0.03]"
+            className="group flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-ink/70"
           >
             <span className="w-12 shrink-0 font-mono text-[9px] uppercase tracking-wide text-muted">
               out
@@ -148,7 +148,7 @@ export function FilePanel({
             onClick={() => switchView("excluded")}
             className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] transition ${
               displayView === "excluded"
-                ? "bg-white/[0.05] text-paper"
+                ? "bg-surface text-paper shadow-[0_1px_4px_rgba(28,45,72,0.08)]"
                 : "text-muted hover:text-muted-light disabled:cursor-not-allowed disabled:opacity-40"
             }`}
           >
@@ -186,7 +186,7 @@ export function FilePanel({
                   lastSelectedRef.current = f.rel;
                   onSelect(f.rel);
                 }}
-                className="flex w-full items-center gap-3 px-4 py-2 text-left transition hover:bg-white/[0.03]"
+                className="flex w-full items-center gap-3 px-4 py-2 text-left transition hover:bg-ink/70"
               >
                 {!result.widened && (
                   <span

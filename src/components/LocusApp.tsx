@@ -115,10 +115,10 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-ink/[0.82] backdrop-blur-2xl">
+      <header className="sticky top-0 z-40 border-b border-line-strong bg-white/[0.82] backdrop-blur-2xl">
         <div className="mx-auto flex h-[72px] max-w-[1480px] items-center justify-between px-4 sm:px-7">
           <Link href="/workspace" className="flex items-center gap-3 text-paper">
-            <span className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[0.05] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <span className="grid h-9 w-9 place-items-center rounded-xl border border-line-strong bg-surface shadow-[0_6px_18px_rgba(28,45,72,0.08)]">
               <Image src="/locus-mark.svg" width={22} height={22} alt="" priority />
             </span>
             <span>
@@ -130,7 +130,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
           </Link>
 
           <nav className="flex items-center gap-1 text-xs">
-            <Link href="/workspace" className="hidden rounded-lg bg-white/[0.06] px-3 py-2 font-medium text-paper sm:block">
+            <Link href="/workspace" className="hidden rounded-lg bg-surface-raised px-3 py-2 font-medium text-paper sm:block">
               Workspace
             </Link>
             <Link href="/projects" className="hidden rounded-lg px-3 py-2 text-muted-light hover:text-paper sm:block">
@@ -171,7 +171,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
             </div>
             <h1 className="max-w-4xl text-5xl font-semibold leading-[0.9] tracking-[-0.07em] text-paper sm:text-6xl lg:text-[78px]">
               Less code in.
-              <span className="block bg-gradient-to-r from-accent via-[#91d6ff] to-[#8b9fff] bg-clip-text text-transparent">
+              <span className="block text-accent">
                 Complete work out.
               </span>
             </h1>
@@ -203,7 +203,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
 
         <section className="grid gap-6 py-8 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
           <aside className="self-start lg:sticky lg:top-23">
-            <div className="overflow-hidden rounded-[24px] border border-line-strong bg-surface/90 shadow-[0_28px_90px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+            <div className="overflow-hidden rounded-[24px] border border-line-strong bg-surface/95 shadow-[0_24px_60px_rgba(28,45,72,0.09)] backdrop-blur-xl">
               <div className="border-b border-line px-5 py-4">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
                   Task brief
