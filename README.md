@@ -1,12 +1,15 @@
 # Locus
 
-**Task-sized context for AI coding agents.**
+**Verified engineering tasks with less context.**
 
-Locus maps a natural-language task to a focused JavaScript/TypeScript code slice:
+Locus maps a natural-language task to a focused JavaScript/TypeScript code Slice:
 matching files, their dependency closure, nearby integration points, and relevant
 recent changes. When the evidence is weak, it returns the whole repo instead of a
 speculative small slice and explains which terms were not found, possible starting
-files, and repository language that can refine the task.
+files, and repository language that can refine the task. The web product can then
+run the Agent Task in an isolated Sandbox, collect verification evidence, and open
+an approval-gated pull request. Active Runs survive refresh and remain reviewable
+from the Runs ledger.
 
 **Live:** https://locus-five-iota.vercel.app
 
@@ -14,7 +17,7 @@ files, and repository language that can refine the task.
 
 | Surface | Use case |
 |---------|----------|
-| **Web app** | Paste a public repo, describe a task, copy the context |
+| **Web app** | Localize, execute, verify, review, and approve an Agent Task |
 | **REST API** | Programmatic access for CI, agents, and custom tooling |
 | **CLI** | `npx locus-context locate "fix billing" --pack` |
 | **MCP server** | JSON-RPC over stdio for Claude, Cursor, and MCP-enabled agents |
@@ -116,10 +119,11 @@ Signed-out visitors go to login; signed-in users go to `/workspace`.
 
 ### Persistence
 
-Supabase stores saved analyses, API keys, and usage analytics. Run the migration:
+Supabase stores Agent Tasks, durable Runs, evidence, saved analyses, API keys, and
+usage analytics. Apply every migration in order:
 
 ```bash
-psql $DATABASE_URL < supabase/migrations/001_initial_schema.sql
+for migration in supabase/migrations/*.sql; do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"; done
 ```
 
 ### Export formats
@@ -161,7 +165,7 @@ npm package lives in [`cli/`](./cli); `pnpm sync-cli` mirrors files from `bin/`.
 
 ## Verification
 
-- **46 automated tests**, including real CLI and MCP stdio process tests
+- **100+ automated tests**, including Run lifecycle, real CLI, and MCP stdio process tests
 - GitHub CI runs lint, tests, CLI sync, type-checking, and a production build
 - [`/api/health`](https://locus-five-iota.vercel.app/api/health) reports the
   deployed package version and Git revision

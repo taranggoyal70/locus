@@ -130,7 +130,7 @@ const markdown = `# Locus historical-task benchmark\n\n` +
   `## What this does—and does not—show\n\nThis replay measures whether Locus includes the files humans actually changed next, while estimating how much TypeScript context it excludes. ` +
   `It does **not** prove that an autonomous agent completed the task, that the excluded files were unnecessary, or that quality cannot regress. Token estimates use the existing character-based heuristic. ` +
   `Agent completion rate is a beta-study outcome, not a benchmark claim.\n\n` +
-  `Cases are declared in [\`benchmarks/cases.json\`](./cases.json); run \`npm run benchmark\` to reproduce them.\n`;
+  `Cases are declared in [\`benchmarks/cases.json\`](./cases.json); run \`pnpm benchmark\` to reproduce them.\n`;
 
 if (shouldWrite) {
   fs.writeFileSync(path.join(projectRoot, "benchmarks/results.json"), json);

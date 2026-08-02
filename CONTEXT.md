@@ -101,6 +101,18 @@ whole-context baseline. Cached input is reported but never double-counted.
 Savings are claimed only for a verified task outcome.
 _Avoid_: prompt tokens (too narrow), estimated savings without an outcome.
 
+**Savings claim**:
+The user-facing token reduction attached to a completed Run. Locus may measure
+admitted context while a Run is active or failed, but that measurement is not a
+Savings claim until verification and approved delivery complete the Run.
+_Avoid_: estimated savings, projected savings, savings on failed Runs.
+
+**Run evidence snapshot**:
+The durable, ownership-checked read model for one Run: its Agent Task, current
+status, append-only Steps, Artifacts, Approvals, Token ledger, and optional
+Savings claim. It is the interface used for refresh, history, and review.
+_Avoid_: response payload, session state, activity feed.
+
 ## Where it lives (read these, don't re-crawl)
 
 - `src/lib/types.ts` — every shape above (**Repo**, `Graph`, **LocateResult**).
@@ -113,8 +125,11 @@ _Avoid_: prompt tokens (too narrow), estimated savings without an outcome.
 - `src/app/api/attachments/route.ts` — authenticated in-memory document extraction.
 - `src/components/TaskEvidence.tsx` — attachment UI and browser-only screenshot OCR.
 - `src/components/DependencyGraph.tsx` — three-stage context trace; recolours by **Slice**.
-- `src/lib/agent/run-state.ts` — valid **Run** lifecycle transitions and the
-  end-to-end token ledger.
+- `src/lib/agent/run-state.ts` — valid **Run** lifecycle transitions and
+  verified-only **Savings claim** rules.
+- `src/lib/agent/run-store.ts` — guarded Run mutations and append-only Step writes.
+- `src/lib/agent/run-view.ts` — the shared **Run evidence snapshot** interface.
+- `src/components/AgentRunsList.tsx` — durable Run history, review, resume, and approval.
 - `supabase/migrations/005_agent_runs.sql` — durable Agent Tasks, Runs, Steps,
   Artifacts, and Approvals.
 
@@ -126,6 +141,10 @@ _Avoid_: prompt tokens (too narrow), estimated savings without an outcome.
 - **Claims follow evidence.** `benchmarks/` measures historical fix-file recall and estimated context reduction; it does not claim autonomous task completion.
 - **No skipped gates.** A Run cannot complete without verification and explicit
   approval; terminal Runs cannot be rewritten.
+- **Steps are append-only.** Current Run status is a projection; completed Step
+  evidence is inserted once and never rewritten to simulate progress.
+- **No outcome, no claim.** Failed, cancelled, and active Runs expose measured
+  usage but never display a Savings claim.
 - **Measure the whole loop.** The USP is total tokens per verified task—not the
   size of the initial prompt alone.
 
