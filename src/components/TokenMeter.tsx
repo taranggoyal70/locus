@@ -105,7 +105,7 @@ export function TokenMeter({
         {result?.widened
           ? "No reduction yet—add a file, symbol, route, or error message to focus the Slice."
           : result
-            ? `${result.slice.length} files in scope · ${result.excluded.length} excluded`
+            ? `${result.slice.length} files in the Slice · ${result.excluded.length} excluded`
             : "Pick a repo and describe a task."}
       </p>
 

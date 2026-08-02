@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/workspace", label: "Workspace" },
-  { href: "/projects", label: "Projects" },
+  { href: "/projects", label: "Runs" },
   { href: "/settings", label: "Settings" },
 ];
 
@@ -17,7 +17,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-3.5 sm:px-8">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
           <Link href="/workspace" className="flex items-center gap-3 text-paper">
             <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
             <span className="font-semibold tracking-[-0.02em]">Locus</span>
@@ -48,7 +48,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
+      <main className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
         {children}
       </main>
     </div>

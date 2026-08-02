@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
-import { ProjectsList } from "@/components/ProjectsList";
+import { AgentRunsList } from "@/components/AgentRunsList";
 import { SettingsShell } from "@/components/SettingsShell";
 
 export default async function ProjectsPage() {
@@ -10,12 +10,12 @@ export default async function ProjectsPage() {
 
   return (
     <SettingsShell>
-      <h1 className="text-2xl font-semibold tracking-[-0.03em] text-paper">Saved analyses</h1>
+      <h1 className="text-2xl font-semibold tracking-[-0.03em] text-paper">Agent Runs</h1>
       <p className="mt-1 text-sm text-muted-light">
-        Analyses you saved from the workspace. Click one to re-open.
+        Resume active work, review failures, approve delivery, and inspect verified token savings.
       </p>
       <div className="mt-6">
-        <ProjectsList />
+        <AgentRunsList />
       </div>
     </SettingsShell>
   );

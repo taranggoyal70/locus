@@ -107,7 +107,7 @@ export function FilePanel({
             {result.widened
               ? "All files retained · refine the task"
               : displayView === "included"
-                ? "In scope · ranked by relevance"
+                ? "In the Slice · ranked by relevance"
                 : "Outside the slice · available to inspect"}
           </p>
           {selected && (

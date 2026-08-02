@@ -2,55 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-type RunStatus =
-  | "queued"
-  | "localizing"
-  | "planning"
-  | "executing"
-  | "verifying"
-  | "awaiting_approval"
-  | "completed"
-  | "failed"
-  | "cancelled";
-
-type AgentStep = {
-  id: number;
-  sequence: number;
-  title: string;
-  status: string;
-  detail: Record<string, unknown>;
-};
-
-type AgentArtifact = {
-  id: string;
-  kind: string;
-  label: string;
-  content: string | null;
-  url: string | null;
-};
-
-type AgentRunResponse = {
-  run: {
-    id: string;
-    status: RunStatus;
-    error: string | null;
-    included_files: string[];
-    excluded_files: string[];
-    widened_files: string[];
-  };
-  steps: AgentStep[];
-  artifacts: AgentArtifact[];
-  tokens: {
-    baselineTokens: number;
-    totalTokens: number;
-    savedTokens: number;
-    savedPct: number;
-  };
-};
+import { isTerminalRun, type RunStatus } from "@/lib/agent/run-state";
+import type { AgentRunSnapshot, AgentStepView } from "@/lib/agent/run-view";
 
 const PHASES: Array<{ label: string; statuses: RunStatus[] }> = [
   { label: "Locate", statuses: ["queued", "localizing"] },
-  { label: "Plan", statuses: ["planning"] },
+  { label: "Prepare", statuses: ["planning"] },
   { label: "Implement", statuses: ["executing"] },
   { label: "Verify", statuses: ["verifying"] },
   { label: "Approve", statuses: ["awaiting_approval", "completed"] },
@@ -66,7 +23,7 @@ export function AgentRunTimeline({
   steps,
 }: {
   status: RunStatus;
-  steps: AgentStep[];
+  steps: AgentStepView[];
 }) {
   const active = phaseIndex(status);
   return (
@@ -114,20 +71,31 @@ export function AgentRunPanel({
   sliceCount,
   excludedCount,
   estimatedSavedPct,
+  initialRunId = null,
+  acceptanceCriteria,
 }: {
   repository: string | null;
   task: string;
   sliceCount: number;
   excludedCount: number;
   estimatedSavedPct: number;
+  initialRunId?: string | null;
+  acceptanceCriteria: string[];
 }) {
-  const [runId, setRunId] = useState<string | null>(null);
-  const [snapshot, setSnapshot] = useState<AgentRunResponse | null>(null);
+  const [runId, setRunId] = useState<string | null>(initialRunId);
+  const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
   const [launching, setLaunching] = useState(false);
   const [approving, setApproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const status = snapshot?.run.status ?? null;
-  const terminal = status === "completed" || status === "failed" || status === "cancelled";
+  const terminal = status ? isTerminalRun(status) : false;
+
+  function rememberRun(nextRunId: string) {
+    setRunId(nextRunId);
+    const url = new URL(window.location.href);
+    url.searchParams.set("run", nextRunId);
+    window.history.replaceState(null, "", url);
+  }
 
   useEffect(() => {
     if (!runId || terminal) return;
@@ -140,10 +108,10 @@ export function AgentRunPanel({
           signal: controller.signal,
           cache: "no-store",
         });
-        const data = await response.json();
+        const data = await response.json() as AgentRunSnapshot & { error?: string };
         if (!response.ok) throw new Error(data?.error ?? "Could not refresh the run.");
         setSnapshot(data);
-        if (!["completed", "failed", "cancelled"].includes(data.run.status)) {
+        if (!isTerminalRun(data.run.status)) {
           timeout = setTimeout(poll, 2_000);
         }
       } catch (cause) {
@@ -172,21 +140,27 @@ export function AgentRunPanel({
         body: JSON.stringify({
           repository,
           task,
-          acceptanceCriteria: ["Implement the requested behavior", "Run relevant verification"],
+          acceptanceCriteria,
         }),
       });
       const data = await response.json();
+      const createdRunId = data?.run?.id ?? data?.runId;
+      if (createdRunId) rememberRun(createdRunId);
       if (!response.ok) throw new Error(data?.error ?? "Could not start the agent.");
-      setRunId(data.run.id);
       setSnapshot({
         run: data.run,
         steps: [],
         artifacts: [],
         tokens: {
           baselineTokens: 0,
+          includedContextTokens: 0,
+          inputTokens: 0,
+          cachedInputTokens: 0,
+          outputTokens: 0,
           totalTokens: 0,
-          savedTokens: 0,
-          savedPct: 0,
+          savedTokens: null,
+          savedPct: null,
+          claim: { verified: false, savedTokens: null, savedPct: null },
         },
       });
     } catch (cause) {
@@ -205,7 +179,7 @@ export function AgentRunPanel({
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error ?? "Could not deliver the change.");
       const refreshed = await fetch(`/api/agent/runs/${runId}`, { cache: "no-store" });
-      const refreshedData = await refreshed.json();
+      const refreshedData = await refreshed.json() as AgentRunSnapshot & { error?: string };
       if (!refreshed.ok) throw new Error(refreshedData?.error ?? "Could not refresh the run.");
       setSnapshot(refreshedData);
     } catch (cause) {
@@ -215,7 +189,7 @@ export function AgentRunPanel({
     }
   }
 
-  const canLaunch = Boolean(repository) && task.trim().length >= 10;
+  const canLaunch = Boolean(repository) && task.trim().length >= 10 && acceptanceCriteria.length > 0;
   const diff = snapshot?.artifacts.find((artifact) => artifact.kind === "diff");
   const summary = snapshot?.artifacts.find((artifact) => artifact.kind === "summary");
   const pullRequest = snapshot?.artifacts.find((artifact) => artifact.kind === "pull_request");
@@ -277,7 +251,11 @@ export function AgentRunPanel({
                 {snapshot.run.status.replaceAll("_", " ")}
               </span>
               <span className="font-mono text-xs font-semibold text-accent">
-                {snapshot.tokens.savedPct}% saved
+                {snapshot.tokens.claim.verified
+                  ? `${snapshot.tokens.claim.savedPct}% verified saved`
+                  : snapshot.run.status === "failed"
+                    ? "no savings claim"
+                    : "claim pending"}
               </span>
             </div>
             {repositoryTruncated && (

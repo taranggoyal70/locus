@@ -21,7 +21,7 @@ describe("AgentRunTimeline", () => {
     );
 
     expect(html).toContain("Locate");
-    expect(html).toContain("Plan");
+    expect(html).toContain("Prepare");
     expect(html).toContain("Implement");
     expect(html).toContain("Verify");
     expect(html).toContain("Approve");

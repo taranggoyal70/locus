@@ -18,9 +18,10 @@ import { buildShareUrl } from "@/lib/share";
 type LocusAppProps = {
   accountName?: string;
   isWorkspace?: boolean;
+  initialRunId?: string | null;
 };
 
-export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
+export function LocusApp({ accountName, isWorkspace = false, initialRunId = null }: LocusAppProps) {
   const {
     repo,
     graph,
@@ -48,6 +49,9 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
   } = useLocus();
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [saveStatus, setSaveStatus] = useState("idle");
+  const [definitionOfDone, setDefinitionOfDone] = useState(
+    "The requested behavior works as described\nRelevant automated checks pass",
+  );
   const taskInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -160,7 +164,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                 {isWorkspace ? "Mission workspace" : "Public beta"}
               </span>
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#52647a]">
-                Scope → Run → Evidence
+                Slice → Run → Evidence
               </span>
             </div>
             <h1 className="max-w-2xl text-5xl font-bold leading-[0.9] tracking-[-0.065em] text-[#14233b] sm:text-6xl lg:text-[72px]">
@@ -300,6 +304,23 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                   )}
                   <TaskEvidence evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
                 </div>
+
+                <div>
+                  <label htmlFor="definition-of-done" className="flex items-center justify-between text-xs font-medium text-paper">
+                    <span>Definition of done</span>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">03</span>
+                  </label>
+                  <textarea
+                    id="definition-of-done"
+                    value={definitionOfDone}
+                    onChange={(event) => setDefinitionOfDone(event.target.value)}
+                    maxLength={2_000}
+                    rows={3}
+                    placeholder="One verifiable outcome per line."
+                    className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-ink px-3 py-3 text-sm leading-6 text-paper placeholder:text-muted focus:border-accent focus:outline-none"
+                  />
+                  <p className="mt-2 text-[10px] leading-4 text-muted">The agent must collect evidence for these outcomes before delivery.</p>
+                </div>
               </div>
 
               {(error || note) && (
@@ -322,7 +343,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                   <div className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
-                        Scope aperture
+                        Slice aperture
                       </p>
                       <p className="mt-1 truncate text-sm font-semibold text-paper">{repo?.name}</p>
                     </div>
@@ -375,6 +396,8 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                     sliceCount={includedCount}
                     excludedCount={excludedCount}
                     estimatedSavedPct={reduction}
+                    initialRunId={initialRunId}
+                    acceptanceCriteria={definitionOfDone.split("\n").map((item) => item.trim()).filter(Boolean)}
                   />
                   <TokenMeter
                     result={result}
@@ -388,7 +411,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
                 <div>
                   <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Waiting for a repository</p>
                   <p className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-paper">
-                    {loading ? "Reading the code graph…" : "Load a repository to open the scope ledger."}
+                    {loading ? "Reading the code graph…" : "Load a repository to open the Slice ledger."}
                   </p>
                 </div>
               </div>
@@ -400,7 +423,7 @@ export function LocusApp({ accountName, isWorkspace = false }: LocusAppProps) {
 
       <footer className="border-t border-[#14233b]/15">
         <div className="mx-auto flex max-w-[1580px] flex-col gap-3 px-4 py-6 text-xs font-medium text-[#52647a] sm:flex-row sm:items-center sm:justify-between sm:px-9">
-          <span>Locus · scoped context, complete work</span>
+          <span>Locus · Slice context, complete work</span>
           <nav className="flex gap-4">
             <Link href="/docs" className="hover:text-[#14233b]">Docs</Link>
             <Link href="/privacy" className="hover:text-[#14233b]">Privacy</Link>
