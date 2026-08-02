@@ -90,7 +90,7 @@ export function BillingPanel() {
           <p className="mt-0.5 text-xs text-muted">
             {isPro
               ? `Active since ${new Date(billing!.subscribedAt!).toLocaleDateString()}`
-              : "Upgrade for private repos, team workspaces, and higher limits"}
+              : "Upgrade for private repos, team workflows, and higher Run limits"}
           </p>
         </div>
         {isPro ? (
@@ -105,7 +105,7 @@ export function BillingPanel() {
           <button
             onClick={checkout}
             disabled={redirecting}
-            className="ml-3 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink transition hover:bg-[#b5f34a] disabled:opacity-40"
+            className="ml-3 shrink-0 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:opacity-40"
           >
             {redirecting ? "Redirecting..." : "Upgrade to Pro"}
           </button>

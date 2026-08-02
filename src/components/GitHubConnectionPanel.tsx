@@ -104,9 +104,9 @@ export function GitHubConnectionPanel() {
       ) : (
         <div className="rounded-xl border border-line-strong p-4">
           <p className="text-sm text-muted-light">
-            Connect your GitHub account to analyze private repositories.
+            Connect GitHub to localize private repositories and open pull requests after approval.
             Locus requests <code className="rounded bg-ink px-1.5 py-0.5 font-mono text-xs">repo</code> scope
-            to read your repository contents.
+            to read repository contents and write only the changes you explicitly approve.
           </p>
           <a
             href="/api/github/connect"

@@ -111,7 +111,7 @@ export function TeamsPanel() {
         <button
           onClick={createTeam}
           disabled={creating || !newName.trim()}
-          className="shrink-0 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-[#b5f34a] disabled:opacity-40"
+          className="shrink-0 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:opacity-40"
         >
           {creating ? "Creating..." : "Create team"}
         </button>
@@ -119,7 +119,7 @@ export function TeamsPanel() {
 
       {teams.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted">
-          No teams yet. Create one to share projects with your colleagues.
+          No teams yet. Create one to share Runs, evidence, and approvals.
         </p>
       ) : (
         <div className="divide-y divide-line overflow-hidden rounded-xl border border-line-strong">

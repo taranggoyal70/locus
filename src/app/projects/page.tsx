@@ -10,11 +10,13 @@ export default async function ProjectsPage() {
 
   return (
     <SettingsShell>
-      <h1 className="text-2xl font-semibold tracking-[-0.03em] text-paper">Agent Runs</h1>
-      <p className="mt-1 text-sm text-muted-light">
+      <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Evidence ledger</p>
+      <h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Agent Runs</h1>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">
         Resume active work, review failures, approve delivery, and inspect verified token savings.
       </p>
-      <div className="mt-6">
+      <div className="aperture-rule mt-7" />
+      <div className="mt-7">
         <AgentRunsList />
       </div>
     </SettingsShell>

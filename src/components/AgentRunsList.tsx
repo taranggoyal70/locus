@@ -29,8 +29,8 @@ function statusLabel(status: string): string {
 function statusTone(status: string): string {
   if (status === "completed") return "border-accent/35 bg-accent/10 text-accent";
   if (status === "failed" || status === "cancelled") return "border-recent/35 bg-recent/10 text-recent";
-  if (status === "awaiting_approval") return "border-[#ffd45c]/35 bg-[#ffd45c]/10 text-[#ffd45c]";
-  return "border-line-strong bg-white/[0.04] text-muted-light";
+  if (status === "awaiting_approval") return "border-[#b78a22]/35 bg-[#e8c866]/25 text-[#765a18]";
+  return "border-line-strong bg-paper/[0.04] text-muted-light";
 }
 
 function runDateLabel(value: string): string {
@@ -153,7 +153,7 @@ export function AgentRunsList() {
               key={run.id}
               type="button"
               onClick={() => selectRun(run.id)}
-              className={`block w-full px-5 py-4 text-left transition hover:bg-white/[0.035] ${selectedRunId === run.id ? "bg-white/[0.05]" : ""}`}
+              className={`block w-full px-5 py-4 text-left transition hover:bg-paper/[0.035] ${selectedRunId === run.id ? "bg-paper/[0.055]" : ""}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
