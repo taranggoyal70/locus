@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
+import { LandingPage } from "@/components/LandingPage";
 import { buildWorkspacePath, sharedWorkspaceViewFrom } from "@/lib/share";
 
 type HomeProps = {
@@ -9,13 +10,13 @@ type HomeProps = {
 
 export default async function Home({ searchParams }: HomeProps) {
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-
   const params = await searchParams;
   const sharedView = sharedWorkspaceViewFrom(params);
 
-  // Preserve old launch links, but only inside the authenticated workspace.
-  if (sharedView) redirect(buildWorkspacePath(sharedView));
+  if (userId) {
+    if (sharedView) redirect(buildWorkspacePath(sharedView));
+    redirect("/workspace");
+  }
 
-  redirect("/workspace");
+  return <LandingPage />;
 }

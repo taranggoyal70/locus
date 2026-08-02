@@ -16,7 +16,7 @@ export default function OgImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          background: "#f1eee6",
+          background: "#edf1ee",
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -26,13 +26,13 @@ export default function OgImage() {
               width: 48,
               height: 48,
               borderRadius: "12px",
-              background: "#2457ff",
+              background: "#14233b",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: "24px",
               fontWeight: 800,
-              color: "#f1eee6",
+              color: "#8ef0c0",
             }}
           >
             L
@@ -52,7 +52,7 @@ export default function OgImage() {
             maxWidth: "800px",
           }}
         >
-          Ship the task. Not the repository.
+          Ship the task. Not the repo.
         </h1>
         <p
           style={{
@@ -63,7 +63,7 @@ export default function OgImage() {
             lineHeight: 1.4,
           }}
         >
-          Focus context, implement in an isolated sandbox, verify the change, and approve delivery.
+          Verified engineering tasks with less total context.
         </p>
         <div
           style={{
@@ -78,7 +78,7 @@ export default function OgImage() {
               style={{
                 padding: "8px 20px",
                 borderRadius: "8px",
-                border: "1px solid rgba(17, 29, 43, 0.2)",
+                border: "1px solid rgba(20, 35, 59, 0.2)",
                 color: "#48525e",
                 fontSize: "14px",
                 fontWeight: 500,

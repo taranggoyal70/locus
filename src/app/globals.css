@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  /* Flight-deck navy with clear, semantic signal colors. */
-  --ink: #14233b;
-  --surface: #1d3150;
-  --surface-raised: #294263;
-  --line: rgba(237, 245, 247, 0.09);
-  --line-strong: rgba(237, 245, 247, 0.18);
-  --muted: #8296ad;
-  --muted-light: #bdcad8;
-  --paper: #f0f6f7;
-  --accent: #8ef0c0;
-  --accent-dim: #69d6a2;
-  --excluded: #3b506c;
-  --recent: #ff896e;
+  /* Mineral field: a daylight canvas with precise evidence signals. */
+  --ink: #edf1ee;
+  --surface: #f9fbf7;
+  --surface-raised: #dfe8e2;
+  --line: rgba(20, 35, 59, 0.1);
+  --line-strong: rgba(20, 35, 59, 0.2);
+  --muted: #71817e;
+  --muted-light: #4e605d;
+  --paper: #14233b;
+  --accent: #087864;
+  --accent-dim: #075e50;
+  --excluded: #cad5cf;
+  --recent: #cf5f49;
 }
 
 @theme inline {
@@ -30,6 +30,7 @@
   --color-excluded: var(--excluded);
   --color-recent: var(--recent);
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-display: var(--font-bricolage, var(--font-geist-sans), ui-sans-serif, sans-serif);
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
 }
 
@@ -39,12 +40,17 @@
 
 html {
   background: var(--ink);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   min-height: 100vh;
-  background: linear-gradient(180deg, #1a2b48 0, var(--ink) 34rem);
+  background-color: var(--ink);
+  background-image:
+    linear-gradient(rgba(20, 35, 59, .045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 35, 59, .045) 1px, transparent 1px),
+    radial-gradient(circle at 74% 4%, rgba(142, 240, 192, .24), transparent 26rem);
+  background-size: 32px 32px, 32px 32px, 100% 100%;
   color: var(--paper);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
@@ -52,7 +58,7 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: #ffffff;
+  color: white;
 }
 
 button:focus-visible,
@@ -81,7 +87,7 @@ summary:focus-visible {
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: rgba(240, 238, 233, 0.16);
+  background: rgba(20, 35, 59, 0.2);
   background-clip: padding-box;
 }
 
@@ -149,6 +155,22 @@ summary:focus-visible {
 
 .locus-stage {
   box-shadow: 0 32px 90px rgba(20, 35, 59, .18);
+}
+
+.site-noise {
+  background-image:
+    radial-gradient(circle at 16% 12%, rgba(255, 255, 255, .9), transparent 24rem),
+    radial-gradient(circle at 88% 20%, rgba(142, 240, 192, .18), transparent 22rem);
+}
+
+.aperture-rule {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(20, 35, 59, .28) 0,
+    rgba(20, 35, 59, .28) 1px,
+    transparent 1px,
+    transparent 14px
+  );
 }
 
 @keyframes context-drift {

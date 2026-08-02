@@ -52,8 +52,8 @@ file was unnecessary, or that agent quality cannot regress.
 ### Task evidence
 
 Attach screenshots, PDFs, DOCX files, or plain text to strengthen task matching.
-Documents are processed in server memory and immediately discarded. Screenshot OCR
-runs in the browser. Attachments are never written to storage.
+Uploaded binaries are processed for text extraction and are not intentionally retained.
+Extracted text can become part of a durable task or Run record when submitted.
 
 ### Supported files
 
@@ -115,7 +115,7 @@ pnpm dev
 ### Authentication
 
 Locus uses Clerk for account creation, email verification, and secure sessions.
-Signed-out visitors go to login; signed-in users go to `/workspace`.
+Signed-out visitors see the public product site; signed-in users go to `/workspace`.
 
 ### Persistence
 
