@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
+import { MarketingShell } from "@/components/MarketingShell";
 import { SITE_URL } from "@/lib/config";
-import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -11,29 +11,15 @@ export const metadata: Metadata = {
 
 export default function DocsPage() {
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <Link href="/" className="flex items-center gap-3 text-paper">
-            <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
-            <span className="font-semibold tracking-[-0.02em]">Locus</span>
-          </Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <Link href="/workspace" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">
-              Workspace
-            </Link>
-            <Link href="/docs" className="rounded-lg px-3 py-2 text-accent font-medium">
-              Docs
-            </Link>
-          </nav>
-        </div>
-      </header>
-
+    <MarketingShell>
       <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
-        <h1 className="text-3xl font-semibold tracking-[-0.04em] text-paper">API Reference</h1>
-        <p className="mt-3 text-sm leading-6 text-muted-light">
-          Use the Locus API to get task-sized context from any public GitHub repository. Authenticate with an API key from your <Link href="/settings" className="text-accent hover:underline">settings page</Link>.
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Developer interface</p>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-5xl">Localize before you spend.</h1>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-light">
+          Agent Runs in the web app handle the full localize, implement, verify, and approve loop. The API below exposes the localization engine directly for your own agents. Authenticate with an API key from your <Link href="/settings" className="text-accent hover:underline">settings page</Link>.
         </p>
+
+        <div className="aperture-rule mt-8" />
 
         <section className="mt-10">
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Authentication</h2>
@@ -52,8 +38,8 @@ export default function DocsPage() {
           </p>
 
           <h3 className="mt-6 text-sm font-semibold text-paper">Request body</h3>
-          <div className="mt-2 overflow-hidden rounded-xl border border-line-strong">
-            <table className="w-full text-sm">
+          <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
+            <table className="min-w-[680px] text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface/50">
                   <th className="px-4 py-2 text-left font-medium text-paper">Field</th>
@@ -139,8 +125,8 @@ export default function DocsPage() {
 
         <section className="mt-10">
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Error codes</h2>
-          <div className="mt-2 overflow-hidden rounded-xl border border-line-strong">
-            <table className="w-full text-sm">
+          <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
+            <table className="min-w-[420px] text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface/50">
                   <th className="px-4 py-2 text-left font-medium text-paper">Status</th>
@@ -168,6 +154,6 @@ export default function DocsPage() {
           </ul>
         </section>
       </main>
-    </div>
+    </MarketingShell>
   );
 }

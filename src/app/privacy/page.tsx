@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 
+import { MarketingShell } from "@/components/MarketingShell";
 import { REPO_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -11,17 +10,12 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-line">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Link href="/" className="flex items-center gap-3 text-paper">
-            <Image src="/locus-mark.svg" width={24} height={24} alt="" />
-            <span className="font-semibold">Locus</span>
-          </Link>
-        </div>
-      </header>
+    <MarketingShell>
       <main className="mx-auto max-w-3xl px-5 py-12">
-        <h1 className="text-3xl font-semibold tracking-tight text-paper">Privacy Policy</h1>
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Trust</p>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Privacy Policy</h1>
+        <p className="mt-3 text-sm leading-7 text-muted-light">What Locus processes, what it keeps, and why.</p>
+        <div className="aperture-rule mt-8" />
 
         <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
           <section>
@@ -36,10 +30,20 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-paper">Repository data</h2>
             <p>
-              When you analyze a repository, its public source code is fetched from GitHub,
-              processed in memory on our server, and returned to your browser. We do not persist,
-              log, or store repository contents. Analysis results exist only in your browser session
-              and are discarded when you close the tab.
+              When you analyze a repository or start an Agent Run, source code is fetched from
+              GitHub and processed by Locus and its execution sandbox. Locus does not intentionally
+              retain a complete copy of your repository. If you connect GitHub, the access token is
+              stored server-side so Locus can access repositories you authorize.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-paper">Run records</h2>
+            <p>
+              To make Agent Runs durable and auditable, Locus stores task metadata, included and
+              excluded file paths, run steps and status, generated change sets, verification
+              evidence, approval events, and token-usage measurements in Supabase. These records
+              are associated with your account and support run history, resume, and review.
             </p>
           </section>
 
@@ -47,17 +51,18 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-paper">Task evidence</h2>
             <p>
               Screenshots, PDFs, and documents you upload for task evidence are processed
-              server-side for text extraction and immediately discarded. Extracted text is returned
-              to your browser and is not stored on our servers.
+              server-side for text extraction. Uploaded binaries are not intentionally retained;
+              extracted text may become part of the task or run record when you submit it.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-paper">Analytics</h2>
             <p>
-              We do not use third-party analytics or tracking scripts. Server logs may record
-              request metadata (IP address, timestamp, user agent) for security and rate-limiting
-              purposes. These logs are rotated automatically and not shared with third parties.
+              Hosting, authentication, database, and execution providers process operational data
+              required to run the service. Server logs may include request metadata such as an IP
+              address, timestamp, user agent, route, and error details for security, reliability,
+              and rate limiting. We do not sell personal data.
             </p>
           </section>
 
@@ -72,6 +77,6 @@ export default function PrivacyPage() {
           </section>
         </div>
       </main>
-    </div>
+    </MarketingShell>
   );
 }

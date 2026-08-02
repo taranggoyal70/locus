@@ -52,8 +52,8 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <>
-            <h2 className="text-xl font-semibold tracking-[-0.02em] text-paper">Join the Pro waitlist</h2>
-            <p className="mt-1 text-sm text-muted-light">Private repos, team workspaces, higher limits. We&apos;ll reach out when it&apos;s ready.</p>
+            <h2 className="font-display text-2xl font-semibold tracking-[-0.04em] text-paper">Join the Pro waitlist</h2>
+            <p className="mt-1 text-sm text-muted-light">Private repos, shared run evidence, and higher throughput. We&apos;ll reach out when it&apos;s ready.</p>
 
             {result && !result.ok && (
               <div className="mt-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-2 text-xs text-recent">{result.message}</div>
@@ -93,7 +93,7 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-ink transition hover:bg-[#b5f34a] disabled:opacity-40"
+                className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:opacity-40"
               >
                 {submitting ? "Joining..." : "Join waitlist"}
               </button>

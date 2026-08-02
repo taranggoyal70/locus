@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { MarketingShell } from "@/components/MarketingShell";
 import { WaitlistForm } from "@/components/WaitlistForm";
 
 const tiers = [
@@ -11,15 +11,16 @@ const tiers = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "For individual developers exploring Locus.",
+    description: "For developers who want a smaller, accountable agent loop.",
     features: [
       "Public repositories",
-      "Unlimited browser analyses",
+      "10 Agent Runs per day",
+      "Durable run history and resume",
+      "Included and excluded file evidence",
+      "Verified-only token savings",
       "CLI + MCP server",
-      "10 saved analyses",
       "5 API keys",
       "30 API calls / minute",
-      "Community support",
     ],
     cta: "Get started",
     ctaHref: "/sign-up",
@@ -30,16 +31,17 @@ const tiers = [
     name: "Pro",
     price: "$29",
     period: "/ month",
-    description: "For teams shipping with AI agents every day.",
+    description: "For teams ready to move the full engineering loop into Locus.",
     features: [
       "Everything in Free",
       "Private repositories (GitHub OAuth)",
-      "Unlimited saved analyses",
+      "Higher Agent Run limits",
+      "Shared runs and evidence",
       "10 API keys",
       "120 API calls / minute",
       "Team workspaces",
-      "Priority support",
       "Usage analytics dashboard",
+      "Priority support",
     ],
     cta: "Join waitlist",
     ctaHref: "",
@@ -71,31 +73,15 @@ export default function PricingPage() {
   const [showWaitlist, setShowWaitlist] = useState(false);
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-line bg-ink/[0.88] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <Link href="/" className="flex items-center gap-3 text-paper">
-            <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
-            <span className="font-semibold tracking-[-0.02em]">Locus</span>
-          </Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <Link href="/docs" className="rounded-lg px-3 py-2 text-muted-light transition hover:text-paper">Docs</Link>
-            <Link href="/pricing" className="rounded-lg px-3 py-2 text-accent font-medium">Pricing</Link>
-            <Link href="/workspace" className="rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-2 font-medium text-accent transition hover:bg-accent/[0.1]">
-              Open workspace
-            </Link>
-          </nav>
-        </div>
-      </header>
-
+    <MarketingShell>
       <main className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
         <div className="text-center">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Pricing</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-paper sm:text-5xl">
-            Start free. Scale when you&apos;re ready.
+          <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-6xl">
+            Pay for throughput, not promises.
           </h1>
-          <p className="mt-4 text-base text-muted-light sm:text-lg">
-            Locus is free for public repositories. Upgrade for private repos, team features, and higher API limits.
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
+            Start with public repositories and ten end-to-end Agent Runs a day. Every plan keeps the same rule: savings count only after verification passes.
           </p>
         </div>
 
@@ -105,8 +91,8 @@ export default function PricingPage() {
               key={tier.name}
               className={`rounded-[22px] border p-6 ${
                 tier.highlighted
-                  ? "border-accent/40 bg-accent/[0.03] shadow-[0_0_60px_rgba(163,230,53,0.06)]"
-                  : "border-line-strong bg-surface"
+                  ? "border-accent/45 bg-[#e2eee8] shadow-[0_24px_70px_rgba(20,35,59,0.10)]"
+                  : "border-line-strong bg-surface/80"
               }`}
             >
               <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">{tier.name}</p>
@@ -129,7 +115,7 @@ export default function PricingPage() {
                 {tier.action === "waitlist" ? (
                   <button
                     onClick={() => setShowWaitlist(true)}
-                    className="block w-full rounded-xl bg-accent px-4 py-3 text-center text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
+                    className="block w-full rounded-xl bg-accent px-4 py-3 text-center text-sm font-semibold text-ink transition hover:bg-accent-dim"
                   >
                     {tier.cta}
                   </button>
@@ -138,7 +124,7 @@ export default function PricingPage() {
                     href={tier.ctaHref}
                     className={`block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition ${
                       tier.highlighted
-                        ? "bg-accent text-ink hover:bg-[#b5f34a]"
+                        ? "bg-accent text-ink hover:bg-accent-dim"
                         : "border border-line-strong text-paper hover:border-accent/40"
                     }`}
                   >
@@ -159,8 +145,7 @@ export default function PricingPage() {
           </p>
         </div>
       </main>
-
       {showWaitlist && <WaitlistForm onClose={() => setShowWaitlist(false)} />}
-    </div>
+    </MarketingShell>
   );
 }
