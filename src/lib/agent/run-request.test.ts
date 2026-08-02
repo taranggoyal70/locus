@@ -30,4 +30,20 @@ describe("agent run request", () => {
       }),
     ).toThrow("No more than 12 acceptance criteria");
   });
+
+  it("keeps the revision selected during repository intake", () => {
+    expect(
+      parseAgentRunRequest({
+        repository: "acme/widgets@feature/token-ledger",
+        task: "Make the token ledger status-aware",
+      }),
+    ).toMatchObject({ repository: "acme/widgets", baseRef: "feature/token-ledger" });
+
+    expect(
+      parseAgentRunRequest({
+        repository: "https://github.com/acme/widgets/tree/release/beta",
+        task: "Prepare the public beta release",
+      }),
+    ).toMatchObject({ repository: "acme/widgets", baseRef: "release/beta" });
+  });
 });

@@ -2,12 +2,12 @@ import { FatalError } from "workflow";
 
 import { runCodingTask } from "@/lib/agent/coding-agent";
 import { fetchAgentRepository } from "@/lib/agent/github-source";
+import { appendRunStep, failRun, patchRun, transitionRun } from "@/lib/agent/run-store";
 import { createVercelWorkspace } from "@/lib/agent/vercel-workspace";
 import { WorkspaceController } from "@/lib/agent/workspace";
-import { AgentScope, buildAgentPrompt } from "@/lib/agent/workspace-tools";
+import { AgentSlice, buildAgentPrompt } from "@/lib/agent/workspace-tools";
 import { buildGraph, locate } from "@/lib/localizer";
 import { serviceClient } from "@/lib/supabase";
-import type { Database, Json } from "@/lib/database.types";
 
 type AgentRunWorkflowInput = {
   runId: string;
@@ -28,46 +28,6 @@ type LocalizedRun = {
   includedTokens: number;
 };
 
-async function updateRun(
-  runId: string,
-  values: Database["public"]["Tables"]["agent_runs"]["Update"],
-): Promise<void> {
-  const db = serviceClient();
-  const { error } = await db.from("agent_runs").update(values).eq("id", runId);
-  if (error) throw new Error(`Could not update agent run: ${error.message}`);
-}
-
-async function recordStep(input: {
-  runId: string;
-  userId: string;
-  sequence: number;
-  kind: "localize" | "plan" | "tool" | "widen" | "verify" | "approval" | "delivery";
-  status: "running" | "completed" | "failed" | "skipped";
-  title: string;
-  detail?: Json;
-  inputTokens?: number;
-  outputTokens?: number;
-}): Promise<void> {
-  const db = serviceClient();
-  const completedAt = input.status === "running" ? null : new Date().toISOString();
-  const { error } = await db.from("agent_steps").upsert(
-    {
-      run_id: input.runId,
-      user_id: input.userId,
-      sequence: input.sequence,
-      kind: input.kind,
-      status: input.status,
-      title: input.title,
-      detail: input.detail ?? {},
-      input_tokens: input.inputTokens ?? 0,
-      output_tokens: input.outputTokens ?? 0,
-      completed_at: completedAt,
-    },
-    { onConflict: "run_id,sequence" },
-  );
-  if (error) throw new Error(`Could not record agent step: ${error.message}`);
-}
-
 async function localizeRunStep(runId: string): Promise<LocalizedRun> {
   "use step";
 
@@ -87,18 +47,15 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
     .single();
   if (taskError || !task) throw new FatalError("Agent task was not found");
 
-  await updateRun(runId, {
-    status: "localizing",
-    started_at: run.started_at ?? new Date().toISOString(),
-    error: null,
-  });
-  await recordStep({
+  await transitionRun({
     runId,
     userId: run.user_id,
-    sequence: 0,
-    kind: "localize",
-    status: "running",
-    title: "Locate the smallest useful context",
+    current: "queued",
+    next: "localizing",
+    values: {
+      started_at: run.started_at ?? new Date().toISOString(),
+      error: null,
+    },
   });
 
   const fetched = await fetchAgentRepository(task.repo_url, task.base_ref);
@@ -110,14 +67,19 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
     .map((node) => node.path)
     .filter((path) => !includedSet.has(path));
 
-  await updateRun(runId, {
-    status: "planning",
-    baseline_tokens: result.totalTokens,
-    included_context_tokens: result.sliceTokens,
-    included_files: included,
-    excluded_files: excluded,
+  await transitionRun({
+    runId,
+    userId: run.user_id,
+    current: "localizing",
+    next: "planning",
+    values: {
+      baseline_tokens: result.totalTokens,
+      included_context_tokens: result.sliceTokens,
+      included_files: included,
+      excluded_files: excluded,
+    },
   });
-  await recordStep({
+  await appendRunStep({
     runId,
     userId: run.user_id,
     sequence: 0,
@@ -134,19 +96,6 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
       repositoryTruncated: fetched.truncated,
     },
   });
-  await recordStep({
-    runId,
-    userId: run.user_id,
-    sequence: 1,
-    kind: "plan",
-    status: "completed",
-    title: "Execution plan bounded to the Slice",
-    detail: {
-      acceptanceCriteria: task.acceptance_criteria,
-      anchors: result.anchors,
-    },
-  });
-
   return {
     runId,
     userId: run.user_id,
@@ -166,14 +115,11 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
 async function executeRunStep(localized: LocalizedRun): Promise<void> {
   "use step";
 
-  await updateRun(localized.runId, { status: "executing" });
-  await recordStep({
+  await transitionRun({
     runId: localized.runId,
     userId: localized.userId,
-    sequence: 2,
-    kind: "tool",
-    status: "running",
-    title: "Implement changes in an isolated sandbox",
+    current: "planning",
+    next: "executing",
   });
 
   const workspace = await createVercelWorkspace({
@@ -181,14 +127,19 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
     revision: localized.revision,
     runId: localized.runId,
   });
-  const scope = new AgentScope({
+  const slice = new AgentSlice({
     included: localized.included,
     excluded: localized.excluded,
   });
-  const controller = new WorkspaceController(workspace, scope);
+  const controller = new WorkspaceController(workspace, slice);
 
   try {
-    await updateRun(localized.runId, { sandbox_id: workspace.id });
+    await patchRun({
+      runId: localized.runId,
+      userId: localized.userId,
+      current: "executing",
+      values: { sandbox_id: workspace.id },
+    });
     await controller.prepareDependencies();
     const prompt = buildAgentPrompt({
       task: localized.task,
@@ -224,18 +175,24 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       localized.baselineTokens,
       localized.includedTokens + widenedTokens,
     );
-    const diff = await controller.diff();
+    const diff = await controller.reviewDiff();
     const changeSet = await controller.changeSet();
     if (changeSet.length === 0) throw new Error("Agent completed without repository changes");
 
-    await updateRun(localized.runId, {
-      status: "verifying",
-      included_context_tokens: effectiveContextTokens,
-      input_tokens: result.tokenLedger.inputTokens,
-      output_tokens: result.tokenLedger.outputTokens,
-      widened_files: result.ledger.widened,
+    await transitionRun({
+      runId: localized.runId,
+      userId: localized.userId,
+      current: "executing",
+      next: "verifying",
+      values: {
+        included_context_tokens: effectiveContextTokens,
+        input_tokens: result.tokenLedger.inputTokens,
+        cached_input_tokens: result.tokenLedger.cachedInputTokens,
+        output_tokens: result.tokenLedger.outputTokens,
+        widened_files: result.ledger.widened,
+      },
     });
-    await recordStep({
+    await appendRunStep({
       runId: localized.runId,
       userId: localized.userId,
       sequence: 2,
@@ -250,7 +207,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       inputTokens: result.tokenLedger.inputTokens,
       outputTokens: result.tokenLedger.outputTokens,
     });
-    await recordStep({
+    await appendRunStep({
       runId: localized.runId,
       userId: localized.userId,
       sequence: 3,
@@ -306,15 +263,12 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
     });
     if (approvalError) throw new Error(`Could not create approval: ${approvalError.message}`);
 
-    await recordStep({
+    await transitionRun({
       runId: localized.runId,
       userId: localized.userId,
-      sequence: 4,
-      kind: "approval",
-      status: "running",
-      title: "Waiting for approval before GitHub delivery",
+      current: "verifying",
+      next: "awaiting_approval",
     });
-    await updateRun(localized.runId, { status: "awaiting_approval" });
   } finally {
     await workspace.stop();
   }
@@ -325,12 +279,7 @@ executeRunStep.maxRetries = 0;
 async function failRunStep(runId: string, message: string): Promise<void> {
   "use step";
 
-  const error = message.slice(0, 2_000);
-  await updateRun(runId, {
-    status: "failed",
-    error,
-    completed_at: new Date().toISOString(),
-  });
+  await failRun(runId, message);
 }
 
 export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<void> {

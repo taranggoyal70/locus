@@ -2,9 +2,11 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { start } from "workflow/api";
 
-import { resolveAgentModel } from "@/lib/agent/coding-agent";
+import { calculateTokenLedger, resolveAgentModel } from "@/lib/agent/coding-agent";
 import { agentRunQuotaDecision } from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
+import { isRunStatus, savingsClaimForRun } from "@/lib/agent/run-state";
+import { transitionRun } from "@/lib/agent/run-store";
 import { serviceClient } from "@/lib/supabase";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
@@ -39,7 +41,42 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: "Could not load agent runs." }, { status: 500 });
   }
-  return NextResponse.json({ runs: data });
+  const taskIds = [...new Set(data.map((run) => run.task_id))];
+  const { data: tasks, error: taskError } = taskIds.length > 0
+    ? await db
+      .from("agent_tasks")
+      .select("id,repo_url,base_ref,task,acceptance_criteria")
+      .eq("user_id", userId)
+      .in("id", taskIds)
+    : { data: [], error: null };
+  if (taskError) {
+    return NextResponse.json({ error: "Could not load Agent Tasks." }, { status: 500 });
+  }
+  const tasksById = new Map((tasks ?? []).map((task) => [task.id, task]));
+  const runs = data.map((run) => {
+    const ledger = calculateTokenLedger({
+      baselineContextTokens: run.baseline_tokens,
+      includedContextTokens: run.included_context_tokens,
+      inputTokens: run.input_tokens,
+      cachedInputTokens: run.cached_input_tokens,
+      outputTokens: run.output_tokens,
+    });
+    const claim = isRunStatus(run.status)
+      ? savingsClaimForRun(run.status, ledger)
+      : { verified: false as const, savedTokens: null, savedPct: null };
+    return {
+      ...run,
+      task: tasksById.get(run.task_id) ?? null,
+      tokens: {
+        totalTokens: ledger.totalTokens,
+        cachedInputTokens: ledger.cachedInputTokens,
+        savedTokens: claim.savedTokens,
+        savedPct: claim.savedPct,
+        verified: claim.verified,
+      },
+    };
+  });
+  return NextResponse.json({ runs });
 }
 
 export async function POST(request: Request) {
@@ -153,15 +190,16 @@ export async function POST(request: Request) {
       { status: 202 },
     );
   } catch {
-    await db
-      .from("agent_runs")
-      .update({
-        status: "failed",
+    await transitionRun({
+      runId: run.id,
+      userId,
+      current: "queued",
+      next: "failed",
+      values: {
         error: "The durable workflow could not be started.",
         completed_at: new Date().toISOString(),
-      })
-      .eq("id", run.id)
-      .eq("user_id", userId);
+      },
+    });
     return NextResponse.json(
       { error: "The agent run was created, but execution could not start.", runId: run.id },
       { status: 503 },

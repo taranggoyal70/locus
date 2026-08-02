@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  AgentScope,
+  AgentSlice,
   buildAgentPrompt,
   truncateToolOutput,
   validateAgentCommand,
@@ -10,18 +10,18 @@ import {
 
 describe("agent Slice permissions", () => {
   it("requires an explicit Widen before excluded source can be read", () => {
-    const scope = new AgentScope({
+    const slice = new AgentSlice({
       included: ["src/dashboard.ts"],
       excluded: ["src/billing.ts"],
     });
 
-    expect(scope.canRead("src/dashboard.ts")).toBe(true);
-    expect(scope.canRead("src/billing.ts")).toBe(false);
+    expect(slice.canRead("src/dashboard.ts")).toBe(true);
+    expect(slice.canRead("src/billing.ts")).toBe(false);
 
-    scope.widen("src/billing.ts");
+    slice.widen("src/billing.ts");
 
-    expect(scope.canRead("src/billing.ts")).toBe(true);
-    expect(scope.ledger()).toEqual({
+    expect(slice.canRead("src/billing.ts")).toBe(true);
+    expect(slice.ledger()).toEqual({
       included: ["src/dashboard.ts"],
       excluded: [],
       widened: ["src/billing.ts"],
@@ -30,23 +30,23 @@ describe("agent Slice permissions", () => {
   });
 
   it("does not invent a Widen for a path outside the excluded ledger", () => {
-    const scope = new AgentScope({
+    const slice = new AgentSlice({
       included: ["src/dashboard.ts"],
       excluded: ["src/billing.ts"],
     });
 
-    expect(() => scope.widen("src/unknown.ts")).toThrow(
+    expect(() => slice.widen("src/unknown.ts")).toThrow(
       "src/unknown.ts is not in the excluded file ledger",
     );
   });
 
   it("tracks new files separately from localized source", () => {
-    const scope = new AgentScope({ included: ["src/a.ts"], excluded: [] });
+    const slice = new AgentSlice({ included: ["src/a.ts"], excluded: [] });
 
-    scope.create("src/a.test.ts");
+    slice.create("src/a.test.ts");
 
-    expect(scope.canWrite("src/a.test.ts")).toBe(true);
-    expect(scope.ledger().created).toEqual(["src/a.test.ts"]);
+    expect(slice.canWrite("src/a.test.ts")).toBe(true);
+    expect(slice.ledger().created).toEqual(["src/a.test.ts"]);
   });
 });
 

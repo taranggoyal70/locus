@@ -1,9 +1,9 @@
-type AgentScopeInput = {
+type AgentSliceInput = {
   included: string[];
   excluded: string[];
 };
 
-export type AgentScopeLedger = {
+export type AgentSliceLedger = {
   included: string[];
   excluded: string[];
   widened: string[];
@@ -29,13 +29,13 @@ export function validateRepoPath(input: string): string {
   return path;
 }
 
-export class AgentScope {
+export class AgentSlice {
   private readonly included: Set<string>;
   private readonly excluded: Set<string>;
   private readonly widened = new Set<string>();
   private readonly created = new Set<string>();
 
-  constructor(input: AgentScopeInput) {
+  constructor(input: AgentSliceInput) {
     this.included = new Set(input.included.map(validateRepoPath));
     this.excluded = new Set(input.excluded.map(validateRepoPath));
   }
@@ -72,7 +72,7 @@ export class AgentScope {
     return sorted(new Set([...this.included, ...this.widened, ...this.created]));
   }
 
-  ledger(): AgentScopeLedger {
+  ledger(): AgentSliceLedger {
     return {
       included: sorted(this.included),
       excluded: sorted(this.excluded),

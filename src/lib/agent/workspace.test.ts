@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AgentScope } from "@/lib/agent/workspace-tools";
+import { AgentSlice } from "@/lib/agent/workspace-tools";
 import {
   WorkspaceController,
   type AgentWorkspace,
@@ -13,7 +13,10 @@ class FakeWorkspace implements AgentWorkspace {
   readonly description = "isolated test workspace";
   readonly commands: AgentWorkspaceCommand[] = [];
 
-  constructor(private readonly existingPaths = new Set<string>()) {}
+  constructor(
+    private readonly existingPaths = new Set<string>(),
+    private readonly diffOutput = "ok\n",
+  ) {}
 
   async run(command: AgentWorkspaceCommand): Promise<AgentWorkspaceResult> {
     this.commands.push(command);
@@ -35,6 +38,9 @@ class FakeWorkspace implements AgentWorkspace {
         stderr: "",
       };
     }
+    if (command.command === "git diff --no-ext-diff -- .") {
+      return { exitCode: 0, stdout: this.diffOutput, stderr: "" };
+    }
     if (command.command.startsWith("git ls-files --others")) {
       return { exitCode: 0, stdout: "src/new.test.ts\n", stderr: "" };
     }
@@ -53,14 +59,14 @@ class FakeWorkspace implements AgentWorkspace {
 
 function setup() {
   const workspace = new FakeWorkspace();
-  const scope = new AgentScope({
+  const slice = new AgentSlice({
     included: ["src/included.ts"],
     excluded: ["src/excluded.ts"],
   });
   return {
     workspace,
-    scope,
-    controller: new WorkspaceController(workspace, scope),
+    slice,
+    controller: new WorkspaceController(workspace, slice),
   };
 }
 
@@ -131,7 +137,7 @@ describe("agent workspace", () => {
     const workspace = new FakeWorkspace(new Set(["README.md"]));
     const controller = new WorkspaceController(
       workspace,
-      new AgentScope({ included: ["src/included.ts"], excluded: [] }),
+      new AgentSlice({ included: ["src/included.ts"], excluded: [] }),
     );
 
     await expect(controller.writeFile("README.md", "replacement")).rejects.toThrow(
@@ -157,6 +163,18 @@ describe("agent workspace", () => {
     expect(workspace.commands.some(
       (command) => command.command === "git add --intent-to-add -- .",
     )).toBe(true);
+  });
+
+  it("keeps the human approval diff complete while bounding agent tool output", async () => {
+    const diffOutput = "x".repeat(12_001);
+    const workspace = new FakeWorkspace(new Set(), diffOutput);
+    const controller = new WorkspaceController(
+      workspace,
+      new AgentSlice({ included: ["src/included.ts"], excluded: [] }),
+    );
+
+    await expect(controller.diff()).resolves.toContain("[truncated 17 characters]");
+    await expect(controller.reviewDiff()).resolves.toBe(diffOutput);
   });
 
   it("captures a bounded delivery change set without reading excluded files", async () => {

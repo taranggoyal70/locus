@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
+import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import type { AgentChange } from "@/lib/agent/workspace";
 import { serviceClient } from "@/lib/supabase";
 
@@ -103,7 +104,7 @@ export async function POST(request: Request, context: RouteContext) {
     });
     const completedAt = new Date().toISOString();
 
-    const [approvalUpdate, runUpdate, stepUpdate, artifactInsert] = await Promise.all([
+    const [approvalUpdate, artifactInsert] = await Promise.all([
       db
         .from("agent_approvals")
         .update({
@@ -119,27 +120,6 @@ export async function POST(request: Request, context: RouteContext) {
           },
         })
         .eq("id", approval.id),
-      db
-        .from("agent_runs")
-        .update({
-          status: "completed",
-          branch_name: delivered.branch,
-          error: null,
-          completed_at: completedAt,
-        })
-        .eq("id", id)
-        .eq("user_id", userId),
-      db
-        .from("agent_steps")
-        .update({
-          status: "completed",
-          title: "Pull request opened after approval",
-          detail: { url: delivered.url, branch: delivered.branch },
-          completed_at: completedAt,
-        })
-        .eq("run_id", id)
-        .eq("user_id", userId)
-        .eq("sequence", 4),
       db.from("agent_artifacts").insert({
         run_id: id,
         user_id: userId,
@@ -148,9 +128,29 @@ export async function POST(request: Request, context: RouteContext) {
         url: delivered.url,
       }),
     ]);
-    if (approvalUpdate.error || runUpdate.error || stepUpdate.error || artifactInsert.error) {
+    if (approvalUpdate.error || artifactInsert.error) {
       throw new Error("GitHub delivery succeeded, but the run ledger could not be finalized");
     }
+    await appendRunStep({
+      runId: id,
+      userId,
+      sequence: 5,
+      kind: "delivery",
+      status: "completed",
+      title: "Pull request opened after approval",
+      detail: { url: delivered.url, branch: delivered.branch },
+    });
+    await transitionRun({
+      runId: id,
+      userId,
+      current: "awaiting_approval",
+      next: "completed",
+      values: {
+        branch_name: delivered.branch,
+        error: null,
+        completed_at: completedAt,
+      },
+    });
 
     return NextResponse.json({ delivery: delivered });
   } catch (error) {

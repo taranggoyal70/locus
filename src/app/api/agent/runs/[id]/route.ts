@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { calculateTokenLedger } from "@/lib/agent/coding-agent";
+import { isRunStatus, savingsClaimForRun } from "@/lib/agent/run-state";
 import { serviceClient } from "@/lib/supabase";
 
 type RouteContext = {
@@ -45,8 +46,12 @@ export async function GET(_request: Request, context: RouteContext) {
     baselineContextTokens: run.baseline_tokens,
     includedContextTokens: run.included_context_tokens,
     inputTokens: run.input_tokens,
+    cachedInputTokens: run.cached_input_tokens,
     outputTokens: run.output_tokens,
   });
+  const claim = isRunStatus(run.status)
+    ? savingsClaimForRun(run.status, tokenLedger)
+    : { verified: false as const, savedTokens: null, savedPct: null };
 
   return NextResponse.json({
     run,
@@ -57,8 +62,9 @@ export async function GET(_request: Request, context: RouteContext) {
     tokens: {
       ...tokenLedger,
       baselineTokens: tokenLedger.baselineContextTokens,
-      savedTokens: tokenLedger.contextTokensSaved,
-      savedPct: tokenLedger.contextReductionPercent,
+      claim,
+      savedTokens: claim.savedTokens,
+      savedPct: claim.savedPct,
     },
   });
 }

@@ -1,9 +1,9 @@
 import {
-  AgentScope,
+  AgentSlice,
   truncateToolOutput,
   validateAgentCommand,
   validateRepoPath,
-  type AgentScopeLedger,
+  type AgentSliceLedger,
 } from "@/lib/agent/workspace-tools";
 
 export type AgentWorkspaceCommand = {
@@ -83,6 +83,8 @@ const PREPARE_DEPENDENCIES = [
   "else echo 'No supported lockfile; dependency install skipped'; fi",
 ].join(" ");
 
+const MAX_REVIEW_DIFF_CHARACTERS = 500_000;
+
 export type AgentChange = {
   path: string;
   content: string | null;
@@ -99,15 +101,15 @@ export class WorkspaceController {
 
   constructor(
     private readonly workspace: AgentWorkspace,
-    private readonly scope: AgentScope,
+    private readonly slice: AgentSlice,
   ) {}
 
-  ledger(): AgentScopeLedger {
-    return this.scope.ledger();
+  ledger(): AgentSliceLedger {
+    return this.slice.ledger();
   }
 
-  listFiles(): AgentScopeLedger {
-    return this.scope.ledger();
+  listFiles(): AgentSliceLedger {
+    return this.slice.ledger();
   }
 
   verification(): AgentVerification[] {
@@ -126,7 +128,7 @@ export class WorkspaceController {
 
   async readFile(input: string, abortSignal?: AbortSignal): Promise<string> {
     const path = validateRepoPath(input);
-    if (!this.scope.canRead(path)) {
+    if (!this.slice.canRead(path)) {
       throw new Error(`${path} is outside the active Slice`);
     }
     const result = await this.workspace.run({
@@ -138,14 +140,14 @@ export class WorkspaceController {
   }
 
   async widenFile(input: string, abortSignal?: AbortSignal): Promise<string> {
-    const path = this.scope.widen(input);
+    const path = this.slice.widen(input);
     return this.readFile(path, abortSignal);
   }
 
   async search(query: string, abortSignal?: AbortSignal): Promise<string> {
     const term = query.trim().slice(0, 300);
     if (!term) throw new Error("Search query is required");
-    const paths = this.scope.readablePaths();
+    const paths = this.slice.readablePaths();
     if (paths.length === 0) return "No readable files in the active Slice.";
     const args = paths.map(shellQuote).join(" ");
     const result = await this.workspace.run({
@@ -163,7 +165,7 @@ export class WorkspaceController {
     abortSignal?: AbortSignal,
   ): Promise<string> {
     const path = validateRepoPath(input);
-    if (!this.scope.canWrite(path)) {
+    if (!this.slice.canWrite(path)) {
       throw new Error(`${path} is outside the active Slice`);
     }
     if (!before || before.length > 30_000 || after.length > 30_000) {
@@ -184,8 +186,8 @@ export class WorkspaceController {
 
   async writeFile(input: string, content: string, abortSignal?: AbortSignal): Promise<string> {
     const path = validateRepoPath(input);
-    if (!this.scope.canWrite(path)) {
-      if (this.scope.ledger().excluded.includes(path)) {
+    if (!this.slice.canWrite(path)) {
+      if (this.slice.ledger().excluded.includes(path)) {
         throw new Error(`${path} already exists outside the Slice; widen it before editing`);
       }
       const absent = await this.workspace.run({
@@ -196,7 +198,7 @@ export class WorkspaceController {
       if (absent.exitCode !== 0) {
         throw new Error(`${path} already exists outside the Slice; widen it before editing`);
       }
-      this.scope.create(path);
+      this.slice.create(path);
     }
     if (content.length > 50_000) throw new Error("File content exceeds the 50,000 character limit");
     const result = await this.workspace.run({
@@ -220,7 +222,7 @@ export class WorkspaceController {
     return output;
   }
 
-  async diff(abortSignal?: AbortSignal): Promise<string> {
+  private async createDiff(abortSignal?: AbortSignal): Promise<AgentWorkspaceResult> {
     const intent = await this.workspace.run({
       command: "git add --intent-to-add -- .",
       abortSignal,
@@ -233,7 +235,19 @@ export class WorkspaceController {
       timeoutMs: 30_000,
     });
     if (result.exitCode !== 0) throw new Error("Could not create the review diff");
-    return evidence(result);
+    return result;
+  }
+
+  async diff(abortSignal?: AbortSignal): Promise<string> {
+    return evidence(await this.createDiff(abortSignal));
+  }
+
+  async reviewDiff(abortSignal?: AbortSignal): Promise<string> {
+    const result = await this.createDiff(abortSignal);
+    if (result.stdout.length > MAX_REVIEW_DIFF_CHARACTERS) {
+      throw new Error("Review diff exceeds the 500,000 character approval limit");
+    }
+    return result.stdout;
   }
 
   async changeSet(abortSignal?: AbortSignal): Promise<AgentChange[]> {
@@ -265,7 +279,7 @@ export class WorkspaceController {
     let totalCharacters = 0;
     const output: AgentChange[] = [];
     for (const change of changes) {
-      if (!this.scope.canWrite(change.path)) {
+      if (!this.slice.canWrite(change.path)) {
         throw new Error(`${change.path} changed outside the active Slice`);
       }
       if (change.status === "D") {

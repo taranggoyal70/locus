@@ -19,6 +19,7 @@ describe("coding agent configuration", () => {
         baselineContextTokens: 10_000,
         includedContextTokens: 2_500,
         inputTokens: 3_100,
+        cachedInputTokens: 1_200,
         outputTokens: 900,
       }),
     ).toEqual({
@@ -27,6 +28,7 @@ describe("coding agent configuration", () => {
       contextTokensSaved: 7_500,
       contextReductionPercent: 75,
       inputTokens: 3_100,
+      cachedInputTokens: 1_200,
       outputTokens: 900,
       totalTokens: 4_000,
     });
@@ -44,6 +46,7 @@ describe("coding agent configuration", () => {
       contextTokensSaved: 0,
       contextReductionPercent: 0,
       inputTokens: 0,
+      cachedInputTokens: 0,
       outputTokens: 0,
     });
   });

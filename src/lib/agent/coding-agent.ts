@@ -17,6 +17,7 @@ export type TokenLedger = {
   contextTokensSaved: number;
   contextReductionPercent: number;
   inputTokens: number;
+  cachedInputTokens: number;
   outputTokens: number;
   totalTokens: number;
 };
@@ -34,6 +35,7 @@ export function calculateTokenLedger(input: {
   baselineContextTokens: number;
   includedContextTokens: number;
   inputTokens: number | undefined;
+  cachedInputTokens?: number | undefined;
   outputTokens: number | undefined;
 }): TokenLedger {
   const baselineContextTokens = Math.max(0, Math.round(input.baselineContextTokens));
@@ -43,6 +45,7 @@ export function calculateTokenLedger(input: {
     ? 0
     : Math.round((contextTokensSaved / baselineContextTokens) * 100);
   const inputTokens = Math.max(0, input.inputTokens ?? 0);
+  const cachedInputTokens = Math.max(0, input.cachedInputTokens ?? 0);
   const outputTokens = Math.max(0, input.outputTokens ?? 0);
 
   return {
@@ -51,6 +54,7 @@ export function calculateTokenLedger(input: {
     contextTokensSaved,
     contextReductionPercent,
     inputTokens,
+    cachedInputTokens,
     outputTokens,
     totalTokens: inputTokens + outputTokens,
   };
@@ -186,6 +190,7 @@ export async function runCodingTask(input: CodingRunInput) {
       baselineContextTokens: input.baselineContextTokens,
       includedContextTokens: input.includedContextTokens,
       inputTokens: result.usage.inputTokens,
+      cachedInputTokens: result.usage.inputTokenDetails.cacheReadTokens,
       outputTokens: result.usage.outputTokens,
     }),
   };
