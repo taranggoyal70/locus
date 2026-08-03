@@ -1,12 +1,19 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { stripe } from "@/lib/stripe";
 import { serviceClient } from "@/lib/supabase";
 
 export async function POST() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!alphaCapabilitiesForUser(userId).billing) {
+    return NextResponse.json(
+      { error: "Billing is disabled during the controlled alpha." },
+      { status: 403 },
+    );
+  }
 
   const db = serviceClient();
   const { data } = await db
