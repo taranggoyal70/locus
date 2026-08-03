@@ -24,7 +24,8 @@ describe("AgentRunTimeline", () => {
     expect(html).toContain("Prepare");
     expect(html).toContain("Implement");
     expect(html).toContain("Verify");
-    expect(html).toContain("Approve");
+    expect(html).toContain("Review");
+    expect(html).not.toContain("Approve");
     expect(html).toContain("Context Slice selected");
     expect(html).toContain("Working");
   });

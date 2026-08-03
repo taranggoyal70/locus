@@ -10,7 +10,7 @@ const PHASES: Array<{ label: string; statuses: RunStatus[] }> = [
   { label: "Prepare", statuses: ["planning"] },
   { label: "Implement", statuses: ["executing"] },
   { label: "Verify", statuses: ["verifying"] },
-  { label: "Approve", statuses: ["awaiting_approval", "completed"] },
+  { label: "Review", statuses: ["awaiting_approval", "completed"] },
 ];
 
 function phaseIndex(status: RunStatus): number {
@@ -85,7 +85,6 @@ export function AgentRunPanel({
   const [runId, setRunId] = useState<string | null>(initialRunId);
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
   const [launching, setLaunching] = useState(false);
-  const [approving, setApproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const status = snapshot?.run.status ?? null;
   const terminal = status ? isTerminalRun(status) : false;
@@ -170,25 +169,6 @@ export function AgentRunPanel({
     }
   }
 
-  async function approveDelivery() {
-    if (!runId || snapshot?.run.status !== "awaiting_approval" || approving) return;
-    setApproving(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/agent/runs/${runId}/approve`, { method: "POST" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data?.error ?? "Could not deliver the change.");
-      const refreshed = await fetch(`/api/agent/runs/${runId}`, { cache: "no-store" });
-      const refreshedData = await refreshed.json() as AgentRunSnapshot & { error?: string };
-      if (!refreshed.ok) throw new Error(refreshedData?.error ?? "Could not refresh the run.");
-      setSnapshot(refreshedData);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not deliver the change.");
-    } finally {
-      setApproving(false);
-    }
-  }
-
   const canLaunch = Boolean(repository) && task.trim().length >= 10 && acceptanceCriteria.length > 0;
   const diff = snapshot?.artifacts.find((artifact) => artifact.kind === "diff");
   const summary = snapshot?.artifacts.find((artifact) => artifact.kind === "summary");
@@ -206,11 +186,11 @@ export function AgentRunPanel({
               Agent run
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-paper">
-              Turn the Slice into a verified change.
+              Turn the Slice into a review-ready proposal.
             </h2>
           </div>
           <span className="rounded-full border border-line-strong px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
-            approval gated
+            external writes off
           </span>
         </div>
       </div>
@@ -240,7 +220,7 @@ export function AgentRunPanel({
               <span aria-hidden>→</span>
             </button>
             <p className="mt-3 text-[11px] leading-5 text-muted">
-              Executes in an isolated sandbox. GitHub delivery remains blocked until you approve it.
+              Executes in an isolated Sandbox. GitHub delivery is disabled during the controlled alpha.
             </p>
           </>
         ) : (
@@ -279,15 +259,9 @@ export function AgentRunPanel({
               </details>
             )}
             {snapshot.run.status === "awaiting_approval" && (
-              <button
-                type="button"
-                onClick={approveDelivery}
-                disabled={approving}
-                className="mt-4 flex w-full items-center justify-between rounded-xl bg-paper px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent disabled:opacity-40"
-              >
-                <span>{approving ? "Opening pull request…" : "Approve & open GitHub PR"}</span>
-                <span aria-hidden>↗</span>
-              </button>
+              <p className="mt-4 rounded-xl border border-line-strong bg-ink px-4 py-3 text-xs leading-5 text-muted-light">
+                Ready for review. External GitHub writes remain disabled during the controlled alpha.
+              </p>
             )}
             {pullRequest?.url && (
               <a
