@@ -20,18 +20,21 @@ export function OnboardingBanner() {
         </button>
         <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Getting started</p>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-paper">
-          Locus maps your task to the exact files an AI agent needs. Paste a public repo above,
-          describe your task, and copy the focused context into Claude, Cursor, or any agent.
+          Load a public Repo, describe one concrete engineering outcome, and inspect the Included
+          and Excluded evidence before starting an invited Run.
         </p>
         <div className="mt-3 flex flex-wrap gap-3 text-xs">
           <span className="rounded-full border border-line-strong px-3 py-1.5 text-muted-light">
-            1. Load a repo
+            1. Load a public Repo
           </span>
           <span className="rounded-full border border-line-strong px-3 py-1.5 text-muted-light">
             2. Describe the task
           </span>
           <span className="rounded-full border border-line-strong px-3 py-1.5 text-muted-light">
-            3. Copy the context
+            3. Start an invited Run
+          </span>
+          <span className="rounded-full border border-line-strong px-3 py-1.5 text-muted-light">
+            4. Review the proposal
           </span>
           <Link
             href="/docs"
