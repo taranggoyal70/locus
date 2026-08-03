@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
 import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import type { AgentChange } from "@/lib/agent/workspace";
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { serviceClient } from "@/lib/supabase";
 
 type RouteContext = {
@@ -13,6 +14,12 @@ type RouteContext = {
 export async function POST(request: Request, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  if (!alphaCapabilitiesForUser(userId).delivery) {
+    return NextResponse.json(
+      { error: "GitHub delivery is disabled during the controlled alpha." },
+      { status: 403 },
+    );
+  }
   if (request.headers.get("sec-fetch-site") === "cross-site") {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
