@@ -95,6 +95,18 @@ A reviewable Run output such as a plan, diff, test result, build result, pull
 request, preview, or final summary.
 _Avoid_: attachment, output blob.
 
+**Check evidence**:
+The exact command, exit status, and relevant output recorded by a Run. Passing
+Check evidence is factual but does not by itself prove the requested behavior or
+the Agent Task's acceptance criteria.
+_Avoid_: verification proof, task success, quality guarantee.
+
+**Review-ready proposal**:
+A Run's reviewable change set together with its Slice ledger, Steps, Artifacts,
+Check evidence, and factual token usage. It is ready for human inspection but is
+not an approved delivery or a verified Agent Task outcome.
+_Avoid_: completed task, verified change, pull request.
+
 **Token ledger**:
 The complete input and output token usage for a Run, compared with a declared
 whole-context baseline. Cached input is reported but never double-counted.
@@ -102,9 +114,10 @@ Savings are claimed only for a verified task outcome.
 _Avoid_: prompt tokens (too narrow), estimated savings without an outcome.
 
 **Savings claim**:
-The user-facing token reduction attached to a completed Run. Locus may measure
-admitted context while a Run is active or failed, but that measurement is not a
-Savings claim until verification and approved delivery complete the Run.
+The user-facing total-token reduction attached to a successful Run only after a
+paired whole-Repo baseline satisfies the same acceptance criteria. Estimated
+admitted-context reduction and factual Run usage are not Savings claims. Savings
+claims are unavailable during the controlled alpha.
 _Avoid_: estimated savings, projected savings, savings on failed Runs.
 
 **Run evidence snapshot**:
@@ -145,6 +158,8 @@ _Avoid_: response payload, session state, activity feed.
   evidence is inserted once and never rewritten to simulate progress.
 - **No outcome, no claim.** Failed, cancelled, and active Runs expose measured
   usage but never display a Savings claim.
+- **Checks are evidence, not outcomes.** A zero exit status is Check evidence;
+  acceptance-criteria satisfaction remains a separate review decision.
 - **Measure the whole loop.** The USP is total tokens per verified task—not the
   size of the initial prompt alone.
 
