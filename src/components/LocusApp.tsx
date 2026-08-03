@@ -161,7 +161,7 @@ export function LocusApp({ accountName, isWorkspace = false, initialRunId = null
           <div className="relative py-2">
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <span className="rounded-full bg-[#14233b] px-3 py-1.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">
-                {isWorkspace ? "Mission workspace" : "Public beta"}
+                {isWorkspace ? "Mission workspace" : "Controlled alpha"}
               </span>
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#52647a]">
                 Slice → Run → Evidence
@@ -172,8 +172,8 @@ export function LocusApp({ accountName, isWorkspace = false, initialRunId = null
               <span className="block text-[#314fd1]">Ship the task.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base font-medium leading-7 text-[#40546b]">
-              Locus routes only the code an agent needs, keeps every excluded file visible,
-              then implements and verifies the work in an isolated run.
+              Locus admits a focused Slice, keeps every excluded file visible, then produces a
+              check-passing proposal in an isolated Run for you to review.
             </p>
             <div className="mt-7 flex max-w-xl items-center gap-4 border-t border-[#14233b]/20 pt-4">
               <span className="h-2.5 w-2.5 rounded-sm bg-[#314fd1]" />
@@ -319,7 +319,7 @@ export function LocusApp({ accountName, isWorkspace = false, initialRunId = null
                     placeholder="One verifiable outcome per line."
                     className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-ink px-3 py-3 text-sm leading-6 text-paper placeholder:text-muted focus:border-accent focus:outline-none"
                   />
-                  <p className="mt-2 text-[10px] leading-4 text-muted">The agent must collect evidence for these outcomes before delivery.</p>
+                  <p className="mt-2 text-[10px] leading-4 text-muted">These are proof requirements for review. A passing command does not by itself prove the requested behavior.</p>
                 </div>
               </div>
 
