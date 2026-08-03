@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AgentRunTimeline } from "@/components/AgentRunPanel";
 import { isTerminalRun } from "@/lib/agent/run-state";
@@ -22,7 +22,8 @@ async function fetchRun(runId: string, signal?: AbortSignal): Promise<AgentRunSn
   return data;
 }
 
-function statusLabel(status: string): string {
+export function alphaRunStatusLabel(status: string): string {
+  if (status === "awaiting_approval") return "ready for review";
   return status.replaceAll("_", " ");
 }
 
@@ -42,10 +43,8 @@ function runDateLabel(value: string): string {
   }).format(new Date(value));
 }
 
-function savingsLabel(run: AgentRunSummary): string {
-  if (run.tokens.verified) return `${run.tokens.savedPct}% verified saved`;
-  if (run.status === "failed" || run.status === "cancelled") return "no savings claim";
-  return "claim pending";
+export function runUsageLabel(totalTokens: number): string {
+  return `${totalTokens.toLocaleString("en-US")} tokens used`;
 }
 
 export function AgentRunsList() {
@@ -56,16 +55,7 @@ export function AgentRunsList() {
   const [runs, setRuns] = useState<AgentRunSummary[]>([]);
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
-  const [approving, setApproving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const refreshRuns = useCallback(async () => {
-    setRuns(await fetchRuns());
-  }, []);
-
-  const refreshRun = useCallback(async (runId: string) => {
-    setSnapshot(await fetchRun(runId));
-  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -101,22 +91,6 @@ export function AgentRunsList() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("run");
     router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
-  }
-
-  async function approveDelivery() {
-    if (!selectedRunId || approving) return;
-    setApproving(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/agent/runs/${selectedRunId}/approve`, { method: "POST" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data?.error ?? "Could not deliver the change.");
-      await Promise.all([refreshRun(selectedRunId), refreshRuns()]);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not deliver the change.");
-    } finally {
-      setApproving(false);
-    }
   }
 
   if (loading) {
@@ -161,13 +135,13 @@ export function AgentRunsList() {
                   <p className="mt-1 truncate font-mono text-[10px] text-muted">{run.task?.repo_url ?? "Unknown Repo"}</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.12em] ${statusTone(run.status)}`}>
-                  {statusLabel(run.status)}
+                  {alphaRunStatusLabel(run.status)}
                 </span>
               </div>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[9px] text-muted">
                 <span>{run.included_files.length} in</span>
                 <span>{run.excluded_files.length} out</span>
-                <span>{savingsLabel(run)}</span>
+                <span>{runUsageLabel(run.tokens.totalTokens)}</span>
                 <span>{runDateLabel(run.created_at)}</span>
               </div>
             </button>
@@ -193,13 +167,11 @@ export function AgentRunsList() {
               <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line">
                 <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">CONTEXT</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.run.included_files.length} in</p></div>
                 <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">OUTSIDE</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.run.excluded_files.length} out</p></div>
-                <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">TOKENS</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.tokens.claim.verified ? `${selectedSnapshot.tokens.claim.savedPct}% saved` : "unclaimed"}</p></div>
+                <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">TOKENS</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.tokens.totalTokens.toLocaleString("en-US")}</p></div>
               </div>
-              {!selectedSnapshot.tokens.claim.verified && (
-                <p className="rounded-xl border border-line-strong bg-ink/60 px-3 py-2.5 text-[11px] leading-5 text-muted-light">
-                  Context reduction is measured internally, but Locus claims savings only after verified delivery.
-                </p>
-              )}
+              <p className="rounded-xl border border-line-strong bg-ink/60 px-3 py-2.5 text-[11px] leading-5 text-muted-light">
+                Token usage is factual. Locus does not publish a Savings claim during the controlled alpha.
+              </p>
               {summary?.content && <p className="text-sm leading-6 text-muted-light">{summary.content}</p>}
               {diff?.content && (
                 <details className="rounded-xl border border-line">
@@ -209,9 +181,9 @@ export function AgentRunsList() {
               )}
               {selectedSnapshot.run.error && <p role="alert" className="text-xs leading-5 text-recent">{selectedSnapshot.run.error}</p>}
               {selectedSnapshot.run.status === "awaiting_approval" && (
-                <button type="button" onClick={approveDelivery} disabled={approving} className="flex w-full items-center justify-between rounded-xl bg-paper px-4 py-3.5 text-sm font-semibold text-ink disabled:opacity-40">
-                  <span>{approving ? "Opening pull request…" : "Approve & open GitHub PR"}</span><span aria-hidden>↗</span>
-                </button>
+                <p className="rounded-xl border border-line-strong bg-ink px-4 py-3 text-xs leading-5 text-muted-light">
+                  Ready for review. External GitHub writes remain disabled during the controlled alpha.
+                </p>
               )}
               {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
               {!isTerminalRun(selectedSnapshot.run.status) && <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="block text-center text-xs font-medium text-accent hover:underline">Resume this Run in the workspace</Link>}
