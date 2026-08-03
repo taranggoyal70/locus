@@ -15,17 +15,18 @@ export default function TermsPage() {
       <main className="mx-auto max-w-3xl px-5 py-12">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Terms</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Terms of Service</h1>
-        <p className="mt-3 text-sm leading-7 text-muted-light">The ground rules for using the Locus public beta.</p>
+        <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 3, 2026 · Terms for the Locus invite-only controlled alpha.</p>
         <div className="aperture-rule mt-8" />
 
         <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
           <section>
             <h2 className="text-lg font-semibold text-paper">Service</h2>
             <p>
-              Locus is an open-source agent workspace that localizes coding tasks, generates
-              changes in a sandbox, runs verification, and presents the result for approval. It is
-              provided as-is, without warranty. The hosted version at{" "}
-              {new URL(SITE_URL).hostname} is a convenience deployment of the open-source project.
+              Locus is an experimental, open-source agent workspace operated by Tarang Goyal. It
+              localizes tasks for public JavaScript and TypeScript repositories, generates changes
+              in an isolated Sandbox, records allowlisted check results, and presents a proposal for
+              human review. External repository writes and billing are disabled during the alpha.
+              The hosted version at {new URL(SITE_URL).hostname} is provided as-is, without warranty.
             </p>
           </section>
 
@@ -61,10 +62,9 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-paper">Agent output</h2>
             <p>
-              Generated code, commands, summaries, and verification results may be incomplete or
-              incorrect. You are responsible for reviewing a proposed change before approving,
-              merging, deploying, or otherwise relying on it. Approval gates reduce risk but do not
-              replace your judgment or testing requirements.
+              Generated code, commands, summaries, and Check evidence may be incomplete, unsafe, or
+              incorrect. A successful command does not prove that acceptance criteria are satisfied.
+              You are responsible for reviewing, testing, and safely applying any proposed change.
             </p>
           </section>
 
@@ -81,15 +81,22 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-paper">Open source</h2>
             <p>
               Locus is licensed under the MIT License. You may self-host, modify, and distribute
-              the software in accordance with the license terms. The CLI and MCP server operate
-              entirely locally and do not require an account.
+              the software in accordance with the license terms. CLI and MCP source runtimes can be
+              executed from a repository checkout; no npm distribution is currently published.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-paper">Changes</h2>
             <p>
-              We may update these terms as the service evolves.
+              We may update these terms as the service evolves. Questions and alpha support requests
+              can be submitted through the{" "}
+              <a
+                href="https://github.com/taranggoyal70/locus/issues/new"
+                className="text-accent hover:underline"
+              >
+                Locus issue tracker
+              </a>.
             </p>
           </section>
         </div>
