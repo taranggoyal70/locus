@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { WaitlistForm } from "@/components/WaitlistForm";
+import { nextDialogFocusIndex, WaitlistForm } from "@/components/WaitlistForm";
 
 describe("alpha access form", () => {
   it("requests design-partner access without paid capability promises", () => {
@@ -19,5 +19,11 @@ describe("alpha access form", () => {
     expect(html).not.toContain("Pro waitlist");
     expect(html).not.toContain("Private repos");
     expect(html).not.toContain("higher throughput");
+  });
+
+  it("keeps keyboard focus inside the dialog", () => {
+    expect(nextDialogFocusIndex(3, 4, false)).toBe(0);
+    expect(nextDialogFocusIndex(0, 4, true)).toBe(3);
+    expect(nextDialogFocusIndex(1, 4, false)).toBe(2);
   });
 });
