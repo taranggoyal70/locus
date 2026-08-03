@@ -7,6 +7,7 @@ import { agentRunQuotaDecision } from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
 import { isRunStatus, savingsClaimForRun } from "@/lib/agent/run-state";
 import { transitionRun } from "@/lib/agent/run-store";
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { serviceClient } from "@/lib/supabase";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
@@ -82,6 +83,12 @@ export async function GET() {
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  if (!alphaCapabilitiesForUser(userId).runStart) {
+    return NextResponse.json(
+      { error: "Agent Runs are limited to invited design partners during the controlled alpha." },
+      { status: 403 },
+    );
+  }
   if (request.headers.get("sec-fetch-site") === "cross-site") {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
