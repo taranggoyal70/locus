@@ -1,26 +1,26 @@
 # Locus
 
-**Verified engineering tasks with less context.**
+**Review-ready engineering proposals with visible context evidence.**
 
 Locus maps a natural-language task to a focused JavaScript/TypeScript code Slice:
 matching files, their dependency closure, nearby integration points, and relevant
 recent changes. When the evidence is weak, it returns the whole repo instead of a
 speculative small slice and explains which terms were not found, possible starting
-files, and repository language that can refine the task. The web product can then
-run the Agent Task in an isolated Sandbox, collect verification evidence, and open
-an approval-gated pull request. Active Runs survive refresh and remain reviewable
-from the Runs ledger.
+files, and repository language that can refine the task. During the invite-only
+controlled alpha, the web product can run an Agent Task in an isolated Sandbox,
+collect factual check evidence, and stop at a review-ready proposal. External
+GitHub writes and billing are disabled. Active Runs survive refresh and remain
+reviewable from the Runs ledger.
 
 **Live:** https://locus-five-iota.vercel.app
 
-## Four delivery surfaces
+## Current surfaces
 
 | Surface | Use case |
 |---------|----------|
-| **Web app** | Localize, execute, verify, review, and approve an Agent Task |
-| **REST API** | Programmatic access for CI, agents, and custom tooling |
-| **CLI** | `npx locus-context locate "fix billing" --pack` |
-| **MCP server** | JSON-RPC over stdio for Claude, Cursor, and MCP-enabled agents |
+| **Invite-only web alpha** | Localize, execute, run allowlisted checks, and review a proposal for a public Repo |
+| **Experimental REST API** | Programmatic localization for public Repos |
+| **Source runtimes** | CLI and MCP implementations used from a source checkout; no npm package is published |
 
 ## Evidence
 
@@ -62,7 +62,7 @@ Extracted text can become part of a durable task or Run record when submitted.
 - `require()` and dynamic `import()` dependency edges
 
 The hosted GitHub importer accepts public repositories (up to 200 source files).
-Use the local CLI for larger repositories.
+The source CLI can be used locally for larger repositories.
 
 ## REST API
 
@@ -100,6 +100,7 @@ pnpm dev
 |----------|---------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk authentication |
 | `CLERK_SECRET_KEY` | Clerk server-side auth |
+| `ALPHA_ALLOWED_USER_IDS` | Comma-separated Clerk user IDs allowed to start Agent Runs |
 
 ### Optional environment variables
 
@@ -133,11 +134,13 @@ Copy context in three formats:
 - **Claude** — XML-wrapped `<context>` blocks
 - **Cursor** — `// File:` comment-style headers
 
-## Use the CLI
+## Develop the source CLI
+
+The `locus-context` package is not published to npm. From this repository checkout:
 
 ```bash
-npx -y locus-context locate "fix the dashboard billing" --pack
-npx -y locus-context locate "login error" --evidence "TypeError: Cannot read property 'email'"
+node bin/locus.mjs locate "fix the dashboard billing" --pack
+node bin/locus.mjs locate "login error" --evidence "TypeError: Cannot read property 'email'"
 ```
 
 Options:
@@ -147,21 +150,14 @@ Options:
 - `--budget <n>` — token budget for `--pack` (default: 40,000)
 - `--path <dir>` — repo directory (default: cwd)
 
-## MCP server
+## Develop the source MCP server
 
-```json
-{
-  "mcpServers": {
-    "locus": {
-      "command": "npx",
-      "args": ["-y", "locus-context", "mcp"]
-    }
-  }
-}
+```bash
+node bin/locus.mjs mcp
 ```
 
-The server exposes `locate(task, path?, evidence?, pack?)`. The publishable
-npm package lives in [`cli/`](./cli); `pnpm sync-cli` mirrors files from `bin/`.
+The server exposes `locate(task, path?, evidence?, pack?)`. The unpublished
+package source lives in [`cli/`](./cli); `pnpm sync-cli` mirrors files from `bin/`.
 
 ## Verification
 
@@ -186,7 +182,7 @@ pnpm benchmark
 ## Links
 
 - [API Docs](https://locus-five-iota.vercel.app/docs)
-- [Pricing](https://locus-five-iota.vercel.app/pricing)
+- [Alpha access](https://locus-five-iota.vercel.app/pricing)
 - [Privacy Policy](https://locus-five-iota.vercel.app/privacy)
 - [Terms of Service](https://locus-five-iota.vercel.app/terms)
 - [Benchmarks](./benchmarks/README.md)
