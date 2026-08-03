@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
-export const alt = "Locus — the token-efficient coding agent";
+export const alt = "Locus — evidence-first coding agent alpha";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -63,7 +63,7 @@ export default function OgImage() {
             lineHeight: 1.4,
           }}
         >
-          Verified engineering tasks with less total context.
+          Review-ready proposals with visible context evidence.
         </p>
         <div
           style={{
@@ -72,7 +72,7 @@ export default function OgImage() {
             gap: "12px",
           }}
         >
-          {["Locate", "Implement", "Verify", "Approve"].map((label) => (
+          {["Locate", "Implement", "Check", "Review"].map((label) => (
             <div
               key={label}
               style={{

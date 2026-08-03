@@ -8,23 +8,23 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Locus — the token-efficient coding agent",
+  title: "Locus — evidence-first coding agent alpha",
   description:
-    "Give Locus an engineering task. It finds the smallest safe context, implements the change in an isolated sandbox, and verifies the result.",
+    "Localize a public Repo, run a task in an isolated Sandbox, and review a check-passing proposal with every Included, Excluded, and Widened file visible.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://locus-five-iota.vercel.app"),
   openGraph: {
-    title: "Locus — the token-efficient coding agent",
-    description: "Ship the task, not the repository. Focus context, implement, and verify.",
+    title: "Locus — evidence-first coding agent alpha",
+    description: "Ship the task, not the repository. Focus context, implement, check, and review.",
     siteName: "Locus",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Locus — the token-efficient coding agent",
-    description: "Ship the task, not the repository. Focus context, implement, and verify.",
+    title: "Locus — evidence-first coding agent alpha",
+    description: "Ship the task, not the repository. Focus context, implement, check, and review.",
   },
   keywords: [
-    "AI coding agent", "context window", "code context", "MCP server",
+    "AI coding agent", "context window", "code context", "public repository",
     "dependency graph", "TypeScript", "developer tools", "Claude", "Cursor", "Codex",
   ],
 };
