@@ -1,151 +1,74 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 import { MarketingShell } from "@/components/MarketingShell";
 import { WaitlistForm } from "@/components/WaitlistForm";
 
-const tiers = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "For developers who want a smaller, accountable agent loop.",
-    features: [
-      "Public repositories",
-      "10 Agent Runs per day",
-      "Durable run history and resume",
-      "Included and excluded file evidence",
-      "Verified-only token savings",
-      "CLI + MCP server",
-      "5 API keys",
-      "30 API calls / minute",
-    ],
-    cta: "Get started",
-    ctaHref: "/sign-up",
-    action: "link" as const,
-    highlighted: false,
-  },
-  {
-    name: "Pro",
-    price: "$29",
-    period: "/ month",
-    description: "For teams ready to move the full engineering loop into Locus.",
-    features: [
-      "Everything in Free",
-      "Private repositories (GitHub OAuth)",
-      "Higher Agent Run limits",
-      "Shared runs and evidence",
-      "10 API keys",
-      "120 API calls / minute",
-      "Team workspaces",
-      "Usage analytics dashboard",
-      "Priority support",
-    ],
-    cta: "Join waitlist",
-    ctaHref: "",
-    action: "waitlist" as const,
-    highlighted: true,
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    description: "For organizations with compliance and scale needs.",
-    features: [
-      "Everything in Pro",
-      "Self-hosted option",
-      "SSO / SAML",
-      "Audit logs",
-      "Custom rate limits",
-      "Dedicated support",
-      "SLA guarantee",
-    ],
-    cta: "Contact us",
-    ctaHref: "mailto:intern@gohighview.com",
-    action: "link" as const,
-    highlighted: false,
-  },
+const alphaBoundaries = [
+  "Public JavaScript and TypeScript repositories",
+  "Durable Included, Excluded, and Widened file evidence",
+  "Isolated Sandbox execution with allowlisted checks",
+  "Review-ready proposal with factual token usage",
+  "No billing, private-Repo access, or external GitHub writes",
 ];
 
 export default function PricingPage() {
-  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [showAccessForm, setShowAccessForm] = useState(false);
 
   return (
     <MarketingShell>
-      <main className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
+      <main className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="text-center">
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Pricing</p>
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+            Controlled alpha
+          </p>
           <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-6xl">
-            Pay for throughput, not promises.
+            Free for invited design partners.
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
-            Start with public repositories and ten end-to-end Agent Runs a day. Every plan keeps the same rule: savings count only after verification passes.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
+            We are working directly with a small group of developers before introducing paid
+            plans. The goal is to prove that the complete Run is useful, safe, and economical.
           </p>
         </div>
 
-        <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          {tiers.map((tier) => (
-            <div
-              key={tier.name}
-              className={`rounded-[22px] border p-6 ${
-                tier.highlighted
-                  ? "border-accent/45 bg-[#e2eee8] shadow-[0_24px_70px_rgba(20,35,59,0.10)]"
-                  : "border-line-strong bg-surface/80"
-              }`}
-            >
-              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">{tier.name}</p>
-              <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-4xl font-semibold tracking-[-0.04em] text-paper">{tier.price}</span>
-                {tier.period && <span className="text-sm text-muted">{tier.period}</span>}
-              </div>
-              <p className="mt-2 text-sm text-muted-light">{tier.description}</p>
-
-              <ul className="mt-6 space-y-2.5">
-                {tier.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm text-muted-light">
-                    <span className="mt-0.5 text-accent">+</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-8">
-                {tier.action === "waitlist" ? (
-                  <button
-                    onClick={() => setShowWaitlist(true)}
-                    className="block w-full rounded-xl bg-accent px-4 py-3 text-center text-sm font-semibold text-ink transition hover:bg-accent-dim"
-                  >
-                    {tier.cta}
-                  </button>
-                ) : (
-                  <Link
-                    href={tier.ctaHref}
-                    className={`block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold transition ${
-                      tier.highlighted
-                        ? "bg-accent text-ink hover:bg-accent-dim"
-                        : "border border-line-strong text-paper hover:border-accent/40"
-                    }`}
-                  >
-                    {tier.cta}
-                  </Link>
-                )}
-              </div>
+        <section className="mx-auto mt-12 max-w-3xl rounded-[26px] border border-accent/35 bg-surface p-6 shadow-[0_28px_80px_rgba(20,35,59,0.10)] sm:p-9">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+                Design-partner access
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-paper">
+                One honest alpha contract
+              </h2>
             </div>
-          ))}
-        </div>
+            <span className="rounded-full border border-line-strong bg-ink px-3 py-1.5 text-xs font-semibold text-paper">
+              $0 during alpha
+            </span>
+          </div>
 
-        <div className="mt-16 text-center">
-          <p className="text-sm text-muted-light">
-            Need something specific?{" "}
-            <a href="mailto:intern@gohighview.com" className="text-accent hover:underline">
-              Get in touch
-            </a>
+          <ul className="mt-7 space-y-3">
+            {alphaBoundaries.map((boundary) => (
+              <li key={boundary} className="flex items-start gap-3 text-sm leading-6 text-muted-light">
+                <span aria-hidden className="mt-0.5 text-accent">+</span>
+                {boundary}
+              </li>
+            ))}
+          </ul>
+
+          <button
+            type="button"
+            onClick={() => setShowAccessForm(true)}
+            className="mt-8 w-full rounded-xl bg-accent px-5 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim"
+          >
+            Request alpha access
+          </button>
+          <p className="mt-3 text-center text-xs leading-5 text-muted">
+            Access is manually approved. No payment information is requested.
           </p>
-        </div>
+        </section>
       </main>
-      {showWaitlist && <WaitlistForm onClose={() => setShowWaitlist(false)} />}
+      {showAccessForm && <WaitlistForm onClose={() => setShowAccessForm(false)} />}
     </MarketingShell>
   );
 }
