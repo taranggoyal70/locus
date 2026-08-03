@@ -1,11 +1,18 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { createGitHubOAuthState } from "@/lib/github-oauth-state";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!alphaCapabilitiesForUser(userId).githubConnect) {
+    return NextResponse.json(
+      { error: "GitHub connections are not available during the controlled alpha." },
+      { status: 403 },
+    );
+  }
 
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
