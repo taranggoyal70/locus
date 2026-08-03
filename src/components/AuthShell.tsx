@@ -53,7 +53,7 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
 
             <div className="mt-10 hidden overflow-hidden rounded-2xl border border-line-strong bg-surface/70 sm:block">
               <div className="grid grid-cols-3 gap-px bg-line-strong">
-                {[["Slice", "7 files"], ["Outside", "19 files"], ["Claim", "after delivery"]].map(([label, value]) => (
+                {[["Slice", "Visible"], ["Excluded", "Visible"], ["External writes", "Disabled"]].map(([label, value]) => (
                   <div key={label} className="bg-surface px-4 py-3">
                     <span className="font-mono text-[9px] uppercase text-muted">{label}</span>
                     <p className="mt-1 text-sm font-semibold text-paper">{value}</p>
@@ -68,8 +68,8 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
         </div>
 
         <footer className="flex flex-col gap-2 border-t border-line-strong py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-          <span>Open-source public beta</span>
-          <span>Approval-gated delivery · Secure authentication by Clerk</span>
+          <span>Invite-only controlled alpha</span>
+          <span>Public Repos · Secure authentication by Clerk</span>
         </footer>
       </div>
     </main>
