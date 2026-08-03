@@ -5,8 +5,8 @@ import { MarketingShell } from "@/components/MarketingShell";
 const runPhases = [
   ["Locate", "Build a deterministic dependency graph and admit the smallest defensible Slice."],
   ["Implement", "Work inside an isolated Sandbox. Every Widen stays visible in the ledger."],
-  ["Verify", "Run allowlisted checks and store the diff, summary, and test evidence."],
-  ["Approve", "You review the complete change before Locus opens a GitHub pull request."],
+  ["Check", "Run allowlisted commands and store their exact exit status and relevant output."],
+  ["Review", "Inspect the complete proposal. External GitHub writes stay disabled in the alpha."],
 ];
 
 export function LandingPage() {
@@ -17,20 +17,22 @@ export function LandingPage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface/75 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Token-efficient coding agent
+              Invite-only alpha
             </div>
             <h1 className="mt-7 font-display text-[clamp(3.6rem,8vw,7.8rem)] font-semibold leading-[.82] tracking-[-0.075em] text-paper">
               Ship the task.
               <span className="mt-2 block text-accent">Not the repo.</span>
             </h1>
             <p className="mt-8 max-w-2xl text-lg leading-8 text-muted-light sm:text-xl">
-              Locus finds the files an engineering task actually needs, completes the change in an isolated Sandbox, verifies it, and waits for your approval—while measuring the whole token loop.
+              Locus localizes a public JavaScript or TypeScript Repo, works in an isolated
+              Sandbox, and returns a review-ready, check-passing proposal with every Included,
+              Excluded, and Widened file visible.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/sign-up" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Start a verified Run</Link>
-              <a href="#evidence" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">See the evidence</a>
+              <Link href="/pricing" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Request alpha access</Link>
+              <a href="#evidence" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">See benchmark evidence</a>
             </div>
-            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Public beta · GitHub delivery is always approval-gated</p>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Controlled alpha · public Repos only · external writes disabled</p>
           </div>
 
           <div className="relative">
@@ -38,10 +40,10 @@ export function LandingPage() {
             <div className="overflow-hidden rounded-[28px] border border-line-strong bg-surface shadow-[0_34px_90px_rgba(20,35,59,.15)]">
               <div className="flex items-center justify-between border-b border-line-strong px-5 py-4">
                 <div>
-                  <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">Context aperture</p>
+                  <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">Illustrative example</p>
                   <p className="mt-1 text-sm font-semibold text-paper">Fix failed savings claims</p>
                 </div>
-                <span className="rounded-full border border-[#b78a22]/30 bg-[#f2d889]/30 px-2.5 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-[#765a18]">Awaiting approval</span>
+                <span className="rounded-full border border-[#b78a22]/30 bg-[#f2d889]/30 px-2.5 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.1em] text-[#765a18]">Ready for review</span>
               </div>
               <div className="grid grid-cols-[88px_1fr]">
                 <div className="border-r border-line-strong p-4">
@@ -67,7 +69,7 @@ export function LandingPage() {
                     ))}
                   </div>
                   <div className="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line-strong bg-line-strong">
-                    {[["Checks", "3 pass"], ["Widen", "1 file"], ["Claim", "pending"]].map(([label, value]) => (
+                    {[["Checks", "3 pass"], ["Widen", "1 file"], ["Writes", "off"]].map(([label, value]) => (
                       <div key={label} className="bg-ink p-3"><p className="font-mono text-[8px] uppercase text-muted">{label}</p><p className="mt-1 text-xs font-semibold text-paper">{value}</p></div>
                     ))}
                   </div>
@@ -81,9 +83,9 @@ export function LandingPage() {
         <section id="evidence" className="border-y border-line-strong bg-surface/70">
           <div className="mx-auto grid max-w-7xl divide-y divide-line-strong px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-8">
             {[
-              ["100%", "historical fix-file recall", "15 declared fixes across 3 repositories"],
-              ["53%", "median context reduction", "measured against whole-repository context"],
-              ["0", "claims on failed Runs", "savings appear only after completed delivery"],
+              ["100%", "historical fix-file recall", "15 declared fixes across 3 public repositories"],
+              ["53%", "median estimated context reduction", "initial admitted context versus whole-Repo context"],
+              ["15", "historical cases", "localization replay only; does not measure agent completion"],
             ].map(([value, label, note]) => (
               <div key={label} className="py-8 sm:px-7 sm:first:pl-0 sm:last:pr-0">
                 <p className="font-display text-5xl font-semibold tracking-[-0.05em] text-paper">{value}</p>
@@ -115,11 +117,11 @@ export function LandingPage() {
         <section className="mx-auto max-w-7xl px-5 pb-24 sm:px-8">
           <div className="overflow-hidden rounded-[30px] bg-paper px-6 py-10 text-white sm:px-10 lg:grid lg:grid-cols-[1fr_auto] lg:items-end lg:px-14 lg:py-14">
             <div>
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">The product promise</p>
-              <h2 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-[.95] tracking-[-0.05em] sm:text-6xl">Fewer total tokens per verified task—not a smaller first prompt.</h2>
-              <p className="mt-5 max-w-2xl text-sm leading-6 text-[#bdcad8]">Included, excluded, and Widened files stay visible. Failed work keeps its evidence but earns no savings claim.</p>
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">The alpha contract</p>
+              <h2 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-[.95] tracking-[-0.05em] sm:text-6xl">A smaller admitted context—with every exclusion visible.</h2>
+              <p className="mt-5 max-w-2xl text-sm leading-6 text-[#bdcad8]">Token efficiency is the hypothesis. The alpha records factual usage, checks, and failures before making any whole-loop Savings claim.</p>
             </div>
-            <Link href="/sign-up" className="mt-8 inline-flex rounded-xl bg-[#8ef0c0] px-5 py-3.5 text-sm font-semibold text-[#14233b] transition hover:bg-white lg:mt-0">Open your workspace →</Link>
+            <Link href="/pricing" className="mt-8 inline-flex rounded-xl bg-[#8ef0c0] px-5 py-3.5 text-sm font-semibold text-[#14233b] transition hover:bg-white lg:mt-0">Request alpha access →</Link>
           </div>
         </section>
       </main>
