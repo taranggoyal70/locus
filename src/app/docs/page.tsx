@@ -5,18 +5,21 @@ import { SITE_URL } from "@/lib/config";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "API Reference — Locus",
-  description: "Use the Locus API to get task-sized context from any GitHub repository for your AI coding agents.",
+  title: "Experimental API Reference — Locus",
+  description: "Use the experimental Locus API to localize public JavaScript and TypeScript repositories.",
 };
 
 export default function DocsPage() {
   return (
     <MarketingShell>
       <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Developer interface</p>
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Experimental localization API</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-5xl">Localize before you spend.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-light">
-          Agent Runs in the web app handle the full localize, implement, verify, and approve loop. The API below exposes the localization engine directly for your own agents. Authenticate with an API key from your <Link href="/settings" className="text-accent hover:underline">settings page</Link>.
+          Invite-only Agent Runs localize a public Repo, work in an isolated Sandbox, run
+          allowlisted checks, and stop at a review-ready proposal. The API below exposes only the
+          deterministic localization engine for experimental use. Authenticate with an API key
+          from your <Link href="/settings" className="text-accent hover:underline">settings page</Link>.
         </p>
 
         <div className="aperture-rule mt-8" />
@@ -114,6 +117,11 @@ export default function DocsPage() {
             <code className="text-accent"> refinement</code> contains unmatched task terms, possible
             starting files, and repository terms the caller can use to make the task more specific.
           </p>
+          <p className="mt-3 rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm leading-6 text-muted-light">
+            <code className="text-accent">savedPct</code> is a legacy response field containing an
+            estimated initial-context reduction. It is not a whole-Run token Savings claim and does
+            not measure agent completion or correctness.
+          </p>
         </section>
 
         <section className="mt-10">
@@ -144,14 +152,12 @@ export default function DocsPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Other interfaces</h2>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Source runtimes</h2>
           <p className="mt-2 text-sm leading-6 text-muted-light">
-            Beyond the HTTP API, Locus also ships as:
+            CLI and MCP implementations exist in the open-source repository for development and
+            automated testing. The <code className="text-accent">locus-context</code> package is not
+            published to npm, so no package-manager installation is currently advertised or supported.
           </p>
-          <ul className="mt-3 space-y-2 text-sm text-muted-light">
-            <li><strong className="text-paper">CLI</strong> — <code className="text-accent">npx locus-context locate &quot;your task&quot; --pack</code></li>
-            <li><strong className="text-paper">MCP server</strong> — JSON-RPC over stdio, compatible with Claude, Cursor, and other MCP-enabled agents</li>
-          </ul>
         </section>
       </main>
     </MarketingShell>
