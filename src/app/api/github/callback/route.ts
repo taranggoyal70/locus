@@ -1,12 +1,16 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { verifyGitHubOAuthState } from "@/lib/github-oauth-state";
 import { serviceClient } from "@/lib/supabase";
 
 export async function GET(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.redirect(new URL("/sign-in", request.url));
+  if (!alphaCapabilitiesForUser(userId).githubConnect) {
+    return NextResponse.redirect(new URL("/settings?error=github_alpha_disabled", request.url));
+  }
 
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
