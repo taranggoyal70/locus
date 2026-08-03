@@ -33,9 +33,15 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl">
-        <button onClick={onClose} className="absolute right-4 top-4 text-muted hover:text-paper">
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="alpha-access-title"
+        aria-describedby="alpha-access-description"
+        className="relative w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl"
+      >
+        <button type="button" aria-label="Close alpha access form" onClick={onClose} className="absolute right-4 top-4 text-muted hover:text-paper">
+          <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
@@ -47,20 +53,23 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                 <path d="M20 6 9 17l-5-5" />
               </svg>
             </div>
-            <p className="text-lg font-semibold text-paper">{result.message}</p>
-            <button onClick={onClose} className="mt-4 text-sm text-accent hover:underline">Close</button>
+            <p id="alpha-access-title" className="text-lg font-semibold text-paper">{result.message}</p>
+            <p id="alpha-access-description" className="sr-only">Your alpha access request was received.</p>
+            <button type="button" onClick={onClose} className="mt-4 text-sm text-accent hover:underline">Close</button>
           </div>
         ) : (
           <>
-            <h2 className="font-display text-2xl font-semibold tracking-[-0.04em] text-paper">Request alpha access</h2>
-            <p className="mt-1 text-sm text-muted-light">Tell us about one public Repo task. We&apos;re inviting a small group of design partners and reviewing every request manually.</p>
+            <h2 id="alpha-access-title" className="font-display text-2xl font-semibold tracking-[-0.04em] text-paper">Request alpha access</h2>
+            <p id="alpha-access-description" className="mt-1 text-sm text-muted-light">Tell us about one public Repo task. We&apos;re inviting a small group of design partners and reviewing every request manually.</p>
 
             {result && !result.ok && (
               <div className="mt-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-2 text-xs text-recent">{result.message}</div>
             )}
 
             <form onSubmit={submit} className="mt-5 space-y-3">
+              <label htmlFor="alpha-access-email" className="sr-only">Email address</label>
               <input
+                id="alpha-access-email"
                 type="email"
                 required
                 value={email}
@@ -68,21 +77,27 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                 placeholder="you@company.com"
                 className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
               />
+              <label htmlFor="alpha-access-name" className="sr-only">Name (optional)</label>
               <input
+                id="alpha-access-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Name (optional)"
                 maxLength={200}
                 className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
               />
+              <label htmlFor="alpha-access-company" className="sr-only">Company (optional)</label>
               <input
+                id="alpha-access-company"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 placeholder="Company (optional)"
                 maxLength={200}
                 className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
               />
+              <label htmlFor="alpha-access-use-case" className="sr-only">Public Repo task (optional)</label>
               <textarea
+                id="alpha-access-use-case"
                 value={useCase}
                 onChange={(e) => setUseCase(e.target.value)}
                 placeholder="How do you plan to use Locus? (optional)"
