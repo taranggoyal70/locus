@@ -16,6 +16,8 @@
     "check:alpha-claims": "node scripts/check-alpha-claims.mjs",
     "benchmark": "node scripts/benchmark.mjs --write",
     "eval:release1": "node scripts/release1-eval.mjs",
+    "evidence:release1": "node scripts/release1-public-report.mjs",
+    "evidence:release1:write": "node scripts/release1-public-report.mjs --write",
     "sync-cli": "cp bin/*.mjs cli/",
     "check-sync": "diff bin/core.mjs cli/core.mjs && diff bin/locus.mjs cli/locus.mjs && diff bin/mcp.mjs cli/mcp.mjs"
   },

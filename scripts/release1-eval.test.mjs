@@ -72,7 +72,12 @@ describe("Release 1 paired evaluation gate", () => {
     ];
     expect(evaluateRelease1Results(contract, results)).toMatchObject({
       passed: true,
+      status: "evaluated",
       evidenceComplete: true,
+      submittedResults: 8,
+      validResults: 8,
+      invalidResults: 0,
+      expectedResults: 8,
       pairsWithTokenReduction: 4,
       medianTotalTokenReduction: 0.375,
     });
@@ -82,7 +87,11 @@ describe("Release 1 paired evaluation gate", () => {
     const missing = pair("a", 50, 100);
     expect(evaluateRelease1Results(contract, missing)).toMatchObject({
       passed: false,
+      status: "collecting",
       evidenceComplete: false,
+      submittedResults: 2,
+      validResults: 2,
+      expectedResults: 8,
     });
 
     const results = [
@@ -108,6 +117,7 @@ describe("Release 1 paired evaluation gate", () => {
     expect(evaluateRelease1Results(contract, results)).toMatchObject({
       passed: false,
       evidenceComplete: false,
+      invalidResults: 2,
     });
   });
 

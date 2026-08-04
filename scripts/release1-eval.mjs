@@ -44,6 +44,7 @@ export function evaluateRelease1Results(contract, results) {
       declaredCaseById.get(result?.caseId),
     ))
     : [];
+  const submittedResults = Array.isArray(results) ? results.length : 0;
   const indexed = new Map();
   const evidenceIds = new Set();
   let duplicates = 0;
@@ -89,9 +90,10 @@ export function evaluateRelease1Results(contract, results) {
   }
 
   const caseCount = declaredCases.length;
+  const expectedResults = caseCount * 2;
   const evidenceComplete = caseCount > 0
     && completePairs === caseCount
-    && validResults.length === caseCount * 2
+    && validResults.length === expectedResults
     && duplicates === 0
     && duplicateEvidence === 0;
   const sliceAcceptanceRate = caseCount === 0 ? 0 : sliceAccepted / caseCount;
@@ -115,8 +117,14 @@ export function evaluateRelease1Results(contract, results) {
   return {
     version: contract?.version ?? null,
     passed: Object.values(gates).every(Boolean),
+    status: evidenceComplete ? "evaluated" : "collecting",
     evidenceComplete,
+    submittedResults,
+    validResults: validResults.length,
+    invalidResults: submittedResults - validResults.length,
+    expectedResults,
     completePairs,
+    expectedPairs: caseCount,
     sliceAcceptanceRate,
     baselineAcceptanceRate,
     acceptanceRateGap,
