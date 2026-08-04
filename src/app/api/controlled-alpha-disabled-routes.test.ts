@@ -7,6 +7,7 @@ vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
 vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
 
 import { GET as githubStatus } from "@/app/api/github/status/route";
+import { GET as billingStatus } from "@/app/api/billing/status/route";
 import { DELETE as deleteTeam, GET as listTeams, POST as createTeam } from "@/app/api/teams/route";
 import {
   DELETE as deleteTeamMember,
@@ -22,6 +23,13 @@ describe("controlled-alpha disabled APIs", () => {
 
   it("does not inspect legacy GitHub connections", async () => {
     const response = await githubStatus();
+
+    expect(response.status).toBe(403);
+    expect(serviceClientMock).not.toHaveBeenCalled();
+  });
+
+  it("does not inspect legacy billing records", async () => {
+    const response = await billingStatus();
 
     expect(response.status).toBe(403);
     expect(serviceClientMock).not.toHaveBeenCalled();

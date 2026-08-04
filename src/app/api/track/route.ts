@@ -2,17 +2,17 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { track } from "@/lib/analytics";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({}, { status: 401 });
+  if (!sameOriginMutation(request)) return NextResponse.json({}, { status: 403 });
 
-  let body: { event: string; properties?: Record<string, unknown> };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({}, { status: 400 });
-  }
+  const parsed = await readLimitedJson<{ event: string; properties?: Record<string, unknown> }>(request, 4_096);
+  if (!parsed.ok) return NextResponse.json({}, { status: parsed.status });
+  const body = parsed.value;
 
   if (!body.event || typeof body.event !== "string") {
     return NextResponse.json({}, { status: 400 });
@@ -23,6 +23,24 @@ export async function POST(request: Request) {
     return NextResponse.json({}, { status: 400 });
   }
 
-  track({ event: body.event, userId, properties: (body.properties ?? {}) as Record<string, import("@/lib/database.types").Json> });
+  let rate;
+  try {
+    rate = await consumeRateLimit({
+      namespace: "analytics-event",
+      identity: userId,
+      limit: 120,
+      windowSeconds: 60,
+    });
+  } catch {
+    return NextResponse.json({}, { status: 503 });
+  }
+  if (!rate.allowed) {
+    return NextResponse.json(
+      {},
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } },
+    );
+  }
+
+  await track({ event: body.event, userId, properties: (body.properties ?? {}) as Record<string, import("@/lib/database.types").Json> });
   return NextResponse.json({ ok: true });
 }

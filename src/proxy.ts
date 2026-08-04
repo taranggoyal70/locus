@@ -24,7 +24,17 @@ export default clerkMiddleware(
       await auth.protect();
     }
   },
-  { frontendApiProxy: { enabled: process.env.NODE_ENV === "production" } },
+  {
+    frontendApiProxy: { enabled: process.env.NODE_ENV === "production" },
+    contentSecurityPolicy: {
+      strict: true,
+      directives: {
+        "base-uri": ["'self'"],
+        "frame-ancestors": ["'none'"],
+        "object-src": ["'none'"],
+      },
+    },
+  },
 );
 
 export const config = {

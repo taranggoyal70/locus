@@ -34,6 +34,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider
+      dynamic
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       afterSignOutUrl="/"
