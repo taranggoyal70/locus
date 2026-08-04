@@ -10,7 +10,8 @@ describe("controlled-alpha documentation", () => {
     expect(html).toContain("Experimental localization API");
     expect(html).toContain("review-ready proposal");
     expect(html).toContain("not published to npm");
-    expect(html).toContain("estimated initial-context reduction");
+    expect(html).toContain("context included by this localization response");
+    expect(html).not.toContain("savedPct");
     expect(html).not.toContain("npx locus-context");
     expect(html).not.toContain("approve loop");
   });
