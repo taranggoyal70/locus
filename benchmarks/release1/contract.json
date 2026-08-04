@@ -1,0 +1,183 @@
+{
+  "version": "release1-v1",
+  "frozenAt": "2026-08-03T00:00:00.000Z",
+  "purpose": "Paired comparison of total model tokens per human-accepted engineering task.",
+  "model": {
+    "provider": "google-generative-ai",
+    "id": "gemini-3.5-flash",
+    "tokenBudget": 180000,
+    "maximumSteps": 10,
+    "maximumOutputTokensPerStep": 6000
+  },
+  "promptVersion": "release1-agent-v1",
+  "toolsVersion": "release1-bounded-workspace-v1",
+  "arms": [
+    {
+      "id": "slice",
+      "context": "Locus localized Slice plus explicitly widened files"
+    },
+    {
+      "id": "whole_repo",
+      "context": "Every supported source file in the same frozen repository snapshot"
+    }
+  ],
+  "review": {
+    "blinded": true,
+    "criterionLevel": true,
+    "failedOrMissingRunsCountAsTokenNonImprovements": true,
+    "acceptanceRubric": [
+      "The requested behavior is present in the proposal.",
+      "Required repository checks pass with captured evidence.",
+      "The proposal introduces no critical security, data-loss, or correctness regression."
+    ]
+  },
+  "thresholds": {
+    "minimumAcceptanceRate": 0.8,
+    "maximumAcceptanceRateGap": 0.05,
+    "minimumMedianTotalTokenReduction": 0.3,
+    "minimumPairsWithTokenReduction": 15,
+    "maximumCriticalRegressions": 0
+  },
+  "cases": [
+    {
+      "id": "locus-origin-cookie",
+      "repository": "https://github.com/taranggoyal70/locus",
+      "snapshotSha": "b80e6fd2bc7b34346ddda20a1ae2ef6a4e864db6",
+      "targetCommitSha": "3240a85d41792e002882f0846ca14e392a4c4115",
+      "task": "Fail closed on cookie mutation origin."
+    },
+    {
+      "id": "locus-token-evidence",
+      "repository": "https://github.com/taranggoyal70/locus",
+      "snapshotSha": "7f6cd150efb27993dc5d95e748b1a9761279ccf2",
+      "targetCommitSha": "b0e7ca83d212accd2664e46b057beeb5a2905c76",
+      "task": "Make alpha token evidence strictly factual."
+    },
+    {
+      "id": "locus-aa-contrast",
+      "repository": "https://github.com/taranggoyal70/locus",
+      "snapshotSha": "a993d99d21f574a7617353adf8f42efd9e6f7648",
+      "targetCommitSha": "bf158ffdc8340547c3303f4e940f2507e6011766",
+      "task": "Raise public text colors to AA contrast."
+    },
+    {
+      "id": "locus-dialog-focus",
+      "repository": "https://github.com/taranggoyal70/locus",
+      "snapshotSha": "487f23626b584d4052f35a048d6441643d3cd6e8",
+      "targetCommitSha": "a993d99d21f574a7617353adf8f42efd9e6f7648",
+      "task": "Trap and restore focus in the alpha access dialog."
+    },
+    {
+      "id": "solum-signup-write",
+      "repository": "https://github.com/taranggoyal70/Solum",
+      "snapshotSha": "6a4a3aa0700eed81273adeaf9ae5af5b8153d2ec",
+      "targetCommitSha": "ce097b60e8b2b44c8ca3765e77018467260b7ba3",
+      "task": "Prevent duplicate signup profile writes."
+    },
+    {
+      "id": "solum-auth-overflow",
+      "repository": "https://github.com/taranggoyal70/Solum",
+      "snapshotSha": "e9d4346928c5ea4caede9e2961861263b9851da1",
+      "targetCommitSha": "6a4a3aa0700eed81273adeaf9ae5af5b8153d2ec",
+      "task": "Clip auth page decorative overflow."
+    },
+    {
+      "id": "solum-mobile-overflow",
+      "repository": "https://github.com/taranggoyal70/Solum",
+      "snapshotSha": "e285b2f932e9439b6efaad6edbcd45f8c0b289f1",
+      "targetCommitSha": "e9d4346928c5ea4caede9e2961861263b9851da1",
+      "task": "Fix mobile landing overflow."
+    },
+    {
+      "id": "solum-theme-persistence",
+      "repository": "https://github.com/taranggoyal70/Solum",
+      "snapshotSha": "01f7326be7af68310ce47effbad3b202e88a248b",
+      "targetCommitSha": "1497f3131c733ceb2181d474872748f2e74983c4",
+      "task": "Remove browser theme persistence."
+    },
+    {
+      "id": "morphic-path-validation",
+      "repository": "https://github.com/taranggoyal70/Morphic",
+      "snapshotSha": "914e363b213ca2dcfeedb6eaef28030c8ad141f3",
+      "targetCommitSha": "51175bd5e36d6424834a1e08f6e0222dbadfd58a",
+      "task": "Validate every published path."
+    },
+    {
+      "id": "morphic-final-diff",
+      "repository": "https://github.com/taranggoyal70/Morphic",
+      "snapshotSha": "96d4c614406ec21e00d20fb6f628574c4f49ce7a",
+      "targetCommitSha": "914e363b213ca2dcfeedb6eaef28030c8ad141f3",
+      "task": "Require a non-empty final diff."
+    },
+    {
+      "id": "morphic-incomplete-runs",
+      "repository": "https://github.com/taranggoyal70/Morphic",
+      "snapshotSha": "bdb67ef24f81c6e6e484f85f31845de354cbbf68",
+      "targetCommitSha": "96d4c614406ec21e00d20fb6f628574c4f49ce7a",
+      "task": "Block incomplete agent runs."
+    },
+    {
+      "id": "morphic-failed-verification",
+      "repository": "https://github.com/taranggoyal70/Morphic",
+      "snapshotSha": "5e3b4385916d18853cc3b72128be0f9be81acbd8",
+      "targetCommitSha": "bdb67ef24f81c6e6e484f85f31845de354cbbf68",
+      "task": "Block publication on failed verification."
+    },
+    {
+      "id": "gatekit-stripe-copy",
+      "repository": "https://github.com/taranggoyal70/gatekit",
+      "snapshotSha": "0745dca3be2e6c0b5d3582fa79ccb2025e45353f",
+      "targetCommitSha": "111a09201af75db95e2301034d865578fe3d0d36",
+      "task": "Hide the Pro upgrade behind a contact link when Stripe is not configured."
+    },
+    {
+      "id": "gatekit-member-email",
+      "repository": "https://github.com/taranggoyal70/gatekit",
+      "snapshotSha": "e3783ac19237a2c1e67eca7af2299a0b74915102",
+      "targetCommitSha": "0745dca3be2e6c0b5d3582fa79ccb2025e45353f",
+      "task": "Show member emails instead of raw Clerk user IDs."
+    },
+    {
+      "id": "gatekit-input-width",
+      "repository": "https://github.com/taranggoyal70/gatekit",
+      "snapshotSha": "486a567afa17ed65a0ab254104c2ba02bd0f9339",
+      "targetCommitSha": "e3783ac19237a2c1e67eca7af2299a0b74915102",
+      "task": "Prevent the shared input class from collapsing invite fields."
+    },
+    {
+      "id": "gatekit-webhook-ssrf",
+      "repository": "https://github.com/taranggoyal70/gatekit",
+      "snapshotSha": "4f9b1e46c9081a29e55fddc8320769e0847bc850",
+      "targetCommitSha": "dc0b1b428fd2e95676e1b1a706706d0f11b5f247",
+      "task": "Validate Slack webhook URLs against SSRF."
+    },
+    {
+      "id": "codeburn-credit-price",
+      "repository": "https://github.com/getagentseal/codeburn",
+      "snapshotSha": "7dcd61889823284c0de9f615f15cc7e8707533ca",
+      "targetCommitSha": "bdf4f3fe24e9690732b22bf1a6d6fea2a8a8d7bf",
+      "task": "Price v1 executions from credits and unify parser fallback."
+    },
+    {
+      "id": "codeburn-credit-cache",
+      "repository": "https://github.com/getagentseal/codeburn",
+      "snapshotSha": "a1f8f4c4ffd5e206c4172e4a03efafdff839177d",
+      "targetCommitSha": "7dcd61889823284c0de9f615f15cc7e8707533ca",
+      "task": "Preserve credit-based cost through the session cache."
+    },
+    {
+      "id": "codeburn-wrapper-attribution",
+      "repository": "https://github.com/getagentseal/codeburn",
+      "snapshotSha": "b78e862f459af0f4588fd1c00705975862736da9",
+      "targetCommitSha": "c6f20737664092bce9a4f964b134f4cc607d661a",
+      "task": "Attribute wrapped commands to the real tool rather than the wrapper."
+    },
+    {
+      "id": "codeburn-config-fallback",
+      "repository": "https://github.com/getagentseal/codeburn",
+      "snapshotSha": "6b6b6b8df6dc55453aeb8c3c196389b3cb149c56",
+      "targetCommitSha": "cb6c92ae45a708e6db78c1ffd5246d963b37af42",
+      "task": "Fall through invalid menubar config IDs to real all-provider totals."
+    }
+  ]
+}
