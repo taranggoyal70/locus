@@ -82,7 +82,7 @@ _Avoid_: saved analysis, prompt, chat.
 
 **Run**:
 One durable attempt to complete an Agent Task. A Run owns its status, model,
-Sandbox identity, Slice ledger, Steps, Artifacts, Approvals, and token usage.
+Sandbox identity, Slice ledger, Steps, Artifacts, Reviews, Approvals, and token usage.
 _Avoid_: session, conversation, request.
 
 **Step**:
@@ -107,6 +107,13 @@ Check evidence, and factual token usage. It is ready for human inspection but is
 not an approved delivery or a verified Agent Task outcome.
 _Avoid_: completed task, verified change, pull request.
 
+**Review**:
+An immutable, human criterion-by-criterion decision bound to the exact hash of a
+Review-ready proposal. A Review accepts or rejects the Agent Task outcome; it
+does not authorize an external write. An **Approval** remains a separate,
+capability-specific decision for delivery, deployment, or another side effect.
+_Avoid_: approval (for task correctness), verification proof, delivery consent.
+
 **Token ledger**:
 The complete input and output token usage for a Run, compared with a declared
 whole-context baseline. Cached input is reported but never double-counted.
@@ -122,7 +129,7 @@ _Avoid_: estimated savings, projected savings, savings on failed Runs.
 
 **Run evidence snapshot**:
 The durable, ownership-checked read model for one Run: its Agent Task, current
-status, append-only Steps, Artifacts, Approvals, Token ledger, and optional
+status, append-only Steps, Artifacts, Reviews, Approvals, Token ledger, and optional
 Savings claim. It is the interface used for refresh, history, and review.
 _Avoid_: response payload, session state, activity feed.
 
@@ -145,6 +152,8 @@ _Avoid_: response payload, session state, activity feed.
 - `src/components/AgentRunsList.tsx` — durable Run history, review, resume, and approval.
 - `supabase/migrations/005_agent_runs.sql` — durable Agent Tasks, Runs, Steps,
   Artifacts, and Approvals.
+- `supabase/migrations/012_release1_run_evidence.sql` — immutable proposal
+  hashes, Reviews, and atomic review-ready publication.
 
 ## Invariants
 
@@ -152,8 +161,8 @@ _Avoid_: response payload, session state, activity feed.
 - **Deterministic graph.** The dependency **Graph** comes from parsing imports, never from an LLM.
 - **`buildGraph` is pure and reused.** One Graph per Repo, many Localize calls across task changes.
 - **Claims follow evidence.** `benchmarks/` measures historical fix-file recall and estimated context reduction; it does not claim autonomous task completion.
-- **No skipped gates.** A Run cannot complete without verification and explicit
-  approval; terminal Runs cannot be rewritten.
+- **No skipped gates.** A Run cannot complete without passing Check evidence and
+  an explicit Review; terminal Runs cannot be rewritten.
 - **Steps are append-only.** Current Run status is a projection; completed Step
   evidence is inserted once and never rewritten to simulate progress.
 - **No outcome, no claim.** Failed, cancelled, and active Runs expose measured

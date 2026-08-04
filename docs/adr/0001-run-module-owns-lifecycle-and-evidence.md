@@ -17,7 +17,8 @@ The Run module is the seam for lifecycle and evidence semantics.
 
 - `run-state.ts` owns valid transitions, terminal immutability, and Savings
   claim eligibility.
-- `run-store.ts` owns guarded persistence and append-only Step writes.
+- `run-store.ts` owns guarded persistence, append-only Step writes, atomic
+  proposal publication, and artifact-bound Review decisions.
 - `run-view.ts` defines the Run evidence snapshot shared by server and client.
 - Run status is the live projection; Steps are immutable completed evidence.
 - Only a completed Run may expose a Savings claim.

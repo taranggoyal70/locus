@@ -104,6 +104,9 @@ pnpm dev
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client configuration |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side only) |
+| `LOCUS_AGENT_MODEL` | Frozen provider/model identifier for Agent Runs |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Direct Google provider credential (server-side only) |
+| `CRON_SECRET` | Authorizes the daily retention job |
 
 ### Optional environment variables
 
@@ -112,6 +115,8 @@ pnpm dev
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
+| `LOCUS_RUN_TOKEN_BUDGET` | Per-Run hard budget; safe default is 180,000 |
+| `OPS_ALERT_WEBHOOK_URL` | HTTPS operational alert destination; required for Release 1 promotion |
 
 ### Authentication
 
@@ -126,6 +131,8 @@ usage analytics. Apply every migration in order:
 Use the history-aware procedure in
 [`docs/operations/release-0-controlled-alpha-rollout.md`](docs/operations/release-0-controlled-alpha-rollout.md).
 Do not apply migrations with an untracked shell loop.
+Release 1 migrations `012`–`014` use the separate
+[`Release 1 readiness rollout`](docs/operations/release-1-readiness-rollout.md).
 
 ### Export formats
 
@@ -177,6 +184,14 @@ pnpm exec tsc --noEmit
 pnpm check-sync
 pnpm build
 pnpm benchmark
+```
+
+The frozen paired total-token release gate is intentionally separate from the
+historical localization benchmark. It fails closed until all 40 arm results are
+recorded:
+
+```bash
+pnpm eval:release1
 ```
 
 ## Links
