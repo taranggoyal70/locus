@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { isTerminalRun, type RunStatus } from "@/lib/agent/run-state";
+import { RunContextLedger } from "@/components/RunContextLedger";
+import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentStepView } from "@/lib/agent/run-view";
 
 const PHASES: Array<{ label: string; statuses: RunStatus[] }> = [
@@ -73,6 +74,7 @@ export function AgentRunPanel({
   estimatedSavedPct,
   initialRunId = null,
   acceptanceCriteria,
+  canStartRun,
 }: {
   repository: string | null;
   task: string;
@@ -81,13 +83,14 @@ export function AgentRunPanel({
   estimatedSavedPct: number;
   initialRunId?: string | null;
   acceptanceCriteria: string[];
+  canStartRun: boolean;
 }) {
   const [runId, setRunId] = useState<string | null>(initialRunId);
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const status = snapshot?.run.status ?? null;
-  const terminal = status ? isTerminalRun(status) : false;
+  const shouldPoll = Boolean(runId) && (!status || isActiveRun(status));
 
   function rememberRun(nextRunId: string) {
     setRunId(nextRunId);
@@ -97,7 +100,7 @@ export function AgentRunPanel({
   }
 
   useEffect(() => {
-    if (!runId || terminal) return;
+    if (!runId || !shouldPoll) return;
     const controller = new AbortController();
     let timeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -110,7 +113,7 @@ export function AgentRunPanel({
         const data = await response.json() as AgentRunSnapshot & { error?: string };
         if (!response.ok) throw new Error(data?.error ?? "Could not refresh the run.");
         setSnapshot(data);
-        if (!isTerminalRun(data.run.status)) {
+        if (isActiveRun(data.run.status)) {
           timeout = setTimeout(poll, 2_000);
         }
       } catch (cause) {
@@ -125,10 +128,10 @@ export function AgentRunPanel({
       controller.abort();
       if (timeout) clearTimeout(timeout);
     };
-  }, [runId, terminal]);
+  }, [runId, shouldPoll]);
 
   async function launch() {
-    if (!repository || task.trim().length < 10 || launching) return;
+    if (!canStartRun || !repository || task.trim().length < 10 || launching) return;
     setLaunching(true);
     setError(null);
     setSnapshot(null);
@@ -157,9 +160,6 @@ export function AgentRunPanel({
           cachedInputTokens: 0,
           outputTokens: 0,
           totalTokens: 0,
-          savedTokens: null,
-          savedPct: null,
-          claim: { verified: false, savedTokens: null, savedPct: null },
         },
       });
     } catch (cause) {
@@ -169,7 +169,10 @@ export function AgentRunPanel({
     }
   }
 
-  const canLaunch = Boolean(repository) && task.trim().length >= 10 && acceptanceCriteria.length > 0;
+  const canLaunch = canStartRun
+    && Boolean(repository)
+    && task.trim().length >= 10
+    && acceptanceCriteria.length > 0;
   const diff = snapshot?.artifacts.find((artifact) => artifact.kind === "diff");
   const summary = snapshot?.artifacts.find((artifact) => artifact.kind === "summary");
   const pullRequest = snapshot?.artifacts.find((artifact) => artifact.kind === "pull_request");
@@ -216,11 +219,13 @@ export function AgentRunPanel({
               disabled={!canLaunch || launching}
               className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span>{launching ? "Starting durable run…" : "Run task with Locus"}</span>
+              <span>{launching ? "Starting durable run…" : canStartRun ? "Run task with Locus" : "Invite required"}</span>
               <span aria-hidden>→</span>
             </button>
             <p className="mt-3 text-[11px] leading-5 text-muted">
-              Executes in an isolated Sandbox. GitHub delivery is disabled during the controlled alpha.
+              {canStartRun
+                ? "Executes in an isolated Sandbox. GitHub delivery is disabled during the controlled alpha."
+                : "Agent Runs are available only to invited design partners. You can still inspect the complete Slice above."}
             </p>
           </>
         ) : (
@@ -231,19 +236,22 @@ export function AgentRunPanel({
                 {snapshot.run.status.replaceAll("_", " ")}
               </span>
               <span className="font-mono text-xs font-semibold text-accent">
-                {snapshot.tokens.claim.verified
-                  ? `${snapshot.tokens.claim.savedPct}% verified saved`
-                  : snapshot.run.status === "failed"
-                    ? "no savings claim"
-                    : "claim pending"}
+                {snapshot.tokens.totalTokens.toLocaleString("en-US")} tokens used
               </span>
+            </div>
+            <div className="mt-4">
+              <RunContextLedger
+                included={snapshot.run.included_files}
+                excluded={snapshot.run.excluded_files}
+                widened={snapshot.run.widened_files}
+              />
             </div>
             {repositoryTruncated && (
               <p
                 role="alert"
                 className="mt-4 rounded-xl border border-recent/40 bg-recent/10 px-3 py-3 text-xs leading-5 text-recent"
               >
-                The repository scan reached the public-beta file cap. Some files are outside both
+                The repository scan reached the controlled-alpha file cap. Some files are outside both
                 the included and excluded lists; review the diff carefully or start a narrower run.
               </p>
             )}

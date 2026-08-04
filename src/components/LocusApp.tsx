@@ -19,9 +19,15 @@ type LocusAppProps = {
   accountName?: string;
   isWorkspace?: boolean;
   initialRunId?: string | null;
+  canStartRun?: boolean;
 };
 
-export function LocusApp({ accountName, isWorkspace = false, initialRunId = null }: LocusAppProps) {
+export function LocusApp({
+  accountName,
+  isWorkspace = false,
+  initialRunId = null,
+  canStartRun = false,
+}: LocusAppProps) {
   const {
     repo,
     graph,
@@ -397,6 +403,7 @@ export function LocusApp({ accountName, isWorkspace = false, initialRunId = null
                     excludedCount={excludedCount}
                     estimatedSavedPct={reduction}
                     initialRunId={initialRunId}
+                    canStartRun={canStartRun}
                     acceptanceCriteria={definitionOfDone.split("\n").map((item) => item.trim()).filter(Boolean)}
                   />
                   <TokenMeter

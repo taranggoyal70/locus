@@ -5,7 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { AgentRunTimeline } from "@/components/AgentRunPanel";
-import { isTerminalRun } from "@/lib/agent/run-state";
+import { RunContextLedger } from "@/components/RunContextLedger";
+import { isActiveRun } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentRunSummary } from "@/lib/agent/run-view";
 
 async function fetchRuns(signal?: AbortSignal): Promise<AgentRunSummary[]> {
@@ -101,7 +102,7 @@ export function AgentRunsList() {
     return (
       <div className="rounded-[22px] border border-line bg-surface p-12 text-center">
         <p className="text-sm font-medium text-paper">No Agent Runs yet.</p>
-        <p className="mt-2 text-xs text-muted-light">Localize a real Repo and start a verified task from the workspace.</p>
+        <p className="mt-2 text-xs text-muted-light">Localize a real Repo and start a Run from the workspace.</p>
         <Link href="/workspace" className="mt-5 inline-block rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink">
           Start a Run
         </Link>
@@ -169,6 +170,11 @@ export function AgentRunsList() {
                 <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">OUTSIDE</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.run.excluded_files.length} out</p></div>
                 <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">TOKENS</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.tokens.totalTokens.toLocaleString("en-US")}</p></div>
               </div>
+              <RunContextLedger
+                included={selectedSnapshot.run.included_files}
+                excluded={selectedSnapshot.run.excluded_files}
+                widened={selectedSnapshot.run.widened_files}
+              />
               <p className="rounded-xl border border-line-strong bg-ink/60 px-3 py-2.5 text-[11px] leading-5 text-muted-light">
                 Token usage is factual. Locus does not publish a Savings claim during the controlled alpha.
               </p>
@@ -186,7 +192,7 @@ export function AgentRunsList() {
                 </p>
               )}
               {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
-              {!isTerminalRun(selectedSnapshot.run.status) && <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="block text-center text-xs font-medium text-accent hover:underline">Resume this Run in the workspace</Link>}
+              {isActiveRun(selectedSnapshot.run.status) && <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="block text-center text-xs font-medium text-accent hover:underline">Resume this Run in the workspace</Link>}
             </div>
           </>
         ) : (

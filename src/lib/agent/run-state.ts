@@ -13,6 +13,14 @@ export const RUN_STATUSES = [
 export type RunStatus = (typeof RUN_STATUSES)[number];
 
 const TERMINAL_STATUSES = new Set<RunStatus>(["completed", "failed", "cancelled"]);
+export const ACTIVE_RUN_STATUSES: readonly RunStatus[] = [
+  "queued",
+  "localizing",
+  "planning",
+  "executing",
+  "verifying",
+];
+const ACTIVE_STATUSES = new Set<RunStatus>(ACTIVE_RUN_STATUSES);
 
 const FORWARD_TRANSITIONS: Record<RunStatus, readonly RunStatus[]> = {
   queued: ["localizing"],
@@ -32,6 +40,10 @@ export function isRunStatus(value: string): value is RunStatus {
 
 export function isTerminalRun(status: RunStatus): boolean {
   return TERMINAL_STATUSES.has(status);
+}
+
+export function isActiveRun(status: RunStatus): boolean {
+  return ACTIVE_STATUSES.has(status);
 }
 
 export function canTransitionRun(current: RunStatus, next: RunStatus): boolean {
@@ -72,8 +84,16 @@ export type RunSavingsClaim =
 export function savingsClaimForRun(
   status: RunStatus,
   ledger: Pick<RunTokenLedger, "contextTokensSaved" | "contextReductionPercent">,
+  outcome?: {
+    acceptanceCriteriaSatisfied: boolean;
+    pairedWholeRepoBaselineSatisfied: boolean;
+  },
 ): RunSavingsClaim {
-  if (status !== "completed") {
+  if (
+    status !== "completed"
+    || !outcome?.acceptanceCriteriaSatisfied
+    || !outcome.pairedWholeRepoBaselineSatisfied
+  ) {
     return { verified: false, savedTokens: null, savedPct: null };
   }
   return {

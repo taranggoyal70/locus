@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertRunTransition,
   canTransitionRun,
+  isActiveRun,
   isTerminalRun,
   savingsClaimForRun,
 } from "@/lib/agent/run-state";
@@ -24,6 +25,12 @@ describe("Run lifecycle", () => {
       );
     }
   });
+
+  it("treats human review as quiescent without making it terminal", () => {
+    expect(isActiveRun("verifying")).toBe(true);
+    expect(isActiveRun("awaiting_approval")).toBe(false);
+    expect(isTerminalRun("awaiting_approval")).toBe(false);
+  });
 });
 
 describe("verified savings claim", () => {
@@ -42,8 +49,16 @@ describe("verified savings claim", () => {
     });
   });
 
-  it("claims measured context savings only after completion", () => {
+  it("requires paired acceptance evidence even after completion", () => {
     expect(savingsClaimForRun("completed", ledger)).toEqual({
+      verified: false,
+      savedTokens: null,
+      savedPct: null,
+    });
+    expect(savingsClaimForRun("completed", ledger, {
+      acceptanceCriteriaSatisfied: true,
+      pairedWholeRepoBaselineSatisfied: true,
+    })).toEqual({
       verified: true,
       savedTokens: 7_500,
       savedPct: 75,

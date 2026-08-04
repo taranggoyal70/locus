@@ -5,8 +5,9 @@ import { start } from "workflow/api";
 import { calculateTokenLedger, resolveAgentModel } from "@/lib/agent/coding-agent";
 import { agentRunQuotaDecision } from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
-import { isRunStatus, savingsClaimForRun } from "@/lib/agent/run-state";
+import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
 import { transitionRun } from "@/lib/agent/run-store";
+import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { serviceClient } from "@/lib/supabase";
 import { agentRunWorkflow } from "@/workflows/agent-run";
@@ -62,18 +63,13 @@ export async function GET() {
       cachedInputTokens: run.cached_input_tokens,
       outputTokens: run.output_tokens,
     });
-    const claim = isRunStatus(run.status)
-      ? savingsClaimForRun(run.status, ledger)
-      : { verified: false as const, savedTokens: null, savedPct: null };
+    const tokenView = controlledAlphaTokenView(ledger);
     return {
       ...run,
       task: tasksById.get(run.task_id) ?? null,
       tokens: {
-        totalTokens: ledger.totalTokens,
-        cachedInputTokens: ledger.cachedInputTokens,
-        savedTokens: claim.savedTokens,
-        savedPct: claim.savedPct,
-        verified: claim.verified,
+        totalTokens: tokenView.totalTokens,
+        cachedInputTokens: tokenView.cachedInputTokens,
       },
     };
   });
@@ -123,7 +119,7 @@ export async function POST(request: Request) {
       .from("agent_runs")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .in("status", ["queued", "localizing", "planning", "executing", "verifying"]),
+      .in("status", [...ACTIVE_RUN_STATUSES]),
     db
       .from("agent_runs")
       .select("id", { count: "exact", head: true })
@@ -140,7 +136,7 @@ export async function POST(request: Request) {
   if (!quota.allowed) {
     const error = quota.reason === "active"
       ? "Two agent runs are already active. Wait for one to finish."
-      : "Public-beta daily agent quota reached. Try again tomorrow.";
+      : "Controlled-alpha daily Agent Run quota reached. Try again tomorrow.";
     return NextResponse.json(
       { error },
       { status: 429, headers: { "Retry-After": String(quota.retryAfterSeconds) } },

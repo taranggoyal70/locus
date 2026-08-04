@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { AgentRunTimeline } from "@/components/AgentRunPanel";
+import { AgentRunPanel, AgentRunTimeline } from "@/components/AgentRunPanel";
 
 describe("AgentRunTimeline", () => {
   it("renders the complete execution lifecycle and current phase", () => {
@@ -28,5 +28,25 @@ describe("AgentRunTimeline", () => {
     expect(html).not.toContain("Approve");
     expect(html).toContain("Context Slice selected");
     expect(html).toContain("Working");
+  });
+});
+
+describe("controlled-alpha Agent Run start", () => {
+  it("shows a disabled invite state outside the allowlist", () => {
+    const html = renderToStaticMarkup(
+      <AgentRunPanel
+        repository="taranggoyal70/locus"
+        task="Fix the controlled alpha evidence contract"
+        sliceCount={4}
+        excludedCount={8}
+        estimatedSavedPct={60}
+        acceptanceCriteria={["The evidence contract is factual"]}
+        canStartRun={false}
+      />,
+    );
+
+    expect(html).toContain("Invite required");
+    expect(html).toContain("available only to invited design partners");
+    expect(html).not.toContain("verified saved");
   });
 });

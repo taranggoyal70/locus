@@ -1,5 +1,25 @@
 import type { RunStatus } from "@/lib/agent/run-state";
 
+type ControlledAlphaLedger = {
+  baselineContextTokens: number;
+  includedContextTokens: number;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+};
+
+export function controlledAlphaTokenView(ledger: ControlledAlphaLedger) {
+  return {
+    baselineTokens: ledger.baselineContextTokens,
+    includedContextTokens: ledger.includedContextTokens,
+    inputTokens: ledger.inputTokens,
+    cachedInputTokens: ledger.cachedInputTokens,
+    outputTokens: ledger.outputTokens,
+    totalTokens: ledger.totalTokens,
+  };
+}
+
 export type AgentStepView = {
   id: number;
   sequence: number;
@@ -44,13 +64,6 @@ export type AgentRunSnapshot = {
     cachedInputTokens: number;
     outputTokens: number;
     totalTokens: number;
-    savedTokens: number | null;
-    savedPct: number | null;
-    claim: {
-      verified: boolean;
-      savedTokens: number | null;
-      savedPct: number | null;
-    };
   };
 };
 
@@ -67,8 +80,5 @@ export type AgentRunSummary = {
   tokens: {
     totalTokens: number;
     cachedInputTokens: number;
-    savedTokens: number | null;
-    savedPct: number | null;
-    verified: boolean;
   };
 };

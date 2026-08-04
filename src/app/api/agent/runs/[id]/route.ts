@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { calculateTokenLedger } from "@/lib/agent/coding-agent";
-import { isRunStatus, savingsClaimForRun } from "@/lib/agent/run-state";
+import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { serviceClient } from "@/lib/supabase";
 
 type RouteContext = {
@@ -49,22 +49,12 @@ export async function GET(_request: Request, context: RouteContext) {
     cachedInputTokens: run.cached_input_tokens,
     outputTokens: run.output_tokens,
   });
-  const claim = isRunStatus(run.status)
-    ? savingsClaimForRun(run.status, tokenLedger)
-    : { verified: false as const, savedTokens: null, savedPct: null };
-
   return NextResponse.json({
     run,
     task: taskResult.data,
     steps: stepsResult.data,
     artifacts: artifactsResult.data,
     approvals: approvalsResult.data,
-    tokens: {
-      ...tokenLedger,
-      baselineTokens: tokenLedger.baselineContextTokens,
-      claim,
-      savedTokens: claim.savedTokens,
-      savedPct: claim.savedPct,
-    },
+    tokens: controlledAlphaTokenView(tokenLedger),
   });
 }

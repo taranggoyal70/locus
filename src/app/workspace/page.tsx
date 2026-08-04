@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LocusApp } from "@/components/LocusApp";
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 
 type WorkspacePageProps = {
   searchParams: Promise<{ run?: string | string[] }>;
@@ -19,10 +20,16 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
     : null;
   const user = await currentUser();
   const accountName = user?.firstName ?? user?.primaryEmailAddress?.emailAddress?.split("@")[0];
+  const capabilities = alphaCapabilitiesForUser(userId);
 
   return (
     <ErrorBoundary>
-      <LocusApp accountName={accountName} isWorkspace initialRunId={initialRunId} />
+      <LocusApp
+        accountName={accountName}
+        isWorkspace
+        initialRunId={initialRunId}
+        canStartRun={capabilities.runStart}
+      />
     </ErrorBoundary>
   );
 }
