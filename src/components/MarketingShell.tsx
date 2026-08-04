@@ -8,7 +8,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
     <div className="site-noise min-h-screen overflow-x-clip">
       <header className="sticky top-0 z-40 border-b border-line-strong bg-ink/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8">
-          <Link href="/" className="flex items-center gap-3 text-paper">
+          <Link href="/" aria-label="Locus home" className="flex items-center gap-3 text-paper">
             <Image src="/locus-mark.svg" width={30} height={30} alt="" priority />
             <span className="hidden font-display text-[17px] font-semibold tracking-[-0.03em] sm:inline">Locus</span>
           </Link>
