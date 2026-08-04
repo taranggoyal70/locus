@@ -1,4 +1,7 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+
+import { sameOriginMutation } from "@/lib/request-security";
 
 export function isProtectedPagePathname(pathname: string): boolean {
   return ["/workspace", "/demo", "/settings", "/projects"].some(
@@ -13,9 +16,20 @@ export function isProtectedPathname(pathname: string): boolean {
   );
 }
 
+export function shouldRejectProtectedMutation(request: Request): boolean {
+  if (["GET", "HEAD", "OPTIONS"].includes(request.method.toUpperCase())) return false;
+  return isProtectedPathname(new URL(request.url).pathname) && !sameOriginMutation(request);
+}
+
 export default clerkMiddleware(
   async (auth, request) => {
     const pathname = request.nextUrl.pathname;
+    if (shouldRejectProtectedMutation(request)) {
+      return NextResponse.json(
+        { error: "Cross-site requests are not allowed." },
+        { status: 403 },
+      );
+    }
     if (isProtectedPagePathname(pathname)) {
       const signInUrl = new URL("/sign-in", request.url);
       signInUrl.searchParams.set("redirect_url", request.url);
