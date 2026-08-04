@@ -9,9 +9,17 @@ import {
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { z } from "zod";
 
+import {
+  assertWithinRunTokenBudget,
+  estimateSerializedTokens,
+  nextStepBudgetDecision,
+  resolveRunTokenBudget,
+} from "@/lib/agent/run-budget";
 import type { WorkspaceController } from "@/lib/agent/workspace";
 
 const DEFAULT_AGENT_MODEL = "openai/gpt-5.6-sol";
+const AGENT_MAX_OUTPUT_TOKENS = 6_000;
+export const AGENT_MAX_STEPS = 10;
 
 export type TokenLedger = {
   baselineContextTokens: number;
@@ -159,9 +167,28 @@ function createWorkspaceTools(controller: WorkspaceController) {
   };
 }
 
+export function agentStepBudgetSettings(input: {
+  budgetTokens: number;
+  messages: unknown;
+  priorUsages: Array<{ totalTokens?: number | undefined }>;
+}): { maxOutputTokens: number } {
+  const consumedTokens = input.priorUsages.reduce(
+    (total, usage) => total + Math.max(0, usage.totalTokens ?? 0),
+    0,
+  );
+  const decision = nextStepBudgetDecision({
+    budgetTokens: input.budgetTokens,
+    consumedTokens,
+    estimatedInputTokens: estimateSerializedTokens(input.messages),
+    requestedOutputTokens: AGENT_MAX_OUTPUT_TOKENS,
+  });
+  return { maxOutputTokens: decision.maxOutputTokens };
+}
+
 export function createCodingAgent(
   controller: WorkspaceController,
   model = resolveAgentModel(),
+  tokenBudgetTokens = resolveRunTokenBudget(),
 ) {
   return new ToolLoopAgent({
     id: "locus-coding-agent",
@@ -181,8 +208,13 @@ credentials, or perform external actions. Widen context only when necessary and 
       "run_checks",
       "show_diff",
     ],
-    stopWhen: stepCountIs(18),
-    maxOutputTokens: 6_000,
+    stopWhen: stepCountIs(AGENT_MAX_STEPS),
+    maxOutputTokens: AGENT_MAX_OUTPUT_TOKENS,
+    prepareStep: ({ messages, steps }) => agentStepBudgetSettings({
+      budgetTokens: tokenBudgetTokens,
+      messages,
+      priorUsages: steps.map((step) => step.usage),
+    }),
     output: Output.object({ schema: agentOutputSchema }),
     include: {
       requestBody: false,
@@ -198,16 +230,34 @@ export type CodingRunInput = {
   baselineContextTokens: number;
   includedContextTokens: number;
   model?: string;
+  tokenBudgetTokens?: number;
   abortSignal?: AbortSignal;
   onStepEnd?: (usage: LanguageModelUsage) => Promise<void> | void;
 };
 
 export async function runCodingTask(input: CodingRunInput) {
-  const agent = createCodingAgent(input.controller, input.model);
+  const tokenBudgetTokens = input.tokenBudgetTokens ?? resolveRunTokenBudget();
+  const agent = createCodingAgent(
+    input.controller,
+    input.model,
+    tokenBudgetTokens,
+  );
   const result = await agent.generate({
     prompt: input.prompt,
     abortSignal: input.abortSignal,
     onStepEnd: async ({ usage }) => input.onStepEnd?.(usage),
+  });
+  const tokenLedger = calculateTokenLedger({
+    baselineContextTokens: input.baselineContextTokens,
+    includedContextTokens: input.includedContextTokens,
+    inputTokens: result.usage.inputTokens,
+    cachedInputTokens: result.usage.inputTokenDetails.cacheReadTokens,
+    outputTokens: result.usage.outputTokens,
+  });
+  assertWithinRunTokenBudget({
+    budgetTokens: tokenBudgetTokens,
+    inputTokens: tokenLedger.inputTokens,
+    outputTokens: tokenLedger.outputTokens,
   });
 
   return {
@@ -215,12 +265,6 @@ export async function runCodingTask(input: CodingRunInput) {
     finishReason: result.finishReason,
     ledger: input.controller.ledger(),
     verification: input.controller.verification(),
-    tokenLedger: calculateTokenLedger({
-      baselineContextTokens: input.baselineContextTokens,
-      includedContextTokens: input.includedContextTokens,
-      inputTokens: result.usage.inputTokens,
-      cachedInputTokens: result.usage.inputTokenDetails.cacheReadTokens,
-      outputTokens: result.usage.outputTokens,
-    }),
+    tokenLedger,
   };
 }

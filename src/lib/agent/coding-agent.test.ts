@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AGENT_MAX_STEPS,
+  agentStepBudgetSettings,
   calculateTokenLedger,
   resolveAgentLanguageModel,
   resolveAgentModel,
 } from "@/lib/agent/coding-agent";
 
 describe("coding agent configuration", () => {
+  it("caps the agent loop at the frozen Release 1 limit", () => {
+    expect(AGENT_MAX_STEPS).toBe(10);
+  });
+
   it("uses the current coding model unless a deployment overrides it", () => {
     expect(resolveAgentModel({})).toBe("openai/gpt-5.6-sol");
     expect(resolveAgentModel({ LOCUS_AGENT_MODEL: "openai/gpt-5.6-terra" })).toBe(
@@ -73,5 +79,24 @@ describe("coding agent configuration", () => {
       cachedInputTokens: 0,
       outputTokens: 0,
     });
+  });
+
+  it("refuses another model step when its estimated request would cross the Run budget", () => {
+    const priorUsages = [
+      { totalTokens: 70_000 },
+      { totalTokens: 80_000 },
+    ];
+
+    expect(agentStepBudgetSettings({
+      budgetTokens: 180_000,
+      messages: "x".repeat(80_000),
+      priorUsages,
+    })).toEqual({ maxOutputTokens: 6_000 });
+
+    expect(() => agentStepBudgetSettings({
+      budgetTokens: 180_000,
+      messages: "x".repeat(120_000),
+      priorUsages,
+    })).toThrow("Run token budget exhausted");
   });
 });

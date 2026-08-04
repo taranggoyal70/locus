@@ -1,12 +1,26 @@
 import { FatalError } from "workflow";
 
 import { runCodingTask } from "@/lib/agent/coding-agent";
+import { sendOperationalAlert } from "@/lib/agent/operations";
+import {
+  agentFailureMessage,
+  classifyAgentFailure,
+  type AgentFailureKind,
+} from "@/lib/agent/run-budget";
 import { fetchAgentRepository } from "@/lib/agent/github-source";
-import { appendRunStep, failRun, patchRun, transitionRun } from "@/lib/agent/run-store";
+import {
+  appendRunStep,
+  failRun,
+  patchRun,
+  publishRunProposal,
+  releaseRunProviderLease,
+  transitionRun,
+} from "@/lib/agent/run-store";
 import { createVercelWorkspace } from "@/lib/agent/vercel-workspace";
 import { WorkspaceController } from "@/lib/agent/workspace";
 import { AgentSlice, buildAgentPrompt } from "@/lib/agent/workspace-tools";
 import { buildGraph, locate } from "@/lib/localizer";
+import { logger } from "@/lib/logger";
 import { serviceClient } from "@/lib/supabase";
 
 type AgentRunWorkflowInput = {
@@ -26,6 +40,7 @@ type LocalizedRun = {
   reason: string;
   baselineTokens: number;
   includedTokens: number;
+  tokenBudget: number;
 };
 
 async function localizeRunStep(runId: string): Promise<LocalizedRun> {
@@ -108,6 +123,7 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
     reason: result.reason,
     baselineTokens: result.totalTokens,
     includedTokens: result.sliceTokens,
+    tokenBudget: run.token_budget,
   };
 }
 
@@ -151,11 +167,35 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       }),
       excluded: localized.excluded,
     });
+    const cumulativeUsage = {
+      inputTokens: 0,
+      cachedInputTokens: 0,
+      outputTokens: 0,
+    };
     const result = await runCodingTask({
       prompt,
       controller,
       baselineContextTokens: localized.baselineTokens,
       includedContextTokens: localized.includedTokens,
+      tokenBudgetTokens: localized.tokenBudget,
+      onStepEnd: async (usage) => {
+        cumulativeUsage.inputTokens += Math.max(0, usage.inputTokens ?? 0);
+        cumulativeUsage.cachedInputTokens += Math.max(
+          0,
+          usage.inputTokenDetails.cacheReadTokens ?? 0,
+        );
+        cumulativeUsage.outputTokens += Math.max(0, usage.outputTokens ?? 0);
+        await patchRun({
+          runId: localized.runId,
+          userId: localized.userId,
+          current: "executing",
+          values: {
+            input_tokens: cumulativeUsage.inputTokens,
+            cached_input_tokens: cumulativeUsage.cachedInputTokens,
+            output_tokens: cumulativeUsage.outputTokens,
+          },
+        });
+      },
     });
     if (result.verification.length === 0) {
       throw new Error("Agent did not run an approved verification command");
@@ -178,97 +218,42 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
     const changeSet = await controller.changeSet();
     if (changeSet.length === 0) throw new Error("Agent completed without repository changes");
 
-    await transitionRun({
+    const proposalHash = await publishRunProposal({
       runId: localized.runId,
       userId: localized.userId,
-      current: "executing",
-      next: "verifying",
-      values: {
-        included_context_tokens: effectiveContextTokens,
-        input_tokens: result.tokenLedger.inputTokens,
-        cached_input_tokens: result.tokenLedger.cachedInputTokens,
-        output_tokens: result.tokenLedger.outputTokens,
-        widened_files: result.ledger.widened,
-        excluded_files: result.ledger.excluded,
-      },
-    });
-    await appendRunStep({
-      runId: localized.runId,
-      userId: localized.userId,
-      sequence: 2,
-      kind: "tool",
-      status: "completed",
-      title: "Repository changes prepared",
-      detail: {
+      baseRevision: localized.revision,
+      changeSetContent: JSON.stringify({
+        version: 1,
+        baseCommitSha: localized.revision,
+        files: changeSet,
+      }),
+      diff,
+      summary: result.output.summary,
+      toolDetail: {
         changedFiles: changeSet.map((change) => change.path),
         createdFiles: result.ledger.created,
         widenedFiles: result.ledger.widened,
       },
-      inputTokens: result.tokenLedger.inputTokens,
-      outputTokens: result.tokenLedger.outputTokens,
-    });
-    await appendRunStep({
-      runId: localized.runId,
-      userId: localized.userId,
-      sequence: 3,
-      kind: "verify",
-      status: "completed",
-      title: "Verification evidence collected",
-      detail: {
+      verifyDetail: {
         checks: result.verification,
         risks: result.output.risks,
       },
+      includedContextTokens: effectiveContextTokens,
+      inputTokens: result.tokenLedger.inputTokens,
+      cachedInputTokens: result.tokenLedger.cachedInputTokens,
+      outputTokens: result.tokenLedger.outputTokens,
+      widenedFiles: result.ledger.widened,
+      excludedFiles: result.ledger.excluded,
     });
-
-    const db = serviceClient();
-    const { error: artifactError } = await db.from("agent_artifacts").insert([
+    logger.info(
+      "agent.run.review_ready",
       {
-        run_id: localized.runId,
-        user_id: localized.userId,
-        kind: "change_set",
-        label: "Approval-gated delivery payload",
-        content: JSON.stringify({
-          version: 1,
-          baseCommitSha: localized.revision,
-          files: changeSet,
-        }),
+        inputTokens: result.tokenLedger.inputTokens,
+        outputTokens: result.tokenLedger.outputTokens,
+        proposalHash,
       },
-      {
-        run_id: localized.runId,
-        user_id: localized.userId,
-        kind: "diff",
-        label: "Proposed repository diff",
-        content: diff,
-      },
-      {
-        run_id: localized.runId,
-        user_id: localized.userId,
-        kind: "summary",
-        label: "Agent summary",
-        content: result.output.summary,
-      },
-    ]);
-    if (artifactError) throw new Error(`Could not store agent artifacts: ${artifactError.message}`);
-
-    const { error: approvalError } = await db.from("agent_approvals").insert({
-      run_id: localized.runId,
-      user_id: localized.userId,
-      action: "open_pull_request",
-      payload: {
-        repository: localized.cloneUrl,
-        revision: localized.revision,
-        changedFiles: changeSet.map((change) => change.path),
-      },
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    });
-    if (approvalError) throw new Error(`Could not create approval: ${approvalError.message}`);
-
-    await transitionRun({
-      runId: localized.runId,
-      userId: localized.userId,
-      current: "verifying",
-      next: "awaiting_approval",
-    });
+      localized.runId,
+    );
   } finally {
     await workspace.stop();
   }
@@ -276,10 +261,26 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
 
 executeRunStep.maxRetries = 0;
 
-async function failRunStep(runId: string, message: string): Promise<void> {
+async function failRunStep(
+  runId: string,
+  message: string,
+  failureKind: AgentFailureKind,
+): Promise<void> {
   "use step";
 
-  await failRun(runId, message);
+  await failRun(runId, message, failureKind);
+  logger.error("agent.run.failed", { failureKind }, runId);
+  await sendOperationalAlert({ event: "agent.run.failed", runId, failureKind });
+}
+
+async function releaseProviderLeaseStep(runId: string): Promise<void> {
+  "use step";
+
+  try {
+    await releaseRunProviderLease(runId);
+  } catch {
+    logger.error("agent.provider_lease.release_failed", {}, runId);
+  }
 }
 
 export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<void> {
@@ -289,9 +290,9 @@ export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<vo
     const localized = await localizeRunStep(input.runId);
     await executeRunStep(localized);
   } catch (error) {
-    await failRunStep(
-      input.runId,
-      error instanceof Error ? error.message : "Agent workflow failed",
-    );
+    const failureKind = classifyAgentFailure(error);
+    await failRunStep(input.runId, agentFailureMessage(failureKind), failureKind);
+  } finally {
+    await releaseProviderLeaseStep(input.runId);
   }
 }
