@@ -1,4 +1,6 @@
 import type { Database, Json } from "@/lib/database.types";
+import type { AgentFailureKind } from "@/lib/agent/run-budget";
+import type { AgentCriterionDecision } from "@/lib/agent/run-review";
 import {
   assertRunTransition,
   isRunStatus,
@@ -77,7 +79,88 @@ export async function appendRunStep(input: {
   if (error) throw new Error(`Could not append Run Step: ${error.message}`);
 }
 
-export async function failRun(runId: string, message: string): Promise<void> {
+export async function publishRunProposal(input: {
+  runId: string;
+  userId: string;
+  baseRevision: string;
+  changeSetContent: string;
+  diff: string;
+  summary: string;
+  toolDetail: Json;
+  verifyDetail: Json;
+  includedContextTokens: number;
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  widenedFiles: string[];
+  excludedFiles: string[];
+}): Promise<string> {
+  const db = serviceClient();
+  const { data, error } = await db.rpc("publish_agent_proposal", {
+    p_run_id: input.runId,
+    p_user_id: input.userId,
+    p_base_revision: input.baseRevision,
+    p_change_set: input.changeSetContent,
+    p_diff: input.diff,
+    p_summary: input.summary,
+    p_tool_detail: input.toolDetail,
+    p_verify_detail: input.verifyDetail,
+    p_included_context_tokens: input.includedContextTokens,
+    p_input_tokens: input.inputTokens,
+    p_cached_input_tokens: input.cachedInputTokens,
+    p_output_tokens: input.outputTokens,
+    p_widened_files: input.widenedFiles,
+    p_excluded_files: input.excludedFiles,
+  });
+  const proposalHash = data?.[0]?.proposal_hash;
+  if (error || !proposalHash) {
+    throw new Error(`Could not atomically publish Agent proposal: ${error?.message ?? "missing hash"}`);
+  }
+  return proposalHash;
+}
+
+export async function releaseRunProviderLease(runId: string): Promise<void> {
+  const db = serviceClient();
+  const { error } = await db.rpc("release_agent_provider_lease", {
+    p_run_id: runId,
+    p_cooldown_seconds: 60,
+  });
+  if (error) throw new Error(`Could not release provider capacity: ${error.message}`);
+}
+
+export async function decideRunProposal(input: {
+  runId: string;
+  userId: string;
+  proposalHash: string;
+  decision: "accepted" | "rejected";
+  criteria: AgentCriterionDecision[];
+  note: string | null;
+}): Promise<{ status: "completed" | "rejected"; reviewId: string }> {
+  const db = serviceClient();
+  const { data, error } = await db.rpc("decide_agent_proposal", {
+    p_run_id: input.runId,
+    p_user_id: input.userId,
+    p_proposal_hash: input.proposalHash,
+    p_decision: input.decision,
+    p_criterion_decisions: input.criteria,
+    p_note: input.note,
+  });
+  const result = data?.[0];
+  if (
+    error
+    || !result
+    || (result.run_status !== "completed" && result.run_status !== "rejected")
+  ) {
+    throw new Error("Run proposal decision could not be recorded");
+  }
+  return { status: result.run_status, reviewId: result.review_id };
+}
+
+export async function failRun(
+  runId: string,
+  message: string,
+  failureKind: AgentFailureKind = "workflow_error",
+): Promise<void> {
   const db = serviceClient();
   const { data: run, error } = await db
     .from("agent_runs")
@@ -93,6 +176,7 @@ export async function failRun(runId: string, message: string): Promise<void> {
     next: "failed",
     values: {
       error: message.slice(0, 2_000),
+      failure_kind: failureKind,
       completed_at: new Date().toISOString(),
     },
   });

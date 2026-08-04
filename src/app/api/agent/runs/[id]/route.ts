@@ -26,11 +26,12 @@ export async function GET(_request: Request, context: RouteContext) {
     .single();
   if (runError || !run) return NextResponse.json({ error: "Agent run not found." }, { status: 404 });
 
-  const [taskResult, stepsResult, artifactsResult, approvalsResult] = await Promise.all([
+  const [taskResult, stepsResult, artifactsResult, approvalsResult, reviewsResult] = await Promise.all([
     db.from("agent_tasks").select("*").eq("id", run.task_id).eq("user_id", userId).single(),
     db.from("agent_steps").select("*").eq("run_id", id).eq("user_id", userId).order("sequence"),
     db.from("agent_artifacts").select("*").eq("run_id", id).eq("user_id", userId).order("created_at"),
     db.from("agent_approvals").select("*").eq("run_id", id).eq("user_id", userId).order("created_at"),
+    db.from("agent_reviews").select("*").eq("run_id", id).eq("user_id", userId).order("created_at"),
   ]);
 
   if (
@@ -38,6 +39,7 @@ export async function GET(_request: Request, context: RouteContext) {
     || stepsResult.error
     || artifactsResult.error
     || approvalsResult.error
+    || reviewsResult.error
   ) {
     return NextResponse.json({ error: "Could not load complete run evidence." }, { status: 500 });
   }
@@ -55,6 +57,7 @@ export async function GET(_request: Request, context: RouteContext) {
     steps: stepsResult.data,
     artifacts: artifactsResult.data,
     approvals: approvalsResult.data,
+    reviews: reviewsResult.data,
     tokens: controlledAlphaTokenView(tokenLedger),
   });
 }

@@ -104,10 +104,13 @@ type AgentRunRow = {
   input_tokens: number;
   output_tokens: number;
   cached_input_tokens: number;
+  token_budget: number;
   cost_microusd: number;
   included_files: string[];
   excluded_files: string[];
   widened_files: string[];
+  failure_kind: string | null;
+  proposal_hash: string | null;
   error: string | null;
   started_at: string | null;
   completed_at: string | null;
@@ -138,6 +141,8 @@ type AgentArtifactRow = {
   label: string;
   url: string | null;
   content: string | null;
+  content_sha256: string | null;
+  base_revision: string | null;
   created_at: string;
 };
 
@@ -151,6 +156,25 @@ type AgentApprovalRow = {
   expires_at: string | null;
   decided_at: string | null;
   created_at: string;
+};
+
+type AgentReviewRow = {
+  id: string;
+  run_id: string;
+  user_id: string;
+  proposal_hash: string;
+  decision: string;
+  criterion_decisions: Json;
+  note: string | null;
+  created_at: string;
+};
+
+type AgentProviderLeaseRow = {
+  run_id: string;
+  model: string;
+  acquired_at: string;
+  released_at: string | null;
+  expires_at: string;
 };
 
 export type Database = {
@@ -229,10 +253,13 @@ export type Database = {
           | "input_tokens"
           | "output_tokens"
           | "cached_input_tokens"
+          | "token_budget"
           | "cost_microusd"
           | "included_files"
           | "excluded_files"
           | "widened_files"
+          | "failure_kind"
+          | "proposal_hash"
           | "error"
           | "started_at"
           | "completed_at"
@@ -251,9 +278,14 @@ export type Database = {
       };
       agent_artifacts: {
         Row: AgentArtifactRow;
-        Insert: Omit<AgentArtifactRow, "id" | "created_at" | "url" | "content"> & {
+        Insert: Omit<
+          AgentArtifactRow,
+          "id" | "created_at" | "url" | "content" | "content_sha256" | "base_revision"
+        > & {
           url?: string | null;
           content?: string | null;
+          content_sha256?: string | null;
+          base_revision?: string | null;
         };
         Update: Partial<Omit<AgentArtifactRow, "id" | "run_id" | "user_id" | "created_at">>;
         Relationships: [];
@@ -265,6 +297,23 @@ export type Database = {
           "id" | "created_at" | "status" | "payload" | "expires_at" | "decided_at"
         > & Partial<Pick<AgentApprovalRow, "status" | "payload" | "expires_at" | "decided_at">>;
         Update: Partial<Omit<AgentApprovalRow, "id" | "run_id" | "user_id" | "action" | "created_at">>;
+        Relationships: [];
+      };
+      agent_reviews: {
+        Row: AgentReviewRow;
+        Insert: Omit<AgentReviewRow, "id" | "created_at" | "note"> & {
+          note?: string | null;
+        };
+        Update: never;
+        Relationships: [];
+      };
+      agent_provider_leases: {
+        Row: AgentProviderLeaseRow;
+        Insert: Omit<AgentProviderLeaseRow, "acquired_at" | "released_at"> & {
+          acquired_at?: string;
+          released_at?: string | null;
+        };
+        Update: Partial<Pick<AgentProviderLeaseRow, "released_at" | "expires_at">>;
         Relationships: [];
       };
     };
@@ -280,6 +329,61 @@ export type Database = {
           allowed: boolean;
           remaining: number;
           retry_after_seconds: number;
+        }>;
+      };
+      publish_agent_proposal: {
+        Args: {
+          p_run_id: string;
+          p_user_id: string;
+          p_base_revision: string;
+          p_change_set: string;
+          p_diff: string;
+          p_summary: string;
+          p_tool_detail: Json;
+          p_verify_detail: Json;
+          p_included_context_tokens: number;
+          p_input_tokens: number;
+          p_cached_input_tokens: number;
+          p_output_tokens: number;
+          p_widened_files: string[];
+          p_excluded_files: string[];
+        };
+        Returns: Array<{ proposal_hash: string }>;
+      };
+      decide_agent_proposal: {
+        Args: {
+          p_run_id: string;
+          p_user_id: string;
+          p_proposal_hash: string;
+          p_decision: string;
+          p_criterion_decisions: Json;
+          p_note?: string | null;
+        };
+        Returns: Array<{ run_status: string; review_id: string }>;
+      };
+      acquire_agent_provider_lease: {
+        Args: {
+          p_run_id: string;
+          p_model: string;
+          p_max_concurrent?: number;
+          p_lease_seconds?: number;
+        };
+        Returns: Array<{ allowed: boolean; retry_after_seconds: number }>;
+      };
+      release_agent_provider_lease: {
+        Args: {
+          p_run_id: string;
+          p_cooldown_seconds?: number;
+        };
+        Returns: boolean;
+      };
+      delete_expired_agent_data: {
+        Args: { p_retention_days?: number };
+        Returns: Array<{
+          deleted_runs: number;
+          deleted_tasks: number;
+          deleted_events: number;
+          deleted_waitlist_entries: number;
         }>;
       };
     };

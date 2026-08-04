@@ -4,12 +4,14 @@ const authMock = vi.hoisted(() => vi.fn());
 const consumeRateLimitMock = vi.hoisted(() => vi.fn());
 const appendRunStepMock = vi.hoisted(() => vi.fn());
 const transitionRunMock = vi.hoisted(() => vi.fn());
+const releaseRunProviderLeaseMock = vi.hoisted(() => vi.fn());
 const serviceClientMock = vi.hoisted(() => vi.fn());
 const startMock = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 vi.mock("@/lib/agent/run-store", () => ({
   appendRunStep: appendRunStepMock,
+  releaseRunProviderLease: releaseRunProviderLeaseMock,
   transitionRun: transitionRunMock,
 }));
 vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
@@ -45,7 +47,10 @@ function queryResult(result: Record<string, unknown>) {
   return builder;
 }
 
-function successfulDatabase() {
+function successfulDatabase(
+  capacity = { allowed: true, retry_after_seconds: 0 },
+  workflowUpdateError: Record<string, unknown> | null = null,
+) {
   const from = vi.fn()
     .mockReturnValueOnce(queryResult({ count: 0, error: null }))
     .mockReturnValueOnce(queryResult({ count: 0, error: null }))
@@ -60,16 +65,21 @@ function successfulDatabase() {
       },
       error: null,
     }))
-    .mockReturnValueOnce(queryResult({ error: null }));
-  serviceClientMock.mockReturnValue({ from });
+    .mockReturnValueOnce(queryResult({ error: workflowUpdateError }));
+  const rpc = vi.fn().mockResolvedValue({ data: [capacity], error: null });
+  serviceClientMock.mockReturnValue({ from, rpc });
+  return { from, rpc };
 }
 
 describe("controlled-alpha Agent Run starts", () => {
   beforeEach(() => {
+    vi.unstubAllEnvs();
     authMock.mockResolvedValue({ userId: "user_outside_alpha" });
     consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 2, retryAfterSeconds: 0 });
     appendRunStepMock.mockReset();
     transitionRunMock.mockReset();
+    releaseRunProviderLeaseMock.mockReset();
+    releaseRunProviderLeaseMock.mockResolvedValue(undefined);
     serviceClientMock.mockReset();
     startMock.mockReset();
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_design_partner");
@@ -119,6 +129,21 @@ describe("controlled-alpha Agent Run starts", () => {
     }));
   });
 
+  it("fails closed when free-tier provider capacity is reserved by another Run", async () => {
+    authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
+    const { rpc } = successfulDatabase({ allowed: false, retry_after_seconds: 41 });
+
+    const response = await POST(runRequest());
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("41");
+    expect(rpc).toHaveBeenCalledWith("acquire_agent_provider_lease", expect.objectContaining({
+      p_run_id: "run-id",
+      p_max_concurrent: 1,
+    }));
+    expect(startMock).not.toHaveBeenCalled();
+  });
+
   it("fails closed when data-policy evidence cannot be recorded", async () => {
     authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
     successfulDatabase();
@@ -134,5 +159,30 @@ describe("controlled-alpha Agent Run starts", () => {
       current: "queued",
       next: "failed",
     }));
+  });
+
+  it("fails closed before persistence when the deployment token budget is invalid", async () => {
+    authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
+    vi.stubEnv("LOCUS_RUN_TOKEN_BUDGET", "unbounded");
+
+    const response = await POST(runRequest());
+
+    expect(response.status).toBe(503);
+    expect(serviceClientMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps a successfully started workflow alive when correlation persistence fails", async () => {
+    authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
+    successfulDatabase(
+      { allowed: true, retry_after_seconds: 0 },
+      { message: "workflow id update failed" },
+    );
+    appendRunStepMock.mockResolvedValueOnce(undefined);
+    startMock.mockResolvedValueOnce({ runId: "workflow-id" });
+
+    const response = await POST(runRequest());
+
+    expect(response.status).toBe(202);
+    expect(transitionRunMock).not.toHaveBeenCalledWith(expect.objectContaining({ next: "failed" }));
   });
 });

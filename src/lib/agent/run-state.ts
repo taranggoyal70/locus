@@ -6,13 +6,14 @@ export const RUN_STATUSES = [
   "verifying",
   "awaiting_approval",
   "completed",
+  "rejected",
   "failed",
   "cancelled",
 ] as const;
 
 export type RunStatus = (typeof RUN_STATUSES)[number];
 
-const TERMINAL_STATUSES = new Set<RunStatus>(["completed", "failed", "cancelled"]);
+const TERMINAL_STATUSES = new Set<RunStatus>(["completed", "rejected", "failed", "cancelled"]);
 export const ACTIVE_RUN_STATUSES: readonly RunStatus[] = [
   "queued",
   "localizing",
@@ -28,8 +29,9 @@ const FORWARD_TRANSITIONS: Record<RunStatus, readonly RunStatus[]> = {
   planning: ["executing"],
   executing: ["verifying"],
   verifying: ["awaiting_approval"],
-  awaiting_approval: ["completed"],
+  awaiting_approval: ["completed", "rejected"],
   completed: [],
+  rejected: [],
   failed: [],
   cancelled: [],
 };
@@ -83,22 +85,29 @@ export type RunSavingsClaim =
 
 export function savingsClaimForRun(
   status: RunStatus,
-  ledger: Pick<RunTokenLedger, "contextTokensSaved" | "contextReductionPercent">,
+  ledger: Pick<RunTokenLedger, "totalTokens">,
   outcome?: {
     acceptanceCriteriaSatisfied: boolean;
-    pairedWholeRepoBaselineSatisfied: boolean;
+    pairedWholeRepoBaseline: {
+      acceptanceCriteriaSatisfied: boolean;
+      totalTokens: number;
+    };
   },
 ): RunSavingsClaim {
+  const baseline = outcome?.pairedWholeRepoBaseline;
   if (
     status !== "completed"
     || !outcome?.acceptanceCriteriaSatisfied
-    || !outcome.pairedWholeRepoBaselineSatisfied
+    || !baseline?.acceptanceCriteriaSatisfied
+    || baseline.totalTokens <= 0
+    || ledger.totalTokens >= baseline.totalTokens
   ) {
     return { verified: false, savedTokens: null, savedPct: null };
   }
+  const savedTokens = baseline.totalTokens - ledger.totalTokens;
   return {
     verified: true,
-    savedTokens: ledger.contextTokensSaved,
-    savedPct: ledger.contextReductionPercent,
+    savedTokens,
+    savedPct: Math.round((savedTokens / baseline.totalTokens) * 100),
   };
 }

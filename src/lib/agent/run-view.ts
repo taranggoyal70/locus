@@ -1,3 +1,5 @@
+import type { AgentFailureKind } from "@/lib/agent/run-budget";
+import type { AgentCriterionDecision } from "@/lib/agent/run-review";
 import type { RunStatus } from "@/lib/agent/run-state";
 
 type ControlledAlphaLedger = {
@@ -34,6 +36,17 @@ export type AgentArtifactView = {
   label: string;
   content: string | null;
   url: string | null;
+  content_sha256?: string | null;
+  base_revision?: string | null;
+};
+
+export type AgentReviewView = {
+  id: string;
+  proposal_hash: string;
+  decision: "accepted" | "rejected";
+  criterion_decisions: AgentCriterionDecision[];
+  note: string | null;
+  created_at: string;
 };
 
 export type AgentTaskView = {
@@ -49,6 +62,9 @@ export type AgentRunSnapshot = {
     id: string;
     status: RunStatus;
     error: string | null;
+    failure_kind: AgentFailureKind | null;
+    proposal_hash: string | null;
+    token_budget: number;
     included_files: string[];
     excluded_files: string[];
     widened_files: string[];
@@ -57,6 +73,7 @@ export type AgentRunSnapshot = {
   task?: AgentTaskView;
   steps: AgentStepView[];
   artifacts: AgentArtifactView[];
+  reviews: AgentReviewView[];
   tokens: {
     baselineTokens: number;
     includedContextTokens: number;

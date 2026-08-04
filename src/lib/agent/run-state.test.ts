@@ -18,7 +18,7 @@ describe("Run lifecycle", () => {
   });
 
   it("keeps every terminal Run immutable", () => {
-    for (const status of ["completed", "failed", "cancelled"] as const) {
+    for (const status of ["completed", "rejected", "failed", "cancelled"] as const) {
       expect(isTerminalRun(status)).toBe(true);
       expect(() => assertRunTransition(status, "localizing")).toThrow(
         `Invalid Run transition: ${status} → localizing`,
@@ -34,7 +34,7 @@ describe("Run lifecycle", () => {
 });
 
 describe("verified savings claim", () => {
-  const ledger = { contextTokensSaved: 7_500, contextReductionPercent: 75 };
+  const ledger = { totalTokens: 4_000 };
 
   it("does not claim savings before a verified outcome", () => {
     expect(savingsClaimForRun("executing", ledger)).toEqual({
@@ -57,11 +57,22 @@ describe("verified savings claim", () => {
     });
     expect(savingsClaimForRun("completed", ledger, {
       acceptanceCriteriaSatisfied: true,
-      pairedWholeRepoBaselineSatisfied: true,
+      pairedWholeRepoBaseline: { acceptanceCriteriaSatisfied: true, totalTokens: 10_000 },
     })).toEqual({
       verified: true,
-      savedTokens: 7_500,
-      savedPct: 75,
+      savedTokens: 6_000,
+      savedPct: 60,
     });
+  });
+
+  it("never turns context reduction or a rejected baseline into a whole-task claim", () => {
+    expect(savingsClaimForRun("completed", ledger, {
+      acceptanceCriteriaSatisfied: true,
+      pairedWholeRepoBaseline: { acceptanceCriteriaSatisfied: false, totalTokens: 10_000 },
+    })).toEqual({ verified: false, savedTokens: null, savedPct: null });
+    expect(savingsClaimForRun("completed", { totalTokens: 12_000 }, {
+      acceptanceCriteriaSatisfied: true,
+      pairedWholeRepoBaseline: { acceptanceCriteriaSatisfied: true, totalTokens: 10_000 },
+    })).toEqual({ verified: false, savedTokens: null, savedPct: null });
   });
 });

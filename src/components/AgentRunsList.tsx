@@ -25,12 +25,13 @@ async function fetchRun(runId: string, signal?: AbortSignal): Promise<AgentRunSn
 
 export function alphaRunStatusLabel(status: string): string {
   if (status === "awaiting_approval") return "ready for review";
+  if (status === "rejected") return "rejected by reviewer";
   return status.replaceAll("_", " ");
 }
 
 function statusTone(status: string): string {
   if (status === "completed") return "border-accent/35 bg-accent/10 text-accent";
-  if (status === "failed" || status === "cancelled") return "border-recent/35 bg-recent/10 text-recent";
+  if (status === "failed" || status === "rejected" || status === "cancelled") return "border-recent/35 bg-recent/10 text-recent";
   if (status === "awaiting_approval") return "border-[#b78a22]/35 bg-[#e8c866]/25 text-[#765a18]";
   return "border-line-strong bg-paper/[0.04] text-muted-light";
 }

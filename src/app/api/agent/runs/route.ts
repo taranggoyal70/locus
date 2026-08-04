@@ -3,18 +3,32 @@ import { NextResponse } from "next/server";
 import { start } from "workflow/api";
 
 import { calculateTokenLedger, resolveAgentModel } from "@/lib/agent/coding-agent";
+import { resolveRunTokenBudget } from "@/lib/agent/run-budget";
 import { agentRunQuotaDecision } from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
 import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
-import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
+import {
+  appendRunStep,
+  releaseRunProviderLease,
+  transitionRun,
+} from "@/lib/agent/run-store";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
+import { logger } from "@/lib/logger";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { serviceClient } from "@/lib/supabase";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
 const MAX_BODY_BYTES = 12_000;
+
+async function releaseProviderCapacity(runId: string) {
+  try {
+    await releaseRunProviderLease(runId);
+  } catch {
+    logger.error("agent.provider_lease.release_failed", {}, runId);
+  }
+}
 
 export async function GET() {
   const { userId } = await auth();
@@ -84,6 +98,18 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Invalid agent run request." },
       { status: 400 },
+    );
+  }
+
+  let model: string;
+  let tokenBudget: number;
+  try {
+    model = resolveAgentModel();
+    tokenBudget = resolveRunTokenBudget();
+  } catch {
+    return NextResponse.json(
+      { error: "Agent Run deployment limits are not configured safely." },
+      { status: 503 },
     );
   }
 
@@ -161,12 +187,61 @@ export async function POST(request: Request) {
     .insert({
       task_id: task.id,
       user_id: userId,
-      model: resolveAgentModel(),
+      model,
+      token_budget: tokenBudget,
     })
     .select("*")
     .single();
   if (runError || !run) {
     return NextResponse.json({ error: "Could not create the agent run." }, { status: 500 });
+  }
+
+  const { data: leaseData, error: leaseError } = await db.rpc(
+    "acquire_agent_provider_lease",
+    {
+      p_run_id: run.id,
+      p_model: model,
+      p_max_concurrent: 1,
+      p_lease_seconds: 3_600,
+    },
+  );
+  const lease = leaseData?.[0];
+  if (leaseError || !lease) {
+    await transitionRun({
+      runId: run.id,
+      userId,
+      current: "queued",
+      next: "failed",
+      values: {
+        error: "Provider capacity could not be reserved.",
+        failure_kind: "workflow_error",
+        completed_at: new Date().toISOString(),
+      },
+    });
+    return NextResponse.json(
+      { error: "Agent provider capacity could not be verified." },
+      { status: 503 },
+    );
+  }
+  if (!lease.allowed) {
+    await transitionRun({
+      runId: run.id,
+      userId,
+      current: "queued",
+      next: "failed",
+      values: {
+        error: "Another Agent Run is using the free-tier provider capacity.",
+        failure_kind: "quota_exhausted",
+        completed_at: new Date().toISOString(),
+      },
+    });
+    return NextResponse.json(
+      { error: "Agent capacity is busy. Retry after the current provider window." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(lease.retry_after_seconds) },
+      },
+    );
   }
 
   const policyAcceptedAt = new Date().toISOString();
@@ -184,6 +259,7 @@ export async function POST(request: Request) {
       },
     });
   } catch {
+    await releaseProviderCapacity(run.id);
     await transitionRun({
       runId: run.id,
       userId,
@@ -200,25 +276,13 @@ export async function POST(request: Request) {
     );
   }
 
+  let workflowRun;
   try {
-    const workflowRun = await start(agentRunWorkflow, [{ runId: run.id }], {
+    workflowRun = await start(agentRunWorkflow, [{ runId: run.id }], {
       deploymentId: "latest",
     });
-    const { error: updateError } = await db
-      .from("agent_runs")
-      .update({ workflow_run_id: workflowRun.runId })
-      .eq("id", run.id)
-      .eq("user_id", userId);
-    if (updateError) throw updateError;
-
-    return NextResponse.json(
-      {
-        run: { ...run, workflow_run_id: workflowRun.runId },
-        statusUrl: `/api/agent/runs/${run.id}`,
-      },
-      { status: 202 },
-    );
   } catch {
+    await releaseProviderCapacity(run.id);
     await transitionRun({
       runId: run.id,
       userId,
@@ -234,4 +298,21 @@ export async function POST(request: Request) {
       { status: 503 },
     );
   }
+
+  const { error: updateError } = await db
+    .from("agent_runs")
+    .update({ workflow_run_id: workflowRun.runId })
+    .eq("id", run.id)
+    .eq("user_id", userId);
+  if (updateError) {
+    logger.error("agent.workflow.correlation_failed", {}, run.id);
+  }
+
+  return NextResponse.json(
+    {
+      run: { ...run, workflow_run_id: updateError ? null : workflowRun.runId },
+      statusUrl: `/api/agent/runs/${run.id}`,
+    },
+    { status: 202 },
+  );
 }
