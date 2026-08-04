@@ -1,11 +1,18 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { serviceClient } from "@/lib/supabase";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!alphaCapabilitiesForUser(userId).privateRepoRead) {
+    return NextResponse.json(
+      { error: "Private repository reads are unavailable during controlled alpha." },
+      { status: 403 },
+    );
+  }
 
   const db = serviceClient();
   const { data } = await db

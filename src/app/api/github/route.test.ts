@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.hoisted(() => vi.fn());
+const serviceClientMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
+vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
 
 import { POST } from "@/app/api/github/route";
 
@@ -17,6 +19,7 @@ function request(body: string, ip: string, headers: Record<string, string> = {})
 describe("GitHub repository API request guards", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_123" });
+    serviceClientMock.mockReset();
   });
 
   it("rejects signed-out requests", async () => {
@@ -61,7 +64,22 @@ describe("GitHub repository API request guards", () => {
     const response = await POST(request('{"url":"owner/repo"}', "198.51.100.20"));
 
     expect(response.status).toBe(502);
+    expect(serviceClientMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({ error: "GitHub returned an invalid repository tree." });
+    fetchMock.mockRestore();
+  });
+
+  it("describes private repository reads as unavailable", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+
+    const response = await POST(request('{"url":"owner/private-repo"}', "198.51.100.22"));
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "Repo not found. Controlled alpha currently supports public repositories only.",
+    });
+    expect(serviceClientMock).not.toHaveBeenCalled();
     fetchMock.mockRestore();
   });
 

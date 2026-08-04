@@ -7,12 +7,18 @@ describe("controlled-alpha capabilities", () => {
     expect(alphaCapabilitiesForUser(null, "user_founder")).toEqual({
       runStart: false,
       githubConnect: false,
+      privateRepoRead: false,
+      teams: false,
+      savingsClaims: false,
       delivery: false,
       billing: false,
     });
     expect(alphaCapabilitiesForUser("user_founder", "")).toEqual({
       runStart: false,
       githubConnect: false,
+      privateRepoRead: false,
+      teams: false,
+      savingsClaims: false,
       delivery: false,
       billing: false,
     });
@@ -27,6 +33,9 @@ describe("controlled-alpha capabilities", () => {
     ).toEqual({
       runStart: true,
       githubConnect: false,
+      privateRepoRead: false,
+      teams: false,
+      savingsClaims: false,
       delivery: false,
       billing: false,
     });

@@ -1,11 +1,20 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { serviceClient } from "@/lib/supabase";
+
+function disabledResponse() {
+  return NextResponse.json(
+    { error: "Teams are unavailable during controlled alpha." },
+    { status: 403 },
+  );
+}
 
 export async function GET(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!alphaCapabilitiesForUser(userId).teams) return disabledResponse();
 
   const url = new URL(request.url);
   const teamId = url.searchParams.get("teamId");
@@ -33,6 +42,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!alphaCapabilitiesForUser(userId).teams) return disabledResponse();
 
   let body: unknown;
   try { body = await request.json(); } catch {
@@ -84,6 +94,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!alphaCapabilitiesForUser(userId).teams) return disabledResponse();
 
   const url = new URL(request.url);
   const teamId = url.searchParams.get("teamId");

@@ -1,6 +1,9 @@
 export type AlphaCapabilities = {
   runStart: boolean;
   githubConnect: boolean;
+  privateRepoRead: boolean;
+  teams: boolean;
+  savingsClaims: boolean;
   delivery: boolean;
   billing: boolean;
 };
@@ -23,6 +26,9 @@ export function alphaCapabilitiesForUser(
   return {
     runStart: allowlisted,
     githubConnect: false,
+    privateRepoRead: false,
+    teams: false,
+    savingsClaims: false,
     delivery: false,
     billing: false,
   };
