@@ -19,6 +19,7 @@
     "check-sync": "diff bin/core.mjs cli/core.mjs && diff bin/locus.mjs cli/locus.mjs && diff bin/mcp.mjs cli/mcp.mjs"
   },
   "dependencies": {
+    "@ai-sdk/google": "4.0.31",
     "@clerk/nextjs": "^7.5.17",
     "@supabase/supabase-js": "^2.110.5",
     "@vercel/sandbox": "^2.9.0",

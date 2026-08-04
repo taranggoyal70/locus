@@ -82,7 +82,7 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
   await appendRunStep({
     runId,
     userId: run.user_id,
-    sequence: 0,
+    sequence: 1,
     kind: "localize",
     status: "completed",
     title: "Context Slice selected",

@@ -1,10 +1,14 @@
+import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/data-policy";
 import { publicGitHubCoordinates } from "@/lib/agent/github-source";
+
+export { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/data-policy";
 
 export type AgentRunRequest = {
   repository: string;
   baseRef: string;
   task: string;
   acceptanceCriteria: string[];
+  dataPolicyVersion: typeof CONTROLLED_ALPHA_DATA_POLICY_VERSION;
 };
 
 function parseRepositorySpecifier(input: string): { repository: string; baseRef?: string } {
@@ -75,5 +79,23 @@ export function parseAgentRunRequest(input: unknown): AgentRunRequest {
     return value;
   });
 
-  return { repository, baseRef, task, acceptanceCriteria };
+  const dataPolicyAcceptance = body.dataPolicyAcceptance;
+  if (
+    !dataPolicyAcceptance
+    || typeof dataPolicyAcceptance !== "object"
+    || (dataPolicyAcceptance as Record<string, unknown>).version
+      !== CONTROLLED_ALPHA_DATA_POLICY_VERSION
+  ) {
+    throw new Error(
+      "Confirm the controlled-alpha data policy before starting an Agent Run",
+    );
+  }
+
+  return {
+    repository,
+    baseRef,
+    task,
+    acceptanceCriteria,
+    dataPolicyVersion: CONTROLLED_ALPHA_DATA_POLICY_VERSION,
+  };
 }

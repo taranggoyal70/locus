@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   calculateTokenLedger,
+  resolveAgentLanguageModel,
   resolveAgentModel,
 } from "@/lib/agent/coding-agent";
 
@@ -11,6 +12,29 @@ describe("coding agent configuration", () => {
     expect(resolveAgentModel({ LOCUS_AGENT_MODEL: "openai/gpt-5.6-terra" })).toBe(
       "openai/gpt-5.6-terra",
     );
+  });
+
+  it("routes an explicitly configured Google model directly on the free tier", () => {
+    const model = resolveAgentLanguageModel("google/gemini-3.5-flash", {
+      GOOGLE_GENERATIVE_AI_API_KEY: "test-google-key",
+    });
+
+    expect(model).toMatchObject({
+      modelId: "gemini-3.5-flash",
+      provider: "google.generative-ai",
+    });
+  });
+
+  it("keeps Gateway routing when no direct-provider credential is configured", () => {
+    expect(resolveAgentLanguageModel("google/gemini-3.5-flash", {})).toBe(
+      "google/gemini-3.5-flash",
+    );
+  });
+
+  it("fails closed when a Google credential is paired with another provider", () => {
+    expect(() => resolveAgentLanguageModel("openai/gpt-5.6-sol", {
+      GOOGLE_GENERATIVE_AI_API_KEY: "test-google-key",
+    })).toThrow("requires LOCUS_AGENT_MODEL to use the google/<model> format");
   });
 
   it("reports Slice savings separately from actual model usage", () => {

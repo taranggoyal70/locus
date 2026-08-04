@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { RunContextLedger } from "@/components/RunContextLedger";
+import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/data-policy";
 import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentStepView } from "@/lib/agent/run-view";
 
@@ -88,6 +89,7 @@ export function AgentRunPanel({
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dataPolicyAccepted, setDataPolicyAccepted] = useState(false);
   const status = snapshot?.run.status ?? null;
   const shouldPoll = Boolean(runId) && (!status || isActiveRun(status));
 
@@ -130,7 +132,13 @@ export function AgentRunPanel({
   }, [runId, shouldPoll]);
 
   async function launch() {
-    if (!canStartRun || !repository || task.trim().length < 10 || launching) return;
+    if (
+      !canStartRun
+      || !repository
+      || task.trim().length < 10
+      || !dataPolicyAccepted
+      || launching
+    ) return;
     setLaunching(true);
     setError(null);
     setSnapshot(null);
@@ -142,6 +150,9 @@ export function AgentRunPanel({
           repository,
           task,
           acceptanceCriteria,
+          dataPolicyAcceptance: {
+            version: CONTROLLED_ALPHA_DATA_POLICY_VERSION,
+          },
         }),
       });
       const data = await response.json();
@@ -171,7 +182,8 @@ export function AgentRunPanel({
   const canLaunch = canStartRun
     && Boolean(repository)
     && task.trim().length >= 10
-    && acceptanceCriteria.length > 0;
+    && acceptanceCriteria.length > 0
+    && dataPolicyAccepted;
   const diff = snapshot?.artifacts.find((artifact) => artifact.kind === "diff");
   const summary = snapshot?.artifacts.find((artifact) => artifact.kind === "summary");
   const pullRequest = snapshot?.artifacts.find((artifact) => artifact.kind === "pull_request");
@@ -212,6 +224,21 @@ export function AgentRunPanel({
                 </div>
               ))}
             </div>
+            {canStartRun && (
+              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-line px-3 py-3 text-[11px] leading-5 text-muted-light">
+                <input
+                  type="checkbox"
+                  checked={dataPolicyAccepted}
+                  onChange={(event) => setDataPolicyAccepted(event.target.checked)}
+                  className="mt-1 size-3.5 shrink-0 accent-[var(--accent)]"
+                />
+                <span>
+                  I confirm this public Repo, task, and criteria contain no private,
+                  confidential, or personal data. Gemini free-tier content may be used
+                  to improve Google products and may be reviewed by people.
+                </span>
+              </label>
+            )}
             <button
               type="button"
               onClick={launch}

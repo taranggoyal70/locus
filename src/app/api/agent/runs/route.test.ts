@@ -2,10 +2,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.hoisted(() => vi.fn());
 const consumeRateLimitMock = vi.hoisted(() => vi.fn());
+const appendRunStepMock = vi.hoisted(() => vi.fn());
+const transitionRunMock = vi.hoisted(() => vi.fn());
+const serviceClientMock = vi.hoisted(() => vi.fn());
+const startMock = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
+vi.mock("@/lib/agent/run-store", () => ({
+  appendRunStep: appendRunStepMock,
+  transitionRun: transitionRunMock,
+}));
+vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
+vi.mock("workflow/api", () => ({ start: startMock }));
 
 import { POST } from "@/app/api/agent/runs/route";
+import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/run-request";
 
 function runRequest() {
   return new Request("http://localhost/api/agent/runs", {
@@ -16,14 +27,51 @@ function runRequest() {
       baseRef: "main",
       task: "Fix the documented alpha capability guard",
       acceptanceCriteria: ["The guarded route rejects users outside the alpha"],
+      dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
     }),
   });
+}
+
+function queryResult(result: Record<string, unknown>) {
+  const builder: Record<string, unknown> = {};
+  for (const method of ["select", "eq", "in", "gte", "insert", "update"]) {
+    builder[method] = vi.fn(() => builder);
+  }
+  builder.single = vi.fn(async () => result);
+  builder.then = (
+    resolve: (value: Record<string, unknown>) => unknown,
+    reject: (reason: unknown) => unknown,
+  ) => Promise.resolve(result).then(resolve, reject);
+  return builder;
+}
+
+function successfulDatabase() {
+  const from = vi.fn()
+    .mockReturnValueOnce(queryResult({ count: 0, error: null }))
+    .mockReturnValueOnce(queryResult({ count: 0, error: null }))
+    .mockReturnValueOnce(queryResult({ data: { id: "task-id" }, error: null }))
+    .mockReturnValueOnce(queryResult({
+      data: {
+        id: "run-id",
+        task_id: "task-id",
+        user_id: "user_design_partner",
+        status: "queued",
+        model: "google/gemini-3.5-flash",
+      },
+      error: null,
+    }))
+    .mockReturnValueOnce(queryResult({ error: null }));
+  serviceClientMock.mockReturnValue({ from });
 }
 
 describe("controlled-alpha Agent Run starts", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_outside_alpha" });
     consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 2, retryAfterSeconds: 0 });
+    appendRunStepMock.mockReset();
+    transitionRunMock.mockReset();
+    serviceClientMock.mockReset();
+    startMock.mockReset();
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_design_partner");
   });
 
@@ -44,5 +92,47 @@ describe("controlled-alpha Agent Run starts", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("37");
+  });
+
+  it("records versioned data-policy evidence before starting the workflow", async () => {
+    const events: string[] = [];
+    authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
+    successfulDatabase();
+    appendRunStepMock.mockImplementationOnce(async () => { events.push("policy"); });
+    startMock.mockImplementationOnce(async () => {
+      events.push("workflow");
+      return { runId: "workflow-id" };
+    });
+
+    const response = await POST(runRequest());
+
+    expect(response.status).toBe(202);
+    expect(events).toEqual(["policy", "workflow"]);
+    expect(appendRunStepMock).toHaveBeenCalledWith(expect.objectContaining({
+      runId: "run-id",
+      sequence: 0,
+      kind: "approval",
+      detail: expect.objectContaining({
+        policyVersion: CONTROLLED_ALPHA_DATA_POLICY_VERSION,
+        acceptedAt: expect.any(String),
+      }),
+    }));
+  });
+
+  it("fails closed when data-policy evidence cannot be recorded", async () => {
+    authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
+    successfulDatabase();
+    appendRunStepMock.mockRejectedValueOnce(new Error("step insert failed"));
+    transitionRunMock.mockResolvedValueOnce(undefined);
+
+    const response = await POST(runRequest());
+
+    expect(response.status).toBe(503);
+    expect(startMock).not.toHaveBeenCalled();
+    expect(transitionRunMock).toHaveBeenCalledWith(expect.objectContaining({
+      runId: "run-id",
+      current: "queued",
+      next: "failed",
+    }));
   });
 });

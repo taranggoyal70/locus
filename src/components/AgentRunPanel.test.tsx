@@ -39,6 +39,24 @@ describe("AgentRunTimeline", () => {
 });
 
 describe("controlled-alpha Agent Run start", () => {
+  it("requires the free-tier data acknowledgement before launch", () => {
+    const html = renderToStaticMarkup(
+      <AgentRunPanel
+        repository="taranggoyal70/locus"
+        task="Fix the controlled alpha evidence contract"
+        sliceCount={4}
+        excludedCount={8}
+        acceptanceCriteria={["The evidence contract is factual"]}
+        canStartRun
+      />,
+    );
+
+    expect(html).toContain("Gemini free-tier content may be used to improve Google products");
+    expect(html).toContain("may be reviewed by people");
+    expect(html).toContain("private, confidential, or personal data");
+    expect(html).toMatch(/<button[^>]*disabled/);
+  });
+
   it("shows a disabled invite state outside the allowlist", () => {
     const html = renderToStaticMarkup(
       <AgentRunPanel

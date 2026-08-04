@@ -90,7 +90,46 @@ order by table_name, role_name, privilege_name;
 Before apply, production must also have server-only
 `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, Clerk keys, and a
 non-empty `ALPHA_ALLOWED_USER_IDS` containing only approved design partners.
-Do not print their values into rollout logs.
+It must also have an Agent provider configured. The no-card controlled-alpha
+configuration is `LOCUS_AGENT_MODEL=google/gemini-3.5-flash` plus the
+server-only `GOOGLE_GENERATIVE_AI_API_KEY`. Google's free tier may use submitted
+content to improve its products and people may review it, so this configuration
+is restricted to public Repos and must never receive private, confidential, or
+personal Repo or task data. The start UI requires an unchecked acknowledgement,
+and the API rejects a request without it. Review the current
+[pricing](https://ai.google.dev/gemini-api/docs/pricing) and
+[terms](https://ai.google.dev/gemini-api/terms) before every promotion.
+
+Install the exact reviewed provider configuration from a permission-restricted
+credential file. These commands replace any stale values without printing them;
+the current deployment does not observe the change until it is redeployed.
+
+```bash
+: "${EXPECTED_VERCEL_PROJECT_ID:?Set the reviewed Vercel project ID}"
+: "${EXPECTED_VERCEL_ORG_ID:?Set the reviewed Vercel organization ID}"
+export EXPECTED_VERCEL_PROJECT_ID EXPECTED_VERCEL_ORG_ID
+node -e '
+  const linked = require("./.vercel/project.json");
+  if (linked.projectId !== process.env.EXPECTED_VERCEL_PROJECT_ID
+    || linked.orgId !== process.env.EXPECTED_VERCEL_ORG_ID) process.exit(1);
+'
+: "${GOOGLE_GENERATIVE_AI_API_KEY_FILE:?Set the path to the reviewed key file}"
+test -f "$GOOGLE_GENERATIVE_AI_API_KEY_FILE"
+test -s "$GOOGLE_GENERATIVE_AI_API_KEY_FILE"
+test -O "$GOOGLE_GENERATIVE_AI_API_KEY_FILE"
+test "$(stat -f '%Lp' "$GOOGLE_GENERATIVE_AI_API_KEY_FILE" 2>/dev/null \
+  || stat -c '%a' "$GOOGLE_GENERATIVE_AI_API_KEY_FILE")" = 600
+test "$(wc -c < "$GOOGLE_GENERATIVE_AI_API_KEY_FILE")" -le 200
+vercel env add LOCUS_AGENT_MODEL production \
+  --value 'google/gemini-3.5-flash' --no-sensitive --force --yes \
+  --project "$EXPECTED_VERCEL_PROJECT_ID" --scope "$EXPECTED_VERCEL_ORG_ID"
+vercel env add GOOGLE_GENERATIVE_AI_API_KEY production \
+  --sensitive --force --yes \
+  --project "$EXPECTED_VERCEL_PROJECT_ID" --scope "$EXPECTED_VERCEL_ORG_ID" \
+  < "$GOOGLE_GENERATIVE_AI_API_KEY_FILE"
+```
+
+Do not print environment values into rollout logs.
 
 ```bash
 for required_name in \
@@ -98,8 +137,13 @@ for required_name in \
   SUPABASE_SERVICE_ROLE_KEY \
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
   CLERK_SECRET_KEY \
-  ALPHA_ALLOWED_USER_IDS; do
-  vercel env ls production | grep -Eq "(^|[[:space:]])${required_name}([[:space:]]|$)"
+  ALPHA_ALLOWED_USER_IDS \
+  LOCUS_AGENT_MODEL \
+  GOOGLE_GENERATIVE_AI_API_KEY; do
+  vercel env ls production \
+    --project "$EXPECTED_VERCEL_PROJECT_ID" \
+    --scope "$EXPECTED_VERCEL_ORG_ID" \
+    | grep -Eq "(^|[[:space:]])${required_name}([[:space:]]|$)"
 done
 ```
 

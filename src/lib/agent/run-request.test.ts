@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { parseAgentRunRequest } from "@/lib/agent/run-request";
+import {
+  CONTROLLED_ALPHA_DATA_POLICY_VERSION,
+  parseAgentRunRequest,
+} from "@/lib/agent/run-request";
 
 describe("agent run request", () => {
   it("normalizes a valid run request", () => {
@@ -9,12 +12,14 @@ describe("agent run request", () => {
         repository: " taranggoyal70/locus ",
         task: " Fix the settings save flow ",
         acceptanceCriteria: ["Persists after refresh", "Tests pass"],
+        dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
       }),
     ).toEqual({
       repository: "taranggoyal70/locus",
       baseRef: "main",
       task: "Fix the settings save flow",
       acceptanceCriteria: ["Persists after refresh", "Tests pass"],
+      dataPolicyVersion: CONTROLLED_ALPHA_DATA_POLICY_VERSION,
     });
   });
 
@@ -36,6 +41,7 @@ describe("agent run request", () => {
       parseAgentRunRequest({
         repository: "acme/widgets@feature/token-ledger",
         task: "Make the token ledger status-aware",
+        dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
       }),
     ).toMatchObject({ repository: "acme/widgets", baseRef: "feature/token-ledger" });
 
@@ -43,7 +49,16 @@ describe("agent run request", () => {
       parseAgentRunRequest({
         repository: "https://github.com/acme/widgets/tree/release/beta",
         task: "Prepare the public beta release",
+        dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
       }),
     ).toMatchObject({ repository: "acme/widgets", baseRef: "release/beta" });
+  });
+
+  it("requires explicit acknowledgement of the free-tier data boundary", () => {
+    expect(() => parseAgentRunRequest({
+      repository: "acme/widgets",
+      task: "Prepare a review-ready proposal",
+      dataPolicyAcceptance: { version: "outdated-policy" },
+    })).toThrow("Confirm the controlled-alpha data policy before starting an Agent Run");
   });
 });

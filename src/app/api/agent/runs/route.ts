@@ -6,7 +6,7 @@ import { calculateTokenLedger, resolveAgentModel } from "@/lib/agent/coding-agen
 import { agentRunQuotaDecision } from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
 import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
-import { transitionRun } from "@/lib/agent/run-store";
+import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -167,6 +167,37 @@ export async function POST(request: Request) {
     .single();
   if (runError || !run) {
     return NextResponse.json({ error: "Could not create the agent run." }, { status: 500 });
+  }
+
+  const policyAcceptedAt = new Date().toISOString();
+  try {
+    await appendRunStep({
+      runId: run.id,
+      userId,
+      sequence: 0,
+      kind: "approval",
+      status: "completed",
+      title: "Controlled-alpha data policy accepted",
+      detail: {
+        policyVersion: input.dataPolicyVersion,
+        acceptedAt: policyAcceptedAt,
+      },
+    });
+  } catch {
+    await transitionRun({
+      runId: run.id,
+      userId,
+      current: "queued",
+      next: "failed",
+      values: {
+        error: "The data-policy acceptance could not be recorded.",
+        completed_at: new Date().toISOString(),
+      },
+    });
+    return NextResponse.json(
+      { error: "The Agent Run data policy could not be recorded." },
+      { status: 503 },
+    );
   }
 
   try {
