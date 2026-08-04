@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.hoisted(() => vi.fn());
+const consumeRateLimitMock = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
+vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 
 import { POST } from "@/app/api/attachments/route";
 
@@ -16,7 +18,10 @@ function upload(file: File, headers: Record<string, string> = {}) {
 }
 
 describe("attachment extraction API", () => {
-  beforeEach(() => authMock.mockResolvedValue({ userId: "user_123" }));
+  beforeEach(() => {
+    authMock.mockResolvedValue({ userId: "user_123" });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 9, retryAfterSeconds: 0 });
+  });
 
   it("requires authentication", async () => {
     authMock.mockResolvedValueOnce({ userId: null });
@@ -39,5 +44,14 @@ describe("attachment extraction API", () => {
       { "sec-fetch-site": "cross-site" },
     ));
     expect(response.status).toBe(403);
+  });
+
+  it("enforces the durable extraction limit", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({ allowed: false, remaining: 0, retryAfterSeconds: 30 });
+
+    const response = await POST(upload(new File(["ticket"], "ticket.txt", { type: "text/plain" })));
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("30");
   });
 });

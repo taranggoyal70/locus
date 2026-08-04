@@ -91,6 +91,20 @@ describe("GitHub repository API request guards", () => {
     fetchMock.mockRestore();
   });
 
+  it("rejects private metadata even when the server token can see it", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ default_branch: "main", private: true, visibility: "private" }));
+
+    const response = await POST(request('{"url":"owner/private-repo"}', "198.51.100.23"));
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "Controlled alpha supports public repositories only.",
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    fetchMock.mockRestore();
+  });
+
   it("drops a source file when its downloaded body exceeds the safety limit", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(Response.json({ default_branch: "main" }))

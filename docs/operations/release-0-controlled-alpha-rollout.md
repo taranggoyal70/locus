@@ -11,7 +11,9 @@ Record immutable release evidence:
 ```bash
 export RELEASE_SHA="$(git rev-parse HEAD)"
 test "$(git branch --show-current)" = main
-test -z "$(git status --porcelain --untracked-files=no)"
+test -z "$(git status --porcelain | grep -v '^?? supabase/.temp/' || true)"
+export SUPABASE_CLI_VERSION=2.111.0
+test "$(pnpm dlx supabase@${SUPABASE_CLI_VERSION} --version)" = "$SUPABASE_CLI_VERSION"
 shasum -a 256 supabase/migrations/0{04,05,06,07,08,09,10,11}_*.sql
 pnpm lint
 pnpm test
@@ -21,12 +23,22 @@ pnpm tsc --noEmit
 pnpm build
 ```
 
-Confirm that the local Supabase link names the production project. Then inspect
+Pin and assert the production project reference before inspecting history:
+
+```bash
+: "${EXPECTED_SUPABASE_PROJECT_REF:?Set the reviewed production project ref}"
+: "${SUPABASE_ACCESS_TOKEN:?Set a short-lived Supabase CLI access token}"
+test -f supabase/.temp/project-ref
+ACTUAL_SUPABASE_PROJECT_REF="$(tr -d '[:space:]' < supabase/.temp/project-ref)"
+test "$ACTUAL_SUPABASE_PROJECT_REF" = "$EXPECTED_SUPABASE_PROJECT_REF"
+```
+
+Then inspect
 history and the exact apply set without changing it:
 
 ```bash
-pnpm dlx supabase migration list --linked
-pnpm dlx supabase db push --linked --dry-run
+pnpm dlx supabase@${SUPABASE_CLI_VERSION} migration list --linked
+pnpm dlx supabase@${SUPABASE_CLI_VERSION} db push --linked --dry-run
 ```
 
 The remote history must be a contiguous prefix of local migrations `001`–`011`.
@@ -80,14 +92,26 @@ Before apply, production must also have server-only
 non-empty `ALPHA_ALLOWED_USER_IDS` containing only approved design partners.
 Do not print their values into rollout logs.
 
+```bash
+for required_name in \
+  NEXT_PUBLIC_SUPABASE_URL \
+  SUPABASE_SERVICE_ROLE_KEY \
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
+  CLERK_SECRET_KEY \
+  ALPHA_ALLOWED_USER_IDS; do
+  vercel env ls production | grep -Eq "(^|[[:space:]])${required_name}([[:space:]]|$)"
+done
+```
+
 ## Safe apply
 
 Pause production deploys. Keep the app on the prior commit while the additive
 schema is installed. Apply the exact suffix shown by the dry run:
 
 ```bash
-pnpm dlx supabase db push --linked
-pnpm dlx supabase migration list --linked
+test "$(tr -d '[:space:]' < supabase/.temp/project-ref)" = "$EXPECTED_SUPABASE_PROJECT_REF"
+pnpm dlx supabase@${SUPABASE_CLI_VERSION} db push --linked
+pnpm dlx supabase@${SUPABASE_CLI_VERSION} migration list --linked
 ```
 
 Migrations `004`–`010` are transactional schema/security changes. Migration
@@ -183,7 +207,7 @@ external GitHub write.
 
 ## Public-beta promotion checklist
 
-- [ ] Two completed design-partner Runs satisfy explicit acceptance criteria.
+- [ ] Two design-partner proposals reach review-ready state and are human-accepted against explicit acceptance criteria.
 - [ ] Each Run exposes complete Included, Excluded, and Widened file evidence.
 - [ ] Paired whole-Repo baselines exist before any savings claim is enabled.
 - [ ] Failure, timeout, truncation, and review-ready states are understandable.

@@ -189,6 +189,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
         cached_input_tokens: result.tokenLedger.cachedInputTokens,
         output_tokens: result.tokenLedger.outputTokens,
         widened_files: result.ledger.widened,
+        excluded_files: result.ledger.excluded,
       },
     });
     await appendRunStep({

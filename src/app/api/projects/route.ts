@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { sameOriginMutation } from "@/lib/request-security";
+import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { serviceClient } from "@/lib/supabase";
 
 export async function GET() {
@@ -27,11 +27,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
 
-  let body: { name: string; repo_url: string; task: string; slice_files: number; total_files: number };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+  const parsed = await readLimitedJson<{
+    name: string;
+    repo_url: string;
+    task: string;
+    slice_files: number;
+    total_files: number;
+  }>(request, 4_096);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+  const body = parsed.value;
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 });
   }
 
   if (!body.name || !body.repo_url || !body.task) {

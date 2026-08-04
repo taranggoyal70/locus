@@ -207,6 +207,12 @@ export async function POST(request: Request) {
     if (!meta || typeof meta !== "object") {
       return NextResponse.json({ error: "GitHub returned an invalid repository response." }, { status: 502, headers: rateHeaders });
     }
+    if (meta.private === true || (typeof meta.visibility === "string" && meta.visibility !== "public")) {
+      return NextResponse.json(
+        { error: "Controlled alpha supports public repositories only." },
+        { status: 403, headers: rateHeaders },
+      );
+    }
     const revision = ref || meta.default_branch || "main";
 
     const treeRes = await fetchWithTimeout(

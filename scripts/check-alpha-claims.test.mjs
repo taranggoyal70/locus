@@ -31,6 +31,16 @@ describe("findBannedAlphaClaims", () => {
     ]);
   });
 
+  it("rejects unreleased delivery and upgrade promises", () => {
+    expect(findBannedAlphaClaims([
+      { path: "auth.tsx", content: "approve verified delivery" },
+      { path: "pricing.tsx", content: "Upgrade for private repos" },
+    ])).toEqual([
+      "auth.tsx: verified delivery",
+      "pricing.tsx: unreleased upgrade",
+    ]);
+  });
+
   it("accepts controlled-alpha language", () => {
     expect(
       findBannedAlphaClaims([

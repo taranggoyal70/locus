@@ -2,7 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { extractAttachment, MAX_ATTACHMENT_BYTES } from "@/lib/attachments";
-import { sameOriginMutation } from "@/lib/request-security";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { readLimitedBody, sameOriginMutation } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 export const maxDuration = 15;
@@ -14,16 +15,40 @@ export async function POST(request: Request) {
   if (!sameOriginMutation(request)) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
+  let rate;
+  try {
+    rate = await consumeRateLimit({
+      namespace: "attachment-extract",
+      identity: userId,
+      limit: 10,
+      windowSeconds: 60,
+    });
+  } catch {
+    return NextResponse.json({ error: "Upload limits could not be verified." }, { status: 503 });
+  }
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many attachments. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } },
+    );
+  }
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data")) {
     return NextResponse.json({ error: "Upload one attachment as multipart form data." }, { status: 415 });
   }
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > MAX_ATTACHMENT_BYTES + 100_000) {
-    return NextResponse.json({ error: "Attachments must be smaller than 4 MB." }, { status: 413 });
-  }
-
   try {
-    const form = await request.formData();
+    const body = await readLimitedBody(request, MAX_ATTACHMENT_BYTES + 100_000);
+    if (!body.ok) {
+      return NextResponse.json(
+        { error: body.status === 413 ? "Attachments must be smaller than 4 MB." : body.error },
+        { status: body.status },
+      );
+    }
+    const boundedRequest = new Request(request.url, {
+      method: "POST",
+      headers: request.headers,
+      body: body.value as BodyInit,
+    });
+    const form = await boundedRequest.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "Choose a document to attach." }, { status: 400 });

@@ -181,6 +181,9 @@ export async function POST(request: Request) {
   }>(request, 50_000);
   if (!parsed.ok) return cors(NextResponse.json({ error: parsed.error }, { status: parsed.status }));
   const body = parsed.value;
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return cors(NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 }));
+  }
 
   if (!body.repo || typeof body.repo !== "string" || body.repo.length > 300) {
     return cors(NextResponse.json({ error: "repo (string, max 300 chars) is required." }, { status: 400 }));

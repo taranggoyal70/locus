@@ -1,8 +1,12 @@
 create table public.api_rate_limits (
   bucket text primary key check (length(bucket) between 1 and 160),
   window_started_at timestamptz not null,
-  request_count integer not null check (request_count > 0)
+  request_count integer not null check (request_count > 0),
+  expires_at timestamptz not null
 );
+
+create index api_rate_limits_expires_at_idx
+  on public.api_rate_limits (expires_at);
 
 alter table public.api_rate_limits enable row level security;
 
@@ -34,12 +38,27 @@ begin
     raise exception 'Invalid rate-limit arguments';
   end if;
 
+  delete from public.api_rate_limits
+  where bucket in (
+    select bucket
+    from public.api_rate_limits
+    where expires_at <= v_now
+    order by expires_at
+    limit 100
+  );
+
   insert into public.api_rate_limits (
     bucket,
     window_started_at,
-    request_count
+    request_count,
+    expires_at
   )
-  values (p_bucket, v_now, 1)
+  values (
+    p_bucket,
+    v_now,
+    1,
+    v_now + make_interval(secs => p_window_seconds)
+  )
   on conflict (bucket) do update
   set
     window_started_at = case
@@ -49,6 +68,11 @@ begin
     request_count = case
       when api_rate_limits.window_started_at + make_interval(secs => p_window_seconds) <= v_now then 1
       else least(api_rate_limits.request_count + 1, p_limit + 1)
+    end,
+    expires_at = case
+      when api_rate_limits.window_started_at + make_interval(secs => p_window_seconds) <= v_now
+        then v_now + make_interval(secs => p_window_seconds)
+      else api_rate_limits.expires_at
     end
   returning window_started_at, request_count
     into v_window_started_at, v_request_count;

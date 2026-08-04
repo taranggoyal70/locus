@@ -13,6 +13,9 @@ export async function POST(request: Request) {
   const parsed = await readLimitedJson<{ event: string; properties?: Record<string, unknown> }>(request, 4_096);
   if (!parsed.ok) return NextResponse.json({}, { status: parsed.status });
   const body = parsed.value;
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return NextResponse.json({}, { status: 400 });
+  }
 
   if (!body.event || typeof body.event !== "string") {
     return NextResponse.json({}, { status: 400 });

@@ -31,8 +31,9 @@ export function AgentRunTimeline({
     <div>
       <ol className="grid grid-cols-5 gap-1" aria-label="Agent run lifecycle">
         {PHASES.map((phase, index) => {
-          const complete = active > index || status === "completed";
-          const current = active === index && status !== "completed";
+          const reviewReady = status === "awaiting_approval" && phase.statuses.includes(status);
+          const complete = active > index || status === "completed" || reviewReady;
+          const current = active === index && status !== "completed" && !reviewReady;
           return (
             <li key={phase.label} className="min-w-0">
               <div

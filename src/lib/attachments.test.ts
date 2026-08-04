@@ -23,4 +23,17 @@ describe("task attachment extraction", () => {
     await expect(extractAttachment(new File(["not a pdf"], "ticket.pdf", { type: "application/pdf" })))
       .rejects.toThrow("This file is not a valid PDF.");
   });
+
+  it("rejects DOCX archives with excessive expanded content", async () => {
+    const bytes = new Uint8Array(64);
+    bytes.set([0x50, 0x4b, 0x03, 0x04], 0);
+    bytes.set([0x50, 0x4b, 0x01, 0x02], 4);
+    new DataView(bytes.buffer).setUint32(28, 25_000_000, true);
+
+    await expect(extractAttachment(new File(
+      [bytes],
+      "oversized.docx",
+      { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+    ))).rejects.toThrow("expanded content is too large");
+  });
 });

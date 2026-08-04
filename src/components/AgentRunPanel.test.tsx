@@ -29,6 +29,13 @@ describe("AgentRunTimeline", () => {
     expect(html).toContain("Context Slice selected");
     expect(html).toContain("Working");
   });
+
+  it("renders review-ready Runs as quiescent", () => {
+    const html = renderToStaticMarkup(<AgentRunTimeline status="awaiting_approval" steps={[]} />);
+
+    expect(html).toContain("Review");
+    expect(html).not.toContain("Review · Working");
+  });
 });
 
 describe("controlled-alpha Agent Run start", () => {

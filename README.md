@@ -101,15 +101,15 @@ pnpm dev
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk authentication |
 | `CLERK_SECRET_KEY` | Clerk server-side auth |
 | `ALPHA_ALLOWED_USER_IDS` | Comma-separated Clerk user IDs allowed to start Agent Runs |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client configuration |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side only) |
 
 ### Optional environment variables
 
 | Variable | Purpose |
 |----------|---------|
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side) |
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
 
@@ -123,9 +123,9 @@ Signed-out visitors see the public product site; signed-in users go to `/workspa
 Supabase stores Agent Tasks, durable Runs, evidence, saved analyses, API keys, and
 usage analytics. Apply every migration in order:
 
-```bash
-for migration in supabase/migrations/*.sql; do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"; done
-```
+Use the history-aware procedure in
+[`docs/operations/release-0-controlled-alpha-rollout.md`](docs/operations/release-0-controlled-alpha-rollout.md).
+Do not apply migrations with an untracked shell loop.
 
 ### Export formats
 

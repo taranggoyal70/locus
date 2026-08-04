@@ -36,6 +36,9 @@ const bannedClaims = [
   ["unsupported benchmark count", /120 api calls/i],
   ["unsupported percentage savings", /(?:\d+|\$\{[^}]+\}|\{[^}]+\})%\s+saved/i],
   ["unsupported percentage token reduction", /(?:\d+|\$\{[^}]+\}|\{[^}]+\})%\s+fewer\s+tokens/i],
+  ["verified delivery", /verified delivery/i],
+  ["unreleased upgrade", /upgrade\s+(?:for|to).*?(?:private repo|team|pro)/i],
+  ["unsupported verified-run quota", /(?:ten|10)\s+verified\s+agent\s+runs/i],
 ];
 
 export function findBannedAlphaClaims(sources) {

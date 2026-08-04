@@ -10,7 +10,7 @@ import { transitionRun } from "@/lib/agent/run-store";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { consumeRateLimit } from "@/lib/rate-limit";
-import { sameOriginMutation } from "@/lib/request-security";
+import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { serviceClient } from "@/lib/supabase";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
@@ -75,17 +75,11 @@ export async function POST(request: Request) {
   if (!sameOriginMutation(request)) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
-  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
-    return NextResponse.json({ error: "Content-Type must be application/json." }, { status: 415 });
-  }
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
-  }
-
   let input;
   try {
-    input = parseAgentRunRequest(await request.json());
+    const parsed = await readLimitedJson(request, MAX_BODY_BYTES);
+    if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+    input = parseAgentRunRequest(parsed.value);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Invalid agent run request." },

@@ -1,6 +1,7 @@
 export const MAX_ATTACHMENT_BYTES = 4_000_000;
 export const MAX_EVIDENCE_CHARACTERS = 50_000;
 export const MAX_PDF_PAGES = 40;
+const MAX_DOCX_EXPANDED_BYTES = 20_000_000;
 
 export type ExtractedEvidence = {
   name: string;
@@ -28,6 +29,17 @@ function startsWith(bytes: Uint8Array, expected: number[]): boolean {
   return expected.every((value, index) => bytes[index] === value);
 }
 
+function docxExpandedBytes(bytes: Uint8Array): number {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let total = 0;
+  for (let offset = 0; offset + 46 <= bytes.byteLength; offset += 1) {
+    if (view.getUint32(offset, true) !== 0x02014b50) continue;
+    total += view.getUint32(offset + 24, true);
+    if (total > MAX_DOCX_EXPANDED_BYTES) return total;
+  }
+  return total;
+}
+
 export async function extractAttachment(file: File): Promise<ExtractedEvidence> {
   if (!file.name || file.name.length > 180) throw new Error("Use a shorter attachment filename.");
   if (file.size === 0) throw new Error("The attachment is empty.");
@@ -48,6 +60,9 @@ export async function extractAttachment(file: File): Promise<ExtractedEvidence> 
     kind = "pdf";
   } else if (ext === "docx" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
     if (!startsWith(bytes, [0x50, 0x4b, 0x03, 0x04])) throw new Error("This file is not a valid DOCX document.");
+    if (docxExpandedBytes(bytes) > MAX_DOCX_EXPANDED_BYTES) {
+      throw new Error("This DOCX document's expanded content is too large.");
+    }
     const mammoth = await import("mammoth");
     const result = await mammoth.extractRawText({ buffer: Buffer.from(bytes) });
     rawText = result.value;

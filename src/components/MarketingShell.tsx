@@ -10,11 +10,11 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8">
           <Link href="/" className="flex items-center gap-3 text-paper">
             <Image src="/locus-mark.svg" width={30} height={30} alt="" priority />
-            <span className="font-display text-[17px] font-semibold tracking-[-0.03em]">Locus</span>
+            <span className="hidden font-display text-[17px] font-semibold tracking-[-0.03em] sm:inline">Locus</span>
           </Link>
           <nav className="flex items-center gap-1 text-xs font-medium sm:gap-2 sm:text-sm" aria-label="Main navigation">
-            <Link href="/docs" className="rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:px-3">Docs</Link>
-            <Link href="/pricing" className="rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:px-3">Alpha access</Link>
+            <Link href="/docs" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Docs</Link>
+            <Link href="/pricing" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper md:block md:px-3">Alpha access</Link>
             <a href={REPO_URL} className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block">Source</a>
             <Link href="/sign-in" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:bg-surface hover:text-paper md:block">Sign in</Link>
             <Link href="/pricing" className="ml-1 rounded-lg bg-paper px-3 py-2 text-white transition hover:bg-paper/90 sm:px-4">Request access</Link>

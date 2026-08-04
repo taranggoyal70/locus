@@ -13,7 +13,7 @@ export default function SignInPage() {
     <AuthShell
       eyebrow="Welcome back"
       title="Pick up with less noise."
-      description="Sign in to resume durable Agent Runs, inspect their evidence, and approve verified delivery."
+      description="Sign in to resume durable Agent Runs and inspect their review-ready evidence."
     >
       <SignIn
         appearance={AUTH_APPEARANCE}
