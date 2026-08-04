@@ -3,9 +3,10 @@ export type JsonReadResult<T = unknown> =
   | { ok: false; status: 400 | 413 | 415; error: string };
 
 export function sameOriginMutation(request: Request): boolean {
-  if (request.headers.get("sec-fetch-site") === "cross-site") return false;
+  const fetchSite = request.headers.get("sec-fetch-site");
+  if (fetchSite === "cross-site" || fetchSite === "same-site") return false;
   const origin = request.headers.get("origin");
-  if (!origin) return true;
+  if (!origin) return fetchSite === "same-origin";
 
   try {
     return new URL(origin).origin === new URL(request.url).origin;

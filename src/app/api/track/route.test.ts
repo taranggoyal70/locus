@@ -11,7 +11,7 @@ import { POST } from "@/app/api/track/route";
 function request(headers: Record<string, string> = {}) {
   return new Request("https://locus.example/api/track", {
     method: "POST",
-    headers: { "content-type": "application/json", ...headers },
+    headers: { "content-type": "application/json", origin: "https://locus.example", ...headers },
     body: JSON.stringify({ event: "context_copied" }),
   });
 }

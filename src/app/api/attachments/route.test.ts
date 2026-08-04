@@ -8,7 +8,11 @@ import { POST } from "@/app/api/attachments/route";
 function upload(file: File, headers: Record<string, string> = {}) {
   const form = new FormData();
   form.set("file", file);
-  return new Request("http://localhost/api/attachments", { method: "POST", body: form, headers });
+  return new Request("http://localhost/api/attachments", {
+    method: "POST",
+    body: form,
+    headers: { origin: "http://localhost", ...headers },
+  });
 }
 
 describe("attachment extraction API", () => {

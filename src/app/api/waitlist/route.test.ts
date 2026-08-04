@@ -11,7 +11,7 @@ import { POST } from "@/app/api/waitlist/route";
 function request(headers: Record<string, string> = {}) {
   return new Request("https://locus.example/api/waitlist", {
     method: "POST",
-    headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10", ...headers },
+    headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10", origin: "https://locus.example", ...headers },
     body: JSON.stringify({ email: "founder@example.com" }),
   });
 }

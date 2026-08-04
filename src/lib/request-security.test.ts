@@ -14,12 +14,12 @@ describe("cookie-authenticated mutation guards", () => {
     }))).toBe(false);
   });
 
-  it("allows same-origin and non-browser requests", () => {
+  it("allows same-origin requests and fails closed when browser provenance is absent", () => {
     expect(sameOriginMutation(new Request("https://locus.example/api/test", {
       method: "POST",
       headers: { origin: "https://locus.example", "sec-fetch-site": "same-origin" },
     }))).toBe(true);
-    expect(sameOriginMutation(new Request("https://locus.example/api/test", { method: "POST" }))).toBe(true);
+    expect(sameOriginMutation(new Request("https://locus.example/api/test", { method: "POST" }))).toBe(false);
   });
 
   it("caps streamed JSON bodies before parsing", async () => {

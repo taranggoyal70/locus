@@ -14,7 +14,7 @@ function request(body: string, ip: string, headers: Record<string, string> = {})
   return new Request("http://localhost/api/github", {
     method: "POST",
     body,
-    headers: { "content-type": "application/json", "x-forwarded-for": ip, ...headers },
+    headers: { "content-type": "application/json", "x-forwarded-for": ip, origin: "http://localhost", ...headers },
   });
 }
 

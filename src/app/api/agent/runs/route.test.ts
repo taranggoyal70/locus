@@ -10,7 +10,7 @@ import { POST } from "@/app/api/agent/runs/route";
 function runRequest() {
   return new Request("http://localhost/api/agent/runs", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", origin: "http://localhost" },
     body: JSON.stringify({
       repository: "vercel/next.js",
       baseRef: "main",
