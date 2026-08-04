@@ -9,6 +9,7 @@ describe("controlled-alpha marketing navigation", () => {
 
     expect(html).toContain("Alpha access");
     expect(html).toContain("Request access");
+    expect(html).toContain('aria-label="Locus home"');
     expect(html).toContain("Public-Repo proposals with visible context evidence");
     expect(html).not.toContain("Pricing");
     expect(html).not.toContain("Verified engineering tasks");
