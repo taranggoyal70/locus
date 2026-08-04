@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { serviceClient } from "@/lib/supabase";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_BODY_BYTES = 2_048;
 
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+  if (!sameOriginMutation(request)) {
+    return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
+  const parsed = await readLimitedJson(request, MAX_BODY_BYTES);
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: parsed.status });
+  const body = parsed.value;
 
   if (typeof body !== "object" || body === null) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
@@ -27,6 +30,27 @@ export async function POST(request: Request) {
     company: typeof company === "string" ? company.trim().slice(0, 200) : null,
     use_case: typeof use_case === "string" ? use_case.trim().slice(0, 1000) : null,
   };
+
+  const identity = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("x-real-ip")
+    || "unknown";
+  let rate;
+  try {
+    rate = await consumeRateLimit({
+      namespace: "waitlist-submit",
+      identity,
+      limit: 5,
+      windowSeconds: 3_600,
+    });
+  } catch {
+    return NextResponse.json({ error: "Submission limits could not be verified." }, { status: 503 });
+  }
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many submissions. Try again later." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } },
+    );
+  }
 
   const db = serviceClient();
   const { error } = await db.from("waitlist").insert(trimmed);

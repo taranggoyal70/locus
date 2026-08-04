@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
+import { sameOriginMutation } from "@/lib/request-security";
 import { serviceClient } from "@/lib/supabase";
 
 export async function GET() {
@@ -31,9 +32,12 @@ export async function GET() {
   });
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!sameOriginMutation(request)) {
+    return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
+  }
 
   const db = serviceClient();
   await db.from("github_connections").delete().eq("user_id", userId);

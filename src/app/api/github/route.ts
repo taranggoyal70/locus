@@ -2,6 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { track } from "@/lib/analytics";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { sameOriginMutation } from "@/lib/request-security";
 import type { RepoData } from "@/lib/types";
 
 // Fetch a public GitHub repo's TypeScript source into the flat {path: content}
@@ -15,12 +17,8 @@ const MAX_BODY_BYTES = 1_024;
 const FETCH_TIMEOUT_MS = 8_000;
 const DOWNLOAD_CONCURRENCY = 8;
 const RATE_LIMIT = 6;
-const RATE_WINDOW_MS = 60_000;
 const SRC_RE = /\.(tsx?|jsx?)$/;
 const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__tests__|e2e)\//i;
-
-type RateEntry = { count: number; resetAt: number };
-const rateLimits = new Map<string, RateEntry>();
 
 function ghHeaders() {
   const h: Record<string, string> = { Accept: "application/vnd.github+json" };
@@ -33,28 +31,6 @@ function clientIp(request: Request): string {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-real-ip")
     || "unknown";
-}
-
-function checkRateLimit(request: Request): { allowed: boolean; remaining: number; retryAfter: number } {
-  const now = Date.now();
-  const key = clientIp(request);
-  const current = rateLimits.get(key);
-  const entry = !current || current.resetAt <= now
-    ? { count: 0, resetAt: now + RATE_WINDOW_MS }
-    : current;
-  entry.count += 1;
-  rateLimits.set(key, entry);
-
-  // Keep the best-effort in-memory limiter bounded on warm server instances.
-  if (rateLimits.size > 10_000) {
-    for (const [ip, value] of rateLimits) if (value.resetAt <= now) rateLimits.delete(ip);
-  }
-
-  return {
-    allowed: entry.count <= RATE_LIMIT,
-    remaining: Math.max(0, RATE_LIMIT - entry.count),
-    retryAfter: Math.max(1, Math.ceil((entry.resetAt - now) / 1_000)),
-  };
 }
 
 function fetchWithTimeout(url: string, init?: RequestInit) {
@@ -154,19 +130,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
-  const rate = checkRateLimit(request);
-  const rateHeaders = {
+  let rateHeaders = {
     "X-RateLimit-Limit": String(RATE_LIMIT),
-    "X-RateLimit-Remaining": String(rate.remaining),
-  };
-  if (!rate.allowed) {
-    return NextResponse.json(
-      { error: "Too many repository requests. Try again shortly." },
-      { status: 429, headers: { ...rateHeaders, "Retry-After": String(rate.retryAfter) } },
-    );
-  }
+    "X-RateLimit-Remaining": String(RATE_LIMIT),
+  } as Record<string, string>;
 
-  if (request.headers.get("sec-fetch-site") === "cross-site") {
+  if (!sameOriginMutation(request)) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403, headers: rateHeaders });
   }
 
@@ -200,6 +169,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Enter owner/repo, owner/repo@commit, or a GitHub URL." }, { status: 400, headers: rateHeaders });
     }
     const { owner, repo, ref } = parsed;
+
+    let rate;
+    try {
+      rate = await consumeRateLimit({
+        namespace: "github-repository-read",
+        identity: clientIp(request),
+        limit: RATE_LIMIT,
+        windowSeconds: 60,
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "Repository request limits could not be verified. Try again shortly." },
+        { status: 503 },
+      );
+    }
+    rateHeaders = {
+      "X-RateLimit-Limit": String(RATE_LIMIT),
+      "X-RateLimit-Remaining": String(rate.remaining),
+    };
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: "Too many repository requests. Try again shortly." },
+        { status: 429, headers: { ...rateHeaders, "Retry-After": String(rate.retryAfterSeconds) } },
+      );
+    }
 
     const info = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders() });
     if (info.status === 404) {

@@ -9,25 +9,12 @@ import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
 import { transitionRun } from "@/lib/agent/run-store";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { sameOriginMutation } from "@/lib/request-security";
 import { serviceClient } from "@/lib/supabase";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
 const MAX_BODY_BYTES = 12_000;
-const startBursts = new Map<string, number[]>();
-
-function allowStartBurst(userId: string): boolean {
-  const cutoff = Date.now() - 60_000;
-  const recent = (startBursts.get(userId) ?? []).filter((timestamp) => timestamp > cutoff);
-  if (recent.length >= 3) return false;
-  recent.push(Date.now());
-  startBursts.set(userId, recent);
-  if (startBursts.size > 10_000) {
-    for (const [key, timestamps] of startBursts) {
-      if (timestamps.every((timestamp) => timestamp <= cutoff)) startBursts.delete(key);
-    }
-  }
-  return true;
-}
 
 export async function GET() {
   const { userId } = await auth();
@@ -85,7 +72,7 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
-  if (request.headers.get("sec-fetch-site") === "cross-site") {
+  if (!sameOriginMutation(request)) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
@@ -106,13 +93,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const db = serviceClient();
-  if (!allowStartBurst(userId)) {
+  let startRate;
+  try {
+    startRate = await consumeRateLimit({
+      namespace: "agent-run-start",
+      identity: userId,
+      limit: 3,
+      windowSeconds: 60,
+    });
+  } catch {
     return NextResponse.json(
-      { error: "Too many agent starts. Wait a minute and try again." },
-      { status: 429, headers: { "Retry-After": "60" } },
+      { error: "Agent Run limits could not be verified. Try again shortly." },
+      { status: 503 },
     );
   }
+  if (!startRate.allowed) {
+    return NextResponse.json(
+      { error: "Too many agent starts. Wait a minute and try again." },
+      { status: 429, headers: { "Retry-After": String(startRate.retryAfterSeconds) } },
+    );
+  }
+  const db = serviceClient();
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1_000).toISOString();
   const [activeResult, dailyResult] = await Promise.all([
     db

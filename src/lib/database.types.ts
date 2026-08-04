@@ -269,7 +269,20 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      consume_api_rate_limit: {
+        Args: {
+          p_bucket: string;
+          p_limit: number;
+          p_window_seconds: number;
+        };
+        Returns: Array<{
+          allowed: boolean;
+          remaining: number;
+          retry_after_seconds: number;
+        }>;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

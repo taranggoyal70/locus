@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.hoisted(() => vi.fn());
 const serviceClientMock = vi.hoisted(() => vi.fn());
+const consumeRateLimitMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
 vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
+vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 
 import { POST } from "@/app/api/github/route";
 
@@ -20,6 +22,7 @@ describe("GitHub repository API request guards", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_123" });
     serviceClientMock.mockReset();
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5, retryAfterSeconds: 0 });
   });
 
   it("rejects signed-out requests", async () => {
@@ -46,14 +49,19 @@ describe("GitHub repository API request guards", () => {
     expect(response.status).toBe(403);
   });
 
-  it("rate-limits repeated expensive requests by client IP", async () => {
-    const responses = [];
-    for (let index = 0; index < 7; index += 1) {
-      responses.push(await POST(request('{"url":"invalid"}', "198.51.100.3")));
-    }
-    expect(responses.slice(0, 6).every((response) => response.status === 400)).toBe(true);
-    expect(responses[6].status).toBe(429);
-    expect(responses[6].headers.get("retry-after")).toBeTruthy();
+  it("enforces the durable repository-read limit", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({ allowed: false, remaining: 0, retryAfterSeconds: 42 });
+
+    const response = await POST(request('{"url":"owner/repo"}', "198.51.100.3"));
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("42");
+    expect(consumeRateLimitMock).toHaveBeenCalledWith({
+      namespace: "github-repository-read",
+      identity: "198.51.100.3",
+      limit: 6,
+      windowSeconds: 60,
+    });
   });
 
   it("fails safely when GitHub returns a malformed tree", async () => {

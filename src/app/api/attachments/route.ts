@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { extractAttachment, MAX_ATTACHMENT_BYTES } from "@/lib/attachments";
+import { sameOriginMutation } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 export const maxDuration = 15;
@@ -10,7 +11,7 @@ export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
-  if (request.headers.get("sec-fetch-site") === "cross-site") {
+  if (!sameOriginMutation(request)) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data")) {

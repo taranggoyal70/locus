@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.hoisted(() => vi.fn());
+const consumeRateLimitMock = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
+vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 
 import { POST } from "@/app/api/agent/runs/route";
 
@@ -21,6 +23,7 @@ function runRequest() {
 describe("controlled-alpha Agent Run starts", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_outside_alpha" });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 2, retryAfterSeconds: 0 });
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_design_partner");
   });
 
@@ -31,5 +34,15 @@ describe("controlled-alpha Agent Run starts", () => {
     await expect(response.json()).resolves.toEqual({
       error: "Agent Runs are limited to invited design partners during the controlled alpha.",
     });
+  });
+
+  it("enforces durable start throttling for an invited user", async () => {
+    authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
+    consumeRateLimitMock.mockResolvedValueOnce({ allowed: false, remaining: 0, retryAfterSeconds: 37 });
+
+    const response = await POST(runRequest());
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("37");
   });
 });

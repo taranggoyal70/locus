@@ -3,30 +3,11 @@ import { NextResponse } from "next/server";
 import { track } from "@/lib/analytics";
 import { authenticateApiKey } from "@/lib/api-auth";
 import { buildGraph, locate } from "@/lib/localizer";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { readLimitedJson } from "@/lib/request-security";
 import { fileContent, type RepoData } from "@/lib/types";
 
 const API_RATE_LIMIT = 30;
-const API_RATE_WINDOW_MS = 60_000;
-type RateEntry = { count: number; resetAt: number };
-const apiRateLimits = new Map<string, RateEntry>();
-
-function checkApiRateLimit(userId: string): { allowed: boolean; remaining: number; retryAfter: number } {
-  const now = Date.now();
-  const current = apiRateLimits.get(userId);
-  const entry = !current || current.resetAt <= now
-    ? { count: 0, resetAt: now + API_RATE_WINDOW_MS }
-    : current;
-  entry.count += 1;
-  apiRateLimits.set(userId, entry);
-  if (apiRateLimits.size > 10_000) {
-    for (const [k, v] of apiRateLimits) if (v.resetAt <= now) apiRateLimits.delete(k);
-  }
-  return {
-    allowed: entry.count <= API_RATE_LIMIT,
-    remaining: Math.max(0, API_RATE_LIMIT - entry.count),
-    retryAfter: Math.max(1, Math.ceil((entry.resetAt - now) / 1_000)),
-  };
-}
 
 const MAX_FILES = 200;
 const MAX_FILE_BYTES = 100_000;
@@ -171,25 +152,35 @@ export async function POST(request: Request) {
     ));
   }
 
-  const rate = checkApiRateLimit(apiKey.userId);
+  let rate;
+  try {
+    rate = await consumeRateLimit({
+      namespace: "api-locate",
+      identity: apiKey.userId,
+      limit: API_RATE_LIMIT,
+      windowSeconds: 60,
+    });
+  } catch {
+    return cors(NextResponse.json(
+      { error: "Rate limit could not be verified. Try again shortly." },
+      { status: 503 },
+    ));
+  }
   if (!rate.allowed) {
     return cors(NextResponse.json(
       { error: "Rate limit exceeded. Try again shortly." },
-      { status: 429, headers: { "Retry-After": String(rate.retryAfter), "X-RateLimit-Remaining": "0" } },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds), "X-RateLimit-Remaining": "0" } },
     ));
   }
 
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > 50_000) {
-    return cors(NextResponse.json({ error: "Request body too large." }, { status: 413 }));
-  }
-
-  let body: { repo: string; task: string; evidence?: string; budget?: number };
-  try {
-    body = await request.json();
-  } catch {
-    return cors(NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 }));
-  }
+  const parsed = await readLimitedJson<{
+    repo: string;
+    task: string;
+    evidence?: string;
+    budget?: number;
+  }>(request, 50_000);
+  if (!parsed.ok) return cors(NextResponse.json({ error: parsed.error }, { status: parsed.status }));
+  const body = parsed.value;
 
   if (!body.repo || typeof body.repo !== "string" || body.repo.length > 300) {
     return cors(NextResponse.json({ error: "repo (string, max 300 chars) is required." }, { status: 400 }));
@@ -225,8 +216,9 @@ export async function POST(request: Request) {
         repo: body.repo,
         task: body.task.slice(0, 200),
         sliceFiles: result.slice.length,
-        savedPct: result.savedPct,
         widened: result.widened,
+        includedTokens: result.sliceTokens,
+        totalTokens: result.totalTokens,
       },
     });
 
@@ -243,7 +235,7 @@ export async function POST(request: Request) {
         recent: f.recent,
       })),
       excluded: result.excluded,
-      tokens: { slice: result.sliceTokens, total: result.totalTokens, savedPct: result.savedPct },
+      tokens: { included: result.sliceTokens, total: result.totalTokens },
       context: packed.join("\n\n"),
     }));
   } catch (error) {

@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { sameOriginMutation } from "@/lib/request-security";
 import { serviceClient } from "@/lib/supabase";
 
 export async function GET() {
@@ -22,6 +23,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!sameOriginMutation(request)) {
+    return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
+  }
 
   let body: { name: string; repo_url: string; task: string; slice_files: number; total_files: number; saved_pct: number };
   try {
@@ -66,6 +70,9 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!sameOriginMutation(request)) {
+    return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
+  }
 
   const url = new URL(request.url);
   const projectId = url.searchParams.get("id");
