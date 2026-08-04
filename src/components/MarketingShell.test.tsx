@@ -8,6 +8,7 @@ describe("controlled-alpha marketing navigation", () => {
     const html = renderToStaticMarkup(<MarketingShell><main>Content</main></MarketingShell>);
 
     expect(html).toContain("Alpha access");
+    expect(html).toContain('href="/evidence/release-1"');
     expect(html).toContain("Request access");
     expect(html).toContain('aria-label="Locus home"');
     expect(html).toContain("Public-Repo proposals with visible context evidence");

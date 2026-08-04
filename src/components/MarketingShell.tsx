@@ -13,6 +13,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             <span className="hidden font-display text-[17px] font-semibold tracking-[-0.03em] sm:inline">Locus</span>
           </Link>
           <nav className="flex items-center gap-1 text-xs font-medium sm:gap-2 sm:text-sm" aria-label="Main navigation">
+            <Link href="/evidence/release-1" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Evidence</Link>
             <Link href="/docs" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Docs</Link>
             <Link href="/pricing" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper md:block md:px-3">Alpha access</Link>
             <a href={REPO_URL} className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block">Source</a>
@@ -33,6 +34,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-light sm:justify-end">
             <Link href="/docs" className="hover:text-paper">API</Link>
+            <Link href="/evidence/release-1" className="hover:text-paper">Evidence</Link>
             <Link href="/pricing" className="hover:text-paper">Alpha access</Link>
             <Link href="/privacy" className="hover:text-paper">Privacy</Link>
             <Link href="/terms" className="hover:text-paper">Terms</Link>
