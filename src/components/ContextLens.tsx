@@ -5,7 +5,7 @@ import { useRef } from "react";
 type ContextLensProps = {
   included: number;
   excluded: number;
-  reduction: number;
+  includedShare: number;
   active: boolean;
 };
 
@@ -20,7 +20,7 @@ const EXCLUDED_NODES = [
 export function ContextLens({
   included,
   excluded,
-  reduction,
+  includedShare,
   active,
 }: ContextLensProps) {
   const lensRef = useRef<HTMLElement>(null);
@@ -41,7 +41,7 @@ export function ContextLens({
   return (
     <section
       ref={lensRef}
-      aria-label={`Context lens: ${included} files included, ${excluded} excluded, ${reduction}% fewer tokens`}
+      aria-label={`Context lens: ${included} files included, ${excluded} excluded, ${includedShare}% of repository tokens included`}
       className="context-lens group relative min-h-[390px] overflow-hidden rounded-[28px] border border-white/20 bg-[#314fd1] shadow-[0_28px_70px_rgba(20,35,59,0.24)]"
       onPointerMove={moveLens}
       onPointerLeave={resetLens}
@@ -104,7 +104,7 @@ export function ContextLens({
         <div className="context-lens__readout absolute left-[48%] top-[43%] -translate-x-1/2 -translate-y-1/2 text-center">
           <p className="font-mono text-[8px] uppercase tracking-[0.18em] text-white/55">safe slice</p>
           <p className="mt-0.5 text-lg font-semibold tracking-[-0.05em] text-white">
-            {active ? `${reduction}% leaner` : "standby"}
+            {active ? `${includedShare}% included` : "standby"}
           </p>
         </div>
       </div>

@@ -10,7 +10,6 @@ type Project = {
   task: string;
   slice_files: number;
   total_files: number;
-  saved_pct: number;
   created_at: string;
   updated_at: string;
 };
@@ -94,7 +93,7 @@ export function ProjectsList() {
             <p className="mt-0.5 truncate text-xs text-muted-light">{project.task}</p>
             <div className="mt-1 flex items-center gap-3 text-xs text-muted">
               <span>{project.slice_files}/{project.total_files} files</span>
-              <span>{project.saved_pct}% saved</span>
+              <span>{project.total_files > 0 ? Math.round((project.slice_files / project.total_files) * 100) : 0}% included</span>
               <span>{new Date(project.updated_at).toLocaleDateString()}</span>
             </div>
           </Link>

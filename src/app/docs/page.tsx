@@ -105,9 +105,8 @@ export default function DocsPage() {
   ],
   "excluded": ["components/Header.tsx", "..."],
   "tokens": {
-    "slice": 770,
-    "total": 45000,
-    "savedPct": 98
+    "included": 770,
+    "total": 45000
   },
   "context": "===== middleware.ts =====\\n..."
 }`}
@@ -118,9 +117,9 @@ export default function DocsPage() {
             starting files, and repository terms the caller can use to make the task more specific.
           </p>
           <p className="mt-3 rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm leading-6 text-muted-light">
-            <code className="text-accent">savedPct</code> is a legacy response field containing an
-            estimated initial-context reduction. It is not a whole-Run token Savings claim and does
-            not measure agent completion or correctness.
+            Token counts report only the context included by this localization response and the
+            repository total measured by the same estimator. They do not claim whole-Run savings,
+            task completion, or correctness.
           </p>
         </section>
 

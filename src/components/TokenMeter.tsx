@@ -62,8 +62,8 @@ export function TokenMeter({
   const [feedback, setFeedback] = useState<"none" | "up" | "down">("none");
   const total = result?.totalTokens ?? 0;
   const slice = result?.sliceTokens ?? total;
-  const pct = result && !result.widened ? result.savedPct : 0;
   const sliceFrac = total ? (slice / total) * 100 : 100;
+  const includedShare = Math.round(sliceFrac);
 
   async function copy() {
     if (!repo || !result) return;
@@ -88,10 +88,10 @@ export function TokenMeter({
           </p>
         </div>
         <div className="text-right">
-          <p className={`font-mono text-4xl font-semibold tabular transition-all duration-500 ${sparse && pct > 0 ? "text-muted-light" : "text-accent"}`}>
-            {result?.widened ? "Full repo" : pct > 0 ? `−${pct}%` : "0%"}
+          <p className={`font-mono text-4xl font-semibold tabular transition-all duration-500 ${sparse ? "text-muted-light" : "text-accent"}`}>
+            {result ? `${includedShare}%` : "—"}
           </p>
-          <p className="text-[11px] text-muted">{result?.widened ? "safe Widen" : "fewer tokens"}</p>
+          <p className="text-[11px] text-muted">included share</p>
         </div>
       </div>
       <div className="mt-4 h-3 overflow-hidden rounded-full bg-ink">
@@ -103,7 +103,7 @@ export function TokenMeter({
 
       <p className="mt-2 text-[11px] text-muted">
         {result?.widened
-          ? "No reduction yet—add a file, symbol, route, or error message to focus the Slice."
+          ? "The full repository is included. Add a file, symbol, route, or error message to focus the Slice."
           : result
             ? `${result.slice.length} files in the Slice · ${result.excluded.length} excluded`
             : "Pick a repo and describe a task."}
@@ -111,9 +111,8 @@ export function TokenMeter({
 
       {sparse && !result?.widened && (
         <p className="mt-2 rounded-md border border-recent/30 bg-recent/5 px-2.5 py-1.5 text-[11px] text-recent">
-          Sparse repo — few internal imports, so there isn&apos;t much to slice. The number
-          reflects structure, not a guaranteed saving. Locus pays off on codebases with real
-          dependency depth.
+          Sparse repo — few internal imports, so the Slice may stay broad. This share reflects
+          repository structure and the files packed for this task.
         </p>
       )}
 
@@ -168,13 +167,13 @@ export function TokenMeter({
         <div className="mt-3 flex items-center justify-center gap-3">
           <span className="text-[11px] text-muted">Was this context useful?</span>
           <button
-            onClick={() => { setFeedback("up"); trackClient("context_feedback", { rating: "up", files: result.slice.length, savedPct: result.savedPct }); }}
+            onClick={() => { setFeedback("up"); trackClient("context_feedback", { rating: "up", files: result.slice.length, includedTokens: result.sliceTokens, totalTokens: result.totalTokens }); }}
             className={`rounded-md px-2 py-1 text-xs transition ${feedback === "up" ? "bg-accent/15 text-accent" : "text-muted hover:text-paper"}`}
           >
             Yes
           </button>
           <button
-            onClick={() => { setFeedback("down"); trackClient("context_feedback", { rating: "down", files: result.slice.length, savedPct: result.savedPct }); }}
+            onClick={() => { setFeedback("down"); trackClient("context_feedback", { rating: "down", files: result.slice.length, includedTokens: result.sliceTokens, totalTokens: result.totalTokens }); }}
             className={`rounded-md px-2 py-1 text-xs transition ${feedback === "down" ? "bg-recent/15 text-recent" : "text-muted hover:text-paper"}`}
           >
             No

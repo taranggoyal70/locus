@@ -71,7 +71,6 @@ export function AgentRunPanel({
   task,
   sliceCount,
   excludedCount,
-  estimatedSavedPct,
   initialRunId = null,
   acceptanceCriteria,
   canStartRun,
@@ -80,7 +79,6 @@ export function AgentRunPanel({
   task: string;
   sliceCount: number;
   excludedCount: number;
-  estimatedSavedPct: number;
   initialRunId?: string | null;
   acceptanceCriteria: string[];
   canStartRun: boolean;
@@ -205,7 +203,7 @@ export function AgentRunPanel({
               {[
                 ["Context", `${sliceCount} in`],
                 ["Outside", `${excludedCount} out`],
-                ["Estimate", `−${estimatedSavedPct}%`],
+                ["Ledger", `${sliceCount + excludedCount} files`],
               ].map(([label, value]) => (
                 <div key={label} className="bg-ink px-3 py-3">
                   <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">{label}</p>

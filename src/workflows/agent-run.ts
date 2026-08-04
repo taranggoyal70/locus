@@ -92,7 +92,6 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
       excludedFiles: excluded.length,
       includedTokens: result.sliceTokens,
       baselineTokens: result.totalTokens,
-      savedPercent: result.savedPct,
       repositoryTruncated: fetched.truncated,
     },
   });

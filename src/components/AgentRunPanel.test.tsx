@@ -39,7 +39,6 @@ describe("controlled-alpha Agent Run start", () => {
         task="Fix the controlled alpha evidence contract"
         sliceCount={4}
         excludedCount={8}
-        estimatedSavedPct={60}
         acceptanceCriteria={["The evidence contract is factual"]}
         canStartRun={false}
       />,
@@ -48,5 +47,6 @@ describe("controlled-alpha Agent Run start", () => {
     expect(html).toContain("Invite required");
     expect(html).toContain("available only to invited design partners");
     expect(html).not.toContain("verified saved");
+    expect(html).not.toContain("−60%");
   });
 });

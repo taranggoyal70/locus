@@ -1,25 +1,26 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
-const publicSurfaces = [
-  "README.md",
-  "src/app/layout.tsx",
-  "src/app/opengraph-image.tsx",
-  "src/app/pricing/page.tsx",
-  "src/app/docs/page.tsx",
-  "src/app/privacy/page.tsx",
-  "src/app/terms/page.tsx",
-  "src/app/projects/page.tsx",
-  "src/components/LandingPage.tsx",
-  "src/components/MarketingShell.tsx",
-  "src/components/AuthShell.tsx",
-  "src/components/WaitlistForm.tsx",
-  "src/components/LocusApp.tsx",
-  "src/components/AgentRunPanel.tsx",
-  "src/components/AgentRunsList.tsx",
-  "src/components/AlphaSettingsNotice.tsx",
-  "src/components/OnboardingBanner.tsx",
-];
+export function isPublicSurfacePath(path) {
+  const normalized = path.replaceAll("\\", "/");
+  if (/\.(?:test|spec)\.[cm]?[jt]sx?$/.test(normalized)) return false;
+  if (normalized === "README.md") return true;
+  if (normalized.startsWith("src/components/") && normalized.endsWith(".tsx")) return true;
+  return normalized.startsWith("src/app/") && /\.[cm]?[jt]sx?$/.test(normalized);
+}
+
+function walkFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = `${directory}/${entry.name}`;
+    return entry.isDirectory() ? walkFiles(path) : [path];
+  });
+}
+
+function discoverPublicSurfaces() {
+  return ["README.md", ...walkFiles("src/app"), ...walkFiles("src/components")]
+    .filter(isPublicSurfacePath)
+    .sort();
+}
 
 const bannedClaims = [
   ["paid price", /\$29/i],
@@ -33,6 +34,8 @@ const bannedClaims = [
   ["enterprise identity support", /sso\s*\/\s*saml/i],
   ["service-level guarantee", /sla guarantee/i],
   ["unsupported benchmark count", /120 api calls/i],
+  ["unsupported percentage savings", /(?:\d+|\$\{[^}]+\}|\{[^}]+\})%\s+saved/i],
+  ["unsupported percentage token reduction", /(?:\d+|\$\{[^}]+\}|\{[^}]+\})%\s+fewer\s+tokens/i],
 ];
 
 export function findBannedAlphaClaims(sources) {
@@ -44,6 +47,7 @@ export function findBannedAlphaClaims(sources) {
 }
 
 function main() {
+  const publicSurfaces = discoverPublicSurfaces();
   const sources = publicSurfaces.map((path) => ({
     path,
     content: readFileSync(path, "utf8"),

@@ -104,7 +104,6 @@ export function LocusApp({
           task,
           slice_files: result.slice.length,
           total_files: graph?.nodes.length ?? 0,
-          saved_pct: result.savedPct,
         }),
       });
       if (response.ok) {
@@ -121,7 +120,9 @@ export function LocusApp({
 
   const includedCount = result?.slice.length ?? 0;
   const excludedCount = result?.excluded.length ?? 0;
-  const reduction = result?.widened ? 0 : result?.savedPct ?? 0;
+  const includedShare = result?.totalTokens
+    ? Math.round((result.sliceTokens / result.totalTokens) * 100)
+    : 0;
 
   return (
     <div className="locus-shell min-h-screen lg:grid lg:grid-cols-[92px_minmax(0,1fr)]">
@@ -192,7 +193,7 @@ export function LocusApp({
           <ContextLens
             included={includedCount}
             excluded={excludedCount}
-            reduction={reduction}
+            includedShare={includedShare}
             active={Boolean(result)}
           />
         </section>
@@ -401,7 +402,6 @@ export function LocusApp({
                     task={task}
                     sliceCount={includedCount}
                     excludedCount={excludedCount}
-                    estimatedSavedPct={reduction}
                     initialRunId={initialRunId}
                     canStartRun={canStartRun}
                     acceptanceCriteria={definitionOfDone.split("\n").map((item) => item.trim()).filter(Boolean)}

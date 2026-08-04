@@ -11,7 +11,7 @@ export async function GET() {
   const db = serviceClient();
   const { data, error } = await db
     .from("projects")
-    .select("id, name, repo_url, task, slice_files, total_files, saved_pct, created_at, updated_at")
+    .select("id, name, repo_url, task, slice_files, total_files, created_at, updated_at")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false })
     .limit(50);
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
 
-  let body: { name: string; repo_url: string; task: string; slice_files: number; total_files: number; saved_pct: number };
+  let body: { name: string; repo_url: string; task: string; slice_files: number; total_files: number };
   try {
     body = await request.json();
   } catch {
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       task: body.task.slice(0, 500),
       slice_files: Math.max(0, Math.round(body.slice_files || 0)),
       total_files: Math.max(0, Math.round(body.total_files || 0)),
-      saved_pct: Math.max(0, Math.min(100, Math.round(body.saved_pct || 0))),
+      saved_pct: 0,
     })
     .select("id")
     .single();
