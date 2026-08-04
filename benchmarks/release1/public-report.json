@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "release1-v1",
+  "contractFrozenAt": "2026-08-03T00:00:00.000Z",
+  "status": "collecting",
+  "gatePassed": false,
+  "evidenceComplete": false,
+  "progress": {
+    "submittedResults": 0,
+    "validResults": 0,
+    "invalidResults": 0,
+    "expectedResults": 40,
+    "completePairs": 0,
+    "expectedPairs": 20
+  },
+  "study": {
+    "repositoryCount": 5,
+    "caseCount": 20,
+    "armCount": 2,
+    "modelId": "gemini-3.5-flash",
+    "promptVersion": "release1-agent-v1",
+    "toolsVersion": "release1-bounded-workspace-v1",
+    "blindedReview": true
+  },
+  "thresholds": {
+    "minimumAcceptanceRate": 0.8,
+    "maximumAcceptanceRateGap": 0.05,
+    "minimumMedianTotalTokenReduction": 0.3,
+    "minimumPairsWithTokenReduction": 15,
+    "maximumCriticalRegressions": 0
+  },
+  "metrics": null
+}
