@@ -11,7 +11,8 @@ describe("controlled-alpha privacy policy", () => {
     expect(html).toContain("public repositories only");
     expect(html).toContain("Durable Run records");
     expect(html).toContain("Clerk, Supabase, GitHub, and Vercel");
-    expect(html).toContain("fixed automatic retention period is not yet implemented");
+    expect(html).toContain("30 days");
+    expect(html).toContain("90 days");
     expect(html).toContain("request deletion");
   });
 });
