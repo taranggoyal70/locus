@@ -41,6 +41,11 @@ The replay checks whether Locus includes the files developers changed next. It
 does not prove that an autonomous agent completed the task, that every excluded
 file was unnecessary, or that agent quality cannot regress.
 
+The separate [Release 1 evidence page](https://locus-five-iota.vercel.app/evidence/release-1)
+publishes the frozen paired-study protocol and current completion state. It
+withholds outcome metrics until all 40 arm results bind to valid Run, review, and
+proposal evidence.
+
 ## How it works
 
 1. Parse `import`, `require()`, dynamic `import()`, and `@/` aliases into a deterministic dependency graph.
@@ -182,6 +187,7 @@ pnpm lint
 pnpm test
 pnpm exec tsc --noEmit
 pnpm check-sync
+pnpm evidence:release1
 pnpm build
 pnpm benchmark
 ```
@@ -197,6 +203,7 @@ pnpm eval:release1
 ## Links
 
 - [API Docs](https://locus-five-iota.vercel.app/docs)
+- [Release 1 evidence](https://locus-five-iota.vercel.app/evidence/release-1)
 - [Alpha access](https://locus-five-iota.vercel.app/pricing)
 - [Privacy Policy](https://locus-five-iota.vercel.app/privacy)
 - [Terms of Service](https://locus-five-iota.vercel.app/terms)

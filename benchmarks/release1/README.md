@@ -12,4 +12,17 @@ Populate `results.json` with one `slice` and one `whole_repo` record per case, t
 pnpm eval:release1
 ```
 
+After changing checked-in results, regenerate the privacy-safe aggregate used by
+the public evidence page, then verify that it is current:
+
+```sh
+pnpm evidence:release1:write
+pnpm evidence:release1
+```
+
+`public-report.json` intentionally excludes Run UUIDs, Review UUIDs, and proposal
+hashes. Those remain in `results.json` for auditability. Aggregate outcome metrics
+stay `null` until every result is valid, unique, and paired; CI rejects a stale
+public report.
+
 The gate requires at least 80% human acceptance in both arms, no more than a five-point acceptance gap, at least 30% median paired total-token reduction, improvement in at least 15 of 20 pairs, complete evidence, and zero critical regressions. The checked-in empty results file intentionally fails closed until the study is run; it is not evidence.
