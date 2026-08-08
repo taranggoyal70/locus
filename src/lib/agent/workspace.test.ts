@@ -28,7 +28,9 @@ class FakeWorkspace implements AgentWorkspace {
         stderr: "",
       };
     }
-    if (command.command.startsWith("sed ")) {
+    // Slice reads are the only operation that passes a line budget, which keeps
+    // them distinguishable from the base64 whole-file capture below.
+    if (command.env?.LOCUS_MAX_LINES) {
       return { exitCode: 0, stdout: "export const value = 1;\n", stderr: "" };
     }
     if (command.command.startsWith("git diff --name-status")) {

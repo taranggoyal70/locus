@@ -14,15 +14,34 @@ function sorted(values: Iterable<string>): string[] {
   return [...values].sort((a, b) => a.localeCompare(b));
 }
 
+// Control characters and DEL. A path carrying these is never a legitimate repo
+// path, and they can forge terminal/log output in review evidence.
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
+// "C:/..." resolves against a drive root rather than the workspace on Windows
+// hosts, so it escapes containment without ever using a leading slash.
+const WINDOWS_DRIVE = /^[a-zA-Z]:/;
+
+// Lexical gate only. This proves nothing about the filesystem the path will be
+// resolved against — a repository-controlled symlink can still redirect a
+// syntactically valid path outside the workspace. Every actual file operation
+// must additionally pass canonical containment inside the sandbox
+// (see CONTAINMENT_PRELUDE in workspace.ts).
 export function validateRepoPath(input: string): string {
   const path = input.trim().replaceAll("\\", "/").replace(/^\.\/+/, "");
   const segments = path.split("/");
   if (
     !path
     || path.startsWith("/")
-    || path.includes("\0")
-    || segments.includes("..")
-    || segments[0] === ".git"
+    || CONTROL_CHARACTERS.test(path)
+    || WINDOWS_DRIVE.test(path)
+    // Empty segments ("a//b"), "." and ".." are all normalization hazards: they
+    // let two different strings denote one file, so a ledger check on one form
+    // can be bypassed with the other.
+    || segments.some((segment) => segment === "" || segment === "." || segment === "..")
+    // ".git" at ANY depth, not just the first segment. Nested repositories and
+    // submodules put a writable .git well below the root, and writing there
+    // rewrites history that the review diff is computed against.
+    || segments.some((segment) => segment.toLowerCase() === ".git")
   ) {
     throw new Error("Path must stay inside the repository");
   }

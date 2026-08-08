@@ -40,35 +40,84 @@ function evidence(result: AgentWorkspaceResult): string {
   return truncateToolOutput(streams.join("\n\n"));
 }
 
-const WRITE_SCRIPT = [
+// Canonical containment, executed inside the sandbox.
+//
+// validateRepoPath is a lexical check that runs on the host and can only see the
+// string. This is the check that actually holds, because it runs where the
+// filesystem is and resolves what the path really points at. A repository is
+// hostile input: it can ship a symlink at an admitted path so that a
+// syntactically-inside path writes outside the workspace.
+//
+// For every path component this rejects:
+//   - resolution outside the workspace root (realpath of cwd)
+//   - symlinks, the documented way a repository redirects an admitted path
+//   - sockets/FIFOs/devices, which make reads and writes non-deterministic
+//
+// lstat is used rather than stat precisely because stat follows links. Walking
+// component-by-component (not just the final target) is required: a symlinked
+// parent directory redirects every child beneath it.
+// Exported so the containment boundary can be executed against a real
+// filesystem in tests. Asserting that this string exists would prove nothing —
+// the guarantee is that running it rejects a symlinked escape.
+export const CONTAINMENT_PRELUDE = [
   'const fs=require("node:fs");',
   'const path=require("node:path");',
-  "const target=process.env.LOCUS_PATH;",
-  "const content=process.env.LOCUS_CONTENT;",
-  'if(!target||content===undefined)throw new Error("missing write input");',
-  "fs.mkdirSync(path.dirname(target),{recursive:true});",
-  "fs.writeFileSync(target,content);",
-  'process.stdout.write(`wrote ${target}\\n`);',
+  "const root=fs.realpathSync(process.cwd());",
+  "function contain(value){",
+  'if(typeof value!=="string"||!value)throw new Error("missing path");',
+  "const absolute=path.resolve(root,value);",
+  "const relative=path.relative(root,absolute);",
+  'if(!relative||relative.startsWith("..")||path.isAbsolute(relative))throw new Error("path escapes the workspace");',
+  "let cursor=root;",
+  "for(const segment of relative.split(path.sep)){",
+  "cursor=path.join(cursor,segment);",
+  "let entry;",
+  // A missing component is fine — writeFile legitimately creates new files and
+  // parent directories. Nothing below a missing component can exist either, so
+  // there is nothing further to validate.
+  "try{entry=fs.lstatSync(cursor);}catch{break;}",
+  'if(entry.isSymbolicLink())throw new Error("symlink rejected: "+segment);',
+  'if(!entry.isDirectory()&&!entry.isFile())throw new Error("special file rejected: "+segment);',
+  "}",
+  "return absolute;",
+  "}",
 ].join("");
 
-const REPLACE_SCRIPT = [
-  'const fs=require("node:fs");',
-  "const target=process.env.LOCUS_PATH;",
+const READ_SLICE_LINES = 320;
+
+const WRITE_SCRIPT = CONTAINMENT_PRELUDE + [
+  "const target=contain(process.env.LOCUS_PATH);",
+  "const content=process.env.LOCUS_CONTENT;",
+  'if(content===undefined)throw new Error("missing write input");',
+  "fs.mkdirSync(path.dirname(target),{recursive:true});",
+  "fs.writeFileSync(target,content);",
+  'process.stdout.write(`wrote ${process.env.LOCUS_PATH}\\n`);',
+].join("");
+
+const REPLACE_SCRIPT = CONTAINMENT_PRELUDE + [
+  "const target=contain(process.env.LOCUS_PATH);",
   "const before=process.env.LOCUS_BEFORE;",
   "const after=process.env.LOCUS_AFTER;",
-  'if(!target||before===undefined||after===undefined)throw new Error("missing replace input");',
+  'if(before===undefined||after===undefined)throw new Error("missing replace input");',
   'const source=fs.readFileSync(target,"utf8");',
   "const count=source.split(before).length-1;",
   'if(count!==1){console.error(`expected exactly one match, found ${count}`);process.exit(2);}',
   "fs.writeFileSync(target,source.replace(before,after));",
-  'process.stdout.write(`updated ${target}\\n`);',
+  'process.stdout.write(`updated ${process.env.LOCUS_PATH}\\n`);',
 ].join("");
 
-const READ_BASE64_SCRIPT = [
-  'const fs=require("node:fs");',
-  "const target=process.env.LOCUS_PATH;",
-  'if(!target)throw new Error("missing read input");',
+const READ_BASE64_SCRIPT = CONTAINMENT_PRELUDE + [
+  "const target=contain(process.env.LOCUS_PATH);",
   'process.stdout.write(fs.readFileSync(target).toString("base64"));',
+].join("");
+
+// Replaces `sed -n '1,320p'`, which follows symlinks and would happily print a
+// file outside the workspace that an admitted path pointed at.
+const READ_SLICE_SCRIPT = CONTAINMENT_PRELUDE + [
+  "const target=contain(process.env.LOCUS_PATH);",
+  "const limit=Number(process.env.LOCUS_MAX_LINES)||320;",
+  'const lines=fs.readFileSync(target,"utf8").split("\\n");',
+  'process.stdout.write(lines.slice(0,limit).join("\\n"));',
 ].join("");
 
 const PREPARE_DEPENDENCIES = [
@@ -132,7 +181,8 @@ export class WorkspaceController {
       throw new Error(`${path} is outside the active Slice`);
     }
     const result = await this.workspace.run({
-      command: `sed -n '1,320p' -- ${shellQuote(path)}`,
+      command: `node -e ${shellQuote(READ_SLICE_SCRIPT)}`,
+      env: { LOCUS_PATH: path, LOCUS_MAX_LINES: String(READ_SLICE_LINES) },
       abortSignal,
       timeoutMs: 30_000,
     });

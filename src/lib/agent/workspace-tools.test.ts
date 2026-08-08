@@ -83,6 +83,37 @@ describe("agent command boundary", () => {
     expect(() => validateRepoPath("/etc/passwd")).toThrow("Path must stay inside the repository");
     expect(() => validateRepoPath(".git/config")).toThrow("Path must stay inside the repository");
   });
+
+  it.each([
+    // A nested repository or submodule puts a writable .git well below the
+    // root; writing there rewrites the history the review diff is computed
+    // against. The original check only looked at the first segment.
+    "vendor/.git/config",
+    "a/b/.git/hooks/pre-commit",
+    // Case-insensitive filesystems resolve these to the same directory.
+    ".GIT/config",
+    "vendor/.Git/config",
+    // Normalization hazards: two spellings of one file let a ledger check on
+    // one form be bypassed with the other.
+    "src//app/page.tsx",
+    "src/./app/page.tsx",
+    "src/app/",
+    // Escapes that never use a leading slash.
+    "C:/Windows/System32/drivers/etc/hosts",
+    "src/app\u0000/page.tsx",
+    "src/\u001bapp/page.tsx",
+  ])("rejects a path that evades the first-segment check: %j", (input) => {
+    expect(() => validateRepoPath(input)).toThrow("Path must stay inside the repository");
+  });
+
+  it.each([
+    // Dotfiles that merely start with ".git" are ordinary tracked files.
+    ".gitignore",
+    ".gitattributes",
+    ".github/workflows/ci.yml",
+  ])("still admits an ordinary dotfile: %s", (input) => {
+    expect(validateRepoPath(input)).toBe(input);
+  });
 });
 
 describe("agent context budget", () => {
