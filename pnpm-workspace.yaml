@@ -18,3 +18,13 @@ overrides:
   postcss: 8.5.23
   sharp: 0.35.3
   'undici@>=7.0.0 <7.29.0': 7.29.0
+  # R8: transitive advisories that `pnpm audit --prod` previously hid. Each
+  # override is scoped to the vulnerable range only, so unaffected major lines
+  # already in the tree resolve normally.
+  # GHSA-28wg-ghj8-5hjv
+  'brace-expansion@<1.1.18': ^1.1.18
+  # js-yaml prototype pollution
+  'js-yaml@>=4.0.0 <4.3.1': ^4.3.1
+  # GHSA-2v37-7h3g-55p8 — nanoid infinite loop on zero size
+  'nanoid@<3.3.17': ^3.3.17
+  'nanoid@>=4.0.0 <5.1.16': ^5.1.16
