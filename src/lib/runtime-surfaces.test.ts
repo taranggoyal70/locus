@@ -97,6 +97,9 @@ describe("published runtime surfaces", () => {
     const processResult = spawnSync(process.execPath, [join(root, "bin/mcp.mjs")], {
       cwd: root,
       encoding: "utf8",
+      // The server only serves directories inside its allowed roots (R5). A
+      // real client grants the repository it wants localized the same way.
+      env: { ...process.env, LOCUS_MCP_ROOTS: fixtureRoot },
       input: `${requests.map((request) => JSON.stringify(request)).join("\n")}\n`,
     });
 
