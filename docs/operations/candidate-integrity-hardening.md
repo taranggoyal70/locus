@@ -1,7 +1,17 @@
 # Candidate integrity and verification isolation (R1, R2)
 
-Status: **not implemented**. This records the design and the reason it was not
-bundled with the R3/R5/R8 hardening.
+Status:
+
+- **R2 network phasing — implemented.** Egress is revoked before any
+  repository-controlled program runs, and verification fails closed if the
+  revocation did not take.
+- **R2 verification-sandbox isolation — not implemented.** It depends on R1: a
+  separate sandbox is only meaningful once there is a frozen candidate to
+  materialize into it, so it is tracked with R1 below.
+- **R1 candidate freezing — not implemented.**
+
+This records the design and the reason the remainder was not bundled with the
+R3/R5/R8 hardening.
 
 R1 and R2 are the two P0 findings from the Locus Security Architecture Review
 that cannot be fixed by tightening a check. They require inverting the order of
@@ -44,27 +54,55 @@ exploitation.
 The edit workspace must stop being authoritative the moment editing ends.
 
 ```
-create sandbox (no customer secrets)
-  -> clone at trusted base SHA
-  -> dependency bootstrap        [network: registry only]
+create sandbox (no customer secrets)            [DONE]
+  -> clone at trusted base SHA                  [DONE]
+  -> dependency bootstrap        [registry only, --ignore-scripts]   [DONE]
   -> network: DENY-ALL           <-- before any repository-controlled code
-  -> agent edits
-  -> freeze + hash candidate
-  -> destroy edit sandbox
-new verification sandbox
-  -> materialize exactly the frozen candidate
+                                                [DONE — R2]
+  -> agent edits                                [DONE]
+  -> freeze + hash candidate                    [TODO — R1]
+  -> destroy edit sandbox                       [TODO — R1]
+new verification sandbox                        [TODO — R1]
+  -> materialize exactly the frozen candidate   [TODO — R1]
   -> run checks                  [network: DENY-ALL, no credentials]
+                                                [deny-all DONE; separate
+                                                 sandbox TODO]
   -> destroy
 server
   -> fetch base tree by immutable GitHub SHA (never sandbox Git state)
-  -> build diff server-side from (base, frozen candidate)
+                                                [TODO — R1]
+  -> build diff server-side from (base, frozen candidate)   [TODO — R1]
   -> ASSERT apply(diff, base) == frozen candidate, byte for byte
+                                                [TODO — R1]
   -> publish proposal
 ```
 
 The security property is not any particular SDK call. It is that the
 transition to deny-all happens **before** any repository-controlled program
 runs, and is enforced by the platform rather than by shell convention.
+
+### What R2 changed
+
+`AgentWorkspace` gained `lockNetwork()`. On Vercel Sandbox it calls
+`sandbox.update({ networkPolicy: "deny-all" })` — verified against
+`@vercel/sandbox` 2.9.0, where `update` is the supported entry point and
+`updateNetworkPolicy` is deprecated. The revocation is applied by the platform
+to a running sandbox, so repository-controlled code cannot undo it from inside
+the guest.
+
+`WorkspaceController.runCheck()` now refuses to run unless the lock is
+recorded, and the flag is only set after the platform confirms the change. A
+failed lock therefore leaves verification blocked rather than silently
+permitted — the run aborts and the sandbox is torn down.
+
+Bootstrap remains the only phase with egress. It installs from the frozen
+lockfile with `--ignore-scripts` for every package manager, so no dependency
+code executes while the network is still reachable.
+
+Still missing, and why it matters: verification runs in the **same** sandbox
+the agent edited, so a check can still mutate the tree that `reviewDiff()` and
+`changeSet()` later read. Deny-all removes exfiltration and remote payload
+fetch; it does not address provenance. That is R1.
 
 ## Implementation notes
 
@@ -117,6 +155,7 @@ Found while implementing the tractable findings; none are fixed:
 - **Sandbox `git` operations are unguarded.** `createDiff()` and `changeSet()`
   invoke `git` directly; containment applies to the file tools only. This is
   subsumed by R1 but remains true until R1 lands.
-- **`prepareDependencies()` runs before network lock-down.** It uses
-  `--ignore-scripts` for every package manager, which is correct, but it
-  currently runs in a sandbox that still has broad egress (R2).
+- ~~`prepareDependencies()` runs before network lock-down.~~ Resolved by R2:
+  bootstrap is now the only phase with egress, and it installs from the frozen
+  lockfile with `--ignore-scripts`, so no dependency code runs while the
+  network is reachable.

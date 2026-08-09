@@ -156,6 +156,13 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       values: { sandbox_id: workspace.id },
     });
     await controller.prepareDependencies();
+    // R2: bootstrap is the last phase that legitimately needs egress. Revoke
+    // it before the agent touches the repository, so every subsequent
+    // repository-controlled program — every `pnpm test`, every build script —
+    // runs with no route out. A failure here aborts the Run: the sandbox is
+    // torn down by the finally block rather than continuing with egress.
+    await controller.lockNetwork();
+    logger.info("agent.sandbox.network_locked", { sandboxId: workspace.id }, localized.runId);
     const prompt = buildAgentPrompt({
       task: localized.task,
       acceptanceCriteria: localized.acceptanceCriteria,
