@@ -17,7 +17,7 @@ import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { logger } from "@/lib/logger";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
-import { serviceClient } from "@/lib/supabase";
+import { tenantClient } from "@/lib/supabase-tenant";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
 const MAX_BODY_BYTES = 12_000;
@@ -34,7 +34,7 @@ export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { data, error } = await db
     .from("agent_runs")
     .select("*")
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
       { status: 429, headers: { "Retry-After": String(startRate.retryAfterSeconds) } },
     );
   }
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1_000).toISOString();
   const [activeResult, dailyResult] = await Promise.all([
     db

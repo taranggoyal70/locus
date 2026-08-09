@@ -6,7 +6,7 @@ import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
 import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import type { AgentChange } from "@/lib/agent/workspace";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
-import { serviceClient } from "@/lib/supabase";
+import { tenantClient } from "@/lib/supabase-tenant";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -30,7 +30,7 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid run identifier." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { data: run, error: runError } = await db
     .from("agent_runs")
     .select("*")
@@ -141,7 +141,8 @@ export async function POST(request: Request, context: RouteContext) {
             url: delivered.url,
           },
         })
-        .eq("id", approval.id),
+        .eq("id", approval.id)
+        .eq("user_id", userId),
       db.from("agent_artifacts").insert({
         run_id: id,
         user_id: userId,
@@ -181,7 +182,8 @@ export async function POST(request: Request, context: RouteContext) {
       db
         .from("agent_approvals")
         .update({ status: "failed", payload: { error: message } })
-        .eq("id", approval.id),
+        .eq("id", approval.id)
+        .eq("user_id", userId),
       db
         .from("agent_runs")
         .update({ error: `Delivery failed: ${message}` })

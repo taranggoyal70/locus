@@ -3,13 +3,13 @@ import { NextResponse } from "next/server";
 
 import { generateApiKey, hashKey } from "@/lib/api-auth";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
-import { serviceClient } from "@/lib/supabase";
+import { tenantClient } from "@/lib/supabase-tenant";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { data, error } = await db
     .from("api_keys")
     .select("id, name, prefix, last_used_at, created_at")
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Name too long." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
 
   const { count } = await db
     .from("api_keys")
@@ -77,7 +77,7 @@ export async function DELETE(request: Request) {
   const keyId = url.searchParams.get("id");
   if (!keyId) return NextResponse.json({ error: "id is required." }, { status: 400 });
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { error } = await db
     .from("api_keys")
     .delete()

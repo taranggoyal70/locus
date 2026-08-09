@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { sameOriginMutation } from "@/lib/request-security";
-import { serviceClient } from "@/lib/supabase";
+import { tenantClient } from "@/lib/supabase-tenant";
 
 export async function GET() {
   const { userId } = await auth();
@@ -15,7 +15,7 @@ export async function GET() {
     );
   }
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { data } = await db
     .from("github_connections")
     .select("github_username, scopes, created_at")
@@ -39,7 +39,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   await db.from("github_connections").delete().eq("user_id", userId);
   return NextResponse.json({ disconnected: true });
 }

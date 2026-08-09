@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { verifyGitHubOAuthState } from "@/lib/github-oauth-state";
-import { serviceClient } from "@/lib/supabase";
+import { tenantClient } from "@/lib/supabase-tenant";
 
 export async function GET(request: Request) {
   const { userId } = await auth();
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
   const ghUser = userRes.ok ? await userRes.json() : null;
   const username = ghUser?.login ?? "unknown";
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   await db
     .from("github_connections")
     .upsert({

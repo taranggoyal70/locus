@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
-import { serviceClient } from "@/lib/supabase";
+import { globalClient } from "@/lib/supabase-tenant";
 
 function authorized(header: string | null, secret: string): boolean {
   if (!header) return false;
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const db = serviceClient();
+  const db = globalClient("retention sweep spans every tenant by design");
   const { data, error } = await db.rpc("delete_expired_agent_data", {
     p_retention_days: 30,
   });
