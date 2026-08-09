@@ -2,13 +2,13 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
-import { serviceClient } from "@/lib/supabase";
+import { tenantClient } from "@/lib/supabase-tenant";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { data, error } = await db
     .from("projects")
     .select("id, name, repo_url, task, slice_files, total_files, created_at, updated_at")
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "name, repo_url, and task are required." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
 
   const PROJECT_LIMIT = 10;
   const { count } = await db
@@ -84,7 +84,7 @@ export async function DELETE(request: Request) {
   const projectId = url.searchParams.get("id");
   if (!projectId) return NextResponse.json({ error: "id is required." }, { status: 400 });
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { error } = await db
     .from("projects")
     .delete()

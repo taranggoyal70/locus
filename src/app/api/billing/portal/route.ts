@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { stripe } from "@/lib/stripe";
-import { serviceClient } from "@/lib/supabase";
+import { tenantClient } from "@/lib/supabase-tenant";
 
 export async function POST() {
   const { userId } = await auth();
@@ -15,7 +15,7 @@ export async function POST() {
     );
   }
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { data } = await db
     .from("subscriptions")
     .select("stripe_customer_id")

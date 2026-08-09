@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { stripe } from "@/lib/stripe";
-import { serviceClient } from "@/lib/supabase";
+import { globalClient } from "@/lib/supabase-tenant";
 
 export async function POST(request: Request) {
   const sig = request.headers.get("stripe-signature");
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  const db = globalClient("Stripe webhook has no authenticated user");
 
   switch (event.type) {
     case "checkout.session.completed": {

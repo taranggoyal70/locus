@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
-import { serviceClient } from "@/lib/supabase";
+import { globalClient } from "@/lib/supabase-tenant";
 
 function disabledResponse() {
   return NextResponse.json(
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const teamId = url.searchParams.get("teamId");
   if (!teamId) return NextResponse.json({ error: "teamId required." }, { status: 400 });
 
-  const db = serviceClient();
+  const db = globalClient("team administration acts on other members' rows; authorization is by team role");
 
   const { data: membership } = await db
     .from("team_members")
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "teamId and inviteUserId required." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  const db = globalClient("team administration acts on other members' rows; authorization is by team role");
 
   const { data: caller } = await db
     .from("team_members")
@@ -103,7 +103,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "teamId and memberId required." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  const db = globalClient("team administration acts on other members' rows; authorization is by team role");
 
   const { data: caller } = await db
     .from("team_members")

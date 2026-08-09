@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { calculateTokenLedger } from "@/lib/agent/coding-agent";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
-import { serviceClient } from "@/lib/supabase";
+import { tenantClient } from "@/lib/supabase-tenant";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -17,7 +17,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid run identifier." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  const db = tenantClient(userId);
   const { data: run, error: runError } = await db
     .from("agent_runs")
     .select("*")

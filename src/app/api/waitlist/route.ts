@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
-import { serviceClient } from "@/lib/supabase";
+import { globalClient } from "@/lib/supabase-tenant";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_BODY_BYTES = 2_048;
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const db = serviceClient();
+  const db = globalClient("waitlist entries exist before any account does");
   const { error } = await db.from("waitlist").insert(trimmed);
 
   if (error) {

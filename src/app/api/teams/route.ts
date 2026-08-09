@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
-import { serviceClient } from "@/lib/supabase";
+import { globalClient } from "@/lib/supabase-tenant";
 
 function disabledResponse() {
   return NextResponse.json(
@@ -24,7 +24,7 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!alphaCapabilitiesForUser(userId).teams) return disabledResponse();
 
-  const db = serviceClient();
+  const db = globalClient("team records are owned via team_members, not a user column");
   const { data: memberships } = await db
     .from("team_members")
     .select("team_id, role")
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Team name must be 2-60 characters." }, { status: 400 });
   }
 
-  const db = serviceClient();
+  const db = globalClient("team records are owned via team_members, not a user column");
 
   const { data: existing } = await db
     .from("team_members")
@@ -100,7 +100,7 @@ export async function DELETE(request: Request) {
   const teamId = url.searchParams.get("id");
   if (!teamId) return NextResponse.json({ error: "Team ID required." }, { status: 400 });
 
-  const db = serviceClient();
+  const db = globalClient("team records are owned via team_members, not a user column");
   const { data: team } = await db
     .from("teams")
     .select("owner_id")
