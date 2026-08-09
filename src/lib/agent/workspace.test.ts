@@ -234,7 +234,7 @@ describe("agent workspace", () => {
     )).toBe(true);
   });
 
-  it("keeps the human approval diff complete while bounding agent tool output", async () => {
+  it("bounds the agent-facing diff, which is no longer a review artifact", async () => {
     const diffOutput = "x".repeat(12_001);
     const workspace = new FakeWorkspace(new Set(), diffOutput);
     const controller = new WorkspaceController(
@@ -243,7 +243,10 @@ describe("agent workspace", () => {
     );
 
     await expect(controller.diff()).resolves.toContain("[truncated 17 characters]");
-    await expect(controller.reviewDiff()).resolves.toBe(diffOutput);
+    // R1 removed reviewDiff(). The reviewed artifact is built on the server
+    // from the trusted base and the frozen candidate, so no method here can
+    // supply it from the sandbox's mutable Git state.
+    expect("reviewDiff" in controller).toBe(false);
   });
 
   it("captures a bounded delivery change set without reading excluded files", async () => {
