@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   AgentSlice,
+  MAX_WIDENED_FILES,
   buildAgentPrompt,
+  classifySensitivePath,
   truncateToolOutput,
   validateAgentCommand,
   validateRepoPath,
@@ -18,13 +20,14 @@ describe("agent Slice permissions", () => {
     expect(slice.canRead("src/dashboard.ts")).toBe(true);
     expect(slice.canRead("src/billing.ts")).toBe(false);
 
-    slice.widen("src/billing.ts");
+    slice.widen("src/billing.ts", "the total is computed here");
 
     expect(slice.canRead("src/billing.ts")).toBe(true);
     expect(slice.ledger()).toEqual({
       included: ["src/dashboard.ts"],
       excluded: [],
       widened: ["src/billing.ts"],
+      widenReasons: [{ path: "src/billing.ts", reason: "the total is computed here" }],
       created: [],
     });
   });
@@ -35,9 +38,86 @@ describe("agent Slice permissions", () => {
       excluded: ["src/billing.ts"],
     });
 
-    expect(() => slice.widen("src/unknown.ts")).toThrow(
+    expect(() => slice.widen("src/unknown.ts", "needed")).toThrow(
       "src/unknown.ts is not in the excluded file ledger",
     );
+  });
+
+  // R6: widening is a capability grant, so the justification is enforced
+  // rather than collected and discarded.
+  it("refuses to widen without a concrete reason", () => {
+    const slice = new AgentSlice({ included: ["src/a.ts"], excluded: ["src/b.ts"] });
+
+    expect(() => slice.widen("src/b.ts", "   ")).toThrow("Widening requires a concrete reason");
+    expect(slice.canRead("src/b.ts")).toBe(false);
+  });
+
+  it("bounds how far a Run may widen beyond its Slice", () => {
+    const excluded = Array.from({ length: MAX_WIDENED_FILES + 1 }, (_, n) => `src/f${n}.ts`);
+    const slice = new AgentSlice({ included: ["src/a.ts"], excluded });
+
+    for (let n = 0; n < MAX_WIDENED_FILES; n += 1) {
+      slice.widen(`src/f${n}.ts`, "needed");
+    }
+
+    expect(() => slice.widen(`src/f${MAX_WIDENED_FILES}.ts`, "needed")).toThrow(
+      `Run exceeded the ${MAX_WIDENED_FILES} widened file limit`,
+    );
+  });
+});
+
+describe("sensitive path policy", () => {
+  it.each([
+    [".github/workflows/ci.yml", "CI and workflow configuration"],
+    ["package.json", "package manifest or lockfile"],
+    ["pnpm-lock.yaml", "package manifest or lockfile"],
+    [".npmrc", "package manifest or lockfile"],
+    ["supabase/migrations/016_x.sql", "database migration"],
+    ["vercel.json", "deployment configuration"],
+    ["next.config.ts", "deployment configuration"],
+    ["Dockerfile", "deployment configuration"],
+    ["src/middleware.ts", "authentication or security code"],
+    ["src/lib/auth/session.ts", "authentication or security code"],
+    ["src/lib/agent/workspace-tools.ts", "Agent policy code"],
+  ])("classifies %s", (path, label) => {
+    expect(classifySensitivePath(path)).toBe(label);
+  });
+
+  it.each([
+    "src/app/page.tsx",
+    "src/lib/localizer.ts",
+    "README.md",
+    "docs/authors.md",
+  ])("leaves ordinary product code unclassified: %s", (path) => {
+    expect(classifySensitivePath(path)).toBeNull();
+  });
+
+  it("refuses to widen a sensitive path even with a good reason", () => {
+    const slice = new AgentSlice({
+      included: ["src/a.ts"],
+      excluded: [".github/workflows/ci.yml"],
+    });
+
+    expect(() => slice.widen(".github/workflows/ci.yml", "the build is failing")).toThrow(
+      /requires elevated review/,
+    );
+  });
+
+  it("refuses to create a sensitive path", () => {
+    const slice = new AgentSlice({ included: ["src/a.ts"], excluded: [] });
+
+    expect(() => slice.create(".github/workflows/release.yml")).toThrow(
+      /requires elevated review/,
+    );
+  });
+
+  // Being inside the Slice is not authority to rewrite the rules: the
+  // localizer can legitimately include a manifest as context.
+  it("refuses to write a sensitive path already inside the Slice", () => {
+    const slice = new AgentSlice({ included: ["package.json"], excluded: [] });
+
+    expect(slice.canRead("package.json")).toBe(true);
+    expect(slice.canWrite("package.json")).toBe(false);
   });
 
   it("tracks new files separately from localized source", () => {

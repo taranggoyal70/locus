@@ -274,6 +274,10 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
         changedFiles: changeSet.map((change) => change.path),
         createdFiles: result.ledger.created,
         widenedFiles: result.ledger.widened,
+        // R6: the justification for each capability grant travels into the
+        // approval evidence. toolDetail is hashed into proposal_hash, so the
+        // reason the reviewer reads is bound to the decision they make.
+        widenReasons: result.ledger.widenReasons,
       },
       verifyDetail: {
         checks: result.verification,
