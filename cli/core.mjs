@@ -264,6 +264,7 @@ export function locate(task, repo, graph, evidence = "") {
         ? "no file matched with enough confidence — widened to the whole repo"
         : "type a task to localize",
       anchors: [],
+      anchorPaths: [],
       slice,
       excluded: [],
       sliceTokens: graph.totalTokens,
@@ -277,6 +278,10 @@ export function locate(task, repo, graph, evidence = "") {
           .filter((candidate) => candidate.score > 0)
           .slice(0, 3)
           .map((candidate) => byPath[candidate.path].rel),
+        candidateFilePaths: ranked
+          .filter((candidate) => candidate.score > 0)
+          .slice(0, 3)
+          .map((candidate) => candidate.path),
         repositoryTerms: repositoryTerms(graph),
       },
     };
@@ -315,6 +320,7 @@ export function locate(task, repo, graph, evidence = "") {
     widened: false,
     reason: `matched ${anchors.map((a) => byPath[a.path].rel).join(", ")}`,
     anchors: anchors.map((a) => byPath[a.path].rel),
+    anchorPaths: anchors.map((a) => a.path),
     slice: sliceFiles,
     excluded,
     sliceTokens,
@@ -449,19 +455,22 @@ export function formatResult(result) {
       lines.push(`Unmatched task terms: ${result.refinement.unmatchedTerms.join(", ")}`);
     }
     if (result.refinement?.candidateFiles.length) {
-      lines.push(`Possible starting files: ${result.refinement.candidateFiles.join(", ")}`);
+      // Emit repo-relative paths, not source-root-relative ones: whatever reads
+      // this text (an agent over MCP, or a human) has to be able to open the file.
+      const candidates = result.refinement.candidateFilePaths ?? result.refinement.candidateFiles;
+      lines.push(`Possible starting files: ${candidates.join(", ")}`);
     }
     if (result.refinement?.repositoryTerms.length) {
       lines.push(`Refine with a filename, symbol, or repo term: ${result.refinement.repositoryTerms.join(", ")}`);
     }
   } else {
-    lines.push(`Anchor: ${result.anchors.join(", ")}`);
+    lines.push(`Anchor: ${(result.anchorPaths ?? result.anchors).join(", ")}`);
   }
   lines.push("");
   lines.push(`Slice (${result.slice.length} file${result.slice.length === 1 ? "" : "s"}):`);
   for (const f of result.slice) {
     const marker = f.recent ? "  [changed]" : "";
-    lines.push(`  ${f.rel}  (dist ${f.dist}, ~${f.tokens} tok)${marker}`);
+    lines.push(`  ${f.path}  (dist ${f.dist}, ~${f.tokens} tok)${marker}`);
   }
   lines.push("");
   lines.push(`Excluded: ${result.excluded.length} file${result.excluded.length === 1 ? "" : "s"}`);
