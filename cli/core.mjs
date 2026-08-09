@@ -254,6 +254,7 @@ export function locate(task, repo, graph, evidence = "") {
   const best = scored[0]?.score ?? 0;
 
   if (!task.trim() || best < 3) {
+    const topCandidates = ranked.filter((candidate) => candidate.score > 0).slice(0, 3);
     const slice = graph.nodes
       .map((n) => ({ path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path) }))
       .sort((a, b) => Number(b.recent) - Number(a.recent) || a.rel.localeCompare(b.rel));
@@ -274,14 +275,8 @@ export function locate(task, repo, graph, evidence = "") {
         unmatchedTerms: [...words].filter(
           (word) => !ranked.some((candidate) => candidate.matchedTerms.includes(word)),
         ),
-        candidateFiles: ranked
-          .filter((candidate) => candidate.score > 0)
-          .slice(0, 3)
-          .map((candidate) => byPath[candidate.path].rel),
-        candidateFilePaths: ranked
-          .filter((candidate) => candidate.score > 0)
-          .slice(0, 3)
-          .map((candidate) => candidate.path),
+        candidateFiles: topCandidates.map((candidate) => byPath[candidate.path].rel),
+        candidateFilePaths: topCandidates.map((candidate) => candidate.path),
         repositoryTerms: repositoryTerms(graph),
       },
     };
@@ -491,7 +486,7 @@ export function buildPackedContext(result, repo, budget = 40000) {
   let used = 0;
   for (const f of result.slice) {
     if (included.length > 0 && used + f.tokens > budgetN) {
-      dropped.push(f.rel);
+      dropped.push(f.path);
       continue;
     }
     included.push(f);
@@ -499,7 +494,7 @@ export function buildPackedContext(result, repo, budget = 40000) {
   }
   let text = `# Context for: ${result.task}\n# ${included.length} file${included.length === 1 ? "" : "s"}, ~${used} tokens`;
   for (const f of included) {
-    text += `\n\n===== ${f.rel} =====\n${repo.files[f.path] ?? ""}`;
+    text += `\n\n===== ${f.path} =====\n${repo.files[f.path] ?? ""}`;
   }
   if (dropped.length) {
     text += `\n\n# ${dropped.length} file(s) omitted — exceeded budget of ${budgetN} tokens: ${dropped.join(", ")}`;
