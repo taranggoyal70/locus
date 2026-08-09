@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { contentShape } from "@/lib/agent/data-policy";
 
 import { track } from "@/lib/analytics";
 import { authenticateApiKey } from "@/lib/api-auth";
@@ -247,6 +248,7 @@ export async function POST(request: Request) {
     const result = locate(body.task, repo, graph, body.evidence ?? "");
 
     const budget = resolveContextBudget(body.budget);
+    const taskShape = contentShape(body.task);
     const packed: string[] = [];
     let tokens = 0;
     for (const f of result.slice) {
@@ -263,7 +265,12 @@ export async function POST(request: Request) {
       userId: apiKey.userId,
       properties: {
         repo: body.repo,
-        task: body.task.slice(0, 200),
+        // R13: the task is what a user typed about their own codebase. The
+        // shape is enough to count and correlate requests; the words are not
+        // needed here and are retained on a different schedule than the Run
+        // record the user can see and delete.
+        taskShape: taskShape.digest,
+        taskCharacters: taskShape.characters,
         sliceFiles: result.slice.length,
         widened: result.widened,
         includedTokens: result.sliceTokens,

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   AGENT_MAX_STEPS,
+  ALLOWED_AGENT_MODELS,
+  DisallowedAgentModelError,
   agentStepBudgetSettings,
   calculateTokenLedger,
   resolveAgentLanguageModel,
@@ -18,6 +20,40 @@ describe("coding agent configuration", () => {
     expect(resolveAgentModel({ LOCUS_AGENT_MODEL: "openai/gpt-5.6-terra" })).toBe(
       "openai/gpt-5.6-terra",
     );
+  });
+
+  // R14: an override is honoured only within the allowlist. Otherwise a single
+  // environment variable stands between an operator mistake and Run content
+  // reaching a provider under an unreviewed data policy.
+  it.each([
+    "anthropic/claude-opus-4",
+    "openai/gpt-4o",
+    "google/gemini-1.0-pro",
+    "http://attacker.example/model",
+  ])("refuses a model outside the production allowlist: %s", (model) => {
+    expect(() => resolveAgentModel({ LOCUS_AGENT_MODEL: model })).toThrow(
+      DisallowedAgentModelError,
+    );
+  });
+
+  it("names the permitted models when it refuses", () => {
+    expect(() => resolveAgentModel({ LOCUS_AGENT_MODEL: "openai/gpt-4o" })).toThrow(
+      /Permitted models: openai\/gpt-5\.6-sol/,
+    );
+  });
+
+  // Trimming surrounding whitespace is correct handling of an environment
+  // variable, not a way around the allowlist.
+  it("tolerates whitespace around an allowlisted model", () => {
+    expect(resolveAgentModel({ LOCUS_AGENT_MODEL: "  openai/gpt-5.6-sol  " })).toBe(
+      "openai/gpt-5.6-sol",
+    );
+  });
+
+  it("allows every model on the allowlist", () => {
+    for (const model of ALLOWED_AGENT_MODELS) {
+      expect(resolveAgentModel({ LOCUS_AGENT_MODEL: model })).toBe(model);
+    }
   });
 
   it("routes an explicitly configured Google model directly on the free tier", () => {

@@ -18,6 +18,37 @@ import {
 import type { WorkspaceController } from "@/lib/agent/workspace";
 
 const DEFAULT_AGENT_MODEL = "openai/gpt-5.6-sol";
+
+// R14: the model an Agent Run uses was whatever LOCUS_AGENT_MODEL happened to
+// contain. That is a single environment variable standing between an operator
+// mistake, or anyone who can set deployment configuration, and Run content
+// being sent to an unintended provider under an unintended data policy.
+//
+// The allowlist contains the models this repository already references: the
+// configured default, the deployment override its own tests document, and the
+// Google model the free-tier routing path is tested against. It is not a guess
+// at what might be wanted. Anything outside it fails closed at resolution
+// rather than silently routing Run content to a provider whose data policy has
+// not been reviewed.
+//
+// Adding a model here is a policy decision, so it is a reviewable diff rather
+// than an environment change made in a dashboard.
+export const ALLOWED_AGENT_MODELS: readonly string[] = [
+  "openai/gpt-5.6-sol",
+  "openai/gpt-5.6-terra",
+  "google/gemini-3.5-flash",
+];
+
+export class DisallowedAgentModelError extends Error {
+  constructor(model: string) {
+    super(
+      `Model "${model}" is not on the production allowlist. `
+        + `Permitted models: ${ALLOWED_AGENT_MODELS.join(", ")}. `
+        + "Add it to ALLOWED_AGENT_MODELS in a reviewed change rather than by configuration.",
+    );
+    this.name = "DisallowedAgentModelError";
+  }
+}
 const AGENT_MAX_OUTPUT_TOKENS = 6_000;
 export const AGENT_MAX_STEPS = 10;
 
@@ -38,7 +69,15 @@ export function resolveAgentModel(
   const configured = environment
     ? environment.LOCUS_AGENT_MODEL
     : process.env["LOCUS_AGENT_MODEL"];
-  return configured?.trim() || DEFAULT_AGENT_MODEL;
+  const model = configured?.trim() || DEFAULT_AGENT_MODEL;
+  // R14: fail closed. An unrecognised model means Run content would reach a
+  // provider whose data policy has not been reviewed, so refusing to start is
+  // the correct outcome, not falling back to the default and proceeding as
+  // though the configuration were honoured.
+  if (!ALLOWED_AGENT_MODELS.includes(model)) {
+    throw new DisallowedAgentModelError(model);
+  }
+  return model;
 }
 
 export function resolveAgentLanguageModel(
