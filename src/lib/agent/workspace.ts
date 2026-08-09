@@ -138,7 +138,7 @@ const PREPARE_DEPENDENCIES = [
   "else echo 'No supported lockfile; dependency install skipped'; fi",
 ].join(" ");
 
-const MAX_REVIEW_DIFF_CHARACTERS = 500_000;
+export const MAX_REVIEW_DIFF_CHARACTERS = 500_000;
 
 export type AgentChange = {
   path: string;
@@ -321,16 +321,15 @@ export class WorkspaceController {
     return result;
   }
 
+  // Agent-facing only: `show_diff` lets the model see its own work in
+  // progress. R1 removed the reviewDiff() counterpart that fed the human
+  // approval artifact, because it derived that artifact from the sandbox's
+  // mutable Git index — the exact state repository-controlled verification can
+  // rewrite. The reviewed diff is now built on the server from the trusted
+  // base and the frozen candidate (see lib/agent/candidate.ts). Nothing that
+  // reaches a reviewer or a delivery should be derived from this method.
   async diff(abortSignal?: AbortSignal): Promise<string> {
     return evidence(await this.createDiff(abortSignal));
-  }
-
-  async reviewDiff(abortSignal?: AbortSignal): Promise<string> {
-    const result = await this.createDiff(abortSignal);
-    if (result.stdout.length > MAX_REVIEW_DIFF_CHARACTERS) {
-      throw new Error("Review diff exceeds the 500,000 character approval limit");
-    }
-    return result.stdout;
   }
 
   async changeSet(abortSignal?: AbortSignal): Promise<AgentChange[]> {

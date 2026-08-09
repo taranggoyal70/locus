@@ -1,5 +1,10 @@
 import { FatalError } from "workflow";
 
+import {
+  assertCandidateIntegrity,
+  buildDeterministicDiff,
+  freezeCandidate,
+} from "@/lib/agent/candidate";
 import { runCodingTask } from "@/lib/agent/coding-agent";
 import { sendOperationalAlert } from "@/lib/agent/operations";
 import {
@@ -17,7 +22,7 @@ import {
   transitionRun,
 } from "@/lib/agent/run-store";
 import { createVercelWorkspace } from "@/lib/agent/vercel-workspace";
-import { WorkspaceController } from "@/lib/agent/workspace";
+import { MAX_REVIEW_DIFF_CHARACTERS, WorkspaceController } from "@/lib/agent/workspace";
 import { AgentSlice, buildAgentPrompt } from "@/lib/agent/workspace-tools";
 import { buildGraph, locate } from "@/lib/localizer";
 import { logger } from "@/lib/logger";
@@ -221,17 +226,46 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       localized.baselineTokens,
       localized.includedTokens + widenedTokens,
     );
-    const diff = await controller.reviewDiff();
+    // R1: capture the candidate exactly once. Everything downstream is derived
+    // from these frozen bytes and the trusted base — never from a second read
+    // of a sandbox tree that repository-controlled verification has already
+    // had the opportunity to rewrite.
     const changeSet = await controller.changeSet();
     if (changeSet.length === 0) throw new Error("Agent completed without repository changes");
+    const candidate = freezeCandidate({
+      baseSha: localized.revision,
+      changes: changeSet,
+    });
+
+    // The base is the tree fetched server-side at the resolved revision, not
+    // anything the sandbox reported about itself.
+    const base = new Map(Object.entries(localized.repo.files));
+    const createdPaths = new Set(result.ledger.created);
+    for (const file of candidate.files) {
+      // A modified file must exist in the trusted base. If it does not, the
+      // sandbox is describing a tree we never fetched — a truncated repository
+      // view (R11) or a path that bypassed the Slice.
+      if (!createdPaths.has(file.path) && !base.has(file.path)) {
+        throw new Error(`Changed file is absent from the trusted base: ${file.path}`);
+      }
+    }
+
+    const diff = buildDeterministicDiff(base, candidate);
+    if (diff.length > MAX_REVIEW_DIFF_CHARACTERS) {
+      throw new Error("Review diff exceeds the 500,000 character approval limit");
+    }
+    // Refuse to publish unless the artifact the human will review reconstructs
+    // the artifact that would be delivered, byte for byte.
+    assertCandidateIntegrity({ base, diff, candidate });
 
     const proposalHash = await publishRunProposal({
       runId: localized.runId,
       userId: localized.userId,
       baseRevision: localized.revision,
       changeSetContent: JSON.stringify({
-        version: 1,
-        baseCommitSha: localized.revision,
+        version: 2,
+        baseCommitSha: candidate.baseSha,
+        candidateSha256: candidate.candidateSha256,
         files: changeSet,
       }),
       diff,

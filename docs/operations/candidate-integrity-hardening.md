@@ -5,10 +5,13 @@ Status:
 - **R2 network phasing — implemented.** Egress is revoked before any
   repository-controlled program runs, and verification fails closed if the
   revocation did not take.
-- **R2 verification-sandbox isolation — not implemented.** It depends on R1: a
-  separate sandbox is only meaningful once there is a frozen candidate to
-  materialize into it, so it is tracked with R1 below.
-- **R1 candidate freezing — not implemented.**
+- **R1 candidate integrity — implemented.** The candidate is captured once, the
+  reviewed diff is built on the server from the trusted base and those frozen
+  bytes, and publishing is refused unless applying that diff to the base
+  reproduces the candidate exactly. `reviewDiff()` has been removed.
+- **R1/R2 verification isolation — not implemented.** Verification still runs
+  in the sandbox the agent edited, so verification *evidence* may describe a
+  tree other than the frozen candidate. See "What remains" below.
 
 This records the design and the reason the remainder was not bundled with the
 R3/R5/R8 hardening.
@@ -122,6 +125,45 @@ Touch points:
 
 The existing proposal-hash and immutable-evidence machinery is the right place
 to extend. It should not be replaced.
+
+### What R1 changed
+
+`lib/agent/candidate.ts` is the new boundary. `freezeCandidate()` captures the
+change set once, hashes each file's exact bytes, and derives an order
+independent `candidateSha256` over (base SHA, paths, content hashes,
+deletions). `buildDeterministicDiff()` builds the reviewed artifact on the
+server from the trusted base tree and those frozen bytes.
+`assertCandidateIntegrity()` then refuses to publish unless
+`applyCandidateDiff()` — an independent reimplementation, not a reuse of the
+candidate — reconstructs every byte.
+
+`WorkspaceController.reviewDiff()` is gone. It derived the human approval
+artifact from the sandbox's mutable Git index, which is precisely the state
+repository-controlled verification can rewrite. `diff()` survives as an
+agent-facing tool only, and says so.
+
+The stored change set is now version 2 and carries `candidateSha256`. Delivery
+re-derives that digest from the stored bytes rather than trusting the stored
+value, so mutation between approval and delivery fails closed.
+
+**The candidate digest is already bound into `proposal_hash`** without a
+migration: `publish_agent_proposal` hashes the full change-set text, and
+`candidateSha256` is inside it. A dedicated column would be tidier for
+querying, but the integrity property does not depend on one.
+
+### What remains
+
+The residual gap is verification-to-candidate correspondence. Because
+verification still runs in the edited sandbox, a check can pass against one
+tree while the candidate captured later is a different tree. The reviewed diff
+now always tells the truth about *what will be delivered* — but "tests passed"
+may describe something else.
+
+Closing it needs the original sequence: freeze, destroy the edit sandbox,
+materialize exactly the frozen candidate in a fresh sandbox, and run checks
+there with deny-all networking. Also still open: fetching the base tree by
+immutable SHA at publish time rather than reusing the localize-time fetch,
+which matters once repository truncation (R11) is in play.
 
 ## The invariant
 

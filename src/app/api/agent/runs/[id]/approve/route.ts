@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { freezeCandidate } from "@/lib/agent/candidate";
 import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
 import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import type { AgentChange } from "@/lib/agent/workspace";
@@ -89,16 +90,30 @@ export async function POST(request: Request, context: RouteContext) {
     const parsed = JSON.parse(changeSetResult.data.content) as {
       version?: unknown;
       baseCommitSha?: unknown;
+      candidateSha256?: unknown;
       files?: unknown;
     };
+    // Version 2 carries the frozen candidate digest (R1). Version 1 payloads
+    // predate it and cannot be verified, so they are not deliverable.
     if (
-      parsed.version !== 1
+      parsed.version !== 2
       || typeof parsed.baseCommitSha !== "string"
+      || typeof parsed.candidateSha256 !== "string"
       || !Array.isArray(parsed.files)
     ) {
       throw new Error("Unsupported delivery payload");
     }
     const changes = parsed.files as AgentChange[];
+    // R1: deliver the exact approved candidate. Re-derive the digest from the
+    // stored bytes rather than trusting the stored digest, so any mutation of
+    // the change set between approval and delivery fails closed here.
+    const recomputed = freezeCandidate({
+      baseSha: parsed.baseCommitSha,
+      changes,
+    });
+    if (recomputed.candidateSha256 !== parsed.candidateSha256) {
+      throw new Error("Approved change set no longer matches its frozen candidate digest");
+    }
     const delivered = await createGitHubPullRequest({
       token: connectionResult.data.access_token,
       repository: taskResult.data.repo_url,
