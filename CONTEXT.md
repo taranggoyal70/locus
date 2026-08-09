@@ -12,9 +12,21 @@ Use these terms exactly. They name the domain; the architecture vocabulary
 
 **Repo** (`RepoData`):
 A codebase loaded into Locus as a flat `path → contents` map plus metadata
-(`root`, `recentlyChanged`). The unit everything operates on, regardless of
-whether it came from a bundle or GitHub.
-_Avoid_: project, codebase (as a type), tree.
+(`root`, `recentlyChanged`, and — for a Repo read off local disk — `dir`, the
+absolute directory it was read from). The unit everything operates on,
+regardless of whether it came from a bundle, GitHub, or a local directory.
+_Avoid_: project, codebase (as a type), tree; and do not confuse `Repo.dir`
+(where the Repo was read from) with `GraphNode.dir` (the top-level folder under
+`root`) — they are unrelated.
+
+**Repo-relative path** (`path`) / **source-root-relative path** (`rel`):
+The two spellings every file in a Repo has. `path` is its key in `Repo.files`
+and opens next to the Repo's `dir`; `rel` is the same file with the `root`
+prefix stripped, and exists for display only. On a Repo whose `root` is `src`,
+one file is both `src/lib/date.ts` and `lib/date.ts`. A `rel` handed to someone
+who will open it is a bug: it may not exist, or — worse — may exist in a
+different repository.
+_Avoid_: filename, "relative path" unqualified (say which of the two).
 
 **Surface**:
 A user-facing entry point — a route/page — that a task can anchor to. Discovered
@@ -136,6 +148,10 @@ _Avoid_: response payload, session state, activity feed.
 ## Where it lives (read these, don't re-crawl)
 
 - `src/lib/types.ts` — every shape above (**Repo**, `Graph`, **LocateResult**).
+- `bin/core.mjs` — the zero-dependency CLI/MCP port of `buildGraph`/`locate`,
+  plus local-Repo loading and the three output surfaces (`formatResult`,
+  `buildPackedContext`, `buildJsonResult`). Copied verbatim into `cli/` by
+  `pnpm sync-cli`; `pnpm check-sync` fails the build if the two drift.
 - `src/lib/localizer.ts` — **Localize**: `buildGraph(repo)` then `locate(task, repo, graph)`.
   `buildGraph` is separate on purpose — build once, **Localize** many as the task changes.
 - `src/components/ErrorBoundary.tsx` — React error boundary for graceful crash recovery.
@@ -159,6 +175,14 @@ _Avoid_: response payload, session state, activity feed.
 
 - **Widen on weak evidence.** `locate` must never return a partial/empty Slice silently; if it cannot anchor, it widens to the whole loaded Repo.
 - **Deterministic graph.** The dependency **Graph** comes from parsing imports, never from an LLM.
+- **Emitted paths are openable.** Anything rendered for a human or an agent to
+  open is a **repo-relative path**, stated together with the `dir` it is
+  relative to; a **source-root-relative path** never stands alone in output. The
+  analyzed directory is not the reader's cwd (`locus locate --path ../other`, a
+  multi-root MCP client), so naming it is what makes the rest resolvable. The
+  CLI and MCP surfaces enforce this — they refuse to render a Repo that cannot
+  state its `dir`. The web Copy/Download export and `/api/v1/locate` still emit
+  `rel`: a known gap, not a pattern to copy.
 - **`buildGraph` is pure and reused.** One Graph per Repo, many Localize calls across task changes.
 - **Claims follow evidence.** `benchmarks/` measures historical fix-file recall and estimated context reduction; it does not claim autonomous task completion.
 - **No skipped gates.** A Run cannot complete without passing Check evidence and
