@@ -12,6 +12,11 @@ class FakeWorkspace implements AgentWorkspace {
   readonly id = "sandbox_test";
   readonly description = "isolated test workspace";
   readonly commands: AgentWorkspaceCommand[] = [];
+  lockNetworkCalls = 0;
+  // How many commands had already run when the network was revoked, so tests
+  // can assert the lock landed before any repository-controlled program.
+  commandsBeforeLock: number | null = null;
+  lockNetworkError: Error | null = null;
 
   constructor(
     private readonly existingPaths = new Set<string>(),
@@ -54,6 +59,12 @@ class FakeWorkspace implements AgentWorkspace {
       };
     }
     return { exitCode: 0, stdout: "ok\n", stderr: "" };
+  }
+
+  async lockNetwork(): Promise<void> {
+    if (this.lockNetworkError) throw this.lockNetworkError;
+    this.lockNetworkCalls += 1;
+    if (this.commandsBeforeLock === null) this.commandsBeforeLock = this.commands.length;
   }
 
   async stop(): Promise<void> {}
@@ -107,6 +118,7 @@ describe("agent workspace", () => {
 
   it("runs approved verification commands and returns bounded evidence", async () => {
     const { controller, workspace } = setup();
+    await controller.lockNetwork();
 
     const result = await controller.runCheck("pnpm test");
 
@@ -118,6 +130,61 @@ describe("agent workspace", () => {
     expect(controller.verification()).toEqual([
       { command: "pnpm test", exitCode: 0, evidence: "exit 0\n\nstdout:\nok" },
     ]);
+  });
+
+  // R2: repository-controlled verification must never execute while the
+  // sandbox can still reach the network.
+  it("refuses to verify while the sandbox can still reach the network", async () => {
+    const { controller, workspace } = setup();
+
+    await expect(controller.runCheck("pnpm test")).rejects.toThrow(
+      "Verification cannot run before the sandbox network is locked",
+    );
+    expect(workspace.commands).toHaveLength(0);
+    expect(controller.verification()).toEqual([]);
+  });
+
+  it("still rejects a non-allowlisted command before mentioning the network", async () => {
+    const { controller } = setup();
+
+    // Command shape is checked first so the error names the real problem.
+    await expect(controller.runCheck("curl https://example.com")).rejects.toThrow(
+      "Command is outside the verification allowlist",
+    );
+  });
+
+  it("locks the network before any repository-controlled program runs", async () => {
+    const { controller, workspace } = setup();
+
+    await controller.prepareDependencies();
+    await controller.lockNetwork();
+    await controller.runCheck("pnpm test");
+
+    // Bootstrap is the only command permitted to precede the lock.
+    expect(workspace.commandsBeforeLock).toBe(1);
+    expect(workspace.commands[0].command).toContain("install");
+  });
+
+  it("leaves verification blocked when the platform refuses to revoke egress", async () => {
+    const { controller, workspace } = setup();
+    workspace.lockNetworkError = new Error("sandbox update failed");
+
+    await expect(controller.lockNetwork()).rejects.toThrow("sandbox update failed");
+    // Fail closed: a lock that did not take must not read as locked.
+    expect(controller.networkIsLocked()).toBe(false);
+    await expect(controller.runCheck("pnpm test")).rejects.toThrow(
+      "Verification cannot run before the sandbox network is locked",
+    );
+  });
+
+  it("revokes egress once even if asked repeatedly", async () => {
+    const { controller, workspace } = setup();
+
+    await controller.lockNetwork();
+    await controller.lockNetwork();
+
+    expect(workspace.lockNetworkCalls).toBe(1);
+    expect(controller.networkIsLocked()).toBe(true);
   });
 
   it("creates new files without silently reclassifying excluded files", async () => {

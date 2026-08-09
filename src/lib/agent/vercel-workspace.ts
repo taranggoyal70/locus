@@ -33,6 +33,19 @@ export function normalizePublicGitHubRepository(input: string): string {
   return `https://github.com/${repository}.git`;
 }
 
+// R2: the bootstrap phase needs the package registry to install from the
+// frozen lockfile, and GitHub to acquire the source. Nothing after bootstrap
+// needs either: the model runs server-side, so only its resulting commands
+// execute here. This allowlist is therefore revoked by lockNetwork() before
+// any repository-controlled program runs.
+const BOOTSTRAP_NETWORK_ALLOWLIST = [
+  "registry.npmjs.org",
+  "*.npmjs.org",
+  "github.com",
+  "*.github.com",
+  "*.githubusercontent.com",
+];
+
 export type VercelWorkspaceInput = {
   repository: string;
   revision?: string;
@@ -62,15 +75,7 @@ export async function createVercelWorkspace(
     timeout: 15 * 60 * 1000,
     resources: { vcpus: 2 },
     persistent: false,
-    networkPolicy: {
-      allow: [
-        "registry.npmjs.org",
-        "*.npmjs.org",
-        "github.com",
-        "*.github.com",
-        "*.githubusercontent.com",
-      ],
-    },
+    networkPolicy: { allow: BOOTSTRAP_NETWORK_ALLOWLIST },
     tags: {
       product: "locus",
       purpose: "coding-agent",
@@ -96,6 +101,14 @@ export async function createVercelWorkspace(
         result.stderr({ signal: command.abortSignal }),
       ]);
       return { exitCode: result.exitCode, stdout, stderr };
+    },
+    async lockNetwork(abortSignal?: AbortSignal): Promise<void> {
+      // Verified against @vercel/sandbox 2.9.0: `update` is the supported
+      // entry point and `updateNetworkPolicy` is deprecated. "deny-all" is a
+      // NetworkPolicy literal, so the revocation is applied by the platform to
+      // the running sandbox rather than configured inside the guest where
+      // repository-controlled code could undo it.
+      await sandbox.update({ networkPolicy: "deny-all" }, { signal: abortSignal });
     },
     async stop(): Promise<void> {
       await sandbox.stop();

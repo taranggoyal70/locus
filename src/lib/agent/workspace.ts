@@ -24,6 +24,12 @@ export interface AgentWorkspace {
   readonly id: string;
   readonly description: string;
   run(command: AgentWorkspaceCommand): Promise<AgentWorkspaceResult>;
+  // R2: revoke every outbound network route for the remainder of the
+  // sandbox's life. This must be enforced by the platform rather than by shell
+  // convention, because the code it constrains can rewrite any shell it is
+  // given. Called once, after dependency bootstrap and before the first
+  // repository-controlled program runs.
+  lockNetwork(abortSignal?: AbortSignal): Promise<void>;
   stop(): Promise<void>;
 }
 
@@ -147,11 +153,29 @@ export type AgentVerification = {
 
 export class WorkspaceController {
   private readonly checks: AgentVerification[] = [];
+  private networkLocked = false;
 
   constructor(
     private readonly workspace: AgentWorkspace,
     private readonly slice: AgentSlice,
   ) {}
+
+  networkIsLocked(): boolean {
+    return this.networkLocked;
+  }
+
+  // R2: the boundary between "Locus-controlled setup" and "repository- and
+  // model-influenced execution". Dependency bootstrap needs the registry;
+  // nothing after this point does, because the model itself runs server-side
+  // and only the resulting commands execute in the sandbox.
+  //
+  // The flag is set only after the platform confirms the change, so a failed
+  // lock leaves verification blocked rather than silently permitted.
+  async lockNetwork(abortSignal?: AbortSignal): Promise<void> {
+    if (this.networkLocked) return;
+    await this.workspace.lockNetwork(abortSignal);
+    this.networkLocked = true;
+  }
 
   ledger(): AgentSliceLedger {
     return this.slice.ledger();
@@ -262,6 +286,15 @@ export class WorkspaceController {
 
   async runCheck(input: string, abortSignal?: AbortSignal): Promise<string> {
     const command = validateAgentCommand(input);
+    // R2: `pnpm test` and `pnpm build` are repository-controlled programs.
+    // validateAgentCommand above constrains which command runs, never what the
+    // command does — the repository supplies the script body. Once a check
+    // starts, the sandbox must be assumed fully attacker-controlled, so it
+    // must not be able to reach the network to exfiltrate the workspace or
+    // fetch a further payload. Fail closed: refuse rather than run with egress.
+    if (!this.networkLocked) {
+      throw new Error("Verification cannot run before the sandbox network is locked");
+    }
     const result = await this.workspace.run({
       command,
       abortSignal,
