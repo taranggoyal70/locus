@@ -127,19 +127,65 @@ async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoDat
   };
 }
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
+// R12: the wildcard Access-Control-Allow-Origin let any web page drive this
+// authenticated API from a browser. It does not leak a key on its own, since
+// the caller must already hold one, but it turns any page that has obtained a
+// key into a usable client and widens the abuse surface for no benefit: this
+// API is consumed by the CLI, the MCP server, and server-side callers, none of
+// which are browsers and none of which consult CORS at all.
+//
+// Origins are therefore allowlisted, and the default is empty, so browser
+// access is off unless an operator opts in.
+// R12: bounds on how much context one request may pack. The default matches
+// the previous behaviour; the ceiling is what was missing.
+export const DEFAULT_CONTEXT_BUDGET_TOKENS = 40_000;
+export const MAX_CONTEXT_BUDGET_TOKENS = 200_000;
+
+/**
+ * Clamp a caller-supplied context budget.
+ *
+ * The previous expression was `Number(body.budget) > 0 ? Number(body.budget) : 40_000`,
+ * which has no upper bound: "budget": 1e400 parses to Infinity and packs the
+ * whole repository into one response. Any valid key could do that well inside
+ * the 30 per minute rate limit.
+ */
+export function resolveContextBudget(value: unknown): number {
+  const requested = Number(value);
+  if (!Number.isFinite(requested) || requested <= 0) return DEFAULT_CONTEXT_BUDGET_TOKENS;
+  return Math.min(requested, MAX_CONTEXT_BUDGET_TOKENS);
+}
+
+const CORS_BASE_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Max-Age": "86400",
+  // The response varies by request Origin, so caches must not share it.
+  Vary: "Origin",
 };
 
-export function OPTIONS() {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+function allowedOrigins(): string[] {
+  return (process.env.LOCUS_API_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }
 
-function cors(response: NextResponse): NextResponse {
-  for (const [k, v] of Object.entries(CORS_HEADERS)) response.headers.set(k, v);
+function corsHeaders(request: Request): Record<string, string> {
+  const origin = request.headers.get("origin");
+  if (origin && allowedOrigins().includes(origin)) {
+    return { ...CORS_BASE_HEADERS, "Access-Control-Allow-Origin": origin };
+  }
+  // Omitting the header makes a browser block the response. Non-browser
+  // clients never consult it, so CLI and server callers are unaffected.
+  return CORS_BASE_HEADERS;
+}
+
+export function OPTIONS(request: Request) {
+  return new Response(null, { status: 204, headers: corsHeaders(request) });
+}
+
+function cors(response: NextResponse, request: Request): NextResponse {
+  for (const [k, v] of Object.entries(corsHeaders(request))) response.headers.set(k, v);
   return response;
 }
 
@@ -149,7 +195,7 @@ export async function POST(request: Request) {
     return cors(NextResponse.json(
       { error: "Invalid or missing API key. Use Authorization: Bearer lk_..." },
       { status: 401 },
-    ));
+    ), request);
   }
 
   let rate;
@@ -164,13 +210,13 @@ export async function POST(request: Request) {
     return cors(NextResponse.json(
       { error: "Rate limit could not be verified. Try again shortly." },
       { status: 503 },
-    ));
+    ), request);
   }
   if (!rate.allowed) {
     return cors(NextResponse.json(
       { error: "Rate limit exceeded. Try again shortly." },
       { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds), "X-RateLimit-Remaining": "0" } },
-    ));
+    ), request);
   }
 
   const parsed = await readLimitedJson<{
@@ -179,20 +225,20 @@ export async function POST(request: Request) {
     evidence?: string;
     budget?: number;
   }>(request, 50_000);
-  if (!parsed.ok) return cors(NextResponse.json({ error: parsed.error }, { status: parsed.status }));
+  if (!parsed.ok) return cors(NextResponse.json({ error: parsed.error }, { status: parsed.status }), request);
   const body = parsed.value;
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
-    return cors(NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 }));
+    return cors(NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 }), request);
   }
 
   if (!body.repo || typeof body.repo !== "string" || body.repo.length > 300) {
-    return cors(NextResponse.json({ error: "repo (string, max 300 chars) is required." }, { status: 400 }));
+    return cors(NextResponse.json({ error: "repo (string, max 300 chars) is required." }, { status: 400 }), request);
   }
   if (!body.task || typeof body.task !== "string" || body.task.length > 1000) {
-    return cors(NextResponse.json({ error: "task (string, max 1000 chars) is required." }, { status: 400 }));
+    return cors(NextResponse.json({ error: "task (string, max 1000 chars) is required." }, { status: 400 }), request);
   }
   if (body.evidence && (typeof body.evidence !== "string" || body.evidence.length > 50_000)) {
-    return cors(NextResponse.json({ error: "evidence must be a string under 50,000 characters." }, { status: 400 }));
+    return cors(NextResponse.json({ error: "evidence must be a string under 50,000 characters." }, { status: 400 }), request);
   }
 
   try {
@@ -200,7 +246,7 @@ export async function POST(request: Request) {
     const graph = buildGraph(repo);
     const result = locate(body.task, repo, graph, body.evidence ?? "");
 
-    const budget = Number(body.budget) > 0 ? Number(body.budget) : 40_000;
+    const budget = resolveContextBudget(body.budget);
     const packed: string[] = [];
     let tokens = 0;
     for (const f of result.slice) {
@@ -240,11 +286,11 @@ export async function POST(request: Request) {
       excluded: result.excluded,
       tokens: { included: result.sliceTokens, total: result.totalTokens },
       context: packed.join("\n\n"),
-    }));
+    }), request);
   } catch (error) {
     return cors(NextResponse.json(
       { error: error instanceof Error ? error.message : "Analysis failed." },
       { status: 422 },
-    ));
+    ), request);
   }
 }
