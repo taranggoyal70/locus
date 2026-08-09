@@ -77,7 +77,7 @@ function runLocate(rest) {
     console.log(packed.text);
     return;
   }
-  console.log(formatResult(result));
+  console.log(formatResult(result, repo));
 }
 
 async function main() {

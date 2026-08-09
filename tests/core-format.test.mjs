@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
-import { buildGraph, buildPackedContext, formatResult, locate } from "../bin/core.mjs";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { afterAll, describe, expect, it } from "vitest";
+import { buildGraph, buildPackedContext, formatResult, loadLocalRepo, locate } from "../bin/core.mjs";
 
 /**
  * The rendered text is what an MCP client receives - bin/mcp.mjs returns
@@ -11,7 +14,7 @@ describe("formatResult path rendering", () => {
   const matched = {
     task: "fix the chart",
     widened: false,
-    reason: "matched components/Chart.tsx",
+    reason: "matched src/components/Chart.tsx",
     anchors: ["components/Chart.tsx"],
     anchorPaths: ["src/components/Chart.tsx"],
     slice: [
@@ -19,6 +22,7 @@ describe("formatResult path rendering", () => {
       { path: "src/lib/format.ts", rel: "lib/format.ts", dist: 1, tokens: 50, recent: false },
     ],
     excluded: ["lib/unused.ts"],
+    excludedPaths: ["src/lib/unused.ts"],
     sliceTokens: 150,
     totalTokens: 600,
     savedPct: 75,
@@ -44,11 +48,6 @@ describe("formatResult path rendering", () => {
     for (const entry of entries) expect(entry[1].startsWith("src/")).toBe(true);
   });
 
-  it("falls back to anchors when anchorPaths is absent", () => {
-    const { anchorPaths, ...legacy } = matched;
-    expect(formatResult(legacy)).toContain("Anchor: components/Chart.tsx");
-  });
-
   it("renders widened refinement candidates as repo-relative paths", () => {
     const widened = {
       ...matched,
@@ -66,27 +65,15 @@ describe("formatResult path rendering", () => {
     expect(formatResult(widened)).toContain("Possible starting files: src/components/Chart.tsx");
   });
 
-  it("falls back to candidateFiles when candidateFilePaths is absent", () => {
-    const widened = {
-      ...matched,
-      widened: true,
-      reason: "widened",
-      anchors: [],
-      refinement: {
-        unmatchedTerms: [],
-        candidateFiles: ["components/Chart.tsx"],
-        repositoryTerms: [],
-      },
-    };
-    expect(formatResult(widened)).toContain("Possible starting files: components/Chart.tsx");
+  it("omits the repo header when no analyzed directory is supplied", () => {
+    expect(formatResult(matched).split("\n")[0]).toBe("Anchor: src/components/Chart.tsx");
   });
 });
 
 /**
  * End-to-end over the real producer: locate() has to emit the repo-relative
  * paths that formatResult() and buildPackedContext() render. Hand-built result
- * literals can't catch the producer dropping anchorPaths/candidateFilePaths,
- * because the renderers fall back to the source-root-relative fields.
+ * literals can't catch the producer dropping anchorPaths/candidateFilePaths.
  */
 describe("locate + render on a repo with a src/ root", () => {
   const repo = {
@@ -118,6 +105,17 @@ describe("locate + render on a repo with a src/ root", () => {
     for (const entry of entries) expect(repo.files[entry[1]]).toBeDefined();
   });
 
+  it("names anchors and excluded files with paths that exist in repo.files", () => {
+    const result = locate("fix the chart", repo, graph);
+    expect(result.excludedPaths.length).toBeGreaterThan(0);
+    expect(result.excludedPaths).toHaveLength(result.excluded.length);
+    for (const excluded of result.excludedPaths) expect(repo.files[excluded]).toBeDefined();
+    for (const anchor of result.anchorPaths) {
+      expect(repo.files[anchor]).toBeDefined();
+      expect(result.reason).toContain(anchor);
+    }
+  });
+
   it("renders widened candidates as paths that exist in repo.files", () => {
     const result = locate("currency rounding", repo, graph);
     expect(result.widened).toBe(true);
@@ -141,5 +139,68 @@ describe("locate + render on a repo with a src/ root", () => {
       expect(repo.files[label]).toBeDefined();
     }
     expect(packed.text).toContain(`tokens: ${packed.dropped.join(", ")}`);
+  });
+});
+
+/**
+ * The rendered paths are relative to the analyzed directory, which is not
+ * necessarily the reader's cwd: `locus locate --path <dir>` and the MCP
+ * `locate({path})` argument both analyze somewhere else. Unless the output
+ * names that directory, an agent resolving the paths against its own cwd gets
+ * ENOENT - or a same-named file in the wrong repo.
+ */
+describe("rendering a repo analyzed from another directory", () => {
+  const workdir = fs.mkdtempSync(path.join(os.tmpdir(), "locus-render-"));
+  const analyzed = path.join(workdir, "api");
+  fs.mkdirSync(path.join(analyzed, "src", "lib"), { recursive: true });
+  fs.writeFileSync(
+    path.join(analyzed, "src", "lib", "sources.ts"),
+    'import { parse } from "./parse";\nexport function loadSources() {\n  return parse("sources");\n}\n',
+  );
+  fs.writeFileSync(
+    path.join(analyzed, "src", "lib", "parse.ts"),
+    "export function parse(input: string) {\n  return input.trim();\n}\n",
+  );
+  // A decoy of the same source-root-relative name in a sibling repo: resolving
+  // "lib/sources.ts" from here silently reads the wrong file.
+  const other = path.join(workdir, "web");
+  fs.mkdirSync(path.join(other, "lib"), { recursive: true });
+  fs.writeFileSync(path.join(other, "lib", "sources.ts"), "export const wrongRepo = true;\n");
+
+  afterAll(() => fs.rmSync(workdir, { recursive: true, force: true }));
+
+  const repo = loadLocalRepo(analyzed);
+  const graph = buildGraph(repo);
+  const result = locate("load sources", repo, graph);
+
+  it("states the analyzed directory before any path", () => {
+    const lines = formatResult(result, repo).split("\n");
+    expect(lines[0]).toBe(`Repo: ${analyzed}  (paths below are relative to this directory)`);
+  });
+
+  it("renders slice paths that resolve to real files under the stated directory", () => {
+    const text = formatResult(result, repo);
+    const entries = text
+      .split("\n")
+      .map((line) => line.match(/^ {2}(\S+) {2}\(dist/))
+      .filter(Boolean);
+    expect(entries.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      expect(fs.existsSync(path.join(analyzed, entry[1]))).toBe(true);
+      // The same path resolved against the reader's own repo does not exist.
+      expect(fs.existsSync(path.join(other, entry[1]))).toBe(false);
+    }
+  });
+
+  it("states the analyzed directory in the packed context header", () => {
+    const packed = buildPackedContext(result, repo, 40000);
+    expect(packed.text.split("\n")[1]).toBe(
+      `# Repo: ${analyzed}  (file paths below are relative to this directory)`,
+    );
+    const headers = [...packed.text.matchAll(/^===== (\S+) =====$/gm)].map((m) => m[1]);
+    expect(headers.length).toBeGreaterThan(0);
+    for (const header of headers) {
+      expect(fs.existsSync(path.join(analyzed, header))).toBe(true);
+    }
   });
 });

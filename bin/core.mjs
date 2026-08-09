@@ -268,6 +268,7 @@ export function locate(task, repo, graph, evidence = "") {
       anchorPaths: [],
       slice,
       excluded: [],
+      excludedPaths: [],
       sliceTokens: graph.totalTokens,
       totalTokens: graph.totalTokens,
       savedPct: 0,
@@ -308,16 +309,18 @@ export function locate(task, repo, graph, evidence = "") {
     Number(b.recent) - Number(a.recent) || a.dist - b.dist || a.rel.localeCompare(b.rel),
   );
   const inSlice = new Set(Object.keys(dist));
-  const excluded = graph.nodes.filter((n) => !inSlice.has(n.path)).map((n) => n.rel);
+  const excludedNodes = graph.nodes.filter((n) => !inSlice.has(n.path));
+  const excluded = excludedNodes.map((n) => n.rel);
   const sliceTokens = sliceFiles.reduce((s, f) => s + f.tokens, 0);
   return {
     task,
     widened: false,
-    reason: `matched ${anchors.map((a) => byPath[a.path].rel).join(", ")}`,
+    reason: `matched ${anchors.map((a) => a.path).join(", ")}`,
     anchors: anchors.map((a) => byPath[a.path].rel),
     anchorPaths: anchors.map((a) => a.path),
     slice: sliceFiles,
     excluded,
+    excludedPaths: excludedNodes.map((n) => n.path),
     sliceTokens,
     totalTokens: graph.totalTokens,
     savedPct: Math.round((100 * (graph.totalTokens - sliceTokens)) / graph.totalTokens),
@@ -435,31 +438,42 @@ export function loadLocalRepo(dir) {
     name,
     slug: name,
     description: `Local repo at ${absDir}`,
+    dir: absDir,
     root,
     recentlyChanged,
     files,
   };
 }
 
-/** Human-readable summary of a LocateResult (shared by CLI + MCP). */
-export function formatResult(result) {
+/**
+ * Human-readable summary of a LocateResult (shared by CLI + MCP).
+ *
+ * Every path below is relative to the analyzed directory, which is not
+ * necessarily the reader's cwd (`locus locate --path ../other`, or an MCP
+ * client with several configured roots). Naming that directory once, here, is
+ * what makes the rest of the block resolvable; pass the repo `loadLocalRepo()`
+ * returned so it can be stated.
+ */
+export function formatResult(result, repo) {
   const lines = [];
+  if (repo?.dir) {
+    lines.push(`Repo: ${repo.dir}  (paths below are relative to this directory)`);
+  }
   if (result.widened) {
     lines.push(`WIDENED to whole repo — ${result.reason}`);
     if (result.refinement?.unmatchedTerms.length) {
       lines.push(`Unmatched task terms: ${result.refinement.unmatchedTerms.join(", ")}`);
     }
-    if (result.refinement?.candidateFiles.length) {
+    if (result.refinement?.candidateFilePaths.length) {
       // Emit repo-relative paths, not source-root-relative ones: whatever reads
       // this text (an agent over MCP, or a human) has to be able to open the file.
-      const candidates = result.refinement.candidateFilePaths ?? result.refinement.candidateFiles;
-      lines.push(`Possible starting files: ${candidates.join(", ")}`);
+      lines.push(`Possible starting files: ${result.refinement.candidateFilePaths.join(", ")}`);
     }
     if (result.refinement?.repositoryTerms.length) {
       lines.push(`Refine with a filename, symbol, or repo term: ${result.refinement.repositoryTerms.join(", ")}`);
     }
   } else {
-    lines.push(`Anchor: ${(result.anchorPaths ?? result.anchors).join(", ")}`);
+    lines.push(`Anchor: ${result.anchorPaths.join(", ")}`);
   }
   lines.push("");
   lines.push(`Slice (${result.slice.length} file${result.slice.length === 1 ? "" : "s"}):`);
@@ -492,7 +506,11 @@ export function buildPackedContext(result, repo, budget = 40000) {
     included.push(f);
     used += f.tokens;
   }
-  let text = `# Context for: ${result.task}\n# ${included.length} file${included.length === 1 ? "" : "s"}, ~${used} tokens`;
+  let text = `# Context for: ${result.task}`;
+  if (repo?.dir) {
+    text += `\n# Repo: ${repo.dir}  (file paths below are relative to this directory)`;
+  }
+  text += `\n# ${included.length} file${included.length === 1 ? "" : "s"}, ~${used} tokens`;
   for (const f of included) {
     text += `\n\n===== ${f.path} =====\n${repo.files[f.path] ?? ""}`;
   }
