@@ -1,19 +1,18 @@
 import type { NextConfig } from "next";
 import { withWorkflow } from "workflow/next";
 
-const securityHeaders = [
-  { key: "X-Frame-Options", value: "DENY" },
-  { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), usb=()" },
-  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-];
+// R16: pinned and asserted in src/lib/security-headers.test.ts so a dropped
+// header fails the build rather than silently weakening the browser surface.
+import { securityHeaders } from "./src/lib/security-headers";
+
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    // Next expects a mutable Header[]; the exported list stays readonly so a
+    // caller cannot mutate the pinned set.
+    return [{ source: "/(.*)", headers: [...securityHeaders] }];
   },
   turbopack: {
     root: process.cwd(),

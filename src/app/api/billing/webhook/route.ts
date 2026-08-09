@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
+import { readLimitedBody } from "@/lib/request-security";
 import { stripe } from "@/lib/stripe";
 import { globalClient } from "@/lib/supabase-tenant";
+
+// Stripe event payloads are small; the largest realistic ones are well under
+// 64 KB. This is a denial-of-service ceiling, not a schema limit.
+const MAX_WEBHOOK_BODY_BYTES = 256 * 1024;
 
 export async function POST(request: Request) {
   const sig = request.headers.get("stripe-signature");
@@ -11,7 +16,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing signature or webhook secret." }, { status: 400 });
   }
 
-  const body = await request.text();
+  // R17: request.text() buffered whatever arrived. Signature verification
+  // happens after the body is read, so an unauthenticated caller who merely
+  // knows the endpoint URL could stream an arbitrarily large body and have it
+  // held in memory before ever being rejected. The ceiling has to sit in front
+  // of the read, not after it.
+  //
+  // The raw bytes are needed verbatim for signature verification, so this uses
+  // the bounded reader rather than the JSON helper.
+  const raw = await readLimitedBody(request, MAX_WEBHOOK_BODY_BYTES);
+  if (!raw.ok) {
+    return NextResponse.json({ error: raw.error }, { status: raw.status });
+  }
+  const body = new TextDecoder().decode(raw.value);
+
   let event;
   try {
     event = stripe().webhooks.constructEvent(body, sig, webhookSecret);
