@@ -1,8 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { timingSafeEqual } from "node:crypto";
+
 import { freezeCandidate } from "@/lib/agent/candidate";
 import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
+import { readLimitedJson } from "@/lib/request-security";
 import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import type { AgentChange } from "@/lib/agent/workspace";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
@@ -11,6 +14,19 @@ import { tenantClient } from "@/lib/supabase-tenant";
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+const PROPOSAL_HASH = /^[0-9a-f]{64}$/;
+const MAX_APPROVAL_BODY_BYTES = 4_096;
+
+function timingSafeEquals(a: string, b: string): boolean {
+  const left = Buffer.from(a, "utf8");
+  const right = Buffer.from(b, "utf8");
+  // timingSafeEqual throws on length mismatch, which would itself leak length.
+  // Both values are validated as 64 hex characters before reaching here, so a
+  // mismatch is a genuine inequality rather than a shape difference.
+  if (left.length !== right.length) return false;
+  return timingSafeEqual(left, right);
+}
 
 export async function POST(request: Request, context: RouteContext) {
   const { userId } = await auth();
@@ -30,6 +46,26 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid run identifier." }, { status: 400 });
   }
 
+  // R10: delivery must name the artifact it is delivering.
+  //
+  // This endpoint previously required only that the Run was awaiting approval,
+  // so it approved "whatever proposal is current" rather than the one a human
+  // read. That made it a second approval path alongside /review, which is
+  // bound to a proposal hash by decide_agent_proposal, and a second path that
+  // is not bound is a way around the one that is.
+  const body = await readLimitedJson<{ proposalHash?: unknown }>(
+    request,
+    MAX_APPROVAL_BODY_BYTES,
+  );
+  if (!body.ok) return NextResponse.json({ error: body.error }, { status: body.status });
+  const submittedHash = (body.value as { proposalHash?: unknown } | null)?.proposalHash;
+  if (typeof submittedHash !== "string" || !PROPOSAL_HASH.test(submittedHash)) {
+    return NextResponse.json(
+      { error: "proposalHash (64 hex characters) is required to approve delivery." },
+      { status: 400 },
+    );
+  }
+
   const db = tenantClient(userId);
   const { data: run, error: runError } = await db
     .from("agent_runs")
@@ -40,6 +76,15 @@ export async function POST(request: Request, context: RouteContext) {
     .single();
   if (runError || !run) {
     return NextResponse.json({ error: "This run is not awaiting approval." }, { status: 409 });
+  }
+
+  // Compared in constant time so a caller cannot recover the stored hash by
+  // timing repeated guesses.
+  if (!run.proposal_hash || !timingSafeEquals(run.proposal_hash, submittedHash)) {
+    return NextResponse.json(
+      { error: "The proposal changed since it was reviewed. Re-read the diff before approving." },
+      { status: 409 },
+    );
   }
 
   const [taskResult, changeSetResult, summaryResult, connectionResult] = await Promise.all([

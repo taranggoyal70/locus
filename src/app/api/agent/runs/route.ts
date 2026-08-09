@@ -278,8 +278,19 @@ export async function POST(request: Request) {
 
   let workflowRun;
   try {
+    // R10: pin the Run to the deployment that started it.
+    //
+    // "latest" meant a Run begun before a deploy could resume its remaining
+    // steps on newly deployed code. The steps are the security policy: path
+    // containment, the network lock, the sensitive-path classes, and the
+    // candidate integrity check all live in them. A Run that localizes under
+    // one policy and publishes under another has no single policy at all, and
+    // the proposal hash would attest to a mixture.
+    //
+    // Falls back to "latest" only where no deployment id exists, which is local
+    // development, where there is one version of the code by definition.
     workflowRun = await start(agentRunWorkflow, [{ runId: run.id }], {
-      deploymentId: "latest",
+      deploymentId: process.env.VERCEL_DEPLOYMENT_ID ?? "latest",
     });
   } catch {
     await releaseProviderCapacity(run.id);
