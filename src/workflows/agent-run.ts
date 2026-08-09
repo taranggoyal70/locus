@@ -8,11 +8,15 @@ import {
 import { runCodingTask } from "@/lib/agent/coding-agent";
 import { sendOperationalAlert } from "@/lib/agent/operations";
 import {
+  IncompleteRepositoryError,
+  assertCompleteRepository,
+  fetchAgentRepository,
+} from "@/lib/agent/github-source";
+import {
   agentFailureMessage,
   classifyAgentFailure,
   type AgentFailureKind,
 } from "@/lib/agent/run-budget";
-import { fetchAgentRepository } from "@/lib/agent/github-source";
 import {
   appendRunStep,
   failRun,
@@ -79,6 +83,13 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
   });
 
   const fetched = await fetchAgentRepository(task.repo_url, task.base_ref);
+  // R11: fail closed before any Agent capability is granted. A truncated view
+  // makes the excluded ledger incomplete rather than merely short, so the
+  // Agent cannot widen into a file it never learned exists, and the trusted
+  // base used to rebuild the review diff would describe a different tree.
+  // The review permits an override, but only one that is explicitly approved
+  // and disables automated delivery, and no such approval path exists yet.
+  assertCompleteRepository(fetched);
   const graph = buildGraph(fetched.repo);
   const result = locate(task.task, fetched.repo, graph);
   const included = result.slice.map((file) => file.path);
@@ -336,7 +347,12 @@ export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<vo
     await executeRunStep(localized);
   } catch (error) {
     const failureKind = classifyAgentFailure(error);
-    await failRunStep(input.runId, agentFailureMessage(failureKind), failureKind);
+    // R11: the generic per-kind text would not tell an operator what went
+    // wrong or what to do, so this one failure carries its own message.
+    const message = error instanceof IncompleteRepositoryError
+      ? error.message
+      : agentFailureMessage(failureKind);
+    await failRunStep(input.runId, message, failureKind);
   } finally {
     await releaseProviderLeaseStep(input.runId);
   }

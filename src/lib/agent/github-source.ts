@@ -86,6 +86,42 @@ export type FetchedAgentRepository = {
   truncated: boolean;
 };
 
+/**
+ * R11: repository ingestion was capped, so the view the Agent reasons over is
+ * not the repository.
+ *
+ * The consequences are not merely "less context". The excluded ledger is built
+ * from what was fetched, so a file that never arrived is not excluded, it is
+ * invisible: the Agent cannot widen into it and will not know to. Sensitive
+ * path classification and the trusted base used to reconstruct the review diff
+ * are both derived from the same partial view. A run that silently proceeds is
+ * reasoning about a repository that does not exist.
+ *
+ * Carries its own user-facing message because the generic workflow_error text
+ * would not tell an operator what to do about it.
+ */
+export class IncompleteRepositoryError extends Error {
+  constructor(name: string) {
+    super(
+      `Locus could not ingest all of ${name} within its safety caps, so the Run was stopped before it started. `
+        + "Reasoning over a partial repository would produce a Slice, an excluded ledger, and a review diff "
+        + "derived from a tree that is not the real one. Narrow the repository or raise the ingestion caps.",
+    );
+    this.name = "IncompleteRepositoryError";
+  }
+}
+
+/**
+ * R11: the admission gate for a fetched repository. Call before granting any
+ * Agent capability. Separate from the workflow so the decision is testable
+ * without standing up a Run.
+ */
+export function assertCompleteRepository(fetched: FetchedAgentRepository): void {
+  if (fetched.truncated) {
+    throw new IncompleteRepositoryError(fetched.repo.name);
+  }
+}
+
 export async function fetchAgentRepository(
   repository: string,
   requestedRevision?: string,
