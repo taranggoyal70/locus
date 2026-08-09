@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Locus CLI — localize a task to the minimal code slice on a local repo.
 import path from "node:path";
-import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext } from "./core.mjs";
+import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext, buildJsonResult } from "./core.mjs";
 
 const HELP = `Locus — show your AI coding agent only the code it needs.
 
@@ -69,7 +69,7 @@ function runLocate(rest) {
   const result = locate(task, repo, graph, evidence);
 
   if (json) {
-    console.log(JSON.stringify(result, null, 2));
+    console.log(JSON.stringify(buildJsonResult(result, repo), null, 2));
     return;
   }
   if (pack) {

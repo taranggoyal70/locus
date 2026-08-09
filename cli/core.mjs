@@ -446,19 +446,24 @@ export function loadLocalRepo(dir) {
 }
 
 /**
- * Human-readable summary of a LocateResult (shared by CLI + MCP).
- *
- * Every path below is relative to the analyzed directory, which is not
+ * Every emitted path is relative to the analyzed directory, which is not
  * necessarily the reader's cwd (`locus locate --path ../other`, or an MCP
- * client with several configured roots). Naming that directory once, here, is
- * what makes the rest of the block resolvable; pass the repo `loadLocalRepo()`
- * returned so it can be stated.
+ * client with several configured roots). A path is only resolvable next to
+ * that directory, so every output surface below states it, and none of them
+ * will render without it.
  */
-export function formatResult(result, repo) {
-  const lines = [];
-  if (repo?.dir) {
-    lines.push(`Repo: ${repo.dir}  (paths below are relative to this directory)`);
+function analyzedDir(repo, surface) {
+  if (!repo?.dir) {
+    throw new Error(
+      `${surface}() needs the repo from loadLocalRepo(): its dir is what every emitted path is relative to`,
+    );
   }
+  return repo.dir;
+}
+
+/** Human-readable summary of a LocateResult (shared by CLI + MCP). */
+export function formatResult(result, repo) {
+  const lines = [`Repo: ${analyzedDir(repo, "formatResult")}  (paths below are relative to this directory)`];
   if (result.widened) {
     lines.push(`WIDENED to whole repo — ${result.reason}`);
     if (result.refinement?.unmatchedTerms.length) {
@@ -494,6 +499,7 @@ export function formatResult(result, repo) {
  * budget, so --pack never returns empty).
  */
 export function buildPackedContext(result, repo, budget = 40000) {
+  const dir = analyzedDir(repo, "buildPackedContext");
   const budgetN = Number(budget) > 0 ? Number(budget) : 40000;
   const included = [];
   const dropped = [];
@@ -506,10 +512,7 @@ export function buildPackedContext(result, repo, budget = 40000) {
     included.push(f);
     used += f.tokens;
   }
-  let text = `# Context for: ${result.task}`;
-  if (repo?.dir) {
-    text += `\n# Repo: ${repo.dir}  (file paths below are relative to this directory)`;
-  }
+  let text = `# Context for: ${result.task}\n# Repo: ${dir}  (file paths below are relative to this directory)`;
   text += `\n# ${included.length} file${included.length === 1 ? "" : "s"}, ~${used} tokens`;
   for (const f of included) {
     text += `\n\n===== ${f.path} =====\n${repo.files[f.path] ?? ""}`;
@@ -518,4 +521,14 @@ export function buildPackedContext(result, repo, budget = 40000) {
     text += `\n\n# ${dropped.length} file(s) omitted — exceeded budget of ${budgetN} tokens: ${dropped.join(", ")}`;
   }
   return { text, included, dropped, usedTokens: used, budget: budgetN };
+}
+
+/**
+ * Machine-readable form of a LocateResult for `locus locate --json`. Its
+ * `slice[].path`, `anchorPaths`, `excludedPaths` and `reason` are relative to
+ * the analyzed directory, so an automated consumer needs that directory named
+ * here the same way the text surfaces name it.
+ */
+export function buildJsonResult(result, repo) {
+  return { dir: analyzedDir(repo, "buildJsonResult"), ...result };
 }
