@@ -124,12 +124,15 @@ function createWorkspaceTools(controller: WorkspaceController) {
     }),
     widen_file: tool({
       description:
-        "Explicitly admit one path from the excluded ledger into the Slice, then read it. Use only when the current Slice is insufficient.",
+        "Explicitly admit one path from the excluded ledger into the Slice, then read it. Use only when the current Slice is insufficient. The reason is recorded in the approval evidence a human reviews. CI configuration, package manifests and lockfiles, database migrations, deployment configuration, authentication code, and Agent policy code cannot be widened.",
       inputSchema: z.object({
         path: z.string().max(500),
         reason: z.string().min(1).max(500),
       }),
-      execute: async ({ path }, { abortSignal }) => controller.widenFile(path, abortSignal),
+      // R6: the reason is passed through, not discarded. It is policy-enforced
+      // and persisted rather than being a prompt-level formality.
+      execute: async ({ path, reason }, { abortSignal }) =>
+        controller.widenFile(path, reason, abortSignal),
     }),
     replace_text: tool({
       description:

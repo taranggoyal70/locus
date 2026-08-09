@@ -92,7 +92,7 @@ describe("agent workspace", () => {
     );
     expect(workspace.commands).toHaveLength(0);
 
-    const widened = await controller.widenFile("src/excluded.ts");
+    const widened = await controller.widenFile("src/excluded.ts", "the total is computed here");
 
     expect(widened).toContain("export const value");
     expect(controller.ledger().widened).toEqual(["src/excluded.ts"]);

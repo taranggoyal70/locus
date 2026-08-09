@@ -213,8 +213,10 @@ export class WorkspaceController {
     return evidence(result);
   }
 
-  async widenFile(input: string, abortSignal?: AbortSignal): Promise<string> {
-    const path = this.slice.widen(input);
+  // R6: the reason travels with the grant rather than being collected and
+  // dropped, so it reaches the approval evidence a human actually reads.
+  async widenFile(input: string, reason: string, abortSignal?: AbortSignal): Promise<string> {
+    const path = this.slice.widen(input, reason);
     return this.readFile(path, abortSignal);
   }
 

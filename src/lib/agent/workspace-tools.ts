@@ -3,15 +3,106 @@ type AgentSliceInput = {
   excluded: string[];
 };
 
+export type WidenRecord = {
+  path: string;
+  reason: string;
+};
+
 export type AgentSliceLedger = {
   included: string[];
   excluded: string[];
   widened: string[];
+  widenReasons: WidenRecord[];
   created: string[];
 };
 
 function sorted(values: Iterable<string>): string[] {
   return [...values].sort((a, b) => a.localeCompare(b));
+}
+
+// R6: independent limit on how far a Run may widen beyond its Slice.
+//
+// The step limit alone does not bound this: an agent following injected
+// instructions can spend its steps widening rather than working, walking the
+// repository one justified-sounding file at a time. The Slice is the context
+// boundary, so it needs its own ceiling.
+export const MAX_WIDENED_FILES = 10;
+
+// R6: paths whose contents decide what later runs are allowed to do.
+//
+// Editing these is not the same kind of act as editing product code: it
+// changes the rules rather than the behaviour under them. Repository content,
+// attachments, and tool output are untrusted input, and an injected
+// instruction that persuades the agent to "fix the CI config" or "update the
+// lockfile" converts a code-suggestion capability into a supply-chain or
+// policy-rewrite capability.
+//
+// The review asks for these to require explicit elevated review. No such
+// review exists yet, so the policy fails closed and refuses, in the same
+// spirit as the hard-disabled delivery capability.
+const SENSITIVE_PATH_CLASSES: ReadonlyArray<{ label: string; matches: (path: string) => boolean }> = [
+  {
+    label: "CI and workflow configuration",
+    matches: (path) => path.startsWith(".github/"),
+  },
+  {
+    label: "package manifest or lockfile",
+    matches: (path) => {
+      const name = path.split("/").pop() ?? "";
+      return (
+        name === "package.json"
+        || name === "package-lock.json"
+        || name === "pnpm-lock.yaml"
+        || name === "pnpm-workspace.yaml"
+        || name === "yarn.lock"
+        || name === "bun.lock"
+        || name === "bun.lockb"
+        || name === ".npmrc"
+        || name === ".yarnrc.yml"
+      );
+    },
+  },
+  {
+    label: "database migration",
+    matches: (path) => path.startsWith("supabase/") || path.endsWith(".sql"),
+  },
+  {
+    label: "deployment configuration",
+    matches: (path) => {
+      const name = path.split("/").pop() ?? "";
+      return (
+        name === "vercel.json"
+        || name === "vercel.ts"
+        || name === "Dockerfile"
+        || name === "render.yaml"
+        || name.startsWith("docker-compose")
+        || /^next\.config\.[cm]?[jt]s$/.test(name)
+      );
+    },
+  },
+  {
+    label: "authentication or security code",
+    matches: (path) => {
+      const name = path.split("/").pop() ?? "";
+      return (
+        /(^|\/)(auth|security)(\/|\.|$)/i.test(path)
+        || /^middleware\.[cm]?[jt]sx?$/.test(name)
+      );
+    },
+  },
+  {
+    // The agent must not be able to edit the policy that constrains it.
+    label: "Agent policy code",
+    matches: (path) => path.startsWith("src/lib/agent/"),
+  },
+];
+
+export function classifySensitivePath(input: string): string | null {
+  const path = validateRepoPath(input);
+  for (const rule of SENSITIVE_PATH_CLASSES) {
+    if (rule.matches(path)) return rule.label;
+  }
+  return null;
 }
 
 // Control characters and DEL. A path carrying these is never a legitimate repo
@@ -52,6 +143,7 @@ export class AgentSlice {
   private readonly included: Set<string>;
   private readonly excluded: Set<string>;
   private readonly widened = new Set<string>();
+  private readonly widenReasons: WidenRecord[] = [];
   private readonly created = new Set<string>();
 
   constructor(input: AgentSliceInput) {
@@ -65,16 +157,38 @@ export class AgentSlice {
   }
 
   canWrite(input: string): boolean {
-    return this.canRead(input);
+    const path = validateRepoPath(input);
+    // R6: a sensitive path is never writable, even if the localizer put it in
+    // the Slice. Being in scope is not authority to rewrite the rules.
+    if (classifySensitivePath(path)) return false;
+    return this.canRead(path);
   }
 
-  widen(input: string): string {
+  // R6: widening is a capability grant, so it is policy-checked rather than
+  // merely recorded. The reason is required, persisted, and becomes part of the
+  // approval evidence — a justification the reviewer never sees cannot inform
+  // a decision, and the previous tool collected one and discarded it.
+  widen(input: string, reason: string): string {
     const path = validateRepoPath(input);
+    const justification = reason.trim();
+    if (!justification) {
+      throw new Error("Widening requires a concrete reason");
+    }
     if (!this.excluded.has(path)) {
       throw new Error(`${path} is not in the excluded file ledger`);
     }
+    const sensitive = classifySensitivePath(path);
+    if (sensitive) {
+      throw new Error(
+        `${path} is ${sensitive} and requires elevated review; it cannot be widened by the Agent`,
+      );
+    }
+    if (this.widened.size >= MAX_WIDENED_FILES) {
+      throw new Error(`Run exceeded the ${MAX_WIDENED_FILES} widened file limit`);
+    }
     this.excluded.delete(path);
     this.widened.add(path);
+    this.widenReasons.push({ path, reason: justification });
     return path;
   }
 
@@ -82,6 +196,12 @@ export class AgentSlice {
     const path = validateRepoPath(input);
     if (this.excluded.has(path)) {
       throw new Error(`${path} already exists outside the Slice; widen it before editing`);
+    }
+    const sensitive = classifySensitivePath(path);
+    if (sensitive) {
+      throw new Error(
+        `${path} is ${sensitive} and requires elevated review; the Agent cannot create it`,
+      );
     }
     this.created.add(path);
     return path;
@@ -96,6 +216,7 @@ export class AgentSlice {
       included: sorted(this.included),
       excluded: sorted(this.excluded),
       widened: sorted(this.widened),
+      widenReasons: [...this.widenReasons],
       created: sorted(this.created),
     };
   }
