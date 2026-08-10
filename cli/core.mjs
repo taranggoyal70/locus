@@ -530,5 +530,18 @@ export function buildPackedContext(result, repo, budget = 40000) {
  * here the same way the text surfaces name it.
  */
 export function buildJsonResult(result, repo) {
-  return { dir: analyzedDir(repo, "buildJsonResult"), ...result };
+  const refinement = result.refinement
+    ? {
+        ...result.refinement,
+        candidateFiles: result.refinement.candidateFilePaths ?? result.refinement.candidateFiles,
+      }
+    : null;
+  return {
+    ...result,
+    dir: analyzedDir(repo, "buildJsonResult"),
+    anchors: result.anchorPaths ?? result.anchors,
+    slice: result.slice.map((file) => ({ ...file, rel: file.path })),
+    excluded: result.excludedPaths ?? result.excluded,
+    refinement,
+  };
 }

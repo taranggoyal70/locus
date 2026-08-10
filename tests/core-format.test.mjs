@@ -269,16 +269,31 @@ describe("rendering a repo analyzed from another directory", () => {
     expect(json.dir).toBe(analyzed);
     const paths = [
       ...json.slice.map((f) => f.path),
+      ...json.slice.map((f) => f.rel),
+      ...json.anchors,
       ...json.anchorPaths,
+      ...json.excluded,
       ...json.excludedPaths,
     ];
     expect(paths.length).toBeGreaterThan(0);
     for (const p of paths) expect(fs.existsSync(path.join(json.dir, p))).toBe(true);
   });
 
-  it("leaves the rest of the LocateResult shape untouched", () => {
-    const { dir, ...rest } = buildJsonResult(result, repo);
-    expect(dir).toBe(analyzed);
-    expect(rest).toEqual(result);
+  it("normalizes legacy JSON path fields to repo-relative paths", () => {
+    const json = buildJsonResult(result, repo);
+    expect(json.dir).toBe(analyzed);
+    expect(json.anchors).toEqual(result.anchorPaths);
+    expect(json.excluded).toEqual(result.excludedPaths);
+    expect(json.slice.map((f) => f.rel)).toEqual(result.slice.map((f) => f.path));
+  });
+
+  it("normalizes widened JSON candidates to repo-relative paths", () => {
+    const widened = locate("trim cleanup", repo, graph);
+    expect(widened.widened).toBe(true);
+    const json = buildJsonResult(widened, repo);
+    expect(json.refinement.candidateFiles).toEqual(widened.refinement.candidateFilePaths);
+    for (const candidate of json.refinement.candidateFiles) {
+      expect(fs.existsSync(path.join(json.dir, candidate))).toBe(true);
+    }
   });
 });
