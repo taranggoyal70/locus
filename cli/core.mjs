@@ -254,6 +254,7 @@ export function locate(task, repo, graph, evidence = "") {
   const best = scored[0]?.score ?? 0;
 
   if (!task.trim() || best < 3) {
+    const topCandidates = ranked.filter((candidate) => candidate.score > 0).slice(0, 3);
     const slice = graph.nodes
       .map((n) => ({ path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path) }))
       .sort((a, b) => Number(b.recent) - Number(a.recent) || a.rel.localeCompare(b.rel));
@@ -264,8 +265,10 @@ export function locate(task, repo, graph, evidence = "") {
         ? "no file matched with enough confidence — widened to the whole repo"
         : "type a task to localize",
       anchors: [],
+      anchorPaths: [],
       slice,
       excluded: [],
+      excludedPaths: [],
       sliceTokens: graph.totalTokens,
       totalTokens: graph.totalTokens,
       savedPct: 0,
@@ -273,10 +276,8 @@ export function locate(task, repo, graph, evidence = "") {
         unmatchedTerms: [...words].filter(
           (word) => !ranked.some((candidate) => candidate.matchedTerms.includes(word)),
         ),
-        candidateFiles: ranked
-          .filter((candidate) => candidate.score > 0)
-          .slice(0, 3)
-          .map((candidate) => byPath[candidate.path].rel),
+        candidateFiles: topCandidates.map((candidate) => byPath[candidate.path].rel),
+        candidateFilePaths: topCandidates.map((candidate) => candidate.path),
         repositoryTerms: repositoryTerms(graph),
       },
     };
@@ -308,15 +309,18 @@ export function locate(task, repo, graph, evidence = "") {
     Number(b.recent) - Number(a.recent) || a.dist - b.dist || a.rel.localeCompare(b.rel),
   );
   const inSlice = new Set(Object.keys(dist));
-  const excluded = graph.nodes.filter((n) => !inSlice.has(n.path)).map((n) => n.rel);
+  const excludedNodes = graph.nodes.filter((n) => !inSlice.has(n.path));
+  const excluded = excludedNodes.map((n) => n.rel);
   const sliceTokens = sliceFiles.reduce((s, f) => s + f.tokens, 0);
   return {
     task,
     widened: false,
-    reason: `matched ${anchors.map((a) => byPath[a.path].rel).join(", ")}`,
+    reason: `matched ${anchors.map((a) => a.path).join(", ")}`,
     anchors: anchors.map((a) => byPath[a.path].rel),
+    anchorPaths: anchors.map((a) => a.path),
     slice: sliceFiles,
     excluded,
+    excludedPaths: excludedNodes.map((n) => n.path),
     sliceTokens,
     totalTokens: graph.totalTokens,
     savedPct: Math.round((100 * (graph.totalTokens - sliceTokens)) / graph.totalTokens),
@@ -434,34 +438,53 @@ export function loadLocalRepo(dir) {
     name,
     slug: name,
     description: `Local repo at ${absDir}`,
+    dir: absDir,
     root,
     recentlyChanged,
     files,
   };
 }
 
+/**
+ * Every emitted path is relative to the analyzed directory, which is not
+ * necessarily the reader's cwd (`locus locate --path ../other`, or an MCP
+ * client with several configured roots). A path is only resolvable next to
+ * that directory, so every output surface below states it, and none of them
+ * will render without it.
+ */
+function analyzedDir(repo, surface) {
+  if (!repo?.dir) {
+    throw new Error(
+      `${surface}() needs the repo from loadLocalRepo(): its dir is what every emitted path is relative to`,
+    );
+  }
+  return repo.dir;
+}
+
 /** Human-readable summary of a LocateResult (shared by CLI + MCP). */
-export function formatResult(result) {
-  const lines = [];
+export function formatResult(result, repo) {
+  const lines = [`Repo: ${analyzedDir(repo, "formatResult")}  (paths below are relative to this directory)`];
   if (result.widened) {
     lines.push(`WIDENED to whole repo — ${result.reason}`);
     if (result.refinement?.unmatchedTerms.length) {
       lines.push(`Unmatched task terms: ${result.refinement.unmatchedTerms.join(", ")}`);
     }
-    if (result.refinement?.candidateFiles.length) {
-      lines.push(`Possible starting files: ${result.refinement.candidateFiles.join(", ")}`);
+    if (result.refinement?.candidateFilePaths.length) {
+      // Emit repo-relative paths, not source-root-relative ones: whatever reads
+      // this text (an agent over MCP, or a human) has to be able to open the file.
+      lines.push(`Possible starting files: ${result.refinement.candidateFilePaths.join(", ")}`);
     }
     if (result.refinement?.repositoryTerms.length) {
       lines.push(`Refine with a filename, symbol, or repo term: ${result.refinement.repositoryTerms.join(", ")}`);
     }
   } else {
-    lines.push(`Anchor: ${result.anchors.join(", ")}`);
+    lines.push(`Anchor: ${result.anchorPaths.join(", ")}`);
   }
   lines.push("");
   lines.push(`Slice (${result.slice.length} file${result.slice.length === 1 ? "" : "s"}):`);
   for (const f of result.slice) {
     const marker = f.recent ? "  [changed]" : "";
-    lines.push(`  ${f.rel}  (dist ${f.dist}, ~${f.tokens} tok)${marker}`);
+    lines.push(`  ${f.path}  (dist ${f.dist}, ~${f.tokens} tok)${marker}`);
   }
   lines.push("");
   lines.push(`Excluded: ${result.excluded.length} file${result.excluded.length === 1 ? "" : "s"}`);
@@ -476,24 +499,49 @@ export function formatResult(result) {
  * budget, so --pack never returns empty).
  */
 export function buildPackedContext(result, repo, budget = 40000) {
+  const dir = analyzedDir(repo, "buildPackedContext");
   const budgetN = Number(budget) > 0 ? Number(budget) : 40000;
   const included = [];
   const dropped = [];
   let used = 0;
   for (const f of result.slice) {
     if (included.length > 0 && used + f.tokens > budgetN) {
-      dropped.push(f.rel);
+      dropped.push(f.path);
       continue;
     }
     included.push(f);
     used += f.tokens;
   }
-  let text = `# Context for: ${result.task}\n# ${included.length} file${included.length === 1 ? "" : "s"}, ~${used} tokens`;
+  let text = `# Context for: ${result.task}\n# Repo: ${dir}  (file paths below are relative to this directory)`;
+  text += `\n# ${included.length} file${included.length === 1 ? "" : "s"}, ~${used} tokens`;
   for (const f of included) {
-    text += `\n\n===== ${f.rel} =====\n${repo.files[f.path] ?? ""}`;
+    text += `\n\n===== ${f.path} =====\n${repo.files[f.path] ?? ""}`;
   }
   if (dropped.length) {
     text += `\n\n# ${dropped.length} file(s) omitted — exceeded budget of ${budgetN} tokens: ${dropped.join(", ")}`;
   }
   return { text, included, dropped, usedTokens: used, budget: budgetN };
+}
+
+/**
+ * Machine-readable form of a LocateResult for `locus locate --json`. Its
+ * `slice[].path`, `anchorPaths`, `excludedPaths` and `reason` are relative to
+ * the analyzed directory, so an automated consumer needs that directory named
+ * here the same way the text surfaces name it.
+ */
+export function buildJsonResult(result, repo) {
+  const refinement = result.refinement
+    ? {
+        ...result.refinement,
+        candidateFiles: result.refinement.candidateFilePaths ?? result.refinement.candidateFiles,
+      }
+    : null;
+  return {
+    ...result,
+    dir: analyzedDir(repo, "buildJsonResult"),
+    anchors: result.anchorPaths ?? result.anchors,
+    slice: result.slice.map((file) => ({ ...file, rel: file.path })),
+    excluded: result.excludedPaths ?? result.excluded,
+    refinement,
+  };
 }

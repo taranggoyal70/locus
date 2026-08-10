@@ -127,7 +127,7 @@ function runLocate(args) {
   const repo = loadLocalRepo(dir);
   const graph = buildGraph(repo);
   const result = locate(task, repo, graph, evidence);
-  let text = formatResult(result);
+  let text = formatResult(result, repo);
   if (pack) {
     const packed = buildPackedContext(result, repo, 40000);
     text += `\n\n${packed.text}`;

@@ -95,7 +95,7 @@ for (const entry of cases) {
     widened: result.widened,
     files: `${result.slice.length}/${Object.keys(repo.files).length}`,
     contextReductionPct: result.savedPct,
-    anchors: result.anchors,
+    anchors: result.anchorPaths,
   });
 }
 

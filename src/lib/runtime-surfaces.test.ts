@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -44,8 +44,10 @@ describe("published runtime surfaces", () => {
     const result = JSON.parse(output);
 
     expect(result.widened).toBe(false);
-    expect(result.anchors).toContain("lib/date.ts");
-    expect(result.slice.some((file: { rel: string }) => file.rel === "lib/date.ts")).toBe(true);
+    expect(result.dir).toBe(fixtureRoot);
+    expect(result.anchors).toContain("src/lib/date.ts");
+    expect(result.slice.some((file: { rel: string }) => file.rel === "src/lib/date.ts")).toBe(true);
+    expect(existsSync(join(result.dir, "src/lib/date.ts"))).toBe(true);
     expect(result.savedPct).toBeGreaterThan(0);
   });
 
