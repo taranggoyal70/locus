@@ -157,7 +157,7 @@ node bin/locus.mjs locate "login error" --evidence "TypeError: Cannot read prope
 
 Options:
 - `--pack` — emit the slice as a token-bounded paste block
-- `--json` — machine-readable LocateResult
+- `--json` — machine-readable result with `dir`; file fields are relative to it
 - `--evidence <text>` — error messages or stack traces to improve matching
 - `--budget <n>` — token budget for `--pack` (default: 40,000)
 - `--path <dir>` — repo directory (default: cwd)
@@ -168,8 +168,10 @@ Options:
 node bin/locus.mjs mcp
 ```
 
-The server exposes `locate(task, path?, evidence?, pack?)`. The unpublished
-package source lives in [`cli/`](./cli); `pnpm sync-cli` mirrors files from `bin/`.
+The server exposes `locate(task, path?, evidence?, pack?)`. Text responses name
+the analyzed `Repo:` directory before file paths; those paths are relative to
+that directory. The unpublished package source lives in [`cli/`](./cli);
+`pnpm sync-cli` mirrors files from `bin/`.
 
 ## Verification
 
