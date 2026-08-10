@@ -83,8 +83,6 @@ These are real and should not be forgotten because the row above says closed.
   absence of a stated policy: only models already referenced by this repository
   are approved. Widening it is a product decision and a one-line change in
   `ALLOWED_AGENT_MODELS`.
-- **R17.** The idempotency ledger is still missing; only the body ceiling
-  shipped.
 
 ## Suggested order
 

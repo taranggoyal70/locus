@@ -23,9 +23,9 @@ present the appearance of a provenance guarantee without the invariant that
 makes it true, and reviewers would trust a diff that still is not bound to the
 delivered bytes.
 
-## The attack path, as the code stands today
+## The attack path R1 closed
 
-Confirmed by reading `src/lib/agent/workspace.ts` on `main`:
+Before R1, the workflow had this sequence:
 
 1. `runCheck()` executes repository-controlled commands — `pnpm test`,
    `pnpm build`, `pnpm exec vitest run`. `validateAgentCommand()` constrains
@@ -45,9 +45,9 @@ and they read it twice. So a verification script can:
 - leave `git diff` displaying only `B → C`, which reads as trivial
 - have `changeSet()` capture the whole of `C`, which still contains `B`
 
-The proposal hash faithfully binds the misleading diff and the complete change
-set. What it does not establish is that **applying the reviewed diff to the
-trusted base produces the change set**. That is the missing property.
+The proposal hash faithfully bound the misleading diff and the complete change
+set. What it did not establish was that **applying the reviewed diff to the
+trusted base produces the change set**. That is the property R1 added.
 
 This is an inference from sequencing and Git semantics, not a claim of
 exploitation.
@@ -63,20 +63,21 @@ create sandbox (no customer secrets)            [DONE]
   -> network: DENY-ALL           <-- before any repository-controlled code
                                                 [DONE — R2]
   -> agent edits                                [DONE]
-  -> freeze + hash candidate                    [TODO — R1]
-  -> destroy edit sandbox                       [TODO — R1]
-new verification sandbox                        [TODO — R1]
-  -> materialize exactly the frozen candidate   [TODO — R1]
+  -> freeze + hash candidate before checks      [TODO - verification isolation;
+                                                 primitive DONE in R1]
+  -> destroy edit sandbox                       [TODO - verification isolation]
+new verification sandbox                        [TODO - verification isolation]
+  -> materialize exactly the frozen candidate   [TODO - verification isolation]
   -> run checks                  [network: DENY-ALL, no credentials]
                                                 [deny-all DONE; separate
                                                  sandbox TODO]
   -> destroy
 server
   -> fetch base tree by immutable GitHub SHA (never sandbox Git state)
-                                                [TODO — R1]
-  -> build diff server-side from (base, frozen candidate)   [TODO — R1]
+                                                [TODO - R11 residual]
+  -> build diff server-side from (base, frozen candidate)   [DONE - R1]
   -> ASSERT apply(diff, base) == frozen candidate, byte for byte
-                                                [TODO — R1]
+                                                [DONE - R1]
   -> publish proposal
 ```
 
@@ -103,25 +104,24 @@ lockfile with `--ignore-scripts` for every package manager, so no dependency
 code executes while the network is still reachable.
 
 Still missing, and why it matters: verification runs in the **same** sandbox
-the agent edited, so a check can still mutate the tree that `reviewDiff()` and
-`changeSet()` later read. Deny-all removes exfiltration and remote payload
-fetch; it does not address provenance. That is R1.
+the agent edited, so a check can still mutate the tree that `changeSet()` later
+captures as the candidate. Deny-all removes exfiltration and remote payload
+fetch; it does not prove verification-to-candidate correspondence.
 
 ## Implementation notes
 
-`FrozenCandidate` is the new boundary type — `baseSha`, per-file
-`{path, mode, contentSha256, content}`, `deletedPaths`, and an overall
+`FrozenCandidate` is the new boundary type: `baseSha`, per-file
+`{path, sha256, content}`, `deletedPaths`, and an overall
 `candidateSha256`.
 
 Touch points:
 
 | File | Change |
 | --- | --- |
-| `src/lib/agent/workspace.ts` | Add `freezeCandidate()`. Retire `reviewDiff()`/`changeSet()` as authoritative sources — they read mutable state. |
-| `src/lib/agent/vercel-workspace.ts` | Phase the network policy; add a second disposable sandbox for verification. |
-| `src/workflows/agent-run.ts` | Reorder: edit → freeze → destroy → verify → server-side diff → publish. |
-| `src/lib/agent/github-delivery.ts` | Deliver the frozen candidate bytes, never a re-read of a workspace. |
-| new migration | Persist `base_tree_sha`, `candidate_tree_sha256`, `change_set_sha256`, `review_diff_sha256`, `verification_input_sha256`, `verification_evidence_sha256`, `workflow_build_id`, `model_provider`, `model_id`, `policy_version`. Extend `proposal_hash` to bind all of them. |
+| `src/lib/agent/candidate.ts` | Freeze candidate bytes, compute the candidate digest, build the deterministic review diff, and assert that the reviewed diff reconstructs the candidate. |
+| `src/lib/agent/workspace.ts` | Remove `reviewDiff()` as an approval source; keep sandbox `diff()` only as agent-facing progress output and `changeSet()` as the candidate input. |
+| `src/workflows/agent-run.ts` | After agent verification, freeze the candidate, build the server-side diff from the fetched base, assert integrity, and publish version 2 change-set content. |
+| `src/app/api/agent/runs/[id]/approve/route.ts` | Require the submitted proposal hash and recheck the stored candidate digest before delivery. |
 
 The existing proposal-hash and immutable-evidence machinery is the right place
 to extend. It should not be replaced.
@@ -179,10 +179,10 @@ construction.
 
 ## Sequencing
 
-R2 (network phasing, separate verification sandbox) should land first. It is
-independently valuable, is a smaller change, and removes the "verification can
-reach the network" precondition that makes R1 cheap to exploit. R1's freeze
-then has a stable sandbox lifecycle to build on.
+Network phasing and candidate integrity have landed. The remaining sequencing
+work is verification isolation: freeze the candidate before checks, destroy the
+edit sandbox, materialize those exact bytes into a fresh sandbox, and verify
+there under deny-all networking.
 
 ## Residual items from the R3/R5/R8 pass
 
@@ -194,9 +194,11 @@ Found while implementing the tractable findings; none are fixed:
   An admitted path that is a symlink can therefore surface outside file
   contents in search output. The `contain()` guard added for read/write does
   not cover this path.
-- **Sandbox `git` operations are unguarded.** `createDiff()` and `changeSet()`
-  invoke `git` directly; containment applies to the file tools only. This is
-  subsumed by R1 but remains true until R1 lands.
+- **Sandbox Git enumeration remains part of candidate capture.** `changeSet()`
+  invokes `git` directly in the edited sandbox to enumerate changed paths
+  before `freezeCandidate()` hashes the file bytes. R1 removed sandbox Git from
+  the human diff, but verification isolation is still needed before this read
+  can be treated as the exact tree that was tested.
 - ~~`prepareDependencies()` runs before network lock-down.~~ Resolved by R2:
   bootstrap is now the only phase with egress, and it installs from the frozen
   lockfile with `--ignore-scripts`, so no dependency code runs while the

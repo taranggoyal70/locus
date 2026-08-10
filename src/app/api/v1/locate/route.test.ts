@@ -1,10 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const authenticateApiKeyMock = vi.hoisted(() => vi.fn());
 const consumeRateLimitMock = vi.hoisted(() => vi.fn());
+const trackMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api-auth", () => ({ authenticateApiKey: authenticateApiKeyMock }));
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
+vi.mock("@/lib/analytics", () => ({ track: trackMock }));
 
 import {
   DEFAULT_CONTEXT_BUDGET_TOKENS,
@@ -26,6 +28,7 @@ describe("locate API throttling", () => {
   beforeEach(() => {
     authenticateApiKeyMock.mockResolvedValue({ userId: "user_123", keyId: "key_123" });
     consumeRateLimitMock.mockReset();
+    trackMock.mockReset();
   });
 
   it("enforces a durable per-user API limit", async () => {
@@ -41,6 +44,54 @@ describe("locate API throttling", () => {
       limit: 30,
       windowSeconds: 60,
     });
+  });
+});
+
+describe("locate API analytics", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  beforeEach(() => {
+    authenticateApiKeyMock.mockResolvedValue({ userId: "user_123", keyId: "key_123" });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 29, retryAfterSeconds: 0 });
+    trackMock.mockReset();
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "https://api.github.com/repos/owner/repo") {
+        return Response.json({ default_branch: "main" });
+      }
+      if (url === "https://api.github.com/repos/owner/repo/git/trees/main?recursive=1") {
+        return Response.json({
+          sha: "commit-sha",
+          tree: [
+            { path: "src/checkout.ts", type: "blob", size: 78 },
+          ],
+        });
+      }
+      if (url === "https://raw.githubusercontent.com/owner/repo/commit-sha/src/checkout.ts") {
+        return new Response("export function checkoutTotal() { return 42; }\n");
+      }
+      return new Response("not found", { status: 404 });
+    }));
+  });
+
+  it("records only the task shape for successful locate requests", async () => {
+    const response = await POST(request());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.slice).toEqual([
+      expect.objectContaining({ path: "checkout.ts" }),
+    ]);
+    expect(trackMock).toHaveBeenCalledWith({
+      event: "api_locate",
+      userId: "user_123",
+      properties: expect.objectContaining({
+        repo: "owner/repo",
+        taskShape: expect.stringMatching(/^[a-f0-9]{16}$/),
+        taskCharacters: "Fix the checkout path".length,
+      }),
+    });
+    expect(trackMock.mock.calls[0][0].properties).not.toHaveProperty("task");
   });
 });
 
