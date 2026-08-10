@@ -20,7 +20,7 @@ risk that was quietly downgraded.
 | R9 | P1 High | `9bda750` | DOCX archive validated structurally from the End of Central Directory record (ZIP half only, see below) |
 | R10 | P1 High | `5834cc8` | Delivery approval bound to the reviewed proposal hash; workflow pinned to the deployment that started it |
 | R12 | P2 Medium | `c520816` | Context budget clamped; wildcard CORS replaced with an allowlist |
-| R13 | P2 Medium/High | `31fd609` | Analytics records the shape of user content, never its words |
+| R13 | P2 Medium/High | `31fd609` | `/api/v1/locate` analytics records task shape, never task words |
 | R14 | P2 Medium/High | `31fd609` | Model resolution fails closed against a production allowlist |
 | R15 | P2 Medium | `3a91b80` | Secrets redacted by value shape, not only field name |
 | R16 | P2 Medium | `3a91b80` | Security headers pinned by tests rather than living unasserted in config |
@@ -75,11 +75,14 @@ These are real and should not be forgotten because the row above says closed.
 - **R12.** The quota and idempotency race half is open. What shipped covered
   the `/v1/locate` budget and CORS, not the atomic-claim logic in the Run
   creation path.
-- **R13, R14.** Both apply a conservative default chosen in the absence of a
-  stated policy: analytics retains nothing of user content beyond shape, and
-  only models already referenced by this repository are approved. Widening
-  either is a product decision and a one-line change, in `data-policy.ts` and
-  `ALLOWED_AGENT_MODELS` respectively.
+- **R13.** The `/api/v1/locate` path records only task shape, but the
+  authenticated `/api/track` route still accepts arbitrary properties for
+  allowed events and persists them unchanged. Closing the broader analytics
+  ingress gap requires event-specific property schemas before `track()`.
+- **R14.** The model allowlist applies a conservative default chosen in the
+  absence of a stated policy: only models already referenced by this repository
+  are approved. Widening it is a product decision and a one-line change in
+  `ALLOWED_AGENT_MODELS`.
 - **R17.** The idempotency ledger is still missing; only the body ceiling
   shipped.
 
