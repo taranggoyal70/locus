@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { track } from "@/lib/analytics";
+import { filterEventProperties, isAllowedEvent } from "@/lib/analytics-events";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 
@@ -21,8 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({}, { status: 400 });
   }
 
-  const allowed = ["context_copied", "task_analyzed", "project_saved", "context_feedback"];
-  if (!allowed.includes(body.event)) {
+  if (!isAllowedEvent(body.event)) {
     return NextResponse.json({}, { status: 400 });
   }
 
@@ -44,6 +44,6 @@ export async function POST(request: Request) {
     );
   }
 
-  await track({ event: body.event, userId, properties: (body.properties ?? {}) as Record<string, import("@/lib/database.types").Json> });
+  await track({ event: body.event, userId, properties: filterEventProperties(body.event, body.properties) });
   return NextResponse.json({ ok: true });
 }
