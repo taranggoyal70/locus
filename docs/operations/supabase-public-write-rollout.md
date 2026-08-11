@@ -305,8 +305,10 @@ Verify both application paths with unique correlation values:
 : "${PRODUCTION_URL:?Set the production application URL}"
 : "${ROLLOUT_CANARY_EMAIL:?Use a controlled unique plus-address}"
 : "${CLERK_SESSION_TOKEN:?Use a short-lived canary session}"
+: "${CLERK_CANARY_USER_ID:?Set the user id for the canary session}"
 
 ROLLOUT_ID="migration-004-$(date -u +%Y%m%dT%H%M%SZ)"
+ROLLOUT_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 curl --fail-with-body \
   -X POST "$PRODUCTION_URL/api/waitlist" \
@@ -317,7 +319,7 @@ curl --fail-with-body \
   -X POST "$PRODUCTION_URL/api/track" \
   -H "Authorization: Bearer $CLERK_SESSION_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"event\":\"context_feedback\",\"properties\":{\"rolloutId\":\"$ROLLOUT_ID\"}}"
+  -d '{"event":"context_feedback","properties":{"rating":"up","files":0,"includedTokens":0,"totalTokens":0}}'
 ```
 
 HTTP success is insufficient. Confirm both writes in the database:
@@ -331,7 +333,9 @@ where email = :'rollout_canary_email'
 select id, user_id, event, properties, created_at
 from public.events
 where event = 'context_feedback'
-  and properties ->> 'rolloutId' = :'rollout_id';
+  and user_id = :'clerk_canary_user_id'
+  and properties = '{"rating":"up","files":0,"includedTokens":0,"totalTokens":0}'::jsonb
+  and created_at >= :'rollout_started_at'::timestamptz;
 ```
 
 Delete the canaries with an administrative connection after evidence is
