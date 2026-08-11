@@ -64,7 +64,7 @@ These are real and should not be forgotten because the row above says closed.
 | --- | --- | --- |
 | R4 | P0 *before enablement* | Dormant, and deliberately not built. GitHub connection, private repository reading, and delivery are hard-disabled (`alpha-capabilities.ts`), and migration 011 deleted stored tokens. Building the GitHub App path now would ship an auth surface nothing exercises, which drifts out of step with the delivery flow before that flow ever runs. It belongs in the same change that enables delivery. |
 
-## Residuals on the risks closed in this pass
+## Notes on the risks closed in this pass
 
 - **R9.** Only the ZIP-validation half shipped. Parsing still runs in the web
   application process rather than a resource-capped, network-denied worker. It
