@@ -65,6 +65,11 @@ const MATERIALIZE_SCRIPT = CONTAINMENT_PRELUDE + [
 const DELETE_SCRIPT = CONTAINMENT_PRELUDE + [
   "const target=contain(process.env.LOCUS_PATH);",
   "fs.rmSync(target,{force:true,recursive:false});",
+  "let cursor=path.dirname(target);",
+  "while(cursor!==root){",
+  "try{fs.rmdirSync(cursor);}catch{break;}",
+  "cursor=path.dirname(cursor);",
+  "}",
   "process.stdout.write(fs.existsSync(target)?'present':'absent');",
 ].join("");
 

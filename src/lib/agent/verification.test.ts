@@ -29,8 +29,14 @@ class FakeWorkspace implements AgentWorkspace {
     timeoutMs?: number;
   }[] = [];
   readonly files = new Map<string, string>();
+  readonly directories = new Set<string>();
 
-  constructor(private readonly overrides: { digestFor?: (path: string) => string } = {}) {}
+  constructor(private readonly overrides: {
+    digestFor?: (path: string) => string;
+    directories?: readonly string[];
+  } = {}) {
+    for (const path of overrides.directories ?? []) this.directories.add(path);
+  }
 
   async run(command: AgentWorkspaceCommand): Promise<AgentWorkspaceResult> {
     this.calls.push({
@@ -42,6 +48,7 @@ class FakeWorkspace implements AgentWorkspace {
 
     if (command.env?.LOCUS_PAYLOAD) {
       const content = this.files.get(command.env.LOCUS_PAYLOAD) ?? "";
+      if (this.directories.has(target!)) return { exitCode: 1, stdout: "", stderr: "is a directory" };
       this.files.set(target!, content);
       this.files.delete(command.env.LOCUS_PAYLOAD);
       const digest = this.overrides.digestFor?.(target!) ?? sha256(content);
@@ -49,6 +56,7 @@ class FakeWorkspace implements AgentWorkspace {
     }
     if (command.command.includes("fs.rmSync")) {
       this.files.delete(target!);
+      if (command.command.includes("rmdirSync")) this.removeEmptyAncestors(target!);
       return { exitCode: 0, stdout: "absent", stderr: "" };
     }
     return { exitCode: 0, stdout: "ok", stderr: "" };
@@ -63,6 +71,18 @@ class FakeWorkspace implements AgentWorkspace {
 
   async lockNetwork(): Promise<void> {}
   async stop(): Promise<void> {}
+
+  private removeEmptyAncestors(path: string): void {
+    let current = path.split("/").slice(0, -1).join("/");
+    while (current) {
+      const prefix = `${current}/`;
+      const hasChildren = [...this.files.keys()].some((file) => file.startsWith(prefix))
+        || [...this.directories].some((directory) => directory !== current && directory.startsWith(prefix));
+      if (hasChildren) return;
+      this.directories.delete(current);
+      current = current.split("/").slice(0, -1).join("/");
+    }
+  }
 }
 
 const candidate = freezeCandidate({
@@ -145,6 +165,28 @@ describe("verification isolation", () => {
     });
 
     expect(workspace.calls.find((call) => call.command === "pnpm test")?.timeoutMs).toBe(300_000);
+  });
+
+  it("materializes a candidate that replaces a deleted directory with a file", async () => {
+    const replacement = freezeCandidate({
+      baseSha: "c".repeat(40),
+      changes: [
+        { path: "src/widget/index.ts", content: null },
+        { path: "src/widget", content: "export const widget = true;\n" },
+      ],
+    });
+    const workspace = new FakeWorkspace({ directories: ["src/widget"] });
+    workspace.files.set("src/widget/index.ts", "export const widget = false;\n");
+
+    await verifyFrozenCandidate({
+      workspace,
+      candidate: replacement,
+      commands: ["pnpm test"],
+      networkIsLocked: true,
+    });
+
+    expect(workspace.files.get("src/widget")).toBe("export const widget = true;\n");
+    expect(workspace.directories.has("src/widget")).toBe(false);
   });
 
   it("refuses to run anything when the sandbox network is not locked", async () => {
