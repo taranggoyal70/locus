@@ -152,6 +152,7 @@ export default function DocsPage() {
               <tbody className="divide-y divide-line text-muted-light">
                 <tr><td className="px-4 py-2 font-mono text-xs">400</td><td className="px-4 py-2">Bad request — missing or invalid fields</td></tr>
                 <tr><td className="px-4 py-2 font-mono text-xs">401</td><td className="px-4 py-2">Invalid or missing API key</td></tr>
+                <tr><td className="px-4 py-2 font-mono text-xs">403</td><td className="px-4 py-2">Repository is not public — this API supports public repositories only</td></tr>
                 <tr><td className="px-4 py-2 font-mono text-xs">422</td><td className="px-4 py-2">Analysis failed — repo not found, no source files, etc.</td></tr>
                 <tr><td className="px-4 py-2 font-mono text-xs">429</td><td className="px-4 py-2">Rate limit exceeded</td></tr>
               </tbody>
