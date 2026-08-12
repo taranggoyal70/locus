@@ -9,9 +9,16 @@ Status:
   reviewed diff is built on the server from the trusted base and those frozen
   bytes, and publishing is refused unless applying that diff to the base
   reproduces the candidate exactly. `reviewDiff()` has been removed.
-- **R1/R2 verification isolation — not implemented.** Verification still runs
-  in the sandbox the agent edited, so verification *evidence* may describe a
-  tree other than the frozen candidate. See "What remains" below.
+- **R1/R2 verification isolation — implemented, not yet verified on the
+  deployment target.** The candidate is frozen before authoritative checks, the
+  edit sandbox is destroyed, and the frozen bytes are materialized into a fresh
+  deny-all sandbox where the approved commands run. `src/lib/agent/verification.ts`
+  owns the boundary and its sequencing is covered against a fake workspace.
+  What has *not* been exercised is the platform behaviour it depends on: a second
+  `Sandbox.create`, `deny-all` applied to that sandbox, and materialization of a
+  real candidate at real size. Until one live Run confirms those, treat the
+  property as implemented rather than proven, and do not cite it as closed. See
+  "What remains" below.
 
 This records the design and the reason the remainder was not bundled with the
 R3/R5/R8 hardening.
@@ -63,15 +70,16 @@ create sandbox (no customer secrets)            [DONE]
   -> network: DENY-ALL           <-- before any repository-controlled code
                                                 [DONE — R2]
   -> agent edits                                [DONE]
-  -> freeze + hash candidate before checks      [TODO - verification isolation;
-                                                 primitive DONE in R1]
-  -> destroy edit sandbox                       [TODO - verification isolation]
-new verification sandbox                        [TODO - verification isolation]
-  -> materialize exactly the frozen candidate   [TODO - verification isolation]
+     (in-loop checks are feedback only, never approval evidence)
+  -> freeze + hash candidate before checks      [DONE]
+  -> destroy edit sandbox                       [DONE]
+new verification sandbox                        [DONE - unverified on platform]
+  -> materialize exactly the frozen candidate   [DONE]
+     (each write's digest compared on the host against the frozen digest)
   -> run checks                  [network: DENY-ALL, no credentials]
-                                                [deny-all DONE; separate
-                                                 sandbox TODO]
-  -> destroy
+                                                [DONE - refuses to run unless
+                                                 the lock is recorded]
+  -> destroy                                    [DONE]
 server
   -> fetch base tree by immutable GitHub SHA (never sandbox Git state)
                                                 [TODO - R11 residual]
@@ -153,17 +161,33 @@ querying, but the integrity property does not depend on one.
 
 ### What remains
 
-The residual gap is verification-to-candidate correspondence. Because
-verification still runs in the edited sandbox, a check can pass against one
-tree while the candidate captured later is a different tree. The reviewed diff
-now always tells the truth about *what will be delivered* — but "tests passed"
-may describe something else.
+Verification-to-candidate correspondence is now implemented:
+`verifyFrozenCandidate()` refuses to run unless the sandbox network is locked and
+the candidate digest re-derives from its own contents, materializes every frozen
+byte, compares each write's digest **on the host**, and aborts if a deletion did
+not take. `verifyDetail` records the `candidateSha256` the evidence was produced
+against, so a reviewer can tell which tree was tested. Failures abort the Run
+rather than downgrading to the edit sandbox's result.
 
-Closing it needs the original sequence: freeze, destroy the edit sandbox,
-materialize exactly the frozen candidate in a fresh sandbox, and run checks
-there with deny-all networking. Also still open: fetching the base tree by
-immutable SHA at publish time rather than reusing the localize-time fetch,
-which matters once repository truncation (R11) is in play.
+Three things are genuinely still open:
+
+- **Platform behaviour is unexercised.** A second `Sandbox.create`, `deny-all`
+  on that sandbox, and materializing a real candidate have only been tested
+  against a fake workspace. One live Run is what turns this from implemented into
+  proven, and the status above says so deliberately.
+- **Cost and latency roughly double per Run.** Two sandboxes, two dependency
+  bootstraps. There is no cheaper correct shape: once repository-controlled code
+  has run, the sandbox it ran in cannot be the source of evidence about anything.
+- **The base tree is still the localize-time fetch**, not a fresh fetch by
+  immutable SHA at publish time, which matters once repository truncation (R11)
+  is in play.
+
+`changeSet()` still enumerates changed paths with sandbox `git` in the edit
+sandbox, and that enumeration now happens before any authoritative check runs.
+It is still repository-influenced: a check the agent ran in-loop could have
+touched the index first. The materialization digest check bounds the damage — the
+candidate that gets tested and delivered is exactly the bytes that were frozen —
+but the *set* of paths is not yet established independently of sandbox Git.
 
 ## The invariant
 

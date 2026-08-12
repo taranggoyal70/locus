@@ -26,6 +26,7 @@ import {
   transitionRun,
 } from "@/lib/agent/run-store";
 import { createVercelWorkspace } from "@/lib/agent/vercel-workspace";
+import { verifyFrozenCandidate } from "@/lib/agent/verification";
 import { MAX_REVIEW_DIFF_CHARACTERS, WorkspaceController } from "@/lib/agent/workspace";
 import { AgentSlice, buildAgentPrompt } from "@/lib/agent/workspace-tools";
 import { buildGraph, locate } from "@/lib/localizer";
@@ -163,6 +164,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
     excluded: localized.excluded,
   });
   const controller = new WorkspaceController(workspace, slice);
+  let editWorkspaceStopped = false;
 
   try {
     await patchRun({
@@ -223,12 +225,11 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
     if (result.verification.length === 0) {
       throw new Error("Agent did not run an approved verification command");
     }
-    const failedChecks = result.verification.filter((check) => check.exitCode !== 0);
-    if (failedChecks.length > 0) {
-      throw new Error(
-        `Verification failed: ${failedChecks.map((check) => check.command).join(", ")}`,
-      );
-    }
+    // The agent's in-loop checks are feedback, not evidence. They ran in the
+    // sandbox it was editing, so they describe whatever tree existed at the
+    // moment they ran. Which commands to trust comes from here; whether they
+    // pass is decided later, against the frozen candidate in a fresh sandbox.
+    const verificationCommands = [...new Set(result.verification.map((check) => check.command))];
     const widenedTokens = result.ledger.widened.reduce((total, path) => {
       const content = localized.repo.files[path];
       return total + (content ? Math.max(1, Math.round(content.length / 4)) : 0);
@@ -261,6 +262,51 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       }
     }
 
+    // R1/R2 verification isolation. The edit sandbox has run
+    // repository-controlled programs, so the tree it holds is no longer evidence
+    // about anything. Destroy it, materialize exactly the frozen candidate into a
+    // fresh sandbox with no egress, and take the verification result from there.
+    // That is what makes "tests passed" describe the bytes being delivered.
+    await workspace.stop();
+    editWorkspaceStopped = true;
+
+    const verificationWorkspace = await createVercelWorkspace({
+      repository: localized.cloneUrl,
+      revision: localized.revision,
+      runId: `${localized.runId}-verify`,
+    });
+    let isolated;
+    try {
+      const verificationController = new WorkspaceController(
+        verificationWorkspace,
+        new AgentSlice({ included: localized.included, excluded: localized.excluded }),
+      );
+      await verificationController.prepareDependencies();
+      await verificationController.lockNetwork();
+      isolated = await verifyFrozenCandidate({
+        workspace: verificationWorkspace,
+        candidate,
+        commands: verificationCommands,
+        networkIsLocked: verificationController.networkIsLocked(),
+      });
+    } finally {
+      await verificationWorkspace.stop();
+    }
+    logger.info(
+      "agent.candidate.verified_in_isolation",
+      { sandboxId: isolated.sandboxId, candidateSha256: isolated.candidateSha256 },
+      localized.runId,
+    );
+
+    const failedChecks = isolated.checks.filter((check) => check.exitCode !== 0);
+    if (failedChecks.length > 0) {
+      throw new Error(
+        `Verification failed against the frozen candidate: ${failedChecks
+          .map((check) => check.command)
+          .join(", ")}`,
+      );
+    }
+
     const diff = buildDeterministicDiff(base, candidate);
     if (diff.length > MAX_REVIEW_DIFF_CHARACTERS) {
       throw new Error("Review diff exceeds the 500,000 character approval limit");
@@ -291,7 +337,10 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
         widenReasons: result.ledger.widenReasons,
       },
       verifyDetail: {
-        checks: result.verification,
+        // Evidence from the isolated sandbox, bound to the candidate digest it
+        // was produced against, so a reviewer can tell which tree was tested.
+        checks: isolated.checks,
+        candidateSha256: isolated.candidateSha256,
         risks: result.output.risks,
       },
       includedContextTokens: effectiveContextTokens,
@@ -311,7 +360,9 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       localized.runId,
     );
   } finally {
-    await workspace.stop();
+    // The edit sandbox is torn down before verification on the success path, so
+    // only stop it here if that never happened.
+    if (!editWorkspaceStopped) await workspace.stop();
   }
 }
 
