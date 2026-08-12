@@ -198,10 +198,12 @@ describe("locate API repository visibility", () => {
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url === "https://api.github.com/repos/owner/repo") return Response.json(meta);
-      if (url.includes("/git/trees/")) {
+      if (url === "https://api.github.com/repos/owner/repo/git/trees/main?recursive=1") {
         return Response.json({ sha: "commit-sha", tree: [{ path: "src/secret.ts", type: "blob", size: 40 }] });
       }
-      if (url.includes("raw.githubusercontent.com")) return new Response("export const apiKey = 'sk-live';\n");
+      if (url === "https://raw.githubusercontent.com/owner/repo/commit-sha/src/secret.ts") {
+        return new Response("export const apiKey = 'sk-live';\n");
+      }
       return new Response("not found", { status: 404 });
     }));
   }
