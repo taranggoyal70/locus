@@ -179,3 +179,60 @@ describe("locate API context budget", () => {
     },
   );
 });
+
+// The route reads every repository with the server's GITHUB_TOKEN, so whether a
+// private repository is reachable depends entirely on that token's scope rather
+// than on anything the caller proved. `/api/github` refuses non-public repos
+// explicitly; this route must too, or the day the token gains `repo` scope it
+// becomes a cross-tenant source-disclosure path.
+describe("locate API repository visibility", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  beforeEach(() => {
+    authenticateApiKeyMock.mockResolvedValue({ userId: "user_123", keyId: "key_123" });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 29, retryAfterSeconds: 0 });
+    trackMock.mockReset();
+  });
+
+  function stubGitHub(meta: Record<string, unknown>) {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "https://api.github.com/repos/owner/repo") return Response.json(meta);
+      if (url === "https://api.github.com/repos/owner/repo/git/trees/main?recursive=1") {
+        return Response.json({ sha: "commit-sha", tree: [{ path: "src/secret.ts", type: "blob", size: 40 }] });
+      }
+      if (url === "https://raw.githubusercontent.com/owner/repo/commit-sha/src/secret.ts") {
+        return new Response("export const apiKey = 'sk-live';\n");
+      }
+      return new Response("not found", { status: 404 });
+    }));
+  }
+
+  it("refuses a repository marked private", async () => {
+    stubGitHub({ default_branch: "main", private: true });
+
+    const response = await POST(request());
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(JSON.stringify(body)).not.toContain("sk-live");
+  });
+
+  it("refuses a repository whose visibility is not public", async () => {
+    stubGitHub({ default_branch: "main", private: false, visibility: "internal" });
+
+    const response = await POST(request());
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(JSON.stringify(body)).not.toContain("sk-live");
+  });
+
+  it("still serves a public repository", async () => {
+    stubGitHub({ default_branch: "main", private: false, visibility: "public" });
+
+    const response = await POST(request());
+
+    expect(response.status).toBe(200);
+  });
+});

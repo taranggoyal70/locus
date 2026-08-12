@@ -71,6 +71,13 @@ function rawPath(path: string): string {
   return path.split("/").map(encodeURIComponent).join("/");
 }
 
+/**
+ * A repository this route must not read. Distinct from the generic failure so the
+ * handler can answer 403 rather than 422: the caller authenticated correctly and
+ * the request is well-formed, they simply are not permitted this repository.
+ */
+export class RepositoryNotPublicError extends Error {}
+
 async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoData> {
   const parsed = parseRepo(repoUrl);
   if (!parsed) throw new Error("Invalid repository. Use owner/repo or a GitHub URL.");
@@ -81,6 +88,14 @@ async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoDat
   if (info.status === 404) throw new Error("Repository not found or is private.");
   if (!info.ok) throw new Error(`GitHub error (${info.status}).`);
   const meta = await info.json();
+  // A 404 only hides a private repository while the server token cannot see it.
+  // Reachability is a property of that token's scope, not of anything the caller
+  // proved, so refuse on the metadata instead: the same check `/api/github` makes.
+  // Without it, widening the token to `repo` scope silently turns this route into
+  // a cross-tenant source-disclosure path.
+  if (meta?.private === true || (typeof meta?.visibility === "string" && meta.visibility !== "public")) {
+    throw new RepositoryNotPublicError("This API supports public repositories only.");
+  }
   const revision = ref || meta.default_branch || "main";
 
   const treeRes = await fetchWithTimeout(
@@ -303,6 +318,9 @@ export async function POST(request: Request) {
       context: packed.join("\n\n"),
     }), request);
   } catch (error) {
+    if (error instanceof RepositoryNotPublicError) {
+      return cors(NextResponse.json({ error: error.message }, { status: 403 }), request);
+    }
     return cors(NextResponse.json(
       { error: error instanceof Error ? error.message : "Analysis failed." },
       { status: 422 },
