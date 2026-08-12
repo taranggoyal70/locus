@@ -3,6 +3,7 @@ import { Sandbox } from "@vercel/sandbox";
 import type {
   AgentWorkspace,
   AgentWorkspaceCommand,
+  AgentWorkspaceFile,
   AgentWorkspaceResult,
 } from "@/lib/agent/workspace";
 
@@ -101,6 +102,12 @@ export async function createVercelWorkspace(
         result.stderr({ signal: command.abortSignal }),
       ]);
       return { exitCode: result.exitCode, stdout, stderr };
+    },
+    async writeFile(file: AgentWorkspaceFile): Promise<void> {
+      await sandbox.writeFiles(
+        [{ path: file.path, content: file.content }],
+        { signal: file.abortSignal },
+      );
     },
     async lockNetwork(abortSignal?: AbortSignal): Promise<void> {
       // Verified against @vercel/sandbox 2.9.0: `update` is the supported

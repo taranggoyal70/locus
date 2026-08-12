@@ -14,6 +14,12 @@ export type AgentWorkspaceCommand = {
   timeoutMs?: number;
 };
 
+export type AgentWorkspaceFile = {
+  path: string;
+  content: string | Uint8Array;
+  abortSignal?: AbortSignal;
+};
+
 export type AgentWorkspaceResult = {
   exitCode: number;
   stdout: string;
@@ -24,6 +30,7 @@ export interface AgentWorkspace {
   readonly id: string;
   readonly description: string;
   run(command: AgentWorkspaceCommand): Promise<AgentWorkspaceResult>;
+  writeFile(file: AgentWorkspaceFile): Promise<void>;
   // R2: revoke every outbound network route for the remainder of the
   // sandbox's life. This must be enforced by the platform rather than by shell
   // convention, because the code it constrains can rewrite any shell it is

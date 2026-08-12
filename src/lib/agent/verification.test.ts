@@ -4,7 +4,12 @@ import { describe, expect, it } from "vitest";
 
 import { freezeCandidate } from "@/lib/agent/candidate";
 import { VerificationIsolationError, verifyFrozenCandidate } from "@/lib/agent/verification";
-import type { AgentWorkspace, AgentWorkspaceCommand, AgentWorkspaceResult } from "@/lib/agent/workspace";
+import type {
+  AgentWorkspace,
+  AgentWorkspaceCommand,
+  AgentWorkspaceFile,
+  AgentWorkspaceResult,
+} from "@/lib/agent/workspace";
 
 function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
@@ -27,9 +32,10 @@ class FakeWorkspace implements AgentWorkspace {
     this.calls.push({ command: command.command, env: command.env });
     const target = command.env?.LOCUS_PATH;
 
-    if (command.command.includes("LOCUS_CONTENT")) {
-      const content = command.env?.LOCUS_CONTENT ?? "";
+    if (command.env?.LOCUS_PAYLOAD) {
+      const content = this.files.get(command.env.LOCUS_PAYLOAD) ?? "";
       this.files.set(target!, content);
+      this.files.delete(command.env.LOCUS_PAYLOAD);
       const digest = this.overrides.digestFor?.(target!) ?? sha256(content);
       return { exitCode: 0, stdout: digest, stderr: "" };
     }
@@ -38,6 +44,13 @@ class FakeWorkspace implements AgentWorkspace {
       return { exitCode: 0, stdout: "absent", stderr: "" };
     }
     return { exitCode: 0, stdout: "ok", stderr: "" };
+  }
+
+  async writeFile(file: AgentWorkspaceFile): Promise<void> {
+    const content = typeof file.content === "string"
+      ? file.content
+      : Buffer.from(file.content).toString("utf8");
+    this.files.set(file.path, content);
   }
 
   async lockNetwork(): Promise<void> {}
@@ -70,6 +83,25 @@ describe("verification isolation", () => {
     expect(result.checks).toEqual([
       { command: "pnpm test", exitCode: 0, output: "exit 0\n\nstdout:\nok" },
     ]);
+  });
+
+  it("materializes large and NUL-containing content outside the environment", async () => {
+    const content = `${"x".repeat(199_999)}\0`;
+    const largeCandidate = freezeCandidate({
+      baseSha: "b".repeat(40),
+      changes: [{ path: "src/large.ts", content }],
+    });
+    const workspace = new FakeWorkspace();
+
+    await verifyFrozenCandidate({
+      workspace,
+      candidate: largeCandidate,
+      commands: ["pnpm test"],
+      networkIsLocked: true,
+    });
+
+    expect(workspace.files.get("src/large.ts")).toBe(content);
+    expect(workspace.calls.some((call) => call.env?.LOCUS_CONTENT !== undefined)).toBe(false);
   });
 
   it("materializes every candidate byte before any check runs", async () => {

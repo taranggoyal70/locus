@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { candidateDigestMatches, type FrozenCandidate } from "@/lib/agent/candidate";
 import { CONTAINMENT_PRELUDE, type AgentWorkspace } from "@/lib/agent/workspace";
 import { validateAgentCommand, validateRepoPath } from "@/lib/agent/workspace-tools";
@@ -40,20 +42,21 @@ function shellQuote(value: string): string {
   return `'${value.replaceAll("'", "'\\''")}'`;
 }
 
-// Content travels in the environment and is written by a script, never
-// interpolated into a shell command: candidate content is agent-authored, so a
-// heredoc or an echo would let file bytes terminate the command and start a new
-// one. `contain()` from the prelude resolves the path where the filesystem is,
-// which is what rejects a candidate path that is a symlink out of the workspace.
-// The script prints the digest it observed; the host compares it, so the decision
-// is not delegated to the guest.
+// The payload is copied into a host-chosen temp file before this script runs, so
+// candidate content never travels through argv, shell text, or environment
+// variables. `contain()` from the prelude resolves the target path where the
+// filesystem is, which is what rejects a candidate path that is a symlink out of
+// the workspace. The script prints the digest it observed; the host compares it,
+// so the decision is not delegated to the guest.
 const MATERIALIZE_SCRIPT = CONTAINMENT_PRELUDE + [
   "const crypto=require('node:crypto');",
   "const target=contain(process.env.LOCUS_PATH);",
-  "const content=process.env.LOCUS_CONTENT;",
-  'if(content===undefined)throw new Error("missing write input");',
+  "const payload=process.env.LOCUS_PAYLOAD;",
+  'if(!payload||!/^\\/tmp\\/locus-candidate-[A-Fa-f0-9-]{36}\\.payload$/.test(payload))throw new Error("missing write input");',
+  "const content=fs.readFileSync(payload);",
   "fs.mkdirSync(path.dirname(target),{recursive:true});",
   "fs.writeFileSync(target,content);",
+  "fs.rmSync(payload,{force:true});",
   "const written=fs.readFileSync(target);",
   "process.stdout.write(crypto.createHash('sha256').update(written).digest('hex'));",
 ].join("");
@@ -68,6 +71,10 @@ function truncate(value: string): string {
   return value.length > MAX_OUTPUT_CHARACTERS
     ? `${value.slice(0, MAX_OUTPUT_CHARACTERS)}\n[output truncated]`
     : value;
+}
+
+function materializationPayloadPath(): string {
+  return `/tmp/locus-candidate-${randomUUID()}.payload`;
 }
 
 /**
@@ -99,9 +106,15 @@ async function materializeCandidate(
 
   for (const file of candidate.files) {
     const target = validateRepoPath(file.path);
+    const payload = materializationPayloadPath();
+    await workspace.writeFile({
+      path: payload,
+      content: Buffer.from(file.content, "utf8"),
+      abortSignal,
+    });
     const written = await workspace.run({
       command: `node -e ${shellQuote(MATERIALIZE_SCRIPT)}`,
-      env: { LOCUS_PATH: target, LOCUS_CONTENT: file.content },
+      env: { LOCUS_PATH: target, LOCUS_PAYLOAD: payload },
       abortSignal,
       timeoutMs: 30_000,
     });
