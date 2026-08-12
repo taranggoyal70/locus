@@ -5,6 +5,7 @@ import {
   WorkspaceController,
   type AgentWorkspace,
   type AgentWorkspaceCommand,
+  type AgentWorkspaceFile,
   type AgentWorkspaceResult,
 } from "@/lib/agent/workspace";
 
@@ -59,6 +60,10 @@ class FakeWorkspace implements AgentWorkspace {
       };
     }
     return { exitCode: 0, stdout: "ok\n", stderr: "" };
+  }
+
+  async writeFile(file: AgentWorkspaceFile): Promise<void> {
+    void file;
   }
 
   async lockNetwork(): Promise<void> {

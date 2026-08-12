@@ -35,14 +35,9 @@ contains, an unscoped tenant query, a widen of a sensitive path.
 
 These are real and should not be forgotten because the row above says closed.
 
-- **R1.** Verification still runs in the sandbox the agent edited, so
-  verification *evidence* may describe a tree other than the frozen candidate.
-  The reviewed diff is always truthful about what will be delivered; "tests
-  passed" may not describe those exact bytes. Closing it needs the separate
-  verification sandbox described in `candidate-integrity-hardening.md`.
-- **R2.** Network phasing shipped; verification-sandbox isolation did not, for
-  the same reason. It only becomes meaningful once there is a frozen candidate
-  to materialize into a fresh sandbox.
+- **R1 / R2.** Verification isolation is implemented but not yet verified on the
+  deployment target. Path *enumeration* still uses sandbox `git`. See
+  `candidate-integrity-hardening.md` for the owner record.
 - **R3.** `WorkspaceController.search()` passes Slice paths to `rg`, which does
   not follow symlinks when walking a directory but does read a symlinked path
   given as an explicit argument. The `contain()` guard covers read and write,
@@ -89,9 +84,10 @@ These are real and should not be forgotten because the row above says closed.
 
 ## Suggested order
 
-1. **R1 and R2 verification isolation**, the largest remaining correctness gap.
-   Verification evidence can still describe a tree other than the frozen
-   candidate.
+1. **One live Run against the isolated verification path.** The implementation
+   landed; what is owed is confirmation that a second sandbox, `deny-all` on it,
+   and materialization at real candidate size behave as expected on the
+   deployment target. Until then the property is implemented, not proven.
 2. **R9 process isolation**, once there is a way to verify worker behaviour on
    the deployment target.
 3. **R7 least-privilege database role**, replacing the service role rather than
