@@ -50,7 +50,8 @@ export type SliceFile = {
 
 export type LocateRefinement = {
   unmatchedTerms: string[];
-  candidateFiles: string[];
+  candidateFiles: string[]; // source-root-relative, for display
+  candidateFilePaths: string[]; // repo-relative, openable
   repositoryTerms: string[];
 };
 
@@ -58,9 +59,16 @@ export type LocateResult = {
   task: string;
   widened: boolean;
   reason: string;
+  // Two spellings of every path, and they are not interchangeable: `rel` is
+  // source-root-relative and exists for display next to other rel values in the
+  // UI; `path` is repo-relative and is the only spelling that opens in a
+  // checkout. Anything rendered for a human or an agent to open uses the
+  // *Paths variants. See CONTEXT.md.
   anchors: string[]; // rel paths of the entry points
+  anchorPaths: string[]; // repo-relative paths of the entry points
   slice: SliceFile[]; // ranked, most-relevant first
   excluded: string[]; // rel paths not loaded
+  excludedPaths: string[]; // repo-relative paths not loaded
   sliceTokens: number;
   totalTokens: number;
   savedPct: number;

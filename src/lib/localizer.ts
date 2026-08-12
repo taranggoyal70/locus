@@ -260,6 +260,7 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
     const slice = graph.nodes
       .map((n) => ({ path: n.path, rel: n.rel, dist: 0, tokens: n.tokens, recent: recent.has(n.path) }))
       .sort((a, b) => Number(b.recent) - Number(a.recent) || a.rel.localeCompare(b.rel));
+    const topCandidates = ranked.filter((candidate) => candidate.score > 0).slice(0, 3);
     return {
       task,
       widened: true,
@@ -267,8 +268,10 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
         ? "no file matched with enough confidence — widened to the whole repo"
         : "type a task to localize",
       anchors: [],
+      anchorPaths: [],
       slice,
       excluded: [],
+      excludedPaths: [],
       sliceTokens: graph.totalTokens,
       totalTokens: graph.totalTokens,
       savedPct: 0,
@@ -276,10 +279,8 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
         unmatchedTerms: [...words].filter(
           (word) => !ranked.some((candidate) => candidate.matchedTerms.includes(word)),
         ),
-        candidateFiles: ranked
-          .filter((candidate) => candidate.score > 0)
-          .slice(0, 3)
-          .map((candidate) => byPath[candidate.path].rel),
+        candidateFiles: topCandidates.map((candidate) => byPath[candidate.path].rel),
+        candidateFilePaths: topCandidates.map((candidate) => candidate.path),
         repositoryTerms: repositoryTerms(graph),
       },
     };
@@ -318,15 +319,18 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
     Number(b.recent) - Number(a.recent) || a.dist - b.dist || a.rel.localeCompare(b.rel),
   );
   const inSlice = new Set(Object.keys(dist));
-  const excluded = graph.nodes.filter((n) => !inSlice.has(n.path)).map((n) => n.rel);
+  const excludedNodes = graph.nodes.filter((n) => !inSlice.has(n.path));
+  const excluded = excludedNodes.map((n) => n.rel);
   const sliceTokens = sliceFiles.reduce((s, f) => s + f.tokens, 0);
   return {
     task,
     widened: false,
-    reason: `matched ${anchors.map((a) => byPath[a.path].rel).join(", ")}`,
+    reason: `matched ${anchors.map((a) => a.path).join(", ")}`,
     anchors: anchors.map((a) => byPath[a.path].rel),
+    anchorPaths: anchors.map((a) => a.path),
     slice: sliceFiles,
     excluded,
+    excludedPaths: excludedNodes.map((n) => n.path),
     sliceTokens,
     totalTokens: graph.totalTokens,
     savedPct: Math.round((100 * (graph.totalTokens - sliceTokens)) / graph.totalTokens),

@@ -79,9 +79,15 @@ describe("locate API analytics", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
+    // The repo is rooted at `src`, so the source-root-relative spelling
+    // ("checkout.ts") names no file in the repository. Every path the response
+    // and the packed block name has to be the repo-relative one a caller can
+    // open in a checkout.
     expect(body.slice).toEqual([
-      expect.objectContaining({ path: "checkout.ts" }),
+      expect.objectContaining({ path: "src/checkout.ts" }),
     ]);
+    expect(body.anchors).toEqual(["src/checkout.ts"]);
+    expect(body.context).toContain("===== src/checkout.ts =====");
     expect(trackMock).toHaveBeenCalledWith({
       event: "api_locate",
       userId: "user_123",

@@ -103,6 +103,8 @@ describe("locate", () => {
 
     expect(result.widened).toBe(true);
     expect(result.refinement?.candidateFiles).toEqual(["metrics.js"]);
+    // "metrics.js" names no file in this repo; the openable spelling does.
+    expect(result.refinement?.candidateFilePaths).toEqual(["src/metrics.js"]);
     expect(result.refinement?.unmatchedTerms).toEqual(["chart"]);
   });
 
@@ -188,5 +190,37 @@ describe("buildGraph", () => {
     const g = buildGraph(mixedRepo);
     expect(g.nodes).toHaveLength(3);
     expect(g.deps["src/app/page.tsx"]).toContain("src/components/Button.jsx");
+  });
+});
+
+// The web app and /api/v1/locate render these values for a human or an agent to
+// open in a checkout, so "is it a real file in this repository" is the assertion
+// that matters - a prefix check would pass on a path that still does not exist.
+describe("openable paths", () => {
+  it("emits repo-relative paths that resolve to real files", () => {
+    // Guard: if the fixture ever loses its source root the two spellings become
+    // identical and every assertion below would pass without proving anything.
+    expect(repo.root).toBe("src");
+
+    const result = locate("the dashboard chart is broken", repo, graph);
+    const rendered = [
+      ...result.anchorPaths,
+      ...result.excludedPaths,
+      ...result.slice.map((f) => f.path),
+    ];
+
+    expect(rendered.length).toBeGreaterThan(0);
+    for (const candidate of rendered) {
+      expect(Object.keys(repo.files)).toContain(candidate);
+    }
+    expect(result.anchorPaths).toContain("src/app/dashboard/page.tsx");
+    expect(result.reason).toContain("src/app/dashboard/page.tsx");
+  });
+
+  it("keeps the source-root-relative spelling available for display", () => {
+    const result = locate("the dashboard chart is broken", repo, graph);
+
+    expect(result.anchors).toContain("app/dashboard/page.tsx");
+    expect(result.slice.every((f) => f.path.endsWith(f.rel))).toBe(true);
   });
 });

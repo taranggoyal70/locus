@@ -112,6 +112,15 @@ export default function DocsPage() {
 }`}
           </pre>
           <p className="mt-3 text-sm leading-6 text-muted-light">
+            Every path in the response is relative to the repository root, so it opens directly in a
+            checkout of <code className="text-accent">repo</code>. That applies to
+            <code className="text-accent"> anchors</code>, <code className="text-accent">excluded</code>,
+            each <code className="text-accent">slice[].path</code>, the file headers inside
+            <code className="text-accent"> context</code>, and the starting files in
+            <code className="text-accent"> refinement</code>. A repository whose source lives under a
+            prefix such as <code className="text-accent">src/</code> keeps that prefix.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-muted-light">
             When <code className="text-accent">widened</code> is true, the full Repo is retained and
             <code className="text-accent"> refinement</code> contains unmatched task terms, possible
             starting files, and repository terms the caller can use to make the task more specific.

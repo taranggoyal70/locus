@@ -18,10 +18,13 @@ function packContext(repo: RepoData, result: LocateResult, format: ExportFormat 
     if (content === undefined) continue;
     const t = Math.ceil(content.length / 4);
     if (tokens + t > BUDGET) { dropped += 1; continue; }
+    // Label with the repo-relative path: this block gets pasted into an agent
+    // working on a real checkout, where the source-root-relative spelling does
+    // not exist. `fileContent` still looks up by `rel`, which is its key.
     if (format === "cursor") {
-      parts.push(`\n\n// File: ${f.rel}\n${content}`);
+      parts.push(`\n\n// File: ${f.path}\n${content}`);
     } else {
-      parts.push(`\n\n===== ${f.rel} =====\n${content}`);
+      parts.push(`\n\n===== ${f.path} =====\n${content}`);
     }
     tokens += t;
   }
