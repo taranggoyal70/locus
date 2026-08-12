@@ -111,10 +111,11 @@ Bootstrap remains the only phase with egress. It installs from the frozen
 lockfile with `--ignore-scripts` for every package manager, so no dependency
 code executes while the network is still reachable.
 
-Still missing, and why it matters: verification runs in the **same** sandbox
-the agent edited, so a check can still mutate the tree that `changeSet()` later
-captures as the candidate. Deny-all removes exfiltration and remote payload
-fetch; it does not prove verification-to-candidate correspondence.
+R2 alone did not prove verification-to-candidate correspondence: deny-all
+removes exfiltration and remote payload fetch, but a check in the edited
+sandbox could still mutate the tree that `changeSet()` later captures. The
+isolated verification path below closes that correspondence gap by treating
+agent in-loop checks as feedback only.
 
 ## Implementation notes
 
@@ -128,7 +129,8 @@ Touch points:
 | --- | --- |
 | `src/lib/agent/candidate.ts` | Freeze candidate bytes, compute the candidate digest, build the deterministic review diff, and assert that the reviewed diff reconstructs the candidate. |
 | `src/lib/agent/workspace.ts` | Remove `reviewDiff()` as an approval source; keep sandbox `diff()` only as agent-facing progress output and `changeSet()` as the candidate input. |
-| `src/workflows/agent-run.ts` | After agent verification, freeze the candidate, build the server-side diff from the fetched base, assert integrity, and publish version 2 change-set content. |
+| `src/lib/agent/verification.ts` | Materialize the frozen candidate into a fresh deny-all sandbox, prove each write by digest, and run the approved checks there. |
+| `src/workflows/agent-run.ts` | Treat agent in-loop checks as feedback, freeze the candidate, verify it in a separate sandbox, build the server-side diff from the fetched base, assert integrity, and publish version 2 change-set content. |
 | `src/app/api/agent/runs/[id]/approve/route.ts` | Require the submitted proposal hash and recheck the stored candidate digest before delivery. |
 
 The existing proposal-hash and immutable-evidence machinery is the right place
@@ -203,10 +205,10 @@ construction.
 
 ## Sequencing
 
-Network phasing and candidate integrity have landed. The remaining sequencing
-work is verification isolation: freeze the candidate before checks, destroy the
-edit sandbox, materialize those exact bytes into a fresh sandbox, and verify
-there under deny-all networking.
+Network phasing, candidate integrity, and verification isolation have landed.
+The remaining sequencing gap is narrower: confirm the isolated path on the
+deployment target, then replace the localize-time base tree with a fresh fetch
+by immutable SHA before publish.
 
 ## Residual items from the R3/R5/R8 pass
 
@@ -221,8 +223,8 @@ Found while implementing the tractable findings; none are fixed:
 - **Sandbox Git enumeration remains part of candidate capture.** `changeSet()`
   invokes `git` directly in the edited sandbox to enumerate changed paths
   before `freezeCandidate()` hashes the file bytes. R1 removed sandbox Git from
-  the human diff, but verification isolation is still needed before this read
-  can be treated as the exact tree that was tested.
+  the human diff, but the path set is still not established independently of
+  sandbox Git.
 - ~~`prepareDependencies()` runs before network lock-down.~~ Resolved by R2:
   bootstrap is now the only phase with egress, and it installs from the frozen
   lockfile with `--ignore-scripts`, so no dependency code runs while the

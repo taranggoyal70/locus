@@ -62,7 +62,9 @@ class FakeWorkspace implements AgentWorkspace {
     return { exitCode: 0, stdout: "ok\n", stderr: "" };
   }
 
-  async writeFile(_file: AgentWorkspaceFile): Promise<void> {}
+  async writeFile(file: AgentWorkspaceFile): Promise<void> {
+    void file;
+  }
 
   async lockNetwork(): Promise<void> {
     if (this.lockNetworkError) throw this.lockNetworkError;

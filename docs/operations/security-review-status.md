@@ -35,16 +35,9 @@ contains, an unscoped tenant query, a widen of a sensitive path.
 
 These are real and should not be forgotten because the row above says closed.
 
-- **R1 / R2.** Verification isolation is now implemented: the candidate is frozen
-  before authoritative checks, the edit sandbox is destroyed, and the frozen bytes
-  are materialized into a fresh deny-all sandbox where the approved commands run.
-  Evidence carries the `candidateSha256` it was produced against. It is **not yet
-  verified on the deployment target** — a second sandbox, deny-all applied to it,
-  and materialization at real size have only been exercised against a fake
-  workspace, so one live Run is still owed before this is cited as closed. Cost
-  and latency roughly double per Run as a result, which is inherent rather than an
-  implementation choice. Path *enumeration* still uses sandbox `git`; see
-  `candidate-integrity-hardening.md`.
+- **R1 / R2.** Verification isolation is implemented but not yet verified on the
+  deployment target. Path *enumeration* still uses sandbox `git`. See
+  `candidate-integrity-hardening.md` for the owner record.
 - **R3.** `WorkspaceController.search()` passes Slice paths to `rg`, which does
   not follow symlinks when walking a directory but does read a symlinked path
   given as an explicit argument. The `contain()` guard covers read and write,
