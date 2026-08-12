@@ -23,13 +23,21 @@ function sha256(value: string): string {
 class FakeWorkspace implements AgentWorkspace {
   readonly id = "sandbox_verify";
   readonly description = "fake verification sandbox";
-  readonly calls: { command: string; env?: Record<string, string> }[] = [];
+  readonly calls: {
+    command: string;
+    env?: Record<string, string>;
+    timeoutMs?: number;
+  }[] = [];
   readonly files = new Map<string, string>();
 
   constructor(private readonly overrides: { digestFor?: (path: string) => string } = {}) {}
 
   async run(command: AgentWorkspaceCommand): Promise<AgentWorkspaceResult> {
-    this.calls.push({ command: command.command, env: command.env });
+    this.calls.push({
+      command: command.command,
+      env: command.env,
+      timeoutMs: command.timeoutMs,
+    });
     const target = command.env?.LOCUS_PATH;
 
     if (command.env?.LOCUS_PAYLOAD) {
@@ -124,6 +132,19 @@ describe("verification isolation", () => {
     expect(deleteIndex).toBeGreaterThanOrEqual(0);
     expect(checkIndex).toBeGreaterThan(writeIndex);
     expect(checkIndex).toBeGreaterThan(deleteIndex);
+  });
+
+  it("bounds approved verification commands", async () => {
+    const workspace = new FakeWorkspace();
+
+    await verifyFrozenCandidate({
+      workspace,
+      candidate,
+      commands: ["pnpm test"],
+      networkIsLocked: true,
+    });
+
+    expect(workspace.calls.find((call) => call.command === "pnpm test")?.timeoutMs).toBe(300_000);
   });
 
   it("refuses to run anything when the sandbox network is not locked", async () => {

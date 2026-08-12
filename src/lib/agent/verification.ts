@@ -37,6 +37,7 @@ export type IsolatedVerification = {
 export class VerificationIsolationError extends Error {}
 
 const MAX_OUTPUT_CHARACTERS = 20_000;
+const VERIFICATION_COMMAND_TIMEOUT_MS = 300_000;
 
 function shellQuote(value: string): string {
   return `'${value.replaceAll("'", "'\\''")}'`;
@@ -173,7 +174,11 @@ export async function verifyFrozenCandidate(input: {
 
   const checks: VerificationCheck[] = [];
   for (const command of approved) {
-    const result = await workspace.run({ command, abortSignal });
+    const result = await workspace.run({
+      command,
+      abortSignal,
+      timeoutMs: VERIFICATION_COMMAND_TIMEOUT_MS,
+    });
     checks.push({
       command,
       exitCode: result.exitCode,
