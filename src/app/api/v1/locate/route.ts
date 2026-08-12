@@ -256,7 +256,7 @@ export async function POST(request: Request) {
       if (!content) continue;
       const t = Math.ceil(content.length / 4);
       if (packed.length > 0 && tokens + t > budget) continue;
-      packed.push(`===== ${f.rel} =====\n${content}`);
+      packed.push(`===== ${f.path} =====\n${content}`);
       tokens += t;
     }
 
@@ -282,15 +282,23 @@ export async function POST(request: Request) {
       task: result.task,
       widened: result.widened,
       reason: result.reason,
-      refinement: result.refinement,
-      anchors: result.anchors,
+      // Every path this response names is repo-relative, so a caller can open it
+      // in a checkout of `repo` without knowing the source root. For a repo with
+      // no source root the two spellings are identical; for one rooted at `src`
+      // the old source-root-relative spelling did not resolve at all.
+      refinement: result.refinement && {
+        unmatchedTerms: result.refinement.unmatchedTerms,
+        candidateFiles: result.refinement.candidateFilePaths,
+        repositoryTerms: result.refinement.repositoryTerms,
+      },
+      anchors: result.anchorPaths,
       slice: result.slice.map((f) => ({
-        path: f.rel,
+        path: f.path,
         tokens: f.tokens,
         distance: f.dist,
         recent: f.recent,
       })),
-      excluded: result.excluded,
+      excluded: result.excludedPaths,
       tokens: { included: result.sliceTokens, total: result.totalTokens },
       context: packed.join("\n\n"),
     }), request);

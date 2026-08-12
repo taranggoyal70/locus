@@ -10,6 +10,7 @@ const result: LocateResult = {
   widened: false,
   reason: "matched dashboard",
   anchors: ["app/dashboard/page.tsx"],
+  anchorPaths: ["src/app/dashboard/page.tsx"],
   slice: [
     {
       path: "src/app/dashboard/page.tsx",
@@ -23,6 +24,11 @@ const result: LocateResult = {
     "app/reports/page.tsx",
     "components/CohortTable.tsx",
     "lib/reporting.ts",
+  ],
+  excludedPaths: [
+    "src/app/reports/page.tsx",
+    "src/components/CohortTable.tsx",
+    "src/lib/reporting.ts",
   ],
   sliceTokens: 42,
   totalTokens: 160,

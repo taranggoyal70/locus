@@ -148,7 +148,9 @@ _Avoid_: response payload, session state, activity feed.
 ## Where it lives (read these, don't re-crawl)
 
 - `src/lib/types.ts` — the web/API **Repo**, `Graph`, and **LocateResult**
-  shapes; these still expose source-root-relative `rel` display paths.
+  shapes. Every path appears in both spellings: `rel` for display beside other
+  rel values in the UI, and `path`/`anchorPaths`/`excludedPaths`/
+  `candidateFilePaths` for anything a reader opens.
 - `bin/core.mjs` — the zero-dependency CLI/MCP port of `buildGraph`/`locate`,
   plus local-Repo loading with an analyzed `dir` and the three openable-path
   output surfaces (`formatResult`, `buildPackedContext`, `buildJsonResult`).
@@ -184,8 +186,10 @@ _Avoid_: response payload, session state, activity feed.
   directory is not the reader's cwd (`locus locate --path ../other`, a
   multi-root MCP client), so naming it is what makes the rest resolvable. The
   CLI and MCP surfaces enforce this: they refuse to render a local Repo that
-  cannot state its `dir`. The web Copy/Download export and `/api/v1/locate`
-  still emit `rel`: a known gap, not a pattern to copy.
+  cannot state its `dir`. The web Copy/Download export and `/api/v1/locate` hold
+  the same invariant without a `dir`, because their paths are relative to the
+  repository the caller named: the checkout is the reader's own, so the root is
+  already known to them.
 - **`buildGraph` is pure and reused.** One Graph per Repo, many Localize calls across task changes.
 - **Claims follow evidence.** `benchmarks/` measures historical fix-file recall and estimated context reduction; it does not claim autonomous task completion.
 - **No skipped gates.** A Run cannot complete without passing Check evidence and
