@@ -53,3 +53,56 @@ describe("CLI/web localizer parity", () => {
     });
   }
 });
+
+/**
+ * The agent Run path ingests `json|css|scss|md` alongside source, unlike the web
+ * and CLI paths which filter to JS/TS first. That made an edge to a non-node
+ * reachable, and `locate` dereferenced `byPath[p].rel` on it. Both
+ * implementations must survive it identically.
+ */
+describe("non-source imports", () => {
+  const cssRepo = {
+    name: "css", slug: "css", description: "", root: "src",
+    recentlyChanged: [],
+    files: {
+      "src/app/dashboard/page.tsx":
+        'import styles from "./Dashboard.module.css";\nimport cfg from "./config.json";\nimport { fmt } from "@/lib/date";\nexport default function P(){return null;}',
+      "src/app/dashboard/Dashboard.module.css": ".root{color:red}",
+      "src/app/dashboard/config.json": '{"a":1}',
+      "src/lib/date.ts": "export const fmt = (d) => String(d);",
+    },
+  };
+
+  it("does not crash on a CSS module or JSON import", () => {
+    for (const [label, build, run] of [
+      ["web", buildGraphWeb, locateWeb],
+      ["cli", buildGraphCli, locateCli],
+    ]) {
+      const graph = build(cssRepo);
+      expect(() => run("fix the dashboard", cssRepo, graph), label).not.toThrow();
+    }
+  });
+
+  it("keeps only edges whose endpoint is a graph node", () => {
+    for (const [label, build] of [["web", buildGraphWeb], ["cli", buildGraphCli]]) {
+      const graph = build(cssRepo);
+      const nodePaths = new Set(graph.nodes.map((n) => n.path));
+      for (const edge of graph.edges) {
+        expect(nodePaths.has(edge.to), `${label}: edge to ${edge.to}`).toBe(true);
+        expect(nodePaths.has(edge.from), `${label}: edge from ${edge.from}`).toBe(true);
+      }
+      // The real dependency is still found; only the non-source edge is dropped.
+      expect(graph.edges.map((e) => e.to), label).toContain("src/lib/date.ts");
+    }
+  });
+
+  it("agrees on the slice for a repo containing non-source files", () => {
+    const web = locateWeb("fix the dashboard", cssRepo, buildGraphWeb(cssRepo));
+    const cli = locateCli("fix the dashboard", cssRepo, buildGraphCli(cssRepo));
+
+    expect(cli.slice.map((f) => f.path)).toEqual(web.slice.map((f) => f.path));
+    expect(cli.anchorPaths).toEqual(web.anchorPaths);
+    // A non-source file must never appear in a slice that feeds a coding agent.
+    expect(web.slice.map((f) => f.path)).not.toContain("src/app/dashboard/Dashboard.module.css");
+  });
+});

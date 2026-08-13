@@ -48,7 +48,7 @@ proposal evidence.
 
 ## How it works
 
-1. Parse `import`, `require()`, dynamic `import()`, and `@/` aliases into a deterministic dependency graph.
+1. Parse supported JavaScript/TypeScript `import`, `require()`, dynamic `import()`, and `@/` aliases into a deterministic dependency graph.
 2. Match meaningful task words against file paths and source text.
 3. Add dependency closures, direct consumers, and recent cross-cutting matches.
 4. Widen to all loaded files when the evidence is insufficient, then return
@@ -65,6 +65,10 @@ Extracted text can become part of a durable task or Run record when submitted.
 - `.ts`, `.tsx`, `.js`, `.jsx`
 - Next.js App Router surface detection (any extension)
 - `require()` and dynamic `import()` dependency edges
+
+Graph nodes and returned Slices are JavaScript/TypeScript files. Imports that
+resolve to non-JavaScript/TypeScript files, such as CSS modules or JSON, are not
+dependency edges.
 
 The hosted GitHub importer accepts public repositories (up to 200 source files).
 The source CLI can be used locally for larger repositories.
