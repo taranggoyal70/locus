@@ -480,6 +480,14 @@ function analyzedDir(repo, surface) {
   return repo.dir;
 }
 
+function sparseGraphWarning(result) {
+  if (!result.sparse || result.widened) return null;
+  return (
+    `warning: few internal imports resolved (${result.edgeDensity.toFixed(2)} edges/file), `
+    + `so this slice may be missing real dependencies and the saving above may be overstated`
+  );
+}
+
 /** Human-readable summary of a LocateResult (shared by CLI + MCP). */
 export function formatResult(result, repo) {
   const lines = [`Repo: ${analyzedDir(repo, "formatResult")}  (paths below are relative to this directory)`];
@@ -513,11 +521,9 @@ export function formatResult(result, repo) {
   // high rather than too low. Say so next to the number it undermines. A widen
   // needs no warning: returning the whole repository is already the honest
   // answer to weak evidence.
-  if (result.sparse && !result.widened) {
-    lines.push(
-      `warning: few internal imports resolved (${result.edgeDensity.toFixed(2)} edges/file), `
-      + `so this slice may be missing real dependencies and the saving above may be overstated`,
-    );
+  const warning = sparseGraphWarning(result);
+  if (warning) {
+    lines.push(warning);
   }
   return lines.join("\n");
 }
@@ -544,6 +550,10 @@ export function buildPackedContext(result, repo, budget = 40000) {
   }
   let text = `# Context for: ${result.task}\n# Repo: ${dir}  (file paths below are relative to this directory)`;
   text += `\n# ${included.length} file${included.length === 1 ? "" : "s"}, ~${used} tokens`;
+  const warning = sparseGraphWarning(result);
+  if (warning) {
+    text += `\n# ${warning}`;
+  }
   for (const f of included) {
     text += `\n\n===== ${f.path} =====\n${repo.files[f.path] ?? ""}`;
   }

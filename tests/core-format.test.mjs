@@ -319,9 +319,20 @@ describe("sparse-graph warning in rendered output", () => {
     expect(text.indexOf("90% fewer")).toBeLessThan(text.indexOf("warning:"));
   });
 
+  it("warns in packed context before file contents", () => {
+    const packed = buildPackedContext(base, { dir: "/repo", files: { "src/dash.ts": "export const dash = true;\n" } });
+    expect(packed.text).toMatch(/# warning: few internal imports resolved \(0\.00 edges\/file\)/);
+    expect(packed.text.indexOf("# warning:")).toBeLessThan(packed.text.indexOf("===== src/dash.ts ====="));
+  });
+
   it("stays quiet when the graph resolved normally", () => {
     const text = formatResult({ ...base, sparse: false, edgeDensity: 1.4 }, { dir: "/repo", files: {} });
     expect(text).not.toContain("warning:");
+    const packed = buildPackedContext(
+      { ...base, sparse: false, edgeDensity: 1.4 },
+      { dir: "/repo", files: { "src/dash.ts": "" } },
+    );
+    expect(packed.text).not.toContain("warning:");
   });
 
   it("stays quiet on a widen, which is already the honest answer", () => {
@@ -332,5 +343,6 @@ describe("sparse-graph warning in rendered output", () => {
       refinement: { unmatchedTerms: [], candidateFiles: [], candidateFilePaths: [], repositoryTerms: [] },
     };
     expect(formatResult(widened, { dir: "/repo", files: {} })).not.toContain("warning:");
+    expect(buildPackedContext(widened, { dir: "/repo", files: { "src/dash.ts": "" } }).text).not.toContain("warning:");
   });
 });
