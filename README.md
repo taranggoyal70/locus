@@ -9,8 +9,8 @@ speculative small slice and explains which terms were not found, possible starti
 files, and repository language that can refine the task. During the invite-only
 controlled alpha, the web product can run an Agent Task in an isolated Sandbox,
 collect factual check evidence, and stop at a review-ready proposal. External
-GitHub writes and billing are disabled. Active Runs survive refresh and remain
-reviewable from the Runs ledger.
+GitHub writes and billing are disabled. Active Runs survive refresh and can be
+resumed, cancelled, and reviewed from the Runs ledger.
 
 **Live:** https://locus-five-iota.vercel.app
 

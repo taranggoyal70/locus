@@ -23,6 +23,12 @@ async function fetchRun(runId: string, signal?: AbortSignal): Promise<AgentRunSn
   return data;
 }
 
+async function requestRunCancellation(runId: string): Promise<void> {
+  const response = await fetch(`/api/agent/runs/${runId}/cancel`, { method: "POST" });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.error ?? "Could not cancel Run.");
+}
+
 export function alphaRunStatusLabel(status: string): string {
   if (status === "awaiting_approval") return "ready for review";
   if (status === "rejected") return "rejected by reviewer";
@@ -58,6 +64,7 @@ export function AgentRunsList() {
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelingRunId, setCancelingRunId] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -93,6 +100,35 @@ export function AgentRunsList() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("run");
     router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
+  }
+
+  async function cancelRun(runId: string) {
+    setError(null);
+    setCancelingRunId(runId);
+    try {
+      await requestRunCancellation(runId);
+      setRuns((currentRuns) => currentRuns.map((run) => (
+        run.id === runId ? { ...run, status: "cancelled", error: "Cancelled by the user." } : run
+      )));
+      setSnapshot((currentSnapshot) => (
+        currentSnapshot?.run.id === runId
+          ? {
+              ...currentSnapshot,
+              run: { ...currentSnapshot.run, status: "cancelled", error: "Cancelled by the user." },
+            }
+          : currentSnapshot
+      ));
+      const [nextRuns, nextSnapshot] = await Promise.all([
+        fetchRuns(),
+        selectedRunId === runId ? fetchRun(runId) : Promise.resolve(null),
+      ]);
+      setRuns(nextRuns);
+      if (nextSnapshot) setSnapshot(nextSnapshot);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not cancel Run.");
+    } finally {
+      setCancelingRunId(null);
+    }
   }
 
   if (loading) {
@@ -193,7 +229,19 @@ export function AgentRunsList() {
                 </p>
               )}
               {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
-              {isActiveRun(selectedSnapshot.run.status) && <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="block text-center text-xs font-medium text-accent hover:underline">Resume this Run in the workspace</Link>}
+              {isActiveRun(selectedSnapshot.run.status) && (
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="text-xs font-medium text-accent hover:underline">Resume this Run in the workspace</Link>
+                  <button
+                    type="button"
+                    onClick={() => void cancelRun(selectedSnapshot.run.id)}
+                    disabled={cancelingRunId === selectedSnapshot.run.id}
+                    className="rounded-xl border border-recent/35 px-3 py-2 text-xs font-medium text-recent transition hover:bg-recent/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {cancelingRunId === selectedSnapshot.run.id ? "Cancelling..." : "Cancel Run"}
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (

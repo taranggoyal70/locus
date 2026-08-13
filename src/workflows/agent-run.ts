@@ -372,11 +372,18 @@ async function failRunStep(
   runId: string,
   message: string,
   failureKind: AgentFailureKind,
+  cause?: string,
 ): Promise<void> {
   "use step";
 
   await failRun(runId, message, failureKind);
-  logger.error("agent.run.failed", { failureKind }, runId);
+  // `message` is the text a user reads, so it stays generic per failure kind.
+  // Without the underlying cause recorded somewhere, though, a TypeError in the
+  // localizer and a missing Vercel OIDC credential both surface as
+  // `workflow_error` with byte-identical output, and neither is diagnosable from
+  // production. The logger sanitizes this payload, redacting sensitive keys and
+  // secret-shaped values, so the real text is safe to record here.
+  logger.error("agent.run.failed", { failureKind, cause }, runId);
   await sendOperationalAlert({ event: "agent.run.failed", runId, failureKind });
 }
 
@@ -403,7 +410,12 @@ export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<vo
     const message = error instanceof IncompleteRepositoryError
       ? error.message
       : agentFailureMessage(failureKind);
-    await failRunStep(input.runId, message, failureKind);
+    await failRunStep(
+      input.runId,
+      message,
+      failureKind,
+      error instanceof Error ? error.message : String(error),
+    );
   } finally {
     await releaseProviderLeaseStep(input.runId);
   }
