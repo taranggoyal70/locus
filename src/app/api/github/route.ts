@@ -109,11 +109,10 @@ function parseRepo(input: string): { owner: string; repo: string; ref?: string }
  * deployment shares because the token is the server's. Two people importing
  * steadily exhaust it, and the importer is the only way to load a repository.
  *
- * A repository at a given revision is immutable, so the expensive part is worth
- * reusing. What is deliberately *not* cached is the metadata call: visibility is
- * rechecked on every request, so a repository turning private is refused
- * immediately rather than served from a cache that predates the change. A hit
- * therefore costs one API call instead of eight.
+ * The expensive source payload is cached only after GitHub has resolved the
+ * requested ref to the current commit. Metadata is rebuilt on every request so a
+ * repository turning private is refused immediately and request-specific fields
+ * such as name/slug still match the input shape.
  *
  * Per-instance and short-lived on purpose. It removes the repeat-load storm,
  * which is the realistic exhaustion path; it is not a cross-instance cache. A
@@ -131,9 +130,16 @@ function parseRepo(input: string): { owner: string; repo: string; ref?: string }
 const REPO_CACHE_TTL_MS = 5 * 60 * 1000;
 const REPO_CACHE_MAX_ENTRIES = 25;
 
-type CachedRepo = { repo: RepoData; truncated: boolean; fileCount: number; expiresAt: number };
+type CachedRepoSource = {
+  root: string;
+  recentlyChanged: string[];
+  files: Record<string, string>;
+  truncated: boolean;
+  fileCount: number;
+  expiresAt: number;
+};
 
-const repoCache = new Map<string, CachedRepo>();
+const repoCache = new Map<string, CachedRepoSource>();
 
 function repoCacheKey(owner: string, repo: string, revision: string): string {
   // GitHub treats owner and repository names case-insensitively, so fold them to
@@ -141,7 +147,7 @@ function repoCacheKey(owner: string, repo: string, revision: string): string {
   return `${owner.toLowerCase()}/${repo.toLowerCase()}@${revision}`;
 }
 
-function readRepoCache(key: string): CachedRepo | null {
+function readRepoCache(key: string): CachedRepoSource | null {
   const hit = repoCache.get(key);
   if (!hit) return null;
   if (hit.expiresAt <= Date.now()) {
@@ -154,7 +160,7 @@ function readRepoCache(key: string): CachedRepo | null {
   return hit;
 }
 
-function writeRepoCache(key: string, value: Omit<CachedRepo, "expiresAt">): void {
+function writeRepoCache(key: string, value: Omit<CachedRepoSource, "expiresAt">): void {
   repoCache.set(key, { ...value, expiresAt: Date.now() + REPO_CACHE_TTL_MS });
   while (repoCache.size > REPO_CACHE_MAX_ENTRIES) {
     const oldest = repoCache.keys().next();
@@ -170,6 +176,24 @@ export function clearRepoCacheForTests(): void {
 
 function rawPath(path: string): string {
   return path.split("/").map(encodeURIComponent).join("/");
+}
+
+function buildRepoData(
+  owner: string,
+  repo: string,
+  ref: string | undefined,
+  resolvedRevision: string,
+  description: unknown,
+  source: Pick<CachedRepoSource, "root" | "recentlyChanged" | "files">,
+): RepoData {
+  return {
+    name: `${owner}/${repo}${ref ? `@${resolvedRevision.slice(0, 7)}` : ""}`,
+    slug: `${owner}-${repo}${ref ? `-${resolvedRevision.slice(0, 7)}` : ""}`,
+    description: typeof description === "string" && description ? description : `${owner}/${repo}`,
+    root: source.root,
+    recentlyChanged: source.recentlyChanged,
+    files: source.files,
+  };
 }
 
 /**
@@ -282,11 +306,27 @@ export async function POST(request: Request) {
     }
     const revision = ref || meta.default_branch || "main";
 
-    // Visibility was rechecked above, so a hit here is a repository still public
-    // as of this request. Everything below costs seven more API calls.
-    const cacheKey = repoCacheKey(owner, repo, revision);
+    const commitRes = await fetchWithTimeout(
+      `https://api.github.com/repos/${owner}/${repo}/commits/${encodeURIComponent(revision)}`,
+      { headers: ghHeaders() },
+    );
+    if (commitRes.status === 404) {
+      return NextResponse.json({ error: `Commit or branch “${revision}” was not found.` }, { status: 404 });
+    }
+    if (!commitRes.ok) return NextResponse.json({ error: "Could not resolve the repository revision." }, { status: 502 });
+    const commit = await commitRes.json().catch(() => null);
+    const resolvedRevision = typeof commit?.sha === "string" ? commit.sha : "";
+    const treeSha = typeof commit?.commit?.tree?.sha === "string" ? commit.commit.tree.sha : "";
+    if (!resolvedRevision || !treeSha) {
+      return NextResponse.json({ error: "GitHub returned an invalid repository revision." }, { status: 502, headers: rateHeaders });
+    }
+    const cacheKey = repoCacheKey(owner, repo, resolvedRevision);
     const cached = readRepoCache(cacheKey);
     if (cached) {
+      // Metadata is rebuilt per request rather than served from the cache, so
+      // name, slug and description match this request rather than the one that
+      // filled the entry.
+      const repoData = buildRepoData(owner, repo, ref, resolvedRevision, meta.description, cached);
       // The metric means "a user successfully loaded a repository", so a hit has
       // to count. Emitting only on a miss would make `Repos loaded (30d)` quietly
       // become "cache misses" and undercount exactly the repeat loads this cache
@@ -302,24 +342,20 @@ export async function POST(request: Request) {
         },
       });
       return NextResponse.json(
-        { repo: cached.repo, truncated: cached.truncated, fileCount: cached.fileCount },
+        { repo: repoData, truncated: cached.truncated, fileCount: cached.fileCount },
         { headers: rateHeaders },
       );
     }
 
     const treeRes = await fetchWithTimeout(
-      `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(revision)}?recursive=1`,
+      `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(treeSha)}?recursive=1`,
       { headers: ghHeaders() },
     );
-    if (treeRes.status === 404) {
-      return NextResponse.json({ error: `Commit or branch “${revision}” was not found.` }, { status: 404 });
-    }
     if (!treeRes.ok) return NextResponse.json({ error: "Could not read the repo file tree." }, { status: 502 });
     const tree = await treeRes.json().catch(() => null);
     if (!tree || typeof tree !== "object" || !Array.isArray(tree.tree)) {
       return NextResponse.json({ error: "GitHub returned an invalid repository tree." }, { status: 502, headers: rateHeaders });
     }
-    const resolvedRevision = String(tree.sha || revision);
 
     const candidates = (tree.tree as { path: string; type: string; size?: number }[])
       .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
@@ -387,32 +423,33 @@ export async function POST(request: Request) {
       recentlyChanged = [];
     }
 
-    const repoData: RepoData = {
-      name: `${owner}/${repo}${ref ? `@${resolvedRevision.slice(0, 7)}` : ""}`,
-      slug: `${owner}-${repo}${ref ? `-${resolvedRevision.slice(0, 7)}` : ""}`,
-      description: meta.description || `${owner}/${repo}`,
-      root: commonRoot(Object.keys(fileMap)),
+    const root = commonRoot(Object.keys(fileMap));
+    const fileCount = Object.keys(fileMap).length;
+    const repoData = buildRepoData(owner, repo, ref, resolvedRevision, meta.description, {
+      root,
       recentlyChanged,
       files: fileMap,
-    };
+    });
     writeRepoCache(cacheKey, {
-      repo: repoData,
+      root,
+      recentlyChanged,
+      files: fileMap,
       truncated,
-      fileCount: Object.keys(fileMap).length,
+      fileCount,
     });
     track({
       event: "repo_loaded",
       userId,
       properties: {
         repo: `${owner}/${repo}`,
-        files: Object.keys(fileMap).length,
+        files: fileCount,
         truncated,
         cached: false,
       },
     });
 
     return NextResponse.json(
-      { repo: repoData, truncated, fileCount: Object.keys(fileMap).length },
+      { repo: repoData, truncated, fileCount },
       { headers: rateHeaders },
     );
   } catch (error) {

@@ -69,6 +69,7 @@ describe("GitHub repository API request guards", () => {
   it("fails safely when GitHub returns a malformed tree", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(Response.json({ default_branch: "main" }))
+      .mockResolvedValueOnce(Response.json({ sha: "abcdef1234567890", commit: { tree: { sha: "treesha" } } }))
       .mockResolvedValueOnce(Response.json({ sha: "abc123", tree: null }));
 
     const response = await POST(request('{"url":"owner/repo"}', "198.51.100.20"));
@@ -110,6 +111,7 @@ describe("GitHub repository API request guards", () => {
   it("drops a source file when its downloaded body exceeds the safety limit", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(Response.json({ default_branch: "main" }))
+      .mockResolvedValueOnce(Response.json({ sha: "abcdef1234567890", commit: { tree: { sha: "treesha" } } }))
       .mockResolvedValueOnce(Response.json({
         sha: "abc123",
         tree: [{ path: "src/page.tsx", type: "blob", size: 10 }],
@@ -129,7 +131,7 @@ describe("GitHub repository API request guards", () => {
 /**
  * One load costs 8 GitHub API calls against a 5,000/hour ceiling shared by every
  * user of the deployment, and the importer is the only way to load a repository.
- * These assert the call count directly, which is the part that can be verified
+ * These assert the call budget directly, which is the part that can be verified
  * without a live GitHub.
  */
 describe("GitHub repository API call budget", () => {
@@ -146,6 +148,9 @@ describe("GitHub repository API call budget", () => {
 
       if (lower === "https://api.github.com/repos/owner/repo") {
         return Response.json({ default_branch: "main", private: false, visibility: "public", description: "d" });
+      }
+      if (lower === "https://api.github.com/repos/owner/repo/commits/main") {
+        return Response.json({ sha: "abcdef1234567890", commit: { tree: { sha: "treesha" } } });
       }
       if (lower.includes("/git/trees/")) {
         return Response.json({ sha: "treesha", tree: [{ path: "src/a.ts", type: "blob", size: 30 }] });
@@ -165,7 +170,7 @@ describe("GitHub repository API call budget", () => {
     stubGitHub();
   });
 
-  it("serves a repeat load from cache at the cost of one API call", async () => {
+  it("serves a repeat load from cache after resolving the branch head", async () => {
     const first = await POST(request('{"url":"owner/repo"}', "198.51.100.20"));
     expect(first.status).toBe(200);
     const firstCallCount = apiCalls.length;
@@ -175,8 +180,10 @@ describe("GitHub repository API call budget", () => {
     const second = await POST(request('{"url":"owner/repo"}', "198.51.100.20"));
 
     expect(second.status).toBe(200);
-    // Only the metadata call, which exists to recheck visibility.
-    expect(apiCalls).toEqual(["https://api.github.com/repos/owner/repo"]);
+    expect(apiCalls).toEqual([
+      "https://api.github.com/repos/owner/repo",
+      "https://api.github.com/repos/owner/repo/commits/main",
+    ]);
     expect(await second.json()).toEqual(await first.clone().json());
   });
 
@@ -213,7 +220,60 @@ describe("GitHub repository API call budget", () => {
     const upper = await POST(request('{"url":"Owner/Repo"}', "198.51.100.23"));
 
     expect(upper.status).toBe(200);
-    expect(apiCalls).toEqual(["https://api.github.com/repos/Owner/Repo"]);
+    expect(apiCalls).toEqual([
+      "https://api.github.com/repos/Owner/Repo",
+      "https://api.github.com/repos/Owner/Repo/commits/main",
+    ]);
+  });
+
+  it("revalidates a mutable branch before serving cached source", async () => {
+    let commitSha = "commit-old";
+    let treeSha = "tree-old";
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "https://api.github.com/repos/owner/repo") {
+        return Response.json({ default_branch: "main", private: false, visibility: "public", description: "d" });
+      }
+      if (url === "https://api.github.com/repos/owner/repo/commits/main") {
+        return Response.json({ sha: commitSha, commit: { tree: { sha: treeSha } } });
+      }
+      if (url === `https://api.github.com/repos/owner/repo/git/trees/${treeSha}?recursive=1`) {
+        return Response.json({ sha: treeSha, tree: [{ path: "src/a.ts", type: "blob", size: 30 }] });
+      }
+      if (url === `https://raw.githubusercontent.com/owner/repo/${commitSha}/src/a.ts`) {
+        return new Response(`export const version = "${commitSha}";\n`);
+      }
+      if (url.startsWith("https://api.github.com/repos/owner/repo/commits?")) return Response.json([]);
+      return new Response("nope", { status: 404 });
+    }));
+
+    const first = await POST(request('{"url":"owner/repo"}', "198.51.100.24"));
+    expect(first.status).toBe(200);
+    expect((await first.json()).repo.files["src/a.ts"]).toBe('export const version = "commit-old";\n');
+
+    commitSha = "commit-new";
+    treeSha = "tree-new";
+    const second = await POST(request('{"url":"owner/repo"}', "198.51.100.24"));
+
+    expect(second.status).toBe(200);
+    expect((await second.json()).repo.files["src/a.ts"]).toBe('export const version = "commit-new";\n');
+  });
+
+  it("rebuilds request-specific metadata around cached source", async () => {
+    const unnamed = await POST(request('{"url":"owner/repo"}', "198.51.100.25"));
+    expect(unnamed.status).toBe(200);
+    expect((await unnamed.clone().json()).repo).toMatchObject({
+      name: "owner/repo",
+      slug: "owner-repo",
+    });
+
+    const named = await POST(request('{"url":"owner/repo@main"}', "198.51.100.25"));
+
+    expect(named.status).toBe(200);
+    expect((await named.json()).repo).toMatchObject({
+      name: "owner/repo@abcdef1",
+      slug: "owner-repo-abcdef1",
+    });
   });
 
   // `Repos loaded (30d)` counts this event. Emitting it only when the cache
