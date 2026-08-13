@@ -24,12 +24,18 @@ resumed, cancelled, and reviewed from the Runs ledger.
 
 ## Evidence
 
-The reproducible historical-task benchmark replays Locus on the parent snapshots
-of 15 real fixes across Locus, Agent Access, and Solum:
+The historical-task benchmark replays Locus on the parent snapshots of 15 real
+fixes across Locus, Agent Access, and Solum - three repositories owned by this
+project's author, so treat it as a regression suite rather than independent
+evidence:
 
-- **100% historical fix-file recall** across all 15 declared cases
-- **53% median estimated context reduction**
-- **2 conservative whole-repo fallbacks**
+- **100% fix-file recall on the 15 cases in the suite.** The suite gates on full
+  recall, so a case Locus missed would have to be removed for the build to pass.
+  The figure therefore describes the cases retained, and cannot report anything
+  other than 100%.
+- **53% median estimated context reduction**, over a distribution from 0% to 99%
+- **2 conservative whole-repo fallbacks**, which score full recall by definition
+  because the whole repository is selected
 
 See [the full method and every case](./benchmarks/README.md), or run:
 
@@ -183,8 +189,11 @@ that directory. The unpublished package source lives in [`cli/`](./cli);
 - GitHub CI runs lint, tests, CLI sync, type-checking, and a production build
 - [`/api/health`](https://locus-five-iota.vercel.app/api/health) reports the
   deployed package version and Git revision
-- The historical benchmark is generated from declared parent snapshots and
-  fails its launch gate if fix-file recall drops below 100%
+- The historical benchmark is generated from declared parent snapshots and fails
+  its gate if fix-file recall drops below 100%. It runs locally via
+  `pnpm benchmark`, **not** in CI, and `benchmarks/results.json` is a committed
+  artifact from whenever it was last run, so unlike the checks above it is not
+  enforced on every change
 
 Run the same checks locally:
 

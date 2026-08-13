@@ -1,7 +1,7 @@
 {
-  "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.",
+  "methodology": "Historical parent snapshots from author-owned repositories; expected files are modified TypeScript source files from each next commit. Treat this as a regression suite, not independent evidence.",
   "summary": {
-    "generatedAt": "2026-08-04T00:25:02.487Z",
+    "generatedAt": "2026-08-13T05:55:58.928Z",
     "cases": 15,
     "repositories": 3,
     "fixFileRecall": 1,
@@ -31,10 +31,10 @@
       "files": "12/15",
       "contextReductionPct": 3,
       "anchors": [
-        "lib/sources.ts",
-        "app/api/github/route.ts",
-        "lib/types.ts",
-        "app/page.tsx"
+        "src/lib/sources.ts",
+        "src/app/api/github/route.ts",
+        "src/lib/types.ts",
+        "src/app/page.tsx"
       ]
     },
     {
@@ -54,10 +54,10 @@
       "files": "12/15",
       "contextReductionPct": 3,
       "anchors": [
-        "app/page.tsx",
-        "lib/sources.ts",
-        "lib/types.ts",
-        "hooks/useLocus.ts"
+        "src/app/page.tsx",
+        "src/lib/sources.ts",
+        "src/lib/types.ts",
+        "src/hooks/useLocus.ts"
       ]
     },
     {
@@ -97,9 +97,9 @@
       "files": "20/61",
       "contextReductionPct": 48,
       "anchors": [
-        "app/api/v1/locate/route.ts",
-        "components/LocusApp.tsx",
-        "app/docs/page.tsx"
+        "src/app/api/v1/locate/route.ts",
+        "src/components/LocusApp.tsx",
+        "src/app/docs/page.tsx"
       ]
     },
     {
@@ -119,10 +119,10 @@
       "files": "19/60",
       "contextReductionPct": 53,
       "anchors": [
-        "components/SettingsShell.tsx",
-        "app/settings/page.tsx",
-        "app/projects/page.tsx",
-        "components/LocusApp.tsx"
+        "src/components/SettingsShell.tsx",
+        "src/app/settings/page.tsx",
+        "src/app/projects/page.tsx",
+        "src/components/LocusApp.tsx"
       ]
     },
     {
@@ -142,12 +142,12 @@
       "files": "24/58",
       "contextReductionPct": 36,
       "anchors": [
-        "components/ApiKeysPanel.tsx",
-        "app/api/v1/locate/route.ts",
-        "app/api/github/route.ts",
-        "lib/api-auth.ts",
-        "lib/api-auth.test.ts",
-        "components/LocusApp.tsx"
+        "src/components/ApiKeysPanel.tsx",
+        "src/app/api/v1/locate/route.ts",
+        "src/app/api/github/route.ts",
+        "src/lib/api-auth.ts",
+        "src/lib/api-auth.test.ts",
+        "src/components/LocusApp.tsx"
       ]
     },
     {

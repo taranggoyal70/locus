@@ -1,6 +1,6 @@
 # Locus historical-task benchmark
 
-Generated 2026-08-04T00:25:02.487Z. Locus was run on the parent snapshot of 15 real fixes across 3 repositories. The expected set is the TypeScript source files modified by the historical fix.
+Generated 2026-08-13T05:55:58.928Z. Locus was run on the parent snapshot of 15 real fixes across 3 repositories owned by this project's author. Treat this as a regression suite, not independent evidence. The expected set is the TypeScript source files modified by the historical fix.
 
 | Repository | Fix | Fix files found | Context reduction | Widened |
 |---|---:|---:|---:|---:|
@@ -20,12 +20,12 @@ Generated 2026-08-04T00:25:02.487Z. Locus was run on the parent snapshot of 15 r
 | Solum | `e9d4346` | 4/4 | 90% | no |
 | Solum | `5c82dff` | 1/1 | 78% | no |
 
-## Launch gate
+## Regression gate
 
-- Fix-file recall: **100%** (15/15 cases with full recall)
-- Median estimated context reduction: **53%**
-- Conservative full-repo fallbacks: **2**
-- Gate: **PASS**
+- Fix-file recall on retained cases: **100%** (15/15 cases with full recall)
+- Median estimated context reduction on retained cases: **53%**
+- Conservative full-repo fallbacks, which score full recall by definition: **2**
+- Regression gate for this suite: **PASS**
 
 ## What this does—and does not—show
 
