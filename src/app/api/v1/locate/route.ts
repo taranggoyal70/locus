@@ -6,7 +6,7 @@ import { authenticateApiKey } from "@/lib/api-auth";
 import { buildGraph, locate } from "@/lib/localizer";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson } from "@/lib/request-security";
-import { fileContent, type RepoData } from "@/lib/types";
+import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
 
 const API_RATE_LIMIT = 30;
 
@@ -171,6 +171,14 @@ export function resolveContextBudget(value: unknown): number {
   return Math.min(requested, MAX_CONTEXT_BUDGET_TOKENS);
 }
 
+function sparseGraphWarning(result: LocateResult): string | null {
+  if (!result.sparse || result.widened) return null;
+  return (
+    `warning: few internal imports resolved (${result.edgeDensity.toFixed(2)} edges/file), ` +
+    `so this Slice may be missing real dependencies and the reduction may be overstated`
+  );
+}
+
 const CORS_BASE_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -265,6 +273,8 @@ export async function POST(request: Request) {
     const budget = resolveContextBudget(body.budget);
     const taskShape = contentShape(body.task);
     const packed: string[] = [];
+    const warning = sparseGraphWarning(result);
+    if (warning) packed.push(`# ${warning}`);
     let tokens = 0;
     for (const f of result.slice) {
       const content = fileContent(repo, f.rel);

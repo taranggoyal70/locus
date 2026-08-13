@@ -88,6 +88,8 @@ describe("locate API analytics", () => {
     ]);
     expect(body.anchors).toEqual(["src/checkout.ts"]);
     expect(body.context).toContain("===== src/checkout.ts =====");
+    expect(body.context).toContain("# warning: few internal imports resolved (0.00 edges/file)");
+    expect(body.context.indexOf("# warning:")).toBeLessThan(body.context.indexOf("===== src/checkout.ts ====="));
     expect(trackMock).toHaveBeenCalledWith({
       event: "api_locate",
       userId: "user_123",
