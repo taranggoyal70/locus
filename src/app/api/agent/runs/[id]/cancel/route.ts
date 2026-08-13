@@ -12,6 +12,9 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
+const TERMINAL_WORKFLOW_STATUSES = new Set(["completed", "failed", "cancelled"]);
+const NON_EXECUTING_WORKFLOW_STATUSES = new Set(["pending", "workflow_suspended"]);
+
 /**
  * Cancelling a Run is the only way out of a stuck one.
  *
@@ -55,12 +58,15 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
+  let releaseCapacityNow = false;
   if (run.workflow_run_id) {
+    const workflowRun = getRun(run.workflow_run_id);
+    let workflowStatus: string;
     try {
-      await getRun(run.workflow_run_id).cancel();
+      workflowStatus = await workflowRun.status;
     } catch (error) {
       logger.error(
-        "agent.workflow.cancel_failed",
+        "agent.workflow.status_failed",
         { cause: error instanceof Error ? error.message : String(error) },
         id,
       );
@@ -68,6 +74,34 @@ export async function POST(request: Request, context: RouteContext) {
         { error: "The durable workflow could not be cancelled." },
         { status: 503 },
       );
+    }
+
+    if (TERMINAL_WORKFLOW_STATUSES.has(workflowStatus)) {
+      releaseCapacityNow = true;
+    } else {
+      try {
+        await workflowRun.cancel();
+        releaseCapacityNow = NON_EXECUTING_WORKFLOW_STATUSES.has(workflowStatus);
+      } catch (error) {
+        let reconciledStatus: string | null = null;
+        try {
+          reconciledStatus = await workflowRun.status;
+        } catch {
+          reconciledStatus = null;
+        }
+        if (!reconciledStatus || !TERMINAL_WORKFLOW_STATUSES.has(reconciledStatus)) {
+          logger.error(
+            "agent.workflow.cancel_failed",
+            { cause: error instanceof Error ? error.message : String(error) },
+            id,
+          );
+          return NextResponse.json(
+            { error: "The durable workflow could not be cancelled." },
+            { status: 503 },
+          );
+        }
+        releaseCapacityNow = workflowStatus !== "running";
+      }
     }
   }
 
@@ -79,7 +113,7 @@ export async function POST(request: Request, context: RouteContext) {
     values: { error: "Cancelled by the user.", completed_at: new Date().toISOString() },
   });
 
-  if (run.workflow_run_id) {
+  if (releaseCapacityNow) {
     try {
       await releaseRunProviderLease(id);
     } catch (error) {

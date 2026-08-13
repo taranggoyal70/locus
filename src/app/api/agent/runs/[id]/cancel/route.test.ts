@@ -5,6 +5,7 @@ const transitionRunMock = vi.hoisted(() => vi.fn());
 const releaseRunProviderLeaseMock = vi.hoisted(() => vi.fn());
 const getRunMock = vi.hoisted(() => vi.fn());
 const workflowCancelMock = vi.hoisted(() => vi.fn());
+const workflowStatusMock = vi.hoisted(() => vi.fn());
 const singleMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
@@ -41,7 +42,13 @@ describe("cancel an agent run", () => {
     authMock.mockResolvedValue({ userId: "user_123" });
     transitionRunMock.mockReset().mockResolvedValue(undefined);
     releaseRunProviderLeaseMock.mockReset().mockResolvedValue(undefined);
-    getRunMock.mockReset().mockReturnValue({ cancel: workflowCancelMock });
+    workflowStatusMock.mockReset().mockResolvedValue("running");
+    getRunMock.mockReset().mockReturnValue({
+      cancel: workflowCancelMock,
+      get status() {
+        return workflowStatusMock();
+      },
+    });
     workflowCancelMock.mockReset().mockResolvedValue(undefined);
     singleMock.mockReset().mockResolvedValue({
       data: { id: RUN_ID, status: "executing", workflow_run_id: "workflow-id" },
@@ -49,11 +56,10 @@ describe("cancel an agent run", () => {
     });
   });
 
-  it("cancels the durable workflow before releasing the deployment-wide provider lease", async () => {
+  it("cancels a running durable workflow without releasing provider capacity early", async () => {
     const events: string[] = [];
     workflowCancelMock.mockImplementationOnce(async () => { events.push("workflow"); });
     transitionRunMock.mockImplementationOnce(async () => { events.push("transition"); });
-    releaseRunProviderLeaseMock.mockImplementationOnce(async () => { events.push("lease"); });
 
     const response = await POST(request(), context());
 
@@ -66,8 +72,30 @@ describe("cancel an agent run", () => {
       current: "executing",
       next: "cancelled",
     }));
+    expect(releaseRunProviderLeaseMock).not.toHaveBeenCalled();
+    expect(events).toEqual(["workflow", "transition"]);
+  });
+
+  it("reconciles an already-terminal workflow and releases provider capacity", async () => {
+    workflowStatusMock.mockResolvedValueOnce("completed");
+
+    const response = await POST(request(), context());
+
+    expect(response.status).toBe(200);
+    expect(workflowCancelMock).not.toHaveBeenCalled();
+    expect(transitionRunMock).toHaveBeenCalledWith(expect.objectContaining({ next: "cancelled" }));
     expect(releaseRunProviderLeaseMock).toHaveBeenCalledWith(RUN_ID);
-    expect(events).toEqual(["workflow", "transition", "lease"]);
+  });
+
+  it("releases provider capacity after cancelling a non-executing workflow", async () => {
+    workflowStatusMock.mockResolvedValueOnce("pending");
+
+    const response = await POST(request(), context());
+
+    expect(response.status).toBe(200);
+    expect(workflowCancelMock).toHaveBeenCalled();
+    expect(transitionRunMock).toHaveBeenCalledWith(expect.objectContaining({ next: "cancelled" }));
+    expect(releaseRunProviderLeaseMock).toHaveBeenCalledWith(RUN_ID);
   });
 
   it("cancels from any non-terminal status", async () => {
@@ -93,14 +121,26 @@ describe("cancel an agent run", () => {
     expect(releaseRunProviderLeaseMock).not.toHaveBeenCalled();
   });
 
-  it("does not mark the Run cancelled when workflow cancellation fails", async () => {
+  it("does not mark the Run cancelled when workflow cancellation fails ambiguously", async () => {
     workflowCancelMock.mockRejectedValueOnce(new Error("workflow unavailable"));
+    workflowStatusMock.mockResolvedValueOnce("running").mockResolvedValueOnce("running");
 
     const response = await POST(request(), context());
 
     expect(response.status).toBe(503);
     expect(transitionRunMock).not.toHaveBeenCalled();
     expect(releaseRunProviderLeaseMock).not.toHaveBeenCalled();
+  });
+
+  it("reconciles terminal workflow state after a cancellation conflict", async () => {
+    workflowStatusMock.mockResolvedValueOnce("pending").mockResolvedValueOnce("cancelled");
+    workflowCancelMock.mockRejectedValueOnce(new Error("run is already terminal"));
+
+    const response = await POST(request(), context());
+
+    expect(response.status).toBe(200);
+    expect(transitionRunMock).toHaveBeenCalledWith(expect.objectContaining({ next: "cancelled" }));
+    expect(releaseRunProviderLeaseMock).toHaveBeenCalledWith(RUN_ID);
   });
 
   it("does not release provider capacity without a workflow handle", async () => {
@@ -117,7 +157,8 @@ describe("cancel an agent run", () => {
     expect(releaseRunProviderLeaseMock).not.toHaveBeenCalled();
   });
 
-  it("still succeeds when releasing capacity fails", async () => {
+  it("still succeeds when terminal reconciliation capacity release fails", async () => {
+    workflowStatusMock.mockResolvedValueOnce("completed");
     releaseRunProviderLeaseMock.mockRejectedValueOnce(new Error("rpc unavailable"));
 
     const response = await POST(request(), context());
