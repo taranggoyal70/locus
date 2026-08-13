@@ -83,7 +83,7 @@ export function LandingPage() {
         <section id="evidence" className="border-y border-line-strong bg-surface/70">
           <div className="mx-auto grid max-w-7xl divide-y divide-line-strong px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-8">
             {[
-              ["100%", "historical fix-file recall", "15 declared fixes across 3 public repositories"],
+              ["100%", "recall on the cases in our suite", "15 fixes across 3 repositories we own; the suite gates on full recall"],
               ["53%", "median estimated context reduction", "initial admitted context versus whole-Repo context"],
               ["15", "historical cases", "localization replay only; does not measure agent completion"],
             ].map(([value, label, note]) => (
