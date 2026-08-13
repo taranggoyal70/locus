@@ -115,18 +115,19 @@ const summary = {
   },
 };
 
-const output = { methodology: "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.", summary, results };
+const methodology = "Historical parent snapshots from author-owned repositories; expected files are modified TypeScript source files from each next commit. Treat this as a regression suite, not independent evidence.";
+const output = { methodology, summary, results };
 const json = `${JSON.stringify(output, null, 2)}\n`;
 const table = results.map((result) =>
   `| ${result.repo.split("/")[1]} | \`${result.commit}\` | ${result.found.length}/${result.expected.length} | ${result.contextReductionPct}% | ${result.widened ? "yes" : "no"} |`,
 ).join("\n");
 const markdown = `# Locus historical-task benchmark\n\n` +
-  `Generated ${summary.generatedAt}. Locus was run on the parent snapshot of ${summary.cases} real fixes across ${summary.repositories} repositories. ` +
-  `The expected set is the TypeScript source files modified by the historical fix.\n\n` +
+  `Generated ${summary.generatedAt}. Locus was run on the parent snapshot of ${summary.cases} real fixes across ${summary.repositories} repositories owned by this project's author. ` +
+  `Treat this as a regression suite, not independent evidence. The expected set is the TypeScript source files modified by the historical fix.\n\n` +
   `| Repository | Fix | Fix files found | Context reduction | Widened |\n|---|---:|---:|---:|---:|\n${table}\n\n` +
-  `## Launch gate\n\n- Fix-file recall: **${Math.round(summary.fixFileRecall * 100)}%** (${summary.casesWithFullRecall}/${summary.cases} cases with full recall)\n` +
-  `- Median estimated context reduction: **${summary.medianContextReductionPct}%**\n- Conservative full-repo fallbacks: **${summary.widenedCases}**\n` +
-  `- Gate: **${summary.gate.fullRecall && summary.gate.medianReductionAtLeast30Pct ? "PASS" : "FAIL"}**\n\n` +
+  `## Regression gate\n\n- Fix-file recall on retained cases: **${Math.round(summary.fixFileRecall * 100)}%** (${summary.casesWithFullRecall}/${summary.cases} cases with full recall)\n` +
+  `- Median estimated context reduction on retained cases: **${summary.medianContextReductionPct}%**\n- Conservative full-repo fallbacks, which score full recall by definition: **${summary.widenedCases}**\n` +
+  `- Regression gate for this suite: **${summary.gate.fullRecall && summary.gate.medianReductionAtLeast30Pct ? "PASS" : "FAIL"}**\n\n` +
   `## What this does—and does not—show\n\nThis replay measures whether Locus includes the files humans actually changed next, while estimating how much TypeScript context it excludes. ` +
   `It does **not** prove that an autonomous agent completed the task, that the excluded files were unnecessary, or that quality cannot regress. Token estimates use the existing character-based heuristic. ` +
   `Agent completion rate is a beta-study outcome, not a benchmark claim.\n\n` +

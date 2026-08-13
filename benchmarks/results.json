@@ -1,5 +1,5 @@
 {
-  "methodology": "Historical parent snapshots; expected files are modified TypeScript source files from each next commit.",
+  "methodology": "Historical parent snapshots from author-owned repositories; expected files are modified TypeScript source files from each next commit. Treat this as a regression suite, not independent evidence.",
   "summary": {
     "generatedAt": "2026-08-13T05:55:58.928Z",
     "cases": 15,
