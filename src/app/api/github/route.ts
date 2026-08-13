@@ -101,6 +101,65 @@ function parseRepo(input: string): { owner: string; repo: string; ref?: string }
   }
 }
 
+/**
+ * Loading one repository costs 8 GitHub API calls: metadata, the file tree, a
+ * commit list, and five commit details for the recent-change signal. At the
+ * per-user limit of 6 loads a minute that is 2,880 calls an hour from one user,
+ * against an authenticated ceiling of 5,000 an hour that every user of this
+ * deployment shares because the token is the server's. Two people importing
+ * steadily exhaust it, and the importer is the only way to load a repository.
+ *
+ * A repository at a given revision is immutable, so the expensive part is worth
+ * reusing. What is deliberately *not* cached is the metadata call: visibility is
+ * rechecked on every request, so a repository turning private is refused
+ * immediately rather than served from a cache that predates the change. A hit
+ * therefore costs one API call instead of eight.
+ *
+ * Per-instance and short-lived on purpose. It removes the repeat-load storm,
+ * which is the realistic exhaustion path; it is not a cross-instance cache. A
+ * shared cache (Vercel Runtime Cache) would be stronger and needs its own
+ * design decision about invalidation.
+ */
+const REPO_CACHE_TTL_MS = 5 * 60 * 1000;
+const REPO_CACHE_MAX_ENTRIES = 25;
+
+type CachedRepo = { repo: RepoData; truncated: boolean; fileCount: number; expiresAt: number };
+
+const repoCache = new Map<string, CachedRepo>();
+
+function repoCacheKey(owner: string, repo: string, revision: string): string {
+  // GitHub treats owner and repository names case-insensitively, so fold them to
+  // avoid caching the same repository under several keys.
+  return `${owner.toLowerCase()}/${repo.toLowerCase()}@${revision}`;
+}
+
+function readRepoCache(key: string): CachedRepo | null {
+  const hit = repoCache.get(key);
+  if (!hit) return null;
+  if (hit.expiresAt <= Date.now()) {
+    repoCache.delete(key);
+    return null;
+  }
+  // Refresh insertion order so the least recently used entry is evicted first.
+  repoCache.delete(key);
+  repoCache.set(key, hit);
+  return hit;
+}
+
+function writeRepoCache(key: string, value: Omit<CachedRepo, "expiresAt">): void {
+  repoCache.set(key, { ...value, expiresAt: Date.now() + REPO_CACHE_TTL_MS });
+  while (repoCache.size > REPO_CACHE_MAX_ENTRIES) {
+    const oldest = repoCache.keys().next();
+    if (oldest.done) break;
+    repoCache.delete(oldest.value);
+  }
+}
+
+/** Exposed for tests: cached repositories must not leak between cases. */
+export function clearRepoCacheForTests(): void {
+  repoCache.clear();
+}
+
 function rawPath(path: string): string {
   return path.split("/").map(encodeURIComponent).join("/");
 }
@@ -215,6 +274,17 @@ export async function POST(request: Request) {
     }
     const revision = ref || meta.default_branch || "main";
 
+    // Visibility was rechecked above, so a hit here is a repository still public
+    // as of this request. Everything below costs seven more API calls.
+    const cacheKey = repoCacheKey(owner, repo, revision);
+    const cached = readRepoCache(cacheKey);
+    if (cached) {
+      return NextResponse.json(
+        { repo: cached.repo, truncated: cached.truncated, fileCount: cached.fileCount },
+        { headers: rateHeaders },
+      );
+    }
+
     const treeRes = await fetchWithTimeout(
       `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(revision)}?recursive=1`,
       { headers: ghHeaders() },
@@ -303,6 +373,11 @@ export async function POST(request: Request) {
       recentlyChanged,
       files: fileMap,
     };
+    writeRepoCache(cacheKey, {
+      repo: repoData,
+      truncated,
+      fileCount: Object.keys(fileMap).length,
+    });
     track({
       event: "repo_loaded",
       userId,
