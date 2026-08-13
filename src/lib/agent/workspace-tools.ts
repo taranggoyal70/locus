@@ -255,14 +255,27 @@ type AgentPromptInput = {
   acceptanceCriteria: string[];
   reason: string;
   baselineTokens: number;
+  sparse?: boolean;
+  edgeDensity?: number;
   included: Array<{ path: string; content: string }>;
   excluded: string[];
 };
+
+function sparseGraphWarning(input: AgentPromptInput): string | null {
+  if (!input.sparse) return null;
+  const edgeDensity = Number(input.edgeDensity);
+  const renderedDensity = Number.isFinite(edgeDensity) ? edgeDensity.toFixed(2) : "unknown";
+  return (
+    `Warning: few internal imports resolved (${renderedDensity} edges/file), ` +
+    "so this Slice may be missing real dependencies. Use widen_file when a dependency, caller, or shared module is needed."
+  );
+}
 
 export function buildAgentPrompt(input: AgentPromptInput): string {
   const criteria = input.acceptanceCriteria.length > 0
     ? input.acceptanceCriteria.map((item) => `- ${item}`).join("\n")
     : "- Preserve existing behavior and make the requested change verifiable.";
+  const warning = sparseGraphWarning(input);
   const included = input.included
     .map(({ path, content }) => `===== ${validateRepoPath(path)} =====\n${content}`)
     .join("\n\n");
@@ -294,7 +307,7 @@ Rules:
 - Finish with a concise summary, changed files, verification evidence, and remaining risks.
 
 Included Slice:
-${included || "(empty)"}
+${warning ? `${warning}\n\n` : ""}${included || "(empty)"}
 
 Excluded file ledger:
 ${excluded}`;

@@ -219,6 +219,29 @@ describe("agent context budget", () => {
     expect(prompt).toContain("widen_file");
   });
 
+  it("warns before included files when the Slice came from a sparse graph", () => {
+    const prompt = buildAgentPrompt({
+      task: "Fix the dashboard total",
+      acceptanceCriteria: [],
+      reason: "dashboard path and source matched",
+      baselineTokens: 12_000,
+      sparse: true,
+      edgeDensity: 0,
+      included: [
+        {
+          path: "src/dashboard.ts",
+          content: "export const total = 0;",
+        },
+      ],
+      excluded: ["src/billing.ts"],
+    });
+
+    expect(prompt).toContain("Warning: few internal imports resolved (0.00 edges/file)");
+    expect(prompt.indexOf("Warning: few internal imports resolved")).toBeLessThan(
+      prompt.indexOf("===== src/dashboard.ts ====="),
+    );
+  });
+
   it("caps noisy tool output while preserving the omitted count", () => {
     const output = truncateToolOutput("a".repeat(12_000), 1_000);
 
