@@ -17,6 +17,8 @@ const result: LocateResult = {
   totalTokens: 100,
   savedPct: 75,
   refinement: null,
+  edgeDensity: 1.5,
+  sparse: false,
 };
 
 const repo: RepoData = {

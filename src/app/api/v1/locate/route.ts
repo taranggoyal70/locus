@@ -307,6 +307,11 @@ export async function POST(request: Request) {
         repositoryTerms: result.refinement.repositoryTerms,
       },
       anchors: result.anchorPaths,
+      // A caller acting on `slice` and `tokens` has no other way to tell that a
+      // small Slice came from unresolved imports rather than from good
+      // localization, and in that case the reported saving is overstated. The web
+      // UI has surfaced this since launch; the API had no equivalent.
+      graph: { edgeDensity: Number(result.edgeDensity.toFixed(3)), sparse: result.sparse },
       slice: result.slice.map((f) => ({
         path: f.path,
         tokens: f.tokens,

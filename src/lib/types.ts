@@ -73,6 +73,14 @@ export type LocateResult = {
   totalTokens: number;
   savedPct: number;
   refinement: LocateRefinement | null;
+  // Dependency edges per graph node. A repository whose imports this parser
+  // cannot resolve — NodeNext `.js` specifiers, aliases other than `@/`,
+  // workspace packages — yields few edges, and a graph with few edges produces a
+  // small Slice for the wrong reason while reporting a *higher* saving. This is
+  // the honesty signal for that case: it says the reduction may be an artifact
+  // of unresolved imports rather than a real localization.
+  edgeDensity: number;
+  sparse: boolean;
 };
 
 /**

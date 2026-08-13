@@ -409,7 +409,7 @@ export function LocusApp({
                   <TokenMeter
                     result={result}
                     repo={repo}
-                    sparse={graph.edges.length / Math.max(1, graph.nodes.length) < 0.6}
+                    sparse={result.sparse}
                   />
                 </div>
               </>
