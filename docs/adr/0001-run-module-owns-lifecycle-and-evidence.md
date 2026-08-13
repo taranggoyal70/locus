@@ -31,6 +31,6 @@ splitting them would duplicate the verified-outcome rule across two interfaces.
 - Workflow and delivery callers must name the expected current status.
 - Concurrent or stale transitions fail instead of silently rewriting state.
 - Failed Runs retain factual usage without presenting a Savings claim.
-- The Run module becomes the test surface for future retry, cancellation,
+- The Run module remains the test surface for cancellation, future retry,
   approval, and delivery recovery work.
 - Multi-table atomic finalization remains follow-up work for the Postgres adapter.

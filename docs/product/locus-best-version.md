@@ -38,7 +38,7 @@ untrustworthy evidence.
 - Expose a Savings claim only for a completed Run.
 - Persist the active Run in the URL so refresh resumes polling.
 - Replace the legacy analyses screen with Run history, evidence review,
-  approval, and resume.
+  cancellation, approval, and resume.
 
 ### 2. Verified execution depth — next
 

@@ -169,7 +169,8 @@ _Avoid_: response payload, session state, activity feed.
   verified-only **Savings claim** rules.
 - `src/lib/agent/run-store.ts` — guarded Run mutations and append-only Step writes.
 - `src/lib/agent/run-view.ts` — the shared **Run evidence snapshot** interface.
-- `src/components/AgentRunsList.tsx` — durable Run history, review, resume, and approval.
+- `src/components/AgentRunsList.tsx` — durable Run history, review, resume,
+  cancellation, and approval.
 - `supabase/migrations/005_agent_runs.sql` — durable Agent Tasks, Runs, Steps,
   Artifacts, and Approvals.
 - `supabase/migrations/012_release1_run_evidence.sql` — immutable proposal
