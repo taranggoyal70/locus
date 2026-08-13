@@ -29,6 +29,9 @@ includes `.ts`, `.tsx`, `.js`, and `.jsx` files. Historical replay is evidence
 about fix-file coverage, not a guarantee of autonomous agent completion or
 unchanged quality.
 
+When few internal imports resolve, CLI and MCP text output warns that the Slice
+may be missing real dependencies and the token reduction may be overstated.
+
 ### Allowed roots
 
 `locate` returns file contents, so the server only reads directories inside an

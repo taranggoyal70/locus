@@ -104,6 +104,10 @@ export default function DocsPage() {
     { "path": "lib/auth.ts", "tokens": 320, "distance": 1, "recent": false }
   ],
   "excluded": ["components/Header.tsx", "..."],
+  "graph": {
+    "edgeDensity": 1.25,
+    "sparse": false
+  },
   "tokens": {
     "included": 770,
     "total": 45000
@@ -124,6 +128,12 @@ export default function DocsPage() {
             When <code className="text-accent">widened</code> is true, the full Repo is retained and
             <code className="text-accent"> refinement</code> contains unmatched task terms, possible
             starting files, and repository terms the caller can use to make the task more specific.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-muted-light">
+            When <code className="text-accent">graph.sparse</code> is true on a non-widened response,
+            few internal imports resolved. The response still includes the best Slice, but the packed
+            <code className="text-accent"> context</code> starts with a warning because the token
+            reduction may be an unresolved-import artifact.
           </p>
           <p className="mt-3 rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm leading-6 text-muted-light">
             Token counts report only the context included by this localization response and the
