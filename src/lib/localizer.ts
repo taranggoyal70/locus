@@ -141,6 +141,15 @@ export function buildGraph(repo: RepoData): Graph {
   return { nodes, edges, byPath, deps, rdeps, surfaces, totalTokens };
 }
 
+// Below this many dependency edges per node, the graph is too sparse for the
+// Slice size to mean what it appears to mean. Kept here so every surface that
+// renders a saving uses the same threshold rather than its own copy.
+const SPARSE_EDGE_DENSITY = 0.6;
+
+function graphDensity(graph: Graph): number {
+  return graph.edges.length / Math.max(1, graph.nodes.length);
+}
+
 /** BFS transitive dependency closure of an anchor, with distances. */
 function closure(anchor: string, deps: Record<string, string[]>, maxDepth = 8): Record<string, number> {
   const dist: Record<string, number> = { [anchor]: 0 };
@@ -289,6 +298,8 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
         candidateFilePaths: topCandidates.map((candidate) => candidate.path),
         repositoryTerms: repositoryTerms(graph),
       },
+      edgeDensity: graphDensity(graph),
+      sparse: graphDensity(graph) < SPARSE_EDGE_DENSITY,
     };
   }
 
@@ -341,5 +352,7 @@ export function locate(task: string, repo: RepoData, graph: Graph, evidence = ""
     totalTokens: graph.totalTokens,
     savedPct: Math.round((100 * (graph.totalTokens - sliceTokens)) / graph.totalTokens),
     refinement: null,
+    edgeDensity: graphDensity(graph),
+    sparse: graphDensity(graph) < SPARSE_EDGE_DENSITY,
   };
 }

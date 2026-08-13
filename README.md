@@ -96,8 +96,9 @@ curl -X POST https://locus-five-iota.vercel.app/api/v1/locate \
 - `evidence` (string, optional) — error logs, stack traces, etc.
 - `budget` (number, optional) — max tokens for packed context (default: 40,000)
 
-**Response:** JSON with `slice`, `anchors`, `tokens`, packed `context`, and
-`refinement` guidance when `widened` is `true`.
+**Response:** JSON with `slice`, `anchors`, `tokens`, `graph`, packed `context`,
+and `refinement` guidance when `widened` is `true`. `graph.sparse` warns when
+few internal imports resolved and the reported token reduction may be overstated.
 
 Rate limit: 30 requests/minute per user. Full reference at [/docs](https://locus-five-iota.vercel.app/docs).
 

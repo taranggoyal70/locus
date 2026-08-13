@@ -106,3 +106,58 @@ describe("non-source imports", () => {
     expect(web.slice.map((f) => f.path)).not.toContain("src/app/dashboard/Dashboard.module.css");
   });
 });
+
+/**
+ * The sparsity signal existed only in the web UI, computed inline in a React
+ * component, while the CLI, MCP server and REST API — the surfaces that feed an
+ * agent with no human looking at the graph — reported the inflated saving with no
+ * warning at all. One definition now, asserted on both implementations.
+ */
+describe("sparsity signal", () => {
+  const sparseRepo = {
+    name: "sparse", slug: "sparse", description: "", root: "src",
+    recentlyChanged: [],
+    files: {
+      // NodeNext-style specifiers this parser cannot resolve: 0 edges, so the
+      // slice looks small for the wrong reason.
+      "src/dashboard.ts": 'import { fmt } from "./date.js";\nexport const dash = fmt;',
+      "src/date.ts": "export const fmt = (d) => String(d);",
+      "src/unrelated.ts": "export const other = 1;",
+    },
+  };
+  const denseRepo = {
+    name: "dense", slug: "dense", description: "", root: "src",
+    recentlyChanged: [],
+    files: {
+      "src/dashboard.ts": 'import { fmt } from "@/date";\nimport { chart } from "@/chart";\nexport const dash = [fmt, chart];',
+      "src/date.ts": 'import { pad } from "@/pad";\nexport const fmt = pad;',
+      "src/chart.ts": 'import { pad } from "@/pad";\nexport const chart = pad;',
+      "src/pad.ts": "export const pad = 1;",
+    },
+  };
+
+  it("flags a repo whose imports did not resolve", () => {
+    for (const [label, build, run] of [["web", buildGraphWeb, locateWeb], ["cli", buildGraphCli, locateCli]]) {
+      const result = run("fix the dashboard", sparseRepo, build(sparseRepo));
+      expect(result.sparse, label).toBe(true);
+      expect(result.edgeDensity, label).toBe(0);
+    }
+  });
+
+  it("does not flag a repo whose imports resolved", () => {
+    for (const [label, build, run] of [["web", buildGraphWeb, locateWeb], ["cli", buildGraphCli, locateCli]]) {
+      const result = run("fix the dashboard", denseRepo, build(denseRepo));
+      expect(result.sparse, label).toBe(false);
+      expect(result.edgeDensity, label).toBeGreaterThan(0.6);
+    }
+  });
+
+  it("agrees on the signal across both implementations", () => {
+    for (const repo of [sparseRepo, denseRepo]) {
+      const web = locateWeb("fix the dashboard", repo, buildGraphWeb(repo));
+      const cli = locateCli("fix the dashboard", repo, buildGraphCli(repo));
+      expect(cli.sparse).toBe(web.sparse);
+      expect(cli.edgeDensity).toBe(web.edgeDensity);
+    }
+  });
+});

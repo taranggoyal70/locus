@@ -9,7 +9,15 @@ const BUDGET = 40_000;
 
 type ExportFormat = "generic" | "claude" | "cursor";
 
-function packContext(repo: RepoData, result: LocateResult, format: ExportFormat = "generic") {
+function sparseGraphWarning(result: LocateResult) {
+  if (!result.sparse || result.widened) return null;
+  return (
+    `warning: few internal imports resolved (${result.edgeDensity.toFixed(2)} edges/file), ` +
+    `so this Slice may be missing real dependencies and the reduction may be overstated`
+  );
+}
+
+export function packContext(repo: RepoData, result: LocateResult, format: ExportFormat = "generic") {
   const parts: string[] = [];
   let tokens = 0;
   let dropped = 0;
@@ -34,14 +42,20 @@ function packContext(repo: RepoData, result: LocateResult, format: ExportFormat 
     head =
       `<context task="${result.task}">\n` +
       `<!-- ${parts.length} file(s), ~${tokens} tokens — localized by Locus -->\n`;
+    const warning = sparseGraphWarning(result);
+    if (warning) head += `<!-- ${warning} -->\n`;
   } else if (format === "cursor") {
     head =
       `// Context for: ${result.task}\n` +
       `// ${parts.length} file(s), ~${tokens} tokens — localized by Locus\n`;
+    const warning = sparseGraphWarning(result);
+    if (warning) head += `// ${warning}\n`;
   } else {
     head =
       `# Context for task: ${result.task}\n` +
       `# ${parts.length} file(s), ~${tokens} tokens — localized by Locus\n`;
+    const warning = sparseGraphWarning(result);
+    if (warning) head += `# ${warning}\n`;
   }
 
   let tail = "";

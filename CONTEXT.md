@@ -139,6 +139,13 @@ admitted-context reduction and factual Run usage are not Savings claims. Savings
 claims are unavailable during the controlled alpha.
 _Avoid_: estimated savings, projected savings, savings on failed Runs.
 
+**Sparse graph signal**:
+The `LocateResult` warning that dependency imports resolved at fewer than 0.6
+edges per Graph node. On a non-widened Slice this means the reduction may be an
+unresolved-import artifact, so user-facing and agent-facing surfaces must carry
+the warning next to token-reduction context.
+_Avoid_: treating a small Slice from a sparse Graph as proven localization.
+
 **Run evidence snapshot**:
 The durable, ownership-checked read model for one Run: its Agent Task, current
 status, append-only Steps, Artifacts, Reviews, Approvals, Token ledger, and optional
@@ -150,7 +157,8 @@ _Avoid_: response payload, session state, activity feed.
 - `src/lib/types.ts` — the web/API **Repo**, `Graph`, and **LocateResult**
   shapes. Every path appears in both spellings: `rel` for display beside other
   rel values in the UI, and `path`/`anchorPaths`/`excludedPaths`/
-  `candidateFilePaths` for anything a reader opens.
+  `candidateFilePaths` for anything a reader opens. `LocateResult` also owns
+  the **Sparse graph signal** fields.
 - `bin/core.mjs` — the zero-dependency CLI/MCP port of `buildGraph`/`locate`,
   plus local-Repo loading with an analyzed `dir` and the three openable-path
   output surfaces (`formatResult`, `buildPackedContext`, `buildJsonResult`).

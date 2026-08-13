@@ -142,6 +142,15 @@ export function buildGraph(repo) {
   return { nodes, edges, byPath, deps, rdeps, surfaces, totalTokens };
 }
 
+// Below this many dependency edges per node, the graph is too sparse for the
+// Slice size to mean what it appears to mean. Kept here so every surface that
+// renders a saving uses the same threshold rather than its own copy.
+const SPARSE_EDGE_DENSITY = 0.6;
+
+function graphDensity(graph) {
+  return graph.edges.length / Math.max(1, graph.nodes.length);
+}
+
 /** BFS transitive dependency closure of an anchor, with distances. */
 function closure(anchor, deps, maxDepth = 8) {
   const dist = { [anchor]: 0 };
@@ -286,6 +295,8 @@ export function locate(task, repo, graph, evidence = "") {
         candidateFilePaths: topCandidates.map((candidate) => candidate.path),
         repositoryTerms: repositoryTerms(graph),
       },
+      edgeDensity: graphDensity(graph),
+      sparse: graphDensity(graph) < SPARSE_EDGE_DENSITY,
     };
   }
 
@@ -331,6 +342,8 @@ export function locate(task, repo, graph, evidence = "") {
     totalTokens: graph.totalTokens,
     savedPct: Math.round((100 * (graph.totalTokens - sliceTokens)) / graph.totalTokens),
     refinement: null,
+    edgeDensity: graphDensity(graph),
+    sparse: graphDensity(graph) < SPARSE_EDGE_DENSITY,
   };
 }
 
@@ -467,6 +480,14 @@ function analyzedDir(repo, surface) {
   return repo.dir;
 }
 
+function sparseGraphWarning(result) {
+  if (!result.sparse || result.widened) return null;
+  return (
+    `warning: few internal imports resolved (${result.edgeDensity.toFixed(2)} edges/file), `
+    + `so this slice may be missing real dependencies and the saving above may be overstated`
+  );
+}
+
 /** Human-readable summary of a LocateResult (shared by CLI + MCP). */
 export function formatResult(result, repo) {
   const lines = [`Repo: ${analyzedDir(repo, "formatResult")}  (paths below are relative to this directory)`];
@@ -495,6 +516,15 @@ export function formatResult(result, repo) {
   lines.push("");
   lines.push(`Excluded: ${result.excluded.length} file${result.excluded.length === 1 ? "" : "s"}`);
   lines.push(`context: ${result.sliceTokens}/${result.totalTokens} tokens — ${result.savedPct}% fewer`);
+  // A sparse graph makes a small Slice look like a good localization when it is
+  // really an unresolved-import artifact, and the reported saving is then too
+  // high rather than too low. Say so next to the number it undermines. A widen
+  // needs no warning: returning the whole repository is already the honest
+  // answer to weak evidence.
+  const warning = sparseGraphWarning(result);
+  if (warning) {
+    lines.push(warning);
+  }
   return lines.join("\n");
 }
 
@@ -520,6 +550,10 @@ export function buildPackedContext(result, repo, budget = 40000) {
   }
   let text = `# Context for: ${result.task}\n# Repo: ${dir}  (file paths below are relative to this directory)`;
   text += `\n# ${included.length} file${included.length === 1 ? "" : "s"}, ~${used} tokens`;
+  const warning = sparseGraphWarning(result);
+  if (warning) {
+    text += `\n# ${warning}`;
+  }
   for (const f of included) {
     text += `\n\n===== ${f.path} =====\n${repo.files[f.path] ?? ""}`;
   }

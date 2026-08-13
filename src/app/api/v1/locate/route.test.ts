@@ -16,11 +16,11 @@ import {
   resolveContextBudget,
 } from "@/app/api/v1/locate/route";
 
-function request() {
+function request(body: Record<string, unknown> = {}) {
   return new Request("https://locus.example/api/v1/locate", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: "Bearer lk_test" },
-    body: JSON.stringify({ repo: "owner/repo", task: "Fix the checkout path" }),
+    body: JSON.stringify({ repo: "owner/repo", task: "Fix the checkout path", ...body }),
   });
 }
 
@@ -88,6 +88,8 @@ describe("locate API analytics", () => {
     ]);
     expect(body.anchors).toEqual(["src/checkout.ts"]);
     expect(body.context).toContain("===== src/checkout.ts =====");
+    expect(body.context).toContain("# warning: few internal imports resolved (0.00 edges/file)");
+    expect(body.context.indexOf("# warning:")).toBeLessThan(body.context.indexOf("===== src/checkout.ts ====="));
     expect(trackMock).toHaveBeenCalledWith({
       event: "api_locate",
       userId: "user_123",
@@ -98,6 +100,16 @@ describe("locate API analytics", () => {
       }),
     });
     expect(trackMock.mock.calls[0][0].properties).not.toHaveProperty("task");
+  });
+
+  it("includes the first source file when the sparse warning precedes a tiny budget", async () => {
+    const response = await POST(request({ budget: 1 }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.context).toContain("# warning: few internal imports resolved (0.00 edges/file)");
+    expect(body.context).toContain("===== src/checkout.ts =====");
+    expect(body.context.indexOf("# warning:")).toBeLessThan(body.context.indexOf("===== src/checkout.ts ====="));
   });
 });
 

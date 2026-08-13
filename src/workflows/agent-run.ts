@@ -48,6 +48,9 @@ type LocalizedRun = {
   included: string[];
   excluded: string[];
   reason: string;
+  widened: boolean;
+  sparse: boolean;
+  edgeDensity: number;
   baselineTokens: number;
   includedTokens: number;
   tokenBudget: number;
@@ -124,6 +127,8 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
       excludedFiles: excluded.length,
       includedTokens: result.sliceTokens,
       baselineTokens: result.totalTokens,
+      sparse: result.sparse,
+      edgeDensity: Number(result.edgeDensity.toFixed(3)),
       repositoryTruncated: fetched.truncated,
     },
   });
@@ -138,6 +143,9 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
     included,
     excluded,
     reason: result.reason,
+    widened: result.widened,
+    sparse: result.sparse,
+    edgeDensity: result.edgeDensity,
     baselineTokens: result.totalTokens,
     includedTokens: result.sliceTokens,
     tokenBudget: run.token_budget,
@@ -186,6 +194,8 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       acceptanceCriteria: localized.acceptanceCriteria,
       reason: localized.reason,
       baselineTokens: localized.baselineTokens,
+      sparse: localized.sparse && !localized.widened,
+      edgeDensity: localized.edgeDensity,
       included: localized.included.flatMap((path) => {
         const content = localized.repo.files[path];
         return content === undefined ? [] : [{ path, content }];

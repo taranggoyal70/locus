@@ -297,3 +297,52 @@ describe("rendering a repo analyzed from another directory", () => {
     }
   });
 });
+
+describe("sparse-graph warning in rendered output", () => {
+  const base = {
+    task: "fix the dashboard",
+    widened: false,
+    reason: "matched src/dash.ts",
+    anchors: ["dash.ts"],
+    anchorPaths: ["src/dash.ts"],
+    slice: [{ path: "src/dash.ts", rel: "dash.ts", dist: 0, tokens: 10, recent: false }],
+    excluded: [], excludedPaths: [],
+    sliceTokens: 10, totalTokens: 100, savedPct: 90,
+    refinement: null,
+    edgeDensity: 0, sparse: true,
+  };
+
+  it("warns beside the saving it undermines", () => {
+    const text = formatResult(base, { dir: "/repo", files: {} });
+    expect(text).toContain("90% fewer");
+    expect(text).toMatch(/warning: few internal imports resolved \(0\.00 edges\/file\)/);
+    expect(text.indexOf("90% fewer")).toBeLessThan(text.indexOf("warning:"));
+  });
+
+  it("warns in packed context before file contents", () => {
+    const packed = buildPackedContext(base, { dir: "/repo", files: { "src/dash.ts": "export const dash = true;\n" } });
+    expect(packed.text).toMatch(/# warning: few internal imports resolved \(0\.00 edges\/file\)/);
+    expect(packed.text.indexOf("# warning:")).toBeLessThan(packed.text.indexOf("===== src/dash.ts ====="));
+  });
+
+  it("stays quiet when the graph resolved normally", () => {
+    const text = formatResult({ ...base, sparse: false, edgeDensity: 1.4 }, { dir: "/repo", files: {} });
+    expect(text).not.toContain("warning:");
+    const packed = buildPackedContext(
+      { ...base, sparse: false, edgeDensity: 1.4 },
+      { dir: "/repo", files: { "src/dash.ts": "" } },
+    );
+    expect(packed.text).not.toContain("warning:");
+  });
+
+  it("stays quiet on a widen, which is already the honest answer", () => {
+    const widened = {
+      ...base, widened: true, sparse: true,
+      reason: "no file matched with enough confidence",
+      anchors: [], anchorPaths: [],
+      refinement: { unmatchedTerms: [], candidateFiles: [], candidateFilePaths: [], repositoryTerms: [] },
+    };
+    expect(formatResult(widened, { dir: "/repo", files: {} })).not.toContain("warning:");
+    expect(buildPackedContext(widened, { dir: "/repo", files: { "src/dash.ts": "" } }).text).not.toContain("warning:");
+  });
+});
