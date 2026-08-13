@@ -125,7 +125,7 @@ export function buildGraph(repo: RepoData): Graph {
       // `resolve` returns any key present in `files`, but nodes exist only for
       // JS/TS paths, so a `./x.module.css` or `./config.json` import resolves to
       // a path with no node. Every consumer of the graph assumes an edge endpoint
-      // has one — `locate` dereferences `byPath[p].rel` — so an edge to a
+      // has one; `locate` dereferences `byPath[p].rel`, so an edge to a
       // non-node is not a weaker edge, it is a crash. Drop it here rather than
       // guarding each consumer.
       if (tgt && tgt !== p && byPath[tgt] && !seen.has(tgt)) {

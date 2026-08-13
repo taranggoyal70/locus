@@ -46,8 +46,8 @@ distance. It is not claimed to be mathematically minimal or complete.
 _Avoid_: subset, scope (noun), selection, context (overloaded).
 
 **Closure**:
-The transitive set of files reachable from a node by following imports. The Slice
-is a Closure rooted at the Anchor.
+The transitive set of files reachable from a node by following import edges to
+other **Graph** nodes. The Slice is a Closure rooted at the Anchor.
 _Avoid_: dependencies (too broad — a Closure is rooted and transitive).
 
 **Localize** (`locate`):
@@ -178,7 +178,10 @@ _Avoid_: response payload, session state, activity feed.
 ## Invariants
 
 - **Widen on weak evidence.** `locate` must never return a partial/empty Slice silently; if it cannot anchor, it widens to the whole loaded Repo.
-- **Deterministic graph.** The dependency **Graph** comes from parsing imports, never from an LLM.
+- **Deterministic source graph.** The dependency **Graph** comes from parsing
+  imports between JavaScript/TypeScript nodes, never from an LLM. Non-source
+  files may exist in `Repo.files`, but imports to them are not Graph edges or
+  Slice files.
 - **CLI/MCP emitted paths are openable.** Anything the source CLI or MCP server
   renders for a human or an agent to open is a **repo-relative path**, stated
   together with the local Repo `dir` it is relative to; a
