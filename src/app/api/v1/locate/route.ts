@@ -275,13 +275,15 @@ export async function POST(request: Request) {
     const packed: string[] = [];
     const warning = sparseGraphWarning(result);
     if (warning) packed.push(`# ${warning}`);
+    let packedFiles = 0;
     let tokens = 0;
     for (const f of result.slice) {
       const content = fileContent(repo, f.rel);
       if (!content) continue;
       const t = Math.ceil(content.length / 4);
-      if (packed.length > 0 && tokens + t > budget) continue;
+      if (packedFiles > 0 && tokens + t > budget) continue;
       packed.push(`===== ${f.path} =====\n${content}`);
+      packedFiles += 1;
       tokens += t;
     }
 
