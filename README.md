@@ -25,7 +25,7 @@ resumed, cancelled, and reviewed from the Runs ledger.
 ## Evidence
 
 The historical-task benchmark replays Locus on the parent snapshots of 15 real
-fixes across Locus, Agent Access, and Solum — three repositories owned by this
+fixes across Locus, Agent Access, and Solum - three repositories owned by this
 project's author, so treat it as a regression suite rather than independent
 evidence:
 
@@ -192,7 +192,7 @@ that directory. The unpublished package source lives in [`cli/`](./cli);
 - The historical benchmark is generated from declared parent snapshots and fails
   its gate if fix-file recall drops below 100%. It runs locally via
   `pnpm benchmark`, **not** in CI, and `benchmarks/results.json` is a committed
-  artifact from whenever it was last run — so unlike the checks above it is not
+  artifact from whenever it was last run, so unlike the checks above it is not
   enforced on every change
 
 Run the same checks locally:

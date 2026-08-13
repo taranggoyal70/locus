@@ -79,7 +79,7 @@ These are real and should not be forgotten because the row above says closed.
   records an event rather than forcing a running function to exit, so freeing
   capacity while the original execution may still hold provider and sandbox
   resources over-subscribes a limit sized for one. Closing this needs a staleness
-  proof — a heartbeat or a reconciliation reaper — not a change to the route.
+  proof, such as a heartbeat or a reconciliation reaper, not a change to the route.
 - **R13.** Closed on both ingress paths. `/api/v1/locate` records task shape
   only, and `/api/track` now filters client properties against a per-event
   schema (`src/lib/analytics-events.ts`) that accepts numbers and fixed
