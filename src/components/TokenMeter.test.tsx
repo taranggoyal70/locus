@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { TokenMeter } from "@/components/TokenMeter";
+import { packContext, TokenMeter } from "@/components/TokenMeter";
 import type { LocateResult, RepoData } from "@/lib/types";
 
 const result: LocateResult = {
@@ -39,5 +39,40 @@ describe("controlled-alpha context token view", () => {
     expect(html).toContain("included share");
     expect(html).not.toContain("fewer tokens");
     expect(html).not.toContain("−75%");
+  });
+});
+
+describe("web packed context sparse warning", () => {
+  const sparseResult: LocateResult = {
+    ...result,
+    edgeDensity: 0,
+    sparse: true,
+  };
+
+  it("includes the sparse warning before generic file contents", () => {
+    const packed = packContext(repo, sparseResult);
+
+    expect(packed.text).toContain("# warning: few internal imports resolved (0.00 edges/file)");
+    expect(packed.text.indexOf("# warning:")).toBeLessThan(packed.text.indexOf("===== src/checkout.ts ====="));
+  });
+
+  it("includes the sparse warning before Claude file contents", () => {
+    const packed = packContext(repo, sparseResult, "claude");
+
+    expect(packed.text).toContain("<!-- warning: few internal imports resolved (0.00 edges/file)");
+    expect(packed.text.indexOf("<!-- warning:")).toBeLessThan(packed.text.indexOf("===== src/checkout.ts ====="));
+  });
+
+  it("includes the sparse warning before Cursor file contents", () => {
+    const packed = packContext(repo, sparseResult, "cursor");
+
+    expect(packed.text).toContain("// warning: few internal imports resolved (0.00 edges/file)");
+    expect(packed.text.indexOf("// warning:")).toBeLessThan(packed.text.indexOf("// File: src/checkout.ts"));
+  });
+
+  it("omits the sparse warning when the result widened", () => {
+    const packed = packContext(repo, { ...sparseResult, widened: true });
+
+    expect(packed.text).not.toContain("warning:");
   });
 });
