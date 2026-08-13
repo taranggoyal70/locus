@@ -26,7 +26,7 @@ function context(id = RUN_ID) {
   return { params: Promise.resolve({ id }) };
 }
 
-function request(headers: Record<string, string> = {}) {
+function request(headers: Record<string, string> = { origin: "https://locus.example" }) {
   return new Request(`https://locus.example/api/agent/runs/${RUN_ID}/cancel`, {
     method: "POST",
     headers,
@@ -97,6 +97,13 @@ describe("cancel an agent run", () => {
 
   it("rejects a cross-site request", async () => {
     const response = await POST(request({ "sec-fetch-site": "cross-site" }), context());
+
+    expect(response.status).toBe(403);
+    expect(transitionRunMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a request without same-origin browser evidence", async () => {
+    const response = await POST(request({}), context());
 
     expect(response.status).toBe(403);
     expect(transitionRunMock).not.toHaveBeenCalled();

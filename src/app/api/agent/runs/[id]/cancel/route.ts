@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { releaseRunProviderLease, transitionRun } from "@/lib/agent/run-store";
 import { isRunStatus, isTerminalRun } from "@/lib/agent/run-state";
 import { logger } from "@/lib/logger";
+import { sameOriginMutation } from "@/lib/request-security";
 import { tenantClient } from "@/lib/supabase-tenant";
 
 type RouteContext = {
@@ -28,7 +29,7 @@ type RouteContext = {
 export async function POST(request: Request, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  if (request.headers.get("sec-fetch-site") === "cross-site") {
+  if (!sameOriginMutation(request)) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
 
