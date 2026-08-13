@@ -3,9 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const authMock = vi.hoisted(() => vi.fn());
 const transitionRunMock = vi.hoisted(() => vi.fn());
 const releaseRunProviderLeaseMock = vi.hoisted(() => vi.fn());
+const getRunMock = vi.hoisted(() => vi.fn());
+const workflowCancelMock = vi.hoisted(() => vi.fn());
 const singleMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
+vi.mock("workflow/api", () => ({ getRun: getRunMock }));
 vi.mock("@/lib/agent/run-store", () => ({
   transitionRun: transitionRunMock,
   releaseRunProviderLease: releaseRunProviderLeaseMock,
@@ -38,28 +41,41 @@ describe("cancel an agent run", () => {
     authMock.mockResolvedValue({ userId: "user_123" });
     transitionRunMock.mockReset().mockResolvedValue(undefined);
     releaseRunProviderLeaseMock.mockReset().mockResolvedValue(undefined);
-    singleMock.mockReset().mockResolvedValue({ data: { id: RUN_ID, status: "executing" }, error: null });
+    getRunMock.mockReset().mockReturnValue({ cancel: workflowCancelMock });
+    workflowCancelMock.mockReset().mockResolvedValue(undefined);
+    singleMock.mockReset().mockResolvedValue({
+      data: { id: RUN_ID, status: "executing", workflow_run_id: "workflow-id" },
+      error: null,
+    });
   });
 
-  it("cancels a stuck run and releases the deployment-wide provider lease", async () => {
+  it("cancels the durable workflow before releasing the deployment-wide provider lease", async () => {
+    const events: string[] = [];
+    workflowCancelMock.mockImplementationOnce(async () => { events.push("workflow"); });
+    transitionRunMock.mockImplementationOnce(async () => { events.push("transition"); });
+    releaseRunProviderLeaseMock.mockImplementationOnce(async () => { events.push("lease"); });
+
     const response = await POST(request(), context());
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ id: RUN_ID, status: "cancelled" });
+    expect(getRunMock).toHaveBeenCalledWith("workflow-id");
     expect(transitionRunMock).toHaveBeenCalledWith(expect.objectContaining({
       runId: RUN_ID,
       userId: "user_123",
       current: "executing",
       next: "cancelled",
     }));
-    // Freeing the user's own slot without releasing the lease would leave every
-    // other user blocked for the rest of the lease window.
     expect(releaseRunProviderLeaseMock).toHaveBeenCalledWith(RUN_ID);
+    expect(events).toEqual(["workflow", "transition", "lease"]);
   });
 
   it("cancels from any non-terminal status", async () => {
     for (const status of ["queued", "localizing", "planning", "executing", "verifying"]) {
-      singleMock.mockResolvedValueOnce({ data: { id: RUN_ID, status }, error: null });
+      singleMock.mockResolvedValueOnce({
+        data: { id: RUN_ID, status, workflow_run_id: "workflow-id" },
+        error: null,
+      });
 
       const response = await POST(request(), context());
 
@@ -77,13 +93,35 @@ describe("cancel an agent run", () => {
     expect(releaseRunProviderLeaseMock).not.toHaveBeenCalled();
   });
 
+  it("does not mark the Run cancelled when workflow cancellation fails", async () => {
+    workflowCancelMock.mockRejectedValueOnce(new Error("workflow unavailable"));
+
+    const response = await POST(request(), context());
+
+    expect(response.status).toBe(503);
+    expect(transitionRunMock).not.toHaveBeenCalled();
+    expect(releaseRunProviderLeaseMock).not.toHaveBeenCalled();
+  });
+
+  it("does not release provider capacity without a workflow handle", async () => {
+    singleMock.mockResolvedValueOnce({
+      data: { id: RUN_ID, status: "executing", workflow_run_id: null },
+      error: null,
+    });
+
+    const response = await POST(request(), context());
+
+    expect(response.status).toBe(200);
+    expect(getRunMock).not.toHaveBeenCalled();
+    expect(transitionRunMock).toHaveBeenCalledWith(expect.objectContaining({ next: "cancelled" }));
+    expect(releaseRunProviderLeaseMock).not.toHaveBeenCalled();
+  });
+
   it("still succeeds when releasing capacity fails", async () => {
     releaseRunProviderLeaseMock.mockRejectedValueOnce(new Error("rpc unavailable"));
 
     const response = await POST(request(), context());
 
-    // The Run is terminal and the user's slot is freed either way; the lease
-    // expires on its own, so failing the request would help nobody.
     expect(response.status).toBe(200);
     expect(transitionRunMock).toHaveBeenCalled();
   });

@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getRun } from "workflow/api";
 
 import { releaseRunProviderLease, transitionRun } from "@/lib/agent/run-store";
 import { isRunStatus, isTerminalRun } from "@/lib/agent/run-state";
@@ -21,10 +22,6 @@ type RouteContext = {
  * Runs for everybody. The state machine already permits the transition from any
  * non-terminal status; only the route was missing.
  *
- * Releasing the lease is the half that matters. Marking the Run cancelled without
- * releasing it would free the user's own slot while still blocking every other
- * user for the remaining lease window, which is the more damaging half of the
- * problem and the less visible one.
  */
 export async function POST(request: Request, context: RouteContext) {
   const { userId } = await auth();
@@ -43,7 +40,7 @@ export async function POST(request: Request, context: RouteContext) {
   const db = tenantClient(userId);
   const { data: run, error: runError } = await db
     .from("agent_runs")
-    .select("id,status")
+    .select("id,status,workflow_run_id")
     .eq("id", id)
     .eq("user_id", userId)
     .single();
@@ -58,6 +55,22 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
+  if (run.workflow_run_id) {
+    try {
+      await getRun(run.workflow_run_id).cancel();
+    } catch (error) {
+      logger.error(
+        "agent.workflow.cancel_failed",
+        { cause: error instanceof Error ? error.message : String(error) },
+        id,
+      );
+      return NextResponse.json(
+        { error: "The durable workflow could not be cancelled." },
+        { status: 503 },
+      );
+    }
+  }
+
   await transitionRun({
     runId: id,
     userId,
@@ -66,18 +79,16 @@ export async function POST(request: Request, context: RouteContext) {
     values: { error: "Cancelled by the user.", completed_at: new Date().toISOString() },
   });
 
-  // Best effort, and deliberately after the transition: if releasing capacity
-  // fails, the Run is still terminal and the user's slot is still freed, so the
-  // caller gets a success. The lease expires on its own, and an operator needs
-  // the log line to know it happened.
-  try {
-    await releaseRunProviderLease(id);
-  } catch (error) {
-    logger.error(
-      "agent.run.cancel_lease_release_failed",
-      { cause: error instanceof Error ? error.message : String(error) },
-      id,
-    );
+  if (run.workflow_run_id) {
+    try {
+      await releaseRunProviderLease(id);
+    } catch (error) {
+      logger.error(
+        "agent.run.cancel_lease_release_failed",
+        { cause: error instanceof Error ? error.message : String(error) },
+        id,
+      );
+    }
   }
 
   logger.info("agent.run.cancelled", { from: run.status }, id);
