@@ -26,5 +26,5 @@ overrides:
   # js-yaml prototype pollution
   'js-yaml@>=4.0.0 <4.3.1': ^4.3.1
   # GHSA-2v37-7h3g-55p8 — nanoid infinite loop on zero size
-  'nanoid@<3.3.17': ^3.3.17
+  'nanoid@<3.3.18': ^3.3.18
   'nanoid@>=4.0.0 <5.1.16': ^5.1.16

@@ -26,10 +26,10 @@ risk that was quietly downgraded.
 | R16 | P2 Medium | `3a91b80` | Security headers pinned by tests rather than living unasserted in config |
 | R17 | P3 Medium/Low | `3a91b80` | Webhook body bounded in front of the read (ceiling only, see below) |
 
-Test coverage went from 215 to 374 over this work. The additions are security
-regression tests that execute the attacks: a symlinked escape, an MCP root
-escape, an oversized JSON-RPC frame, a diff that hides what the candidate
-contains, an unscoped tenant query, a widen of a sensitive path.
+The additions are security regression tests that execute the attacks: a
+symlinked escape, an MCP root escape, an oversized JSON-RPC frame, a diff that
+hides what the candidate contains, an unscoped tenant query, a widen of a
+sensitive path, and browser-forged delivery approval requests.
 
 ## Residuals on closed risks
 
@@ -52,6 +52,14 @@ These are real and should not be forgotten because the row above says closed.
   with Clerk to Supabase JWT so RLS applies per user. What shipped removes the
   default cross-tenant failure mode; it does not remove the service role.
 - **R17.** The body ceiling shipped. The idempotency ledger did not.
+- **CSRF on mutation routes.** `POST /api/agent/runs/[id]/approve` used an inline
+  `sec-fetch-site === "cross-site"` check while every other mutation route used the
+  shared `sameOriginMutation` guard. The inline form allowed `same-site` (a sibling
+  subdomain), a request carrying no Fetch Metadata, and a foreign `Origin` — on the
+  one route that writes to GitHub. Latent rather than live, because
+  `alphaCapabilitiesForUser().delivery` is false and returns 403 first, so the check
+  was unreachable. Now on the shared guard, with three regression tests covering the
+  cases the inline form let through.
 
 ## Open
 
