@@ -377,8 +377,8 @@ export type Database = {
         };
         Returns: boolean;
       };
-      // R17: Stripe writes that refuse an event older than, or identical to, the
-      // one already applied to the row. `applied` is false for a refusal.
+      // R17: Stripe writes that refuse stale grants and resolve same-second
+      // ambiguity toward the more restrictive subscription state.
       upsert_stripe_subscription: {
         Args: {
           p_user_id: string;

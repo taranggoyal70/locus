@@ -11,14 +11,15 @@
 -- account. An event-id ledger alone would not prevent that, because those are two
 -- distinct events.
 --
--- So the row records which event last wrote it, and a write is refused when the
--- incoming event is older than the one already applied, or is the one already
--- applied. Stripe event.created is seconds since the Unix epoch, so equal
--- timestamps can be different events; ties fail closed, accepting the cost of
--- dropping a same-second event rather than wrongly granting access. Both checks
--- live in the same statement as the write: reading the watermark and then
--- updating would reintroduce exactly the race closed in 016, since Stripe
--- retries deliveries concurrently.
+-- So the row records which event last wrote it. Stripe event.created is seconds
+-- since the Unix epoch, so equal timestamps can be different events; ambiguity
+-- resolves toward the more restrictive state. Same-second active events are
+-- refused, while same-second inactive or cancelled events apply. The cost is
+-- that a legitimate same-second grant may be dropped, but a same-second
+-- restriction must not leave paid access in place. Both checks live in the same
+-- statement as the write: reading the watermark and then updating would
+-- reintroduce exactly the race closed in 016, since Stripe retries deliveries
+-- concurrently.
 alter table public.subscriptions
   add column if not exists last_event_id text,
   add column if not exists last_event_created_at timestamptz;
@@ -28,7 +29,7 @@ set last_event_created_at = coalesce(updated_at, created_at)
 where last_event_created_at is null;
 
 comment on column public.subscriptions.last_event_created_at is
-  'Stripe `event.created` of the last applied event. Older and identical-second events are refused.';
+  'Stripe `event.created` of the last applied event. Older events are refused; identical-second grants are refused.';
 
 -- `checkout.session.completed`. Creates the row or advances it, never regresses it.
 create or replace function public.upsert_stripe_subscription(
@@ -119,7 +120,10 @@ begin
     last_event_created_at = p_event_created
   where stripe_subscription_id = p_subscription_id
     and last_event_id is distinct from p_event_id
-    and last_event_created_at < p_event_created
+    and (
+      last_event_created_at < p_event_created
+      or (last_event_created_at = p_event_created and p_status in ('inactive', 'cancelled'))
+    )
     and (status <> 'cancelled' or p_status = 'cancelled');
 
   get diagnostics v_rows = row_count;
