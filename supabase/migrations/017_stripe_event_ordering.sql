@@ -13,15 +13,22 @@
 --
 -- So the row records which event last wrote it, and a write is refused when the
 -- incoming event is older than the one already applied, or is the one already
--- applied. Both checks live in the same statement as the write: reading the
--- watermark and then updating would reintroduce exactly the race closed in 016,
--- since Stripe retries deliveries concurrently.
+-- applied. Stripe event.created is seconds since the Unix epoch, so equal
+-- timestamps can be different events; ties fail closed, accepting the cost of
+-- dropping a same-second event rather than wrongly granting access. Both checks
+-- live in the same statement as the write: reading the watermark and then
+-- updating would reintroduce exactly the race closed in 016, since Stripe
+-- retries deliveries concurrently.
 alter table public.subscriptions
   add column if not exists last_event_id text,
   add column if not exists last_event_created_at timestamptz;
 
+update public.subscriptions
+set last_event_created_at = coalesce(updated_at, created_at)
+where last_event_created_at is null;
+
 comment on column public.subscriptions.last_event_created_at is
-  'Stripe `event.created` of the last applied event. Older events are refused.';
+  'Stripe `event.created` of the last applied event. Older and identical-second events are refused.';
 
 -- `checkout.session.completed`. Creates the row or advances it, never regresses it.
 create or replace function public.upsert_stripe_subscription(
@@ -68,13 +75,9 @@ begin
       last_event_created_at = excluded.last_event_created_at
     where
       -- Refuse a replay of the event already applied, and refuse an event older
-      -- than the one already applied. A null watermark is a row written before
-      -- this migration, which is treated as older than anything.
+      -- than or equal to the one already applied.
       public.subscriptions.last_event_id is distinct from excluded.last_event_id
-      and (
-        public.subscriptions.last_event_created_at is null
-        or public.subscriptions.last_event_created_at <= excluded.last_event_created_at
-      );
+      and public.subscriptions.last_event_created_at < excluded.last_event_created_at;
 
   get diagnostics v_rows = row_count;
 
@@ -116,7 +119,8 @@ begin
     last_event_created_at = p_event_created
   where stripe_subscription_id = p_subscription_id
     and last_event_id is distinct from p_event_id
-    and (last_event_created_at is null or last_event_created_at <= p_event_created);
+    and last_event_created_at < p_event_created
+    and (status <> 'cancelled' or p_status = 'cancelled');
 
   get diagnostics v_rows = row_count;
 
