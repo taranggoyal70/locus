@@ -19,7 +19,7 @@ risk that was quietly downgraded.
 | R11 | P1 High | `032df7f` | Runs refuse to start against a truncated repository |
 | R9 | P1 High | `9bda750` | DOCX archive validated structurally from the End of Central Directory record (ZIP half only, see below) |
 | R10 | P1 High | `5834cc8` | Delivery approval bound to the reviewed proposal hash; workflow pinned to the deployment that started it |
-| R12 | P2 Medium | `c520816` | Context budget clamped; wildcard CORS replaced with an allowlist |
+| R12 | P2 Medium | `c520816`, `1acfc13` | Context budget clamped; wildcard CORS replaced with an allowlist; Agent Run active and daily quota claims now count and insert atomically |
 | R13 | P2 Medium/High | `31fd609` | Analytics records the shape of user content on both ingress paths, never its words |
 | R14 | P2 Medium/High | `31fd609` | Model resolution fails closed against a production allowlist |
 | R15 | P2 Medium | `3a91b80` | Secrets redacted by value shape, not only field name |

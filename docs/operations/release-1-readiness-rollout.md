@@ -1,6 +1,6 @@
 # Release 1 readiness rollout
 
-This package installs migrations `012`–`015`, deploys the reviewed application SHA, and gathers the evidence required to decide whether Release 1 may begin. It does not turn missing human acceptance or elapsed canary time into a pass.
+This package installs migrations `012`–`016`, deploys the reviewed application SHA, and gathers the evidence required to decide whether Release 1 may begin. It does not turn missing human acceptance or elapsed canary time into a pass.
 
 ## Exact preflight
 
@@ -14,7 +14,7 @@ test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
 git diff --check
 git diff --quiet -- . ':!launch/locus-linkedin-video/**'
 git diff --cached --quiet
-shasum -a 256 supabase/migrations/0{12,13,14,15}_*.sql
+shasum -a 256 supabase/migrations/0{12,13,14,15,16}_*.sql
 pnpm lint
 pnpm test
 pnpm check:alpha-claims
@@ -43,7 +43,7 @@ pnpm dlx supabase@${SUPABASE_CLI_VERSION} migration list --linked
 pnpm dlx supabase@${SUPABASE_CLI_VERSION} db push --linked --dry-run
 ```
 
-Remote migration history must be the exact contiguous prefix `001`–`011`. The dry run must contain only `012_release1_run_evidence.sql`, `013_agent_provider_capacity.sql`, `014_agent_data_retention.sql`, and `015_supabase_advisor_hardening.sql`, in that order. Stop on a gap, remote-only migration, repair marker, or additional file.
+Remote migration history must be the exact contiguous prefix `001`–`011`. The dry run must contain only `012_release1_run_evidence.sql`, `013_agent_provider_capacity.sql`, `014_agent_data_retention.sql`, `015_supabase_advisor_hardening.sql`, and `016_agent_run_quota_claim.sql`, in that order. Stop on a gap, remote-only migration, repair marker, or additional file.
 
 Run and retain these read-only production checks:
 
@@ -96,7 +96,7 @@ Do not use `--include-all`, repair history, or run an untracked file loop. After
 ```sql
 select version, name
 from supabase_migrations.schema_migrations
-where version between '012' and '015'
+where version between '012' and '016'
 order by version;
 
 select column_name, data_type, is_nullable, column_default
@@ -110,6 +110,7 @@ select
   to_regprocedure('public.decide_agent_proposal(uuid,text,text,text,jsonb,text)') as review_rpc,
   to_regprocedure('public.acquire_agent_provider_lease(uuid,text,integer,integer)') as acquire_rpc,
   to_regprocedure('public.release_agent_provider_lease(uuid,integer)') as release_rpc,
+  to_regprocedure('public.claim_agent_run_slot(text,uuid,text,integer,text[],integer,integer)') as claim_rpc,
   to_regprocedure('public.delete_expired_agent_data(integer)') as retention_rpc;
 
 select c.relname, c.relrowsecurity,
@@ -135,6 +136,7 @@ where n.nspname = 'public'
     'decide_agent_proposal',
     'acquire_agent_provider_lease',
     'release_agent_provider_lease',
+    'claim_agent_run_slot',
     'delete_expired_agent_data'
   )
 order by routine;
@@ -146,7 +148,7 @@ where not tgisinternal
 order by tgname;
 ```
 
-Required results: migrations `012`–`015` appear once; every object resolves; both new tables have RLS; browser roles have no effective access or RPC execution; `service_role` can execute every RPC; both immutability triggers are enabled. `pnpm dlx supabase@2.111.0 db advisors --linked` must return no security or performance findings.
+Required results: migrations `012`–`016` appear once; every object resolves; both new tables have RLS; browser roles have no effective access or RPC execution; `service_role` can execute every RPC; both immutability triggers are enabled. `pnpm dlx supabase@2.111.0 db advisors --linked` must return no security or performance findings.
 
 Run the following transactional canary from an administrative SQL session. It creates no durable rows:
 
@@ -240,9 +242,9 @@ The cross-origin request must be denied and create no task or Run. Restore exact
 
 ## Rollback boundaries
 
-- Roll application code back first and clear `ALPHA_ALLOWED_USER_IDS`. Migrations `012`–`015` are additive and safe to leave installed for the previous application.
+- Roll application code back first and clear `ALPHA_ALLOWED_USER_IDS`. Migrations `012`–`016` are additive and safe to leave installed for the previous application.
 - Do not drop proposal hashes, reviews, artifacts, or immutability triggers after any Release 1 Run exists. Fix forward.
-- Do not drop provider-lease RPCs while a Release 1 caller is deployed. Old leases expire automatically; manual deletion is safe only after admission is disabled and active Runs are zero.
+- Do not drop provider-lease or quota-claim RPCs while a Release 1 caller is deployed. Old provider leases expire automatically; manual deletion is safe only after admission is disabled and active Runs are zero.
 - Do not call the retention RPC as a rollback. Deleted data is intentionally unrecoverable from the application; provider backups have separate lifetimes.
 - Reversing RLS/revokes or restoring public writes is never an acceptable rollback.
 - If the review RPC is defective, disable admission and review, preserve existing evidence, deploy a fix, and retry with a new Run rather than rewriting a published proposal.
