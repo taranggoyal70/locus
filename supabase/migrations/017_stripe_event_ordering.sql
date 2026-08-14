@@ -20,6 +20,21 @@
 -- statement as the write: reading the watermark and then updating would
 -- reintroduce exactly the race closed in 016, since Stripe retries deliveries
 -- concurrently.
+--
+-- Residual: this is a row-local watermark, so it cannot order an event that
+-- arrives before the subscriptions row exists. Concrete remaining sequence:
+-- checkout.session.completed is created at T0, the subscription is cancelled at
+-- T1, Stripe delivers customer.subscription.deleted first, this RPC updates zero
+-- rows as unknown and the route acknowledges it, then the older checkout event
+-- creates an active/pro row. Closing that requires a watermark keyed on
+-- stripe_subscription_id that outlives the subscriptions row, which is the
+-- ledger R17 originally named, needed for ordering rather than deduplication.
+-- It is deliberately deferred because billing is hard-disabled during the
+-- controlled alpha: alphaCapabilitiesForUser().billing is false for every user,
+-- there is no billing UI, and no Stripe keys are configured. As with R4, a
+-- dormant surface is finished in the change that enables the feature. This
+-- migration strictly improves the previous behaviour because that sequence was
+-- equally open before it, but it must not be read as fully closing R17.
 alter table public.subscriptions
   add column if not exists last_event_id text,
   add column if not exists last_event_created_at timestamptz;
