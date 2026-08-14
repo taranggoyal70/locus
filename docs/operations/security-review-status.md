@@ -11,7 +11,7 @@ risk that was quietly downgraded.
 | --- | --- | --- | --- |
 | R1 | P0 Critical | `a34ed5d` | Candidate frozen in one capture; reviewed diff built server-side from the trusted base; publishing refused unless `apply(diff, base) == candidate` |
 | R2 | P0 Critical/High | `64a60e8` | Egress revoked before any repository-controlled program runs; verification fails closed if the revocation did not take |
-| R3 | P0/P1 High | `4b671b8` | Canonical containment inside the sandbox, rejecting symlinks, escapes and non-regular files per path component |
+| R3 | P0/P1 High | `4b671b8`, `67c3fbd` | Canonical containment inside the sandbox, rejecting symlinks, escapes and non-regular files per path component; Slice search now uses that boundary instead of explicit `rg` path arguments |
 | R5 | P1 High | `74c2e68` | Server-side MCP root allowlist; bounded JSON-RPC framing |
 | R6 | P1 High | `528d323` | Widen justification enforced and bound into `proposal_hash`; widened-file ceiling; six sensitive-path classes that fail closed |
 | R7 | P1 High | `e024154` | Unscoped tenant queries fail closed; no API route holds a raw service client |
@@ -27,9 +27,10 @@ risk that was quietly downgraded.
 | R17 | P3 Medium/Low | `3a91b80` | Webhook body bounded in front of the read (ceiling only, see below) |
 
 The additions are security regression tests that execute the attacks: a
-symlinked escape, an MCP root escape, an oversized JSON-RPC frame, a diff that
-hides what the candidate contains, an unscoped tenant query, a widen of a
-sensitive path, and browser-forged delivery approval requests.
+symlinked escape, a Slice-search symlink leak, an MCP root escape, an oversized
+JSON-RPC frame, a diff that hides what the candidate contains, an unscoped tenant
+query, a widen of a sensitive path, and browser-forged delivery approval
+requests.
 
 ## Residuals on closed risks
 
@@ -38,10 +39,6 @@ These are real and should not be forgotten because the row above says closed.
 - **R1 / R2.** Verification isolation is implemented but not yet verified on the
   deployment target. Path *enumeration* still uses sandbox `git`. See
   `candidate-integrity-hardening.md` for the owner record.
-- **R3.** `WorkspaceController.search()` passes Slice paths to `rg`, which does
-  not follow symlinks when walking a directory but does read a symlinked path
-  given as an explicit argument. The `contain()` guard covers read and write,
-  not this path.
 - **R3.** `createDiff()` and `changeSet()` invoke `git` directly and sit outside
   containment. Subsumed by the R1 residual.
 - **R7.** `src/lib` (rate-limit, api-auth, run-store) and the run workflow still

@@ -108,8 +108,40 @@ describe("agent workspace", () => {
 
     await controller.search("value");
 
-    expect(workspace.commands[0].command).toContain("'src/included.ts'");
-    expect(workspace.commands[0].command).not.toContain("src/excluded.ts");
+    // Paths travel in the environment now rather than as `rg` arguments, because
+    // rg reads a symlinked path given explicitly and Slice paths are repository
+    // controlled (R3). The property under test is unchanged: excluded files are
+    // not searched.
+    expect(workspace.commands[0].env?.LOCUS_PATHS).toBe(JSON.stringify(["src/included.ts"]));
+    expect(workspace.commands[0].env?.LOCUS_PATHS).not.toContain("src/excluded.ts");
+  });
+
+  it("does not search with a shell tool that follows explicit symlinks", async () => {
+    const { controller, workspace } = setup();
+
+    await controller.search("value");
+
+    expect(workspace.commands[0].command).not.toContain("rg ");
+    expect(workspace.commands[0].command).toContain("node -e");
+  });
+
+  it("bounds the search path environment entry by UTF-8 bytes", async () => {
+    const paths = Array.from(
+      { length: 3_000 },
+      (_, index) => `src/検索-${String(index).padStart(4, "0")}.ts`,
+    );
+    const workspace = new FakeWorkspace();
+    const controller = new WorkspaceController(
+      workspace,
+      new AgentSlice({ included: paths, excluded: [] }),
+    );
+
+    const result = await controller.search("value");
+    const encodedPaths = workspace.commands[0].env?.LOCUS_PATHS;
+
+    expect(Buffer.byteLength(`LOCUS_PATHS=${encodedPaths}\0`, "utf8")).toBeLessThanOrEqual(60_000);
+    expect((JSON.parse(encodedPaths ?? "[]") as string[]).length).toBeLessThan(paths.length);
+    expect(result).toContain("readable path(s) exceeded the search path budget");
   });
 
   it("blocks external actions before they reach the sandbox", async () => {

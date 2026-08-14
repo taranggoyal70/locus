@@ -1,11 +1,11 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { CONTAINMENT_PRELUDE } from "@/lib/agent/workspace";
+import { CONTAINMENT_PRELUDE, SEARCH_SCRIPT } from "@/lib/agent/workspace";
 
 // R3: lexical path validation cannot defeat repository-controlled symlinks.
 // These tests execute the containment script that ships inside the sandbox
@@ -87,5 +87,94 @@ describe("sandbox path containment", () => {
 
   it("rejects an empty path", () => {
     expect(() => contain("")).toThrow(/missing path/);
+  });
+});
+
+// R3 residual: search used to hand Slice paths to `rg` as explicit arguments.
+// ripgrep does not follow symlinks while walking a directory, but it does read a
+// symlinked path passed explicitly, so an admitted path that is a symlink printed
+// a file from outside the workspace. Verified against ripgrep 14.1.1 before this
+// changed. These tests run the replacement script against a real filesystem.
+function search(paths: string[], query: string, cwd = root) {
+  const result = spawnSync(process.execPath, ["-e", SEARCH_SCRIPT], {
+    cwd,
+    env: {
+      ...process.env,
+      LOCUS_QUERY: query,
+      LOCUS_PATHS: JSON.stringify(paths),
+    },
+    encoding: "utf8",
+  });
+  return { stdout: result.stdout, stderr: result.stderr, status: result.status };
+}
+
+describe("slice search containment", () => {
+  // Own fixtures rather than the symlinks the cases above create inside their
+  // `it` bodies, so these tests do not depend on execution order.
+  beforeAll(() => {
+    symlinkSync(path.join(outside, "secret.env"), path.join(root, "search-leak.env"));
+    symlinkSync(outside, path.join(root, "search-escape"));
+  });
+
+  it("finds matches in an ordinary file inside the workspace", () => {
+    const { stdout } = search(["src/included.ts"], "value");
+
+    expect(stdout).toContain("src/included.ts:1:export const value = 1;");
+  });
+
+  it("does not read a symlinked path that resolves outside the workspace", () => {
+    // The exact leak: `rg -n --fixed-strings -- STOLEN leak.env` printed this.
+    const { stdout, stderr } = search(["search-leak.env"], "STOLEN");
+
+    expect(stdout).not.toContain("STOLEN");
+    expect(stderr).toMatch(/refused 1 path\(s\) that failed containment/);
+    expect(stderr).toMatch(/search-leak\.env: symlink rejected/);
+  });
+
+  it("still searches the contained paths when one path is refused", () => {
+    // A refused entry must not abort the whole search, or a single hostile
+    // symlink would blind the Agent to the rest of its Slice.
+    const { stdout, stderr } = search(["search-leak.env", "src/included.ts"], "value");
+
+    expect(stdout).toContain("src/included.ts:1:");
+    expect(stderr).toMatch(/search-leak\.env/);
+  });
+
+  it("does not read a file beneath a symlinked parent directory", () => {
+    const { stdout, stderr } = search(["search-escape/secret.env"], "STOLEN");
+
+    expect(stdout).not.toContain("STOLEN");
+    expect(stderr).toMatch(/symlink rejected: search-escape/);
+  });
+
+  it("refuses a path that climbs out of the workspace", () => {
+    const { stdout, stderr } = search(["../secret.env"], "STOLEN");
+
+    expect(stdout).not.toContain("STOLEN");
+    expect(stderr).toMatch(/path escapes the workspace/);
+  });
+
+  it("skips a binary file rather than decoding it into the evidence", () => {
+    writeFileSync(path.join(root, "src", "blob.bin"), Buffer.from([0x00, 0x66, 0x6f, 0x6f]));
+
+    const { stdout } = search(["src/blob.bin"], "foo");
+
+    expect(stdout).not.toContain("blob.bin:");
+  });
+
+  it("stops at the match limit instead of returning unbounded output", () => {
+    writeFileSync(path.join(root, "src", "many.ts"), "needle\n".repeat(500));
+
+    const { stdout } = search(["src/many.ts"], "needle");
+
+    expect(stdout).toContain("stopped at the 200 match limit");
+    expect(stdout.split("\n").filter((line) => line.startsWith("src/many.ts:"))).toHaveLength(200);
+  });
+
+  it("tolerates a Slice path that does not exist on disk", () => {
+    const { stdout, status } = search(["src/absent.ts"], "value");
+
+    expect(status).toBe(0);
+    expect(stdout).toContain("no matches");
   });
 });

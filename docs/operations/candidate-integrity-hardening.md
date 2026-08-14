@@ -212,14 +212,20 @@ by immutable SHA before publish.
 
 ## Residual items from the R3/R5/R8 pass
 
-Found while implementing the tractable findings; none are fixed:
+Found while implementing the tractable findings. The R3 search residual is
+closed here; the remaining items are still open:
 
-- **`search()` follows explicitly-named symlinks.** `WorkspaceController.search()`
-  passes Slice paths to `rg`. ripgrep does not follow symlinks when walking a
-  directory, but it does read a symlinked path given as an explicit argument.
-  An admitted path that is a symlink can therefore surface outside file
-  contents in search output. The `contain()` guard added for read/write does
-  not cover this path.
+- ~~**`search()` follows explicitly-named symlinks.**~~ Resolved. The leak was
+  confirmed against ripgrep 14.1.1 before the change: a symlink at an admitted
+  path printed the contents of a file outside the workspace, while the same
+  search issued as a directory walk found nothing. `search()` no longer shells
+  out to `rg`; it runs `SEARCH_SCRIPT`, which calls `contain()` per path like
+  every other read, reports refused paths on stderr instead of skipping them
+  silently, skips binary files, and bounds both match count and line width.
+  Eight real-filesystem behavioural tests in `containment.test.ts` spawn
+  `SEARCH_SCRIPT` against a real cwd; the controller-boundary test in
+  `workspace.test.ts` separately guards that the call site does not shell out
+  to `rg`.
 - **Sandbox Git enumeration remains part of candidate capture.** `changeSet()`
   invokes `git` directly in the edited sandbox to enumerate changed paths
   before `freezeCandidate()` hashes the file bytes. R1 removed sandbox Git from
