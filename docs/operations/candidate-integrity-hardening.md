@@ -214,12 +214,14 @@ by immutable SHA before publish.
 
 Found while implementing the tractable findings; none are fixed:
 
-- **`search()` follows explicitly-named symlinks.** `WorkspaceController.search()`
-  passes Slice paths to `rg`. ripgrep does not follow symlinks when walking a
-  directory, but it does read a symlinked path given as an explicit argument.
-  An admitted path that is a symlink can therefore surface outside file
-  contents in search output. The `contain()` guard added for read/write does
-  not cover this path.
+- ~~**`search()` follows explicitly-named symlinks.**~~ Resolved. The leak was
+  confirmed against ripgrep 14.1.1 before the change: a symlink at an admitted
+  path printed the contents of a file outside the workspace, while the same
+  search issued as a directory walk found nothing. `search()` no longer shells
+  out to `rg`; it runs `SEARCH_SCRIPT`, which calls `contain()` per path like
+  every other read, reports refused paths on stderr instead of skipping them
+  silently, skips binary files, and bounds both match count and line width.
+  `containment.test.ts` executes the attack against a real filesystem.
 - **Sandbox Git enumeration remains part of candidate capture.** `changeSet()`
   invokes `git` directly in the edited sandbox to enumerate changed paths
   before `freezeCandidate()` hashes the file bytes. R1 removed sandbox Git from

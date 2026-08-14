@@ -38,10 +38,14 @@ These are real and should not be forgotten because the row above says closed.
 - **R1 / R2.** Verification isolation is implemented but not yet verified on the
   deployment target. Path *enumeration* still uses sandbox `git`. See
   `candidate-integrity-hardening.md` for the owner record.
-- **R3.** `WorkspaceController.search()` passes Slice paths to `rg`, which does
-  not follow symlinks when walking a directory but does read a symlinked path
-  given as an explicit argument. The `contain()` guard covers read and write,
-  not this path.
+- ~~**R3.** `WorkspaceController.search()` passes Slice paths to `rg`.~~ Closed.
+  The leak was reproduced against ripgrep 14.1.1 first — an explicit symlink
+  argument printed a file from outside the workspace, while the same search as a
+  directory walk found nothing — so this was live, not theoretical. `search()`
+  now runs through `contain()` like every other read instead of shelling out to a
+  tool whose containment behaviour depends on how it was invoked. Refused paths
+  are reported rather than silently skipped, since a Slice entry that turns out
+  to be a symlink is a fact about the repository a reviewer should see.
 - **R3.** `createDiff()` and `changeSet()` invoke `git` directly and sit outside
   containment. Subsumed by the R1 residual.
 - **R7.** `src/lib` (rate-limit, api-auth, run-store) and the run workflow still
