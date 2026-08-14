@@ -4,7 +4,14 @@ import { start } from "workflow/api";
 
 import { calculateTokenLedger, resolveAgentModel } from "@/lib/agent/coding-agent";
 import { resolveRunTokenBudget } from "@/lib/agent/run-budget";
-import { agentRunQuotaDecision } from "@/lib/agent/run-quota";
+import {
+  agentRunQuotaDecision,
+  isQuotaReason,
+  quotaDenialMessage,
+  quotaRetryAfterSeconds,
+  MAX_ACTIVE_RUNS,
+  MAX_DAILY_RUNS,
+} from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
 import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
 import {
@@ -155,11 +162,8 @@ export async function POST(request: Request) {
     dailyRuns: dailyResult.count ?? 0,
   });
   if (!quota.allowed) {
-    const error = quota.reason === "active"
-      ? "Two agent runs are already active. Wait for one to finish."
-      : "Controlled-alpha daily Agent Run quota reached. Try again tomorrow.";
     return NextResponse.json(
-      { error },
+      { error: quotaDenialMessage(quota.reason) },
       { status: 429, headers: { "Retry-After": String(quota.retryAfterSeconds) } },
     );
   }
@@ -182,15 +186,48 @@ export async function POST(request: Request) {
     );
   }
 
+  // R12: the quota check above is advisory. Counting and inserting must happen in
+  // one transaction or concurrent requests all read the same pre-insert counts and
+  // all pass — measured at six concurrent requests creating six Runs against a
+  // limit of two. `claim_agent_run_slot` holds a per-user advisory lock across
+  // both, so this is the decision that actually binds.
+  const { data: claimData, error: claimError } = await db.rpc("claim_agent_run_slot", {
+    p_user_id: userId,
+    p_task_id: task.id,
+    p_model: model,
+    p_token_budget: tokenBudget,
+    p_active_statuses: [...ACTIVE_RUN_STATUSES],
+    p_max_active: MAX_ACTIVE_RUNS,
+    p_max_daily: MAX_DAILY_RUNS,
+  });
+  const claim = claimData?.[0];
+  if (claimError || !claim) {
+    // The task was created in anticipation of a Run that will not exist, so it is
+    // removed rather than left as an orphan no flow will ever reach.
+    await db.from("agent_tasks").delete().eq("id", task.id).eq("user_id", userId);
+    return NextResponse.json({ error: "Could not create the agent run." }, { status: 503 });
+  }
+  if (!claim.allowed) {
+    await db.from("agent_tasks").delete().eq("id", task.id).eq("user_id", userId);
+    const reason = isQuotaReason(claim.reason) ? claim.reason : "active";
+    return NextResponse.json(
+      { error: quotaDenialMessage(reason) },
+      { status: 429, headers: { "Retry-After": String(quotaRetryAfterSeconds(reason)) } },
+    );
+  }
+
+  // An allowed claim always carries the inserted id. Checked rather than asserted
+  // so a future change to the function cannot turn this into a silent lookup of
+  // every Run.
+  if (!claim.run_id) {
+    return NextResponse.json({ error: "Could not create the agent run." }, { status: 500 });
+  }
+
   const { data: run, error: runError } = await db
     .from("agent_runs")
-    .insert({
-      task_id: task.id,
-      user_id: userId,
-      model,
-      token_budget: tokenBudget,
-    })
     .select("*")
+    .eq("id", claim.run_id)
+    .eq("user_id", userId)
     .single();
   if (runError || !run) {
     return NextResponse.json({ error: "Could not create the agent run." }, { status: 500 });

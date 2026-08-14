@@ -147,7 +147,7 @@ usage analytics. Apply every migration in order:
 Use the history-aware procedure in
 [`docs/operations/release-0-controlled-alpha-rollout.md`](docs/operations/release-0-controlled-alpha-rollout.md).
 Do not apply migrations with an untracked shell loop.
-Release 1 migrations `012`–`015` use the separate
+Release 1 migrations `012`–`016` use the separate
 [`Release 1 readiness rollout`](docs/operations/release-1-readiness-rollout.md).
 
 ### Export formats
