@@ -212,7 +212,8 @@ by immutable SHA before publish.
 
 ## Residual items from the R3/R5/R8 pass
 
-Found while implementing the tractable findings; none are fixed:
+Found while implementing the tractable findings. The R3 search residual is
+closed here; the remaining items are still open:
 
 - ~~**`search()` follows explicitly-named symlinks.**~~ Resolved. The leak was
   confirmed against ripgrep 14.1.1 before the change: a symlink at an admitted
