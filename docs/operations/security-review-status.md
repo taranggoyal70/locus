@@ -48,7 +48,22 @@ These are real and should not be forgotten because the row above says closed.
   the review's literal recommendation, which is a least-privilege database role
   with Clerk to Supabase JWT so RLS applies per user. What shipped removes the
   default cross-tenant failure mode; it does not remove the service role.
-- **R17.** The body ceiling shipped. The idempotency ledger did not.
+- **R17.** The body ceiling shipped. The idempotency ledger did not, and on
+  inspection it was not the live risk: all three Stripe handlers are last-write-wins
+  writes, so processing one event twice writes the same values, and Stripe's
+  signature timestamp tolerance already rejects a captured body replayed later.
+  What was live is *ordering*. Stripe does not guarantee delivery order, and a
+  delayed `customer.subscription.updated` carrying `status: active` arriving after
+  `customer.subscription.deleted` restored paid access to a cancelled account —
+  reproduced against this schema, `free/cancelled` becoming `free/active`.
+  Migration 017 records which event last wrote each subscription row and refuses an
+  event that is older than, or identical to, the one already applied. The
+  comparison and the write are one statement, because reading the watermark and
+  then writing would reintroduce the race closed in 016. Duplicate suppression
+  therefore comes for free, which is the ledger the review asked for, but it is not
+  what was protecting anything. The route also had no tests at all despite granting
+  and revoking paid access; it now has ten, five of which fail against the previous
+  implementation.
 - **CSRF on mutation routes.** `POST /api/agent/runs/[id]/approve` used an inline
   `sec-fetch-site === "cross-site"` check while every other mutation route used the
   shared `sameOriginMutation` guard. The inline form allowed `same-site` (a sibling

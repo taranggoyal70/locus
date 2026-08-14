@@ -39,46 +39,66 @@ export async function POST(request: Request) {
 
   const db = globalClient("Stripe webhook has no authenticated user");
 
+  // R17: Stripe does not guarantee delivery order, and it retries deliveries
+  // concurrently. Each handler below was individually idempotent — replaying one
+  // wrote the same values — so duplicate delivery was never the live risk. Stale
+  // delivery was: a delayed `customer.subscription.updated` carrying
+  // `status: active` arriving after `customer.subscription.deleted` restored paid
+  // access to a cancelled account, which is reproducible against this schema.
+  //
+  // Every write now goes through a function that refuses an event older than, or
+  // identical to, the one already applied to that row. The comparison and the
+  // write are one statement, because reading the watermark here and then writing
+  // would be the same race closed in migration 016.
+  const eventCreatedAt = new Date(event.created * 1_000).toISOString();
+
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
       const userId = session.metadata?.userId ?? session.client_reference_id;
       if (!userId || !session.subscription || !session.customer) break;
 
-      await db.from("subscriptions").upsert({
-        user_id: userId,
-        stripe_customer_id: String(session.customer),
-        stripe_subscription_id: String(session.subscription),
-        plan: "pro",
-        status: "active",
-      }, { onConflict: "user_id" });
+      await db.rpc("upsert_stripe_subscription", {
+        p_user_id: userId,
+        p_customer_id: String(session.customer),
+        p_subscription_id: String(session.subscription),
+        p_plan: "pro",
+        p_status: "active",
+        p_event_id: event.id,
+        p_event_created: eventCreatedAt,
+      });
       break;
     }
 
     case "customer.subscription.updated": {
       const sub = event.data.object;
-      const { data } = await db
-        .from("subscriptions")
-        .select("user_id")
-        .eq("stripe_subscription_id", sub.id)
-        .single();
-      if (data) {
-        await db.from("subscriptions").update({
-          status: sub.status === "active" ? "active" : "inactive",
-        }).eq("user_id", data.user_id);
-      }
+      await db.rpc("apply_stripe_subscription_event", {
+        p_subscription_id: sub.id,
+        p_status: sub.status === "active" ? "active" : "inactive",
+        // The plan is not part of this event, so it is left as it is rather than
+        // being guessed from the status.
+        p_plan: null,
+        p_event_id: event.id,
+        p_event_created: eventCreatedAt,
+      });
       break;
     }
 
     case "customer.subscription.deleted": {
       const sub = event.data.object;
-      await db.from("subscriptions").update({
-        status: "cancelled",
-        plan: "free",
-      }).eq("stripe_subscription_id", sub.id);
+      await db.rpc("apply_stripe_subscription_event", {
+        p_subscription_id: sub.id,
+        p_status: "cancelled",
+        p_plan: "free",
+        p_event_id: event.id,
+        p_event_created: eventCreatedAt,
+      });
       break;
     }
   }
 
+  // Acknowledged whether or not the event changed anything: a refused stale or
+  // duplicate event was handled correctly, and a non-2xx would make Stripe retry
+  // it forever.
   return NextResponse.json({ received: true });
 }
