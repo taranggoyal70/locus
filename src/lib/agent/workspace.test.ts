@@ -125,6 +125,25 @@ describe("agent workspace", () => {
     expect(workspace.commands[0].command).toContain("node -e");
   });
 
+  it("bounds the search path environment entry by UTF-8 bytes", async () => {
+    const paths = Array.from(
+      { length: 3_000 },
+      (_, index) => `src/検索-${String(index).padStart(4, "0")}.ts`,
+    );
+    const workspace = new FakeWorkspace();
+    const controller = new WorkspaceController(
+      workspace,
+      new AgentSlice({ included: paths, excluded: [] }),
+    );
+
+    const result = await controller.search("value");
+    const encodedPaths = workspace.commands[0].env?.LOCUS_PATHS;
+
+    expect(Buffer.byteLength(`LOCUS_PATHS=${encodedPaths}\0`, "utf8")).toBeLessThanOrEqual(60_000);
+    expect((JSON.parse(encodedPaths ?? "[]") as string[]).length).toBeLessThan(paths.length);
+    expect(result).toContain("readable path(s) exceeded the search path budget");
+  });
+
   it("blocks external actions before they reach the sandbox", async () => {
     const { controller, workspace } = setup();
 

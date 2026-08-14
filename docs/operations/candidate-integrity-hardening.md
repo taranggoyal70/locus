@@ -221,7 +221,10 @@ Found while implementing the tractable findings; none are fixed:
   out to `rg`; it runs `SEARCH_SCRIPT`, which calls `contain()` per path like
   every other read, reports refused paths on stderr instead of skipping them
   silently, skips binary files, and bounds both match count and line width.
-  `containment.test.ts` executes the attack against a real filesystem.
+  Eight real-filesystem behavioural tests in `containment.test.ts` spawn
+  `SEARCH_SCRIPT` against a real cwd; the controller-boundary test in
+  `workspace.test.ts` separately guards that the call site does not shell out
+  to `rg`.
 - **Sandbox Git enumeration remains part of candidate capture.** `changeSet()`
   invokes `git` directly in the edited sandbox to enumerate changed paths
   before `freezeCandidate()` hashes the file bytes. R1 removed sandbox Git from

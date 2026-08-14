@@ -146,7 +146,8 @@ const READ_SLICE_SCRIPT = CONTAINMENT_PRELUDE + [
 // reviewer should see.
 export const SEARCH_MATCH_LIMIT = 200;
 const SEARCH_LINE_WIDTH = 300;
-const SEARCH_PATH_JSON_BUDGET = 60_000;
+const SEARCH_PATHS_ENV = "LOCUS_PATHS";
+const SEARCH_PATH_ENV_ENTRY_BUDGET = 60_000;
 
 export const SEARCH_SCRIPT = CONTAINMENT_PRELUDE + [
   "const term=process.env.LOCUS_QUERY;",
@@ -284,12 +285,13 @@ export class WorkspaceController {
     // Linux), and a wide Slice can carry more path text than that. Truncating
     // here would quietly shrink what "searched the Slice" means, so the paths
     // that did not fit are counted and reported with the result.
-    let remaining = SEARCH_PATH_JSON_BUDGET;
+    let pathEnvEntryBytes = Buffer.byteLength(`${SEARCH_PATHS_ENV}=[]`, "utf8") + 1;
     const searched: string[] = [];
     for (const path of readable) {
-      const cost = JSON.stringify(path).length + 1;
-      if (cost > remaining) break;
-      remaining -= cost;
+      const pathBytes = Buffer.byteLength(JSON.stringify(path), "utf8");
+      const nextPathEnvEntryBytes = pathEnvEntryBytes + pathBytes + (searched.length === 0 ? 0 : 1);
+      if (nextPathEnvEntryBytes > SEARCH_PATH_ENV_ENTRY_BUDGET) break;
+      pathEnvEntryBytes = nextPathEnvEntryBytes;
       searched.push(path);
     }
 
@@ -297,7 +299,7 @@ export class WorkspaceController {
       command: `node -e ${shellQuote(SEARCH_SCRIPT)}`,
       env: {
         LOCUS_QUERY: term,
-        LOCUS_PATHS: JSON.stringify(searched),
+        [SEARCH_PATHS_ENV]: JSON.stringify(searched),
         LOCUS_MATCH_LIMIT: String(SEARCH_MATCH_LIMIT),
         LOCUS_LINE_WIDTH: String(SEARCH_LINE_WIDTH),
       },
