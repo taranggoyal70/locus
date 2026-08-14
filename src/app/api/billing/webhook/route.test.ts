@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // R17: this route grants and revokes paid access and had no tests at all.
 //
-// The property under test is not "does a duplicate event write twice" — every
+// The property under test is not "does a duplicate event write twice": every
 // handler here is a last-write-wins write, so it does not. It is that a stale
 // event cannot undo a newer one. Stripe does not guarantee delivery order, so a
 // delayed `customer.subscription.updated` carrying `status: active` can arrive

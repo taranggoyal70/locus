@@ -39,17 +39,9 @@ export async function POST(request: Request) {
 
   const db = globalClient("Stripe webhook has no authenticated user");
 
-  // R17: Stripe does not guarantee delivery order, and it retries deliveries
-  // concurrently. Each handler below was individually idempotent — replaying one
-  // wrote the same values — so duplicate delivery was never the live risk. Stale
-  // delivery was: a delayed `customer.subscription.updated` carrying
-  // `status: active` arriving after `customer.subscription.deleted` restored paid
-  // access to a cancelled account, which is reproducible against this schema.
-  //
   // Every write now goes through a function that refuses an event older than, or
   // identical to, the one already applied to that row. The comparison and the
-  // write are one statement, because reading the watermark here and then writing
-  // would be the same race closed in migration 016.
+  // write are one statement because Stripe retries deliveries concurrently.
   const eventCreatedAt = new Date(event.created * 1_000).toISOString();
 
   switch (event.type) {

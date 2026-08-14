@@ -24,7 +24,7 @@ risk that was quietly downgraded.
 | R14 | P2 Medium/High | `31fd609` | Model resolution fails closed against a production allowlist |
 | R15 | P2 Medium | `3a91b80` | Secrets redacted by value shape, not only field name |
 | R16 | P2 Medium | `3a91b80` | Security headers pinned by tests rather than living unasserted in config |
-| R17 | P3 Medium/Low | `3a91b80` | Webhook body bounded in front of the read; row-local ordering guard added but not a full closure (see below) |
+| R17 | P3 Medium/Low | `3a91b80`, `5f77eb7` | Webhook body bounded in front of the read; row-local ordering guard added but not a full closure (see below) |
 
 The additions are security regression tests that execute the attacks: a
 symlinked escape, a Slice-search symlink leak, an MCP root escape, an oversized
@@ -118,8 +118,9 @@ audit of who can write what all depend on that. It also means `004`, whose whole
 purpose is restricting public writes, has never been exercised from a clean
 state.
 
-Once that single grant is supplied, all sixteen migrations apply in order and
-produce the expected 16 public tables, so this is the only blocker.
+Once that single grant is supplied, migrations through `016` apply in order and
+produce the expected 16 public tables, so this is the only blocker known from
+that reproduction.
 
 Fixing it properly means granting explicitly next to each table's creation, which
 edits migrations that already ran in production. That is safe only if the added

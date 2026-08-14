@@ -1,40 +1,14 @@
--- R17: make Stripe subscription writes replay-safe and order-safe.
+-- R17: make Stripe subscription writes order-safe.
 --
--- The webhook's three handlers were each individually idempotent — every one is a
--- last-write-wins upsert or update, so processing the same event twice writes the
--- same values. The gap recorded as "the idempotency ledger did not ship" was
--- therefore not the live risk.
+-- The row records the Stripe event that last wrote it. Stripe event.created is
+-- seconds since the Unix epoch, so equal timestamps can be different events;
+-- ambiguity resolves toward the more restrictive state. Same-second active
+-- events are refused, while same-second inactive or cancelled events apply. Both
+-- checks live in the same statement as the write because Stripe retries
+-- deliveries concurrently.
 --
--- The live risk is ordering. Stripe does not guarantee delivery order, so a
--- delayed `customer.subscription.updated` carrying `status: active` can arrive
--- after `customer.subscription.deleted` and restore paid access to a cancelled
--- account. An event-id ledger alone would not prevent that, because those are two
--- distinct events.
---
--- So the row records which event last wrote it. Stripe event.created is seconds
--- since the Unix epoch, so equal timestamps can be different events; ambiguity
--- resolves toward the more restrictive state. Same-second active events are
--- refused, while same-second inactive or cancelled events apply. The cost is
--- that a legitimate same-second grant may be dropped, but a same-second
--- restriction must not leave paid access in place. Both checks live in the same
--- statement as the write: reading the watermark and then updating would
--- reintroduce exactly the race closed in 016, since Stripe retries deliveries
--- concurrently.
---
--- Residual: this is a row-local watermark, so it cannot order an event that
--- arrives before the subscriptions row exists. Concrete remaining sequence:
--- checkout.session.completed is created at T0, the subscription is cancelled at
--- T1, Stripe delivers customer.subscription.deleted first, this RPC updates zero
--- rows as unknown and the route acknowledges it, then the older checkout event
--- creates an active/pro row. Closing that requires a watermark keyed on
--- stripe_subscription_id that outlives the subscriptions row, which is the
--- ledger R17 originally named, needed for ordering rather than deduplication.
--- It is deliberately deferred because billing is hard-disabled during the
--- controlled alpha: alphaCapabilitiesForUser().billing is false for every user,
--- there is no billing UI, and no Stripe keys are configured. As with R4, a
--- dormant surface is finished in the change that enables the feature. This
--- migration strictly improves the previous behaviour because that sequence was
--- equally open before it, but it must not be read as fully closing R17.
+-- The full R17 status and residual owner is
+-- docs/operations/security-review-status.md.
 alter table public.subscriptions
   add column if not exists last_event_id text,
   add column if not exists last_event_created_at timestamptz;
