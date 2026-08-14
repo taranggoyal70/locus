@@ -377,6 +377,20 @@ export type Database = {
         };
         Returns: boolean;
       };
+      // R12: counts a user's active and daily Runs and inserts the Run in one
+      // transaction. `reason` is null when the claim was allowed.
+      claim_agent_run_slot: {
+        Args: {
+          p_user_id: string;
+          p_task_id: string;
+          p_model: string;
+          p_token_budget: number;
+          p_active_statuses: string[];
+          p_max_active: number;
+          p_max_daily: number;
+        };
+        Returns: Array<{ allowed: boolean; reason: string | null; run_id: string | null }>;
+      };
       delete_expired_agent_data: {
         Args: { p_retention_days?: number };
         Returns: Array<{

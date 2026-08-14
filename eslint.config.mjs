@@ -13,6 +13,10 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "src/app/.well-known/workflow/**",
+    // Written by `supabase start`, not by this project. Gitignored, but eslint
+    // ignores are configured separately and it lints the generated edge-runtime
+    // entrypoint otherwise.
+    "supabase/.temp/**",
   ]),
 ]);
 

@@ -58,6 +58,41 @@ These are real and should not be forgotten because the row above says closed.
   was unreachable. Now on the shared guard, with three regression tests covering the
   cases the inline form let through.
 
+## The migration chain does not apply to a fresh database
+
+Found while standing up a local database to test the R12 fix, and unresolved
+because it is a decision rather than a patch.
+
+`004_harden_public_writes.sql` aborts on a new database with
+`service_role must retain INSERT on public.events`. Its `do $$` block is a
+precondition assertion that runs before any revoke, and the assertion is correct:
+`service_role` genuinely has no INSERT.
+
+The cause is that no migration grants table privileges explicitly. Supabase's
+default ACLs for schema `public` are attached to objects created by
+`supabase_admin`, while migrations run as `postgres`:
+
+```
+default_acl = anon=arwdDxtm/supabase_admin | authenticated=… | service_role=arwdDxtm/supabase_admin
+has_table_privilege('service_role', <table created by postgres>, 'INSERT') = false
+```
+
+So the privilege posture of this database is not written down anywhere. It is a
+consequence of which role happened to create each table, which means the schema
+cannot be rebuilt from its own migrations — staging, disaster recovery, and any
+audit of who can write what all depend on that. It also means `004`, whose whole
+purpose is restricting public writes, has never been exercised from a clean
+state.
+
+Once that single grant is supplied, all sixteen migrations apply in order and
+produce the expected 16 public tables, so this is the only blocker.
+
+Fixing it properly means granting explicitly next to each table's creation, which
+edits migrations that already ran in production. That is safe only if the added
+grants match production's real ACLs — otherwise fresh environments diverge from
+production, which is worse than the current state. Confirm the production grants
+before changing the chain.
+
 ## Open
 
 | Risk | Priority | Why it is still open |
@@ -72,9 +107,19 @@ These are real and should not be forgotten because the row above says closed.
   CPU-bound parser holding the event loop, so an in-process timeout would look
   like a fix without being one, and a worker in this runtime needs verification
   on the deployment target that a local build does not provide.
-- **R12.** The quota and idempotency race half is open. What shipped covered
-  the `/v1/locate` budget and CORS, not the atomic-claim logic in the Run
-  creation path.
+- **R12, quota race.** Closed for the active and daily Agent Run limits.
+  Reproduced against a real database first: six concurrent requests against a
+  limit of two created six active Runs, because the route counted, decided, and
+  then inserted with nothing held in between. The 3-per-60s start rate limit
+  bounds how fast the race can be attempted and does not close it.
+  `claim_agent_run_slot` (migration 016) counts and inserts in one transaction
+  under a per-user advisory lock, following `acquire_agent_provider_lease`. Same
+  fixtures after the change: 6 concurrent requests produce 2 Runs, 25 concurrent
+  requests produce 2, and the daily limit produces exactly its cap under 8
+  concurrent attempts. The in-application check is kept as an advisory fast path
+  and is documented as such, so the two cannot be mistaken for one decision.
+  Idempotency (a caller retrying the same logical request) is still open and is a
+  different property from the count race.
 - **R12, provider capacity.** `POST /api/agent/runs/[id]/cancel` always frees the
   caller's own active slot, but releases the deployment-wide provider lease only
   when the durable workflow is provably terminal or not executing. When the
