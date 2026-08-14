@@ -52,6 +52,14 @@ These are real and should not be forgotten because the row above says closed.
   with Clerk to Supabase JWT so RLS applies per user. What shipped removes the
   default cross-tenant failure mode; it does not remove the service role.
 - **R17.** The body ceiling shipped. The idempotency ledger did not.
+- **CSRF on mutation routes.** `POST /api/agent/runs/[id]/approve` used an inline
+  `sec-fetch-site === "cross-site"` check while every other mutation route used the
+  shared `sameOriginMutation` guard. The inline form allowed `same-site` (a sibling
+  subdomain), a request carrying no Fetch Metadata, and a foreign `Origin` — on the
+  one route that writes to GitHub. Latent rather than live, because
+  `alphaCapabilitiesForUser().delivery` is false and returns 403 first, so the check
+  was unreachable. Now on the shared guard, with three regression tests covering the
+  cases the inline form let through.
 
 ## Open
 

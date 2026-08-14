@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locus — pre-launch scout review</title>
+<style>
+  /* Locus's own tokens (src/app/globals.css). Deliberately light-only, as the product is. */
+  :root {
+    --ink:#edf1ee; --surface:#f9fbf7; --surface-raised:#dfe8e2;
+    --line:rgba(20,35,59,.1); --line-strong:rgba(20,35,59,.2);
+    --muted:#596b67; --muted-light:#4e605d; --paper:#14233b;
+    --accent:#087864; --accent-dim:#075e50; --excluded:#cad5cf; --recent:#a33f32;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing:border-box; border-color:var(--line); }
+  body {
+    margin:0; background-color:var(--ink); color:var(--paper);
+    font-family:var(--sans); font-size:15px; line-height:1.6;
+    background-image:
+      linear-gradient(rgba(20,35,59,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,35,59,.045) 1px, transparent 1px),
+      radial-gradient(circle at 74% 4%, rgba(142,240,192,.24), transparent 26rem);
+    background-size:32px 32px, 32px 32px, 100% 100%;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:1000px; margin:0 auto; padding:40px 24px 96px; }
+
+  header.top { margin-bottom:32px; }
+  .eyebrow {
+    font-family:var(--mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:.14em; color:var(--muted); margin:0 0 10px;
+  }
+  h1 { font-size:clamp(26px,4.4vw,38px); letter-spacing:-.025em; margin:0 0 12px; line-height:1.15; text-wrap:balance; }
+  .lede { font-size:16px; color:var(--muted-light); max-width:68ch; margin:0; }
+  .lede strong { color:var(--paper); }
+
+  h2 {
+    font-family:var(--mono); font-size:11.5px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.14em; color:var(--muted); margin:0 0 16px;
+    padding-bottom:8px; border-bottom:1px solid var(--line-strong);
+  }
+  section { margin-top:44px; }
+  h3 { font-size:16px; margin:0 0 6px; }
+  p { margin:0 0 12px; max-width:70ch; }
+  p:last-child { margin-bottom:0; }
+  code {
+    font-family:var(--mono); font-size:.87em; background:var(--surface-raised);
+    padding:1.5px 5px; border-radius:3px; overflow-wrap:anywhere;
+  }
+  a { color:var(--accent-dim); text-underline-offset:2px; }
+
+  /* verdict */
+  .verdict { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr)); gap:12px; }
+  .vcard {
+    background:var(--surface); border:1px solid var(--line-strong);
+    border-left:3px solid var(--recent); border-radius:8px; padding:14px 16px; min-width:0;
+  }
+  .vcard.ok { border-left-color:var(--accent); }
+  .vcard .n { font-family:var(--mono); font-size:22px; font-weight:600; letter-spacing:-.02em; }
+  .vcard .l { font-size:13px; color:var(--muted-light); margin-top:2px; }
+
+  /* status pills */
+  .pill {
+    display:inline-block; font-family:var(--mono); font-size:10px; text-transform:uppercase;
+    letter-spacing:.08em; padding:2px 7px; border-radius:3px; white-space:nowrap; font-weight:600;
+  }
+  .pill.rep { background:var(--recent); color:#fff; }
+  .pill.ver { background:var(--accent); color:#fff; }
+  .pill.res { background:var(--surface-raised); color:var(--muted-light); }
+  .pill.unk { background:transparent; color:var(--recent); border:1px solid var(--recent); }
+
+  /* tables */
+  .tw { overflow-x:auto; border:1px solid var(--line-strong); border-radius:8px; background:var(--surface); }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; min-width:620px; }
+  th, td { text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  th {
+    font-family:var(--mono); font-size:10px; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--muted); font-weight:600; background:var(--surface-raised); white-space:nowrap;
+  }
+  td.ev { font-family:var(--mono); font-size:11.5px; color:var(--accent-dim); overflow-wrap:anywhere; }
+  td.st { white-space:nowrap; }
+
+  /* finding blocks */
+  .find {
+    background:var(--surface); border:1px solid var(--line-strong); border-radius:8px;
+    padding:16px 18px; margin-bottom:10px; border-left:3px solid var(--recent);
+  }
+  .find.med { border-left-color:#b8862b; }
+  .find.info { border-left-color:var(--muted); }
+  .find .hd { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; margin-bottom:8px; }
+  .find .hd h3 { margin:0; }
+  .find p { font-size:14px; color:var(--muted-light); margin:0 0 8px; }
+  .find p strong { color:var(--paper); }
+  .find .why {
+    font-size:13.5px; background:var(--ink); border:1px solid var(--line);
+    border-radius:6px; padding:10px 12px; margin-top:8px; color:var(--muted-light);
+  }
+  .find .why b { color:var(--paper); }
+
+  pre {
+    background:var(--ink); border:1px solid var(--line-strong); border-radius:6px;
+    padding:12px 14px; overflow-x:auto; font-family:var(--mono); font-size:12px;
+    line-height:1.5; margin:10px 0 0; color:var(--paper);
+  }
+
+  /* decision form */
+  form.dec { background:var(--surface); border:1px solid var(--line-strong); border-radius:8px; padding:18px 20px; margin-bottom:12px; }
+  form.dec > h3 { margin:0 0 4px; }
+  form.dec .hint { font-size:13.5px; color:var(--muted-light); margin:0 0 14px; }
+  .opts { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .opts label {
+    display:flex; gap:10px; align-items:flex-start; font-size:14px;
+    background:var(--ink); border:1px solid var(--line); border-radius:6px;
+    padding:10px 12px; cursor:pointer;
+  }
+  .opts label:hover { border-color:var(--accent); }
+  .opts input { margin-top:3px; flex:none; accent-color:var(--accent); }
+  .opts .ot { min-width:0; }
+  .opts .ot b { display:block; }
+  .opts .ot span { color:var(--muted-light); font-size:13px; }
+  button[type=submit] {
+    font-family:var(--mono); font-size:12px; text-transform:uppercase; letter-spacing:.08em;
+    background:var(--accent); color:#fff; border:none; border-radius:6px;
+    padding:9px 16px; cursor:pointer; font-weight:600;
+  }
+  button[type=submit]:hover { background:var(--accent-dim); }
+  button[type=submit]:focus-visible { outline:2px solid var(--paper); outline-offset:2px; }
+
+  footer { margin-top:56px; padding-top:18px; border-top:1px solid var(--line-strong); font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+  @media (max-width:560px) { .find .hd { flex-direction:column; gap:6px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">Pre-launch scout review · 12 Aug 2026</p>
+  <h1>Two scouts on Locus, before the launch video ships</h1>
+  <p class="lede">A market scout and a technical scout ran in parallel. I then <strong>re-verified every checkable claim myself</strong> against your repo rather than relaying either report on faith. One finding is a reproduced crash, one is a security fork only you can resolve, and one is a public claim that is false.</p>
+</header>
+
+<section>
+  <h2>Where it stands</h2>
+  <div class="verdict">
+    <div class="vcard"><div class="n">3</div><div class="l">launch blockers, all verified by me</div></div>
+    <div class="vcard"><div class="n">1</div><div class="l">security fork needing your answer today</div></div>
+    <div class="vcard ok"><div class="n">53%</div><div class="l">real median reduction, not the 56/84 I quoted</div></div>
+    <div class="vcard ok"><div class="n">428</div><div class="l">tests passing; hygiene is genuinely good</div></div>
+  </div>
+  <p style="margin-top:14px;color:var(--muted-light);font-size:13.5px">
+    Legend —
+    <span class="pill rep">reproduced</span> I ran it and saw the failure ·
+    <span class="pill ver">verified</span> I read the code or data myself ·
+    <span class="pill res">scout research</span> external sources, cited ·
+    <span class="pill unk">needs you</span> I cannot determine it
+  </p>
+</section>
+
+<section>
+  <h2>Launch blockers</h2>
+
+  <div class="find">
+    <div class="hd"><h3>1. <code>locate()</code> crashes on any repo with a CSS-module or JSON import</h3><span class="pill rep">reproduced</span></div>
+    <p><code>buildGraph</code> creates nodes only for <code>.ts/.tsx/.js/.jsx</code>, but <code>tryPath</code> returns a bare specifier when that exact key exists in <code>repo.files</code>. So an edge can point at a path with no node, and <code>locate</code> dereferences <code>byPath[p].rel</code> unguarded.</p>
+    <p>Harmless on the web and CLI paths — both filter to JS/TS before building the graph. <strong>But the Agent Run path ingests <code>json|css|scss|md</code></strong> and calls the same functions on that map.</p>
+    <pre>nodes: 1 edges: [{"from":"src/app/dashboard/page.tsx",
+                  "to":"src/app/dashboard/Dashboard.module.css"}]
+*** locate THREW: TypeError - Cannot read properties of undefined (reading 'rel')</pre>
+    <div class="why"><b>Why it matters:</b> the first invited alpha user who points a Run at a React repo using CSS Modules gets a hard failure. The raw error is never logged — only a <code>failureKind</code> — so you cannot diagnose it from production. Fix is one guard at <code>src/lib/localizer.ts:315</code>, or drop non-node edges in <code>buildGraph</code>.</div>
+  </div>
+
+  <div class="find">
+    <div class="hd"><h3>2. A single failed Run blocks Agent Runs deployment-wide for an hour</h3><span class="pill ver">verified</span></div>
+    <p><code>cancelled</code> exists in <code>RUN_STATUSES</code> and <code>canTransitionRun</code> permits it, but <strong>nothing ever sets it</strong> — the <code>[id]</code> route has only <code>approve</code> and <code>review</code> subroutes, and the only cron is retention. There is no reaper and no self-service recovery.</p>
+    <p>If the workflow dies before the lease is released, the provider lease persists for <code>3600s</code> while <code>max_concurrent</code> is <strong>1</strong>. Capacity-rejected runs still burn daily quota, because the count happens before the insert and counts rows by <code>created_at</code> regardless of status.</p>
+    <div class="why"><b>Why it matters:</b> blocker 1 fires on the first user's first Run, the lease is orphaned, and every other invited user gets capacity rejections for an hour while burning their daily allowance. The alpha is dead for a day and the logs say <code>workflow_error</code>. The state machine already permits cancel — the route is missing.</div>
+  </div>
+
+  <div class="find">
+    <div class="hd"><h3>3. A public "Verification" claim in the README is false</h3><span class="pill ver">verified</span></div>
+    <p>Under <strong>## Verification</strong>, directly beneath "GitHub CI runs lint, tests, CLI sync, type-checking, and a production build", the README says the historical benchmark "fails its launch gate if fix-file recall drops below 100%".</p>
+    <pre>$ grep -c 'pnpm benchmark' .github/workflows/*.yml
+0</pre>
+    <div class="why"><b>Why it matters:</b> in that context a reader concludes the gate runs in CI. It does not. <code>benchmarks/results.json</code> is a checked-in artifact from one local run on 2026-08-04. This is the same class of problem as the R13 analytics claim the gate caught earlier — a verification claim that outruns the verification.</div>
+  </div>
+</section>
+
+<section>
+  <h2>The security fork — only you can resolve this</h2>
+  <div class="find med">
+    <div class="hd"><h3><code>/api/v1/locate</code> has no repository-visibility check</h3><span class="pill ver">verified</span><span class="pill unk">needs you</span></div>
+    <p><code>src/app/api/github/route.ts:210</code> refuses non-public repos explicitly. The public API route has no equivalent — its only related line is <code>:81</code>, <code>if (info.status === 404) throw new Error("Repository not found or is private.")</code>. That catches a private repo <em>only when the token cannot see it</em>. It also attaches <code>process.env.GITHUB_TOKEN</code> at <code>:23</code>.</p>
+    <p>Separately, API-key minting requires only a Clerk session, while Agent Runs require the alpha allowlist. Anyone who signs up gets keys.</p>
+    <div class="why"><b>The fork:</b> if <code>GITHUB_TOKEN</code> in Vercel production carries <code>repo</code> scope, any signup can read the full source of every private repo that token can see, packed into <code>context</code>, at 30 req/min — while your docs promise "public JavaScript and TypeScript repositories". If the token is <em>unset</em>, that exposure disappears and instead you inherit GitHub's unauthenticated 60 requests/hour per shared Vercel egress IP, against 8 API calls per repo load — so the importer 403s for everyone on launch day. <b>Check which one you shipped before anything else.</b></div>
+  </div>
+</section>
+
+<section>
+  <h2>Where the slice is silently wrong</h2>
+  <p style="color:var(--muted-light);font-size:14px">The dangerous failure is not widening — that is honest. It is a <em>small</em> slice that reports a <em>higher</em> saving than the truth. The scout reproduced each of these.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Repo shape</th><th>Result</th><th>Reported saving</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td>NodeNext / ESM <code>.js</code> specifiers</td><td class="st"><span class="pill rep">silently bad</span></td><td>61% claimed vs 29% real</td><td class="ev">localizer.ts:23-32</td></tr>
+        <tr><td>Aliases other than <code>@/</code> (<code>~/</code>, <code>#lib/</code>)</td><td class="st"><span class="pill rep">silently bad</span></td><td>60%, 0 edges</td><td class="ev">localizer.ts:47-60</td></tr>
+        <tr><td>Monorepo / workspace packages</td><td class="st"><span class="pill rep">silently bad</span></td><td>54%, no Surface detected</td><td class="ev">localizer.ts:47-55, :99</td></tr>
+        <tr><td>Side-effect imports (<code>import "./polyfill"</code>)</td><td class="st"><span class="pill rep">silently bad</span></td><td>90%, 0 edges</td><td class="ev">localizer.ts:10</td></tr>
+        <tr><td>Dependency chain deeper than 8</td><td class="st"><span class="pill rep">silently bad</span></td><td>6 of 15 real deps dropped</td><td class="ev">localizer.ts:139</td></tr>
+        <tr><td>Repo with zero JS/TS files</td><td class="st"><span class="pill rep">claims the opposite</span></td><td><code>widened:true, slice:[]</code>, exit 0</td><td class="ev">localizer.ts:260-262</td></tr>
+        <tr><td>Barrel files / <code>index.ts</code> re-exports</td><td class="st"><span class="pill ver">honest</span></td><td>0% — over-includes safely</td><td class="ev">reproduced, 42/42 files</td></tr>
+        <tr><td>Domain language absent from filenames</td><td class="st"><span class="pill ver">honest</span></td><td>widens, returns refinement terms</td><td class="ev">works as designed</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="find info" style="margin-top:12px">
+    <div class="hd"><h3>You already built the detector and did not wire it up</h3><span class="pill ver">verified</span></div>
+    <p><code>src/components/LocusApp.tsx:412</code> renders a "Sparse repo" warning when <code>edges/nodes &lt; 0.6</code> — which would catch most of the rows above. It exists <strong>only in the demo web UI</strong>. It is absent from <code>formatResult</code>, <code>buildJsonResult</code>, the <code>/v1/locate</code> response, and the agent workflow: every surface that actually feeds a coding agent.</p>
+    <div class="why">Cheapest high-value change on this page. The signal already exists; it just is not where the consumer is.</div>
+  </div>
+</section>
+
+<section>
+  <h2>The benchmark will not survive an informed reader</h2>
+  <p style="color:var(--muted-light);font-size:14px">The disclaimers in <code>benchmarks/README.md</code> are genuinely good. The corpus and the gate are the problem. I verified the distribution myself:</p>
+  <pre>reductions: [0, 0, 3, 3, 36, 48, 53, 53, 56, 60, 75, 78, 85, 90, 99]   median 53
+cases: 15   repositories: 3   widenedCases: 2   fixFileRecall: 1
+repos: taranggoyal70/Solum, taranggoyal70/agent-access, taranggoyal70/locus</pre>
+  <div class="tw" style="margin-top:12px">
+    <table>
+      <thead><tr><th>Problem</th><th>Detail</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>100% recall is tautological</td><td>The gate fails the build unless every case has recall 1, so a missed case must be deleted. It can only ever read 100%.</td><td class="st"><span class="pill ver">verified</span></td></tr>
+        <tr><td>Corpus is all your own repos</td><td>3 repositories, all <code>taranggoyal70/*</code>; 6 of 15 cases are on Locus itself — the exact shape the algorithm was written against.</td><td class="st"><span class="pill ver">verified</span></td></tr>
+        <tr><td>Two cases scored 0%</td><td>Widened to the whole repo, which scores recall 1.0 by definition, and are still aggregated into the headline.</td><td class="st"><span class="pill ver">verified</span></td></tr>
+        <tr><td>Largest snapshot is 61 files</td><td>Two cases run on 15-file snapshots. Nothing supports a claim about a repo of consequential size.</td><td class="st"><span class="pill res">scout research</span></td></tr>
+        <tr><td>41% of tasks name their own answer</td><td>9 of 22 expected files are directly named in the task text. No ablation against a "grep task words over paths" baseline.</td><td class="st"><span class="pill res">scout research</span></td></tr>
+        <tr><td>Not third-party reproducible</td><td><code>resolveRepo</code> discards the <code>platform</code> sub-path, so 3 cases analyse a different directory on any machine without your sibling checkout.</td><td class="st"><span class="pill res">scout research</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="find info" style="margin-top:12px">
+    <div class="hd"><h3>The instrument you should lead with already exists</h3><span class="pill res">scout research</span></div>
+    <p><code>benchmarks/release1/</code> is a blinded, criterion-level, pre-registered paired study whose <code>results.json</code> is deliberately empty and fails closed. That design is sound. Lead with it and demote the 15-case replay.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Market: the pitch is aimed at the wrong buyer</h2>
+
+  <div class="find med">
+    <div class="hd"><h3>The closest competitor is free, stronger, and an official Claude plugin</h3><span class="pill res">scout research</span></div>
+    <p><strong>Serena</strong> — 27.9k stars, MIT, 30+ languages — does LSP-based symbol retrieval and explicitly sells "token-efficient". Locus parses imports with regex and scores files by matching task words against paths and source text. For TypeScript, compiler-grade symbol resolution is strictly more accurate. The "TypeScript accuracy" wedge is claimed against a tool that already has it, plus 30 other languages.</p>
+    <p><code>zilliztech/claude-context</code> (12.4k stars) publishes the <em>same 40% token claim</em>, free. Nobody monetises token reduction as a SKU; the ones charging money — Cursor, Augment, Greptile — charge for accuracy and review outcomes.</p>
+  </div>
+
+  <div class="find med">
+    <div class="hd"><h3>The hosted product caps below where the problem starts</h3><span class="pill ver">verified</span></div>
+    <p><code>MAX_FILES = 200</code> at <code>src/app/api/github/route.ts:13</code>, enforced at <code>:238</code>. Cursor's published measurements put retrieval benefit at <strong>1,000+ files</strong>. Anyone trying it on a real codebase gets truncation, not a demo — and <code>savedPct</code> is computed against the truncated denominator.</p>
+  </div>
+
+  <div class="find info">
+    <div class="hd"><h3>Two arguments worth sitting with</h3><span class="pill res">scout research</span></div>
+    <p><strong>A slice up front does not stop the agent grepping.</strong> It adds tokens unless the agent is told to trust the slice — and if it trusts a slice built by word-matching, the quality risk moves to you. Your benchmark measures whether fix files were <em>included</em>, not whether an agent finished with fewer total tokens.</p>
+    <p><strong>Anthropic's context editing cut tokens 84% while improving task performance 29–39%</strong>, free, attacking accumulated history rather than initial file selection. Bigger number, aimed at the part of the bill that dominates.</p>
+    <p>The counterweight, and it is real: <em>ContextBench</em> (1,136 tasks, 66 repos, human-annotated gold contexts) finds all frontier models over-retrieve, 0.35 F1 at line level, up to 43% evidence drop. So agentic search <em>is</em> measurably wasteful. That is the strongest evidence in your favour and it comes from a neutral party.</p>
+  </div>
+
+  <div class="find" style="border-left-color:var(--accent)">
+    <div class="hd"><h3>The wedge the scout would bet on</h3><span class="pill res">scout research</span></div>
+    <p>Not "smaller prompts for developers." <strong>The deterministic, auditable context-admission layer for unattended agent runs under a token budget</strong> — CI bots, bulk migrations, PR agents — where determinism is a requirement rather than a preference, and where "here are the included paths, the excluded paths, and the reason" is a governance artifact that embeddings structurally cannot produce.</p>
+    <p>Enterprise token caps became real this year: Uber burned its 2026 AI budget by April across ~5,000 engineers and imposed a per-tool cap; Microsoft pulled Claude Code licences from a division at ~$2,000/engineer/month. That is a budget that exists, with an owner. Serena and claude-context are not positioned there — they are interactive developer ergonomics.</p>
+    <p>Note the alignment: Anthropic's own stated reasons for dropping RAG were staleness, privacy, and reliability — which is <em>your</em> determinism pitch, not against it.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Your decisions</h2>
+
+  <form class="dec" data-lavish-question="token" onsubmit="event.preventDefault(); const v=new FormData(event.currentTarget).get('token'); if(v) window.lavish.queuePrompt('GITHUB_TOKEN in production: '+v+'. Act on the corresponding risk.', {tag:'decision', text:'GITHUB_TOKEN: '+v, element:event.currentTarget, data:{question:'github-token', answer:v}});">
+    <h3>1. Is <code>GITHUB_TOKEN</code> set in Vercel production, and with what scope?</h3>
+    <p class="hint">This decides which of two live risks you actually have. I cannot read your production environment.</p>
+    <div class="opts">
+      <label><input type="radio" name="token" value="set with repo scope"><span class="ot"><b>Set, with <code>repo</code> scope</b><span>Private-repo read is live. Add the visibility check and gate key minting today.</span></span></label>
+      <label><input type="radio" name="token" value="set with public-only scope"><span class="ot"><b>Set, public-only scope</b><span>Best case. Still add the visibility check for defence in depth.</span></span></label>
+      <label><input type="radio" name="token" value="not set"><span class="ot"><b>Not set</b><span>Rate-limit exhaustion is live: 60 req/hour per shared IP against 8 calls per load.</span></span></label>
+      <label><input type="radio" name="token" value="unsure"><span class="ot"><b>Not sure</b><span>I will tell you exactly what to run to check.</span></span></label>
+    </div>
+    <button type="submit">Queue this answer</button>
+  </form>
+
+  <form class="dec" data-lavish-question="fixes" onsubmit="event.preventDefault(); const v=[...new FormData(event.currentTarget).getAll('fix')]; window.lavish.queuePrompt(v.length? 'Fix these before launch, each through the no-mistakes gate: '+v.join('; ') : 'Do not fix anything yet; hold for discussion.', {tag:'decision', text:v.length? v.length+' fixes selected' : 'none selected', element:event.currentTarget, data:{question:'fixes', answer:v}});">
+    <h3>2. Which of these should I fix now?</h3>
+    <p class="hint">Each goes through the gate as its own PR. Pick any combination.</p>
+    <div class="opts">
+      <label><input type="checkbox" name="fix" value="guard byPath in locate() to stop the CSS/JSON crash"><span class="ot"><b>The crash</b><span>One guard at <code>localizer.ts:315</code>. Kills blocker 1.</span></span></label>
+      <label><input type="checkbox" name="fix" value="add POST /api/agent/runs/[id]/cancel and log error.message on failure"><span class="ot"><b>Run cancel route + real error logging</b><span>State machine already permits <code>cancelled</code>. Kills blocker 2.</span></span></label>
+      <label><input type="checkbox" name="fix" value="delete the false benchmark-in-CI claim from README Verification"><span class="ot"><b>The false README claim</b><span>Delete the line, or wire <code>pnpm benchmark</code> into CI properly.</span></span></label>
+      <label><input type="checkbox" name="fix" value="add the repository visibility check to /api/v1/locate and return truncated"><span class="ot"><b>API visibility check</b><span>Copy the check from <code>api/github/route.ts:210</code>.</span></span></label>
+      <label><input type="checkbox" name="fix" value="expose the sparsity signal in formatResult, buildJsonResult and /v1/locate"><span class="ot"><b>Wire up the sparsity warning</b><span>Highest value per line. The detector already exists.</span></span></label>
+      <label><input type="checkbox" name="fix" value="say 'no JavaScript or TypeScript source found' instead of claiming a widen"><span class="ot"><b>Honest empty-repo message</b><span>The web route gets this right; CLI and MCP do not.</span></span></label>
+    </div>
+    <button type="submit">Queue selected fixes</button>
+  </form>
+
+  <form class="dec" data-lavish-question="positioning" onsubmit="event.preventDefault(); const v=new FormData(event.currentTarget).get('pos'); if(v) window.lavish.queuePrompt('Positioning decision: '+v, {tag:'decision', text:'Positioning: '+v, element:event.currentTarget, data:{question:'positioning', answer:v}});">
+    <h3>3. Does the launch pitch change?</h3>
+    <p class="hint">This is your call about your product. I am flagging evidence, not deciding.</p>
+    <div class="opts">
+      <label><input type="radio" name="pos" value="pivot to the auditability and governance wedge"><span class="ot"><b>Pivot to auditability / governance</b><span>Unattended runs under a budget cap. Defensible against free substitutes.</span></span></label>
+      <label><input type="radio" name="pos" value="keep the token-reduction pitch but fix the numbers to 53% median"><span class="ot"><b>Keep the pitch, fix the numbers</b><span>53% median, disclose the two 0% cases and the corpus.</span></span></label>
+      <label><input type="radio" name="pos" value="hold the launch until the Release 1 paired study has data"><span class="ot"><b>Hold the launch</b><span>Run the paired study first, lead with that instrument.</span></span></label>
+      <label><input type="radio" name="pos" value="disagree with the market read, keep as is"><span class="ot"><b>I disagree with the market read</b><span>Tell me where, and I will re-examine it rather than defend it.</span></span></label>
+    </div>
+    <button type="submit">Queue this answer</button>
+  </form>
+</section>
+
+<footer>
+  Two parallel scouts · every repo-internal claim re-verified against main at <code>7d6fc8f</code> · rendered in Locus's own Mineral&nbsp;field palette from <code>src/app/globals.css</code>
+</footer>
+
+</div>
+</body>
+</html>

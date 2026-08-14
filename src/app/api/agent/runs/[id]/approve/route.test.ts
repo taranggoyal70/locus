@@ -44,10 +44,13 @@ vi.mock("@/lib/supabase-tenant", () => ({
 const RUN_ID = "00000000-0000-4000-8000-000000000001";
 const STORED_HASH = "a".repeat(64);
 
-function approvalRequest(body?: unknown) {
+function approvalRequest(body?: unknown, headers: Record<string, string> = {}) {
   return new Request(`http://localhost/api/agent/runs/${RUN_ID}/approve`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    // A same-origin browser request, which is what these tests mean to exercise.
+    // Sending no Origin and no Fetch Metadata is a shape a browser never produces
+    // and the shared mutation guard rejects.
+    headers: { "content-type": "application/json", origin: "http://localhost", ...headers },
     body: JSON.stringify(body ?? {}),
   });
 }
@@ -95,5 +98,47 @@ describe("delivery is bound to the reviewed proposal", () => {
     await expect(response.json()).resolves.toMatchObject({
       error: expect.stringContaining("changed since it was reviewed"),
     });
+  });
+});
+
+describe("delivery rejects requests a browser would not have made", () => {
+  beforeEach(() => {
+    authMock.mockResolvedValue({ userId: "user_design_partner" });
+    capabilitiesMock.mockReturnValue({ delivery: true });
+  });
+
+  it("rejects a cross-site request", async () => {
+    const response = await POST(approvalRequest({}, { "sec-fetch-site": "cross-site" }), context());
+
+    expect(response.status).toBe(403);
+  });
+
+  it("rejects a same-site request from a sibling origin", async () => {
+    // The inline `sec-fetch-site === "cross-site"` check this route used allowed
+    // `same-site`, so a sibling subdomain could drive the delivery endpoint with
+    // the user's cookies. Every other mutation route already used the shared
+    // guard, which rejects this.
+    const response = await POST(approvalRequest({}, { "sec-fetch-site": "same-site" }), context());
+
+    expect(response.status).toBe(403);
+  });
+
+  it("rejects a request carrying no browser evidence at all", async () => {
+    const bare = new Request(`http://localhost/api/agent/runs/${RUN_ID}/approve`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+
+    // No Origin and no Fetch Metadata: the inline check allowed this too.
+    const response = await POST(bare, context());
+
+    expect(response.status).toBe(403);
+  });
+
+  it("rejects a request whose Origin is a different host", async () => {
+    const response = await POST(approvalRequest({}, { origin: "http://attacker.example" }), context());
+
+    expect(response.status).toBe(403);
   });
 });

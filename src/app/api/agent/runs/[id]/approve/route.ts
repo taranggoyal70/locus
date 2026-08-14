@@ -5,7 +5,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import { freezeCandidate } from "@/lib/agent/candidate";
 import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
-import { readLimitedJson } from "@/lib/request-security";
+import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import type { AgentChange } from "@/lib/agent/workspace";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
@@ -37,7 +37,13 @@ export async function POST(request: Request, context: RouteContext) {
       { status: 403 },
     );
   }
-  if (request.headers.get("sec-fetch-site") === "cross-site") {
+  // The shared guard, as used by every other mutation route. The inline
+  // `sec-fetch-site === "cross-site"` check this replaced allowed `same-site`, so a
+  // sibling subdomain could drive delivery with the user's cookies, and allowed a
+  // request carrying no Fetch Metadata or a foreign Origin at all. This is the
+  // route that writes to GitHub, so it had the weakest check and the highest
+  // consequence.
+  if (!sameOriginMutation(request)) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
 
