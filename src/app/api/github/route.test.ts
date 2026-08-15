@@ -129,12 +129,13 @@ describe("GitHub repository API request guards", () => {
 });
 
 /**
- * One load costs 8 GitHub API calls against a 5,000/hour ceiling shared by every
- * user of the deployment, and the importer is the only way to load a repository.
- * These assert the call budget directly, which is the part that can be verified
- * without a live GitHub.
+ * The stub returns five commits, matching the route's recent-change fan-out, so
+ * these miss and hit assertions are the source of truth for this route's GitHub
+ * API call budget.
  */
 describe("GitHub repository API call budget", () => {
+  const COLD_LOAD_GITHUB_API_CALLS = 9;
+  const CACHE_HIT_GITHUB_API_CALLS = 2;
   let apiCalls: string[];
 
   function stubGitHub() {
@@ -155,7 +156,9 @@ describe("GitHub repository API call budget", () => {
       if (lower.includes("/git/trees/")) {
         return Response.json({ sha: "treesha", tree: [{ path: "src/a.ts", type: "blob", size: 30 }] });
       }
-      if (lower.includes("/commits?")) return Response.json([{ sha: "c1" }, { sha: "c2" }]);
+      if (lower.includes("/commits?")) {
+        return Response.json([{ sha: "c1" }, { sha: "c2" }, { sha: "c3" }, { sha: "c4" }, { sha: "c5" }]);
+      }
       if (lower.includes("/commits/")) return Response.json({ files: [{ filename: "src/a.ts" }] });
       if (lower.includes("raw.githubusercontent.com")) return new Response("export const a = 1;\n");
       return new Response("nope", { status: 404 });
@@ -174,12 +177,13 @@ describe("GitHub repository API call budget", () => {
     const first = await POST(request('{"url":"owner/repo"}', "198.51.100.20"));
     expect(first.status).toBe(200);
     const firstCallCount = apiCalls.length;
-    expect(firstCallCount).toBeGreaterThan(1);
+    expect(firstCallCount).toBe(COLD_LOAD_GITHUB_API_CALLS);
 
     apiCalls.length = 0;
     const second = await POST(request('{"url":"owner/repo"}', "198.51.100.20"));
 
     expect(second.status).toBe(200);
+    expect(apiCalls).toHaveLength(CACHE_HIT_GITHUB_API_CALLS);
     expect(apiCalls).toEqual([
       "https://api.github.com/repos/owner/repo",
       "https://api.github.com/repos/owner/repo/commits/main",

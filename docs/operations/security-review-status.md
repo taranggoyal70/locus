@@ -155,16 +155,17 @@ before changing the chain.
   and is documented as such, so the two cannot be mistaken for one decision.
   Idempotency (a caller retrying the same logical request) is still open and is a
   different property from the count race.
-- **R12, GitHub token quota on the API path.** Loading one repository costs eight
+- **R12, GitHub token quota on the API path.** A cold web load can spend nine
   GitHub API calls against a 5,000/hour ceiling that every user of the deployment
   shares, because the token is the server's. The web importer (`/api/github`) now
-  serves repeat loads from a short per-instance cache, so a hit costs one call
-  instead of eight. `POST /api/v1/locate` was deliberately left out of that
-  change: it loads repositories through its own `fetchRepo`, rechecks repository
-  visibility on every request, and authenticates by API key rather than session,
-  so sharing one loading boundary is a design change rather than a cache. An
-  API-key caller can therefore still exhaust the shared token by repeatedly
-  locating the same repository. Open.
+  serves repeat loads from a short per-instance cache, so a hit costs two calls:
+  repository visibility metadata and ref resolution before the cache read.
+  `POST /api/v1/locate` was deliberately left out of that change: it loads
+  repositories through its own `fetchRepo`, rechecks repository visibility on
+  every request, and authenticates by API key rather than session, so sharing one
+  loading boundary is a design change rather than a cache. An API-key caller can
+  therefore still exhaust the shared token by repeatedly locating the same
+  repository. Open.
 - **R12, provider capacity.** `POST /api/agent/runs/[id]/cancel` always frees the
   caller's own active slot, but releases the deployment-wide provider lease only
   when the durable workflow is provably terminal or not executing. When the

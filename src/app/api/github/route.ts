@@ -102,28 +102,30 @@ function parseRepo(input: string): { owner: string; repo: string; ref?: string }
 }
 
 /**
- * Loading one repository costs 8 GitHub API calls: metadata, the file tree, a
- * commit list, and five commit details for the recent-change signal. At the
- * per-user limit of 6 loads a minute that is 2,880 calls an hour from one user,
- * against an authenticated ceiling of 5,000 an hour that every user of this
- * deployment shares because the token is the server's. Two people importing
- * steadily exhaust it, and the importer is the only way to load a repository.
+ * A cold web load can spend 9 GitHub API calls: metadata, ref resolution, the
+ * file tree, a commit list, and five commit details for the recent-change
+ * signal. At the per-user limit of 6 loads a minute that is 3,240 calls an hour
+ * from one user, against an authenticated ceiling of 5,000 an hour that every
+ * user of this deployment shares because the token is the server's. Two people
+ * importing steadily exhaust it.
  *
  * The expensive source payload is cached only after GitHub has resolved the
  * requested ref to the current commit. Metadata is rebuilt on every request so a
  * repository turning private is refused immediately and request-specific fields
- * such as name/slug still match the input shape.
+ * such as name/slug still match the input shape. A cache hit still spends 2
+ * GitHub API calls for visibility metadata and ref resolution before the cache
+ * read.
  *
  * Per-instance and short-lived on purpose. It removes the repeat-load storm,
  * which is the realistic exhaustion path; it is not a cross-instance cache. A
  * shared cache (Vercel Runtime Cache) would be stronger and needs its own
  * design decision about invalidation.
  *
- * Scoped to web imports only. `POST /api/v1/locate` loads repositories through
- * its own `fetchRepo` and is deliberately not routed through this cache, so an
- * API-key caller can still spend the shared server token on repeat loads of the
- * same repository. That path is tracked as an open residual in
- * `docs/operations/security-review-status.md` rather than closed here: it
+ * Scoped to web imports only. `POST /api/v1/locate` is a second repository
+ * loading path through its own `fetchRepo` and is deliberately not routed
+ * through this cache, so an API-key caller can still spend the shared server
+ * token on repeat loads of the same repository. That path is tracked as an open
+ * residual in `docs/operations/security-review-status.md` rather than closed here: it
  * rechecks repository visibility on every request and authenticates differently,
  * so putting both behind one loading boundary is a design change, not a cache.
  */
