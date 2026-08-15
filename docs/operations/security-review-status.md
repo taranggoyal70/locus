@@ -130,11 +130,11 @@ alter default privileges in schema public
 
 which states the privileges the hosted database already holds rather than
 inventing a new posture. That distinction matters: the permissive Supabase
-default is what production actually has, and `004` and `015` are what narrow it.
-Starting a rebuilt database from a tighter set would make it diverge from
-production, which is a worse failure than the one being fixed. The statement
-applies to tables created afterwards by the current role, which is every table in
-the chain.
+default is what production actually has, and `004` plus later explicit revokes
+are what narrow it. Starting a rebuilt database from a tighter set would make it
+diverge from production, which is a worse failure than the one being fixed. The
+statement applies to tables created afterwards by the current role, which is
+every table in the chain.
 
 Verified by execution against a real Postgres: dropping and recreating `public`,
 then applying all seventeen migrations in order with no shim, succeeds and

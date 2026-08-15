@@ -13,9 +13,10 @@
 -- This states the privileges the hosted database already has, so a fresh
 -- database starts from the same place and the later hardening migrations do the
 -- same work here that they did there. It is deliberately the permissive Supabase
--- default rather than a tighter set invented now: 004 and 015 are what narrow it,
--- and changing the starting point would make a rebuilt database diverge from
--- production in a way that is worse than the gap it closes.
+-- default rather than a tighter set invented now: 004 and later explicit revokes
+-- are what narrow it, and changing the starting point would make a rebuilt
+-- database diverge from production in a way that is worse than the gap it
+-- closes.
 --
 -- Applies to tables created after this statement by the current role, which is
 -- every table in this chain.
