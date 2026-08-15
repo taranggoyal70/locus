@@ -163,12 +163,6 @@ application reads and writes these tables through the service role. If the hoste
 project is ever found to hold a narrower set, this statement is the place to
 correct.
 
-Fixing it properly means granting explicitly next to each table's creation, which
-edits migrations that already ran in production. That is safe only if the added
-grants match production's real ACLs — otherwise fresh environments diverge from
-production, which is worse than the current state. Confirm the production grants
-before changing the chain.
-
 ## Open
 
 | Risk | Priority | Why it is still open |
