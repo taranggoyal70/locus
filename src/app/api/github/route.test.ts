@@ -142,25 +142,32 @@ describe("GitHub repository API call budget", () => {
     apiCalls = [];
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.startsWith("https://api.github.com/")) apiCalls.push(url);
+      const parsed = new URL(url);
+      if (parsed.hostname === "api.github.com") apiCalls.push(url);
       // GitHub resolves owner and repository names case-insensitively; a
       // case-sensitive stub would fail a request the real API would serve.
-      const lower = url.toLowerCase();
+      const path = parsed.pathname.toLowerCase();
 
-      if (lower === "https://api.github.com/repos/owner/repo") {
+      if (parsed.hostname === "api.github.com" && path === "/repos/owner/repo") {
         return Response.json({ default_branch: "main", private: false, visibility: "public", description: "d" });
       }
-      if (lower === "https://api.github.com/repos/owner/repo/commits/main") {
+      if (parsed.hostname === "api.github.com" && path === "/repos/owner/repo/commits/main") {
         return Response.json({ sha: "abcdef1234567890", commit: { tree: { sha: "treesha" } } });
       }
-      if (lower.includes("/git/trees/")) {
+      if (parsed.hostname === "api.github.com" && path === "/repos/owner/repo/git/trees/treesha") {
         return Response.json({ sha: "treesha", tree: [{ path: "src/a.ts", type: "blob", size: 30 }] });
       }
-      if (lower.includes("/commits?")) {
+      if (parsed.hostname === "api.github.com" && path === "/repos/owner/repo/commits") {
         return Response.json([{ sha: "c1" }, { sha: "c2" }, { sha: "c3" }, { sha: "c4" }, { sha: "c5" }]);
       }
-      if (lower.includes("/commits/")) return Response.json({ files: [{ filename: "src/a.ts" }] });
-      if (lower.includes("raw.githubusercontent.com")) return new Response("export const a = 1;\n");
+      if (
+        parsed.hostname === "api.github.com"
+        && ["c1", "c2", "c3", "c4", "c5"].some((sha) => path === `/repos/owner/repo/commits/${sha}`)
+      ) return Response.json({ files: [{ filename: "src/a.ts" }] });
+      if (
+        parsed.hostname === "raw.githubusercontent.com"
+        && path === "/owner/repo/abcdef1234567890/src/a.ts"
+      ) return new Response("export const a = 1;\n");
       return new Response("nope", { status: 404 });
     }));
   }
@@ -235,6 +242,7 @@ describe("GitHub repository API call budget", () => {
     let treeSha = "tree-old";
     vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
+      const parsed = new URL(url);
       if (url === "https://api.github.com/repos/owner/repo") {
         return Response.json({ default_branch: "main", private: false, visibility: "public", description: "d" });
       }
@@ -247,7 +255,9 @@ describe("GitHub repository API call budget", () => {
       if (url === `https://raw.githubusercontent.com/owner/repo/${commitSha}/src/a.ts`) {
         return new Response(`export const version = "${commitSha}";\n`);
       }
-      if (url.startsWith("https://api.github.com/repos/owner/repo/commits?")) return Response.json([]);
+      if (parsed.hostname === "api.github.com" && parsed.pathname === "/repos/owner/repo/commits") {
+        return Response.json([]);
+      }
       return new Response("nope", { status: 404 });
     }));
 
