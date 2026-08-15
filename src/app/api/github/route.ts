@@ -7,9 +7,10 @@ import { sameOriginMutation } from "@/lib/request-security";
 import type { RepoData } from "@/lib/types";
 
 // Fetch a public GitHub repo's TypeScript source into the flat {path: content}
-// shape the localizer uses. Tree comes from the API (1 call, GITHUB_TOKEN
-// optional for higher limits); file contents come from raw.githubusercontent
-// (not API-rate-limited). Capped so arbitrary repos stay responsive.
+// shape the localizer uses. GitHub API calls cover metadata, ref resolution,
+// tree listing, and recent-change metadata; file contents come from
+// raw.githubusercontent (not API-rate-limited). Capped so arbitrary repos stay
+// responsive.
 const MAX_FILES = 200;
 const MAX_FILE_BYTES = 100_000;
 const MAX_TOTAL_BYTES = 5_000_000;
@@ -101,8 +102,101 @@ function parseRepo(input: string): { owner: string; repo: string; ref?: string }
   }
 }
 
+/**
+ * A cold web load can spend 9 GitHub API calls: metadata, ref resolution, the
+ * file tree, a commit list, and five commit details for the recent-change
+ * signal. At the per-user limit of 6 loads a minute that is 3,240 calls an hour
+ * from one user, against an authenticated ceiling of 5,000 an hour that every
+ * user of this deployment shares because the token is the server's. Two people
+ * importing steadily exhaust it.
+ *
+ * The expensive source payload is cached only after GitHub has resolved the
+ * requested ref to the current commit. Metadata is rebuilt on every request so a
+ * repository turning private is refused immediately and request-specific fields
+ * such as name/slug still match the input shape. A cache hit still spends 2
+ * GitHub API calls for visibility metadata and ref resolution before the cache
+ * read.
+ *
+ * Per-instance and short-lived on purpose. It removes the repeat-load storm,
+ * which is the realistic exhaustion path; it is not a cross-instance cache. A
+ * shared cache (Vercel Runtime Cache) would be stronger and needs its own
+ * design decision about invalidation.
+ *
+ * Scoped to web imports only. `POST /api/v1/locate` is a second repository
+ * loading path through its own `fetchRepo` and is deliberately not routed
+ * through this cache, so an API-key caller can still spend the shared server
+ * token on repeat loads of the same repository. That path is tracked as an open
+ * residual in `docs/operations/security-review-status.md` rather than closed here: it
+ * rechecks repository visibility on every request and authenticates differently,
+ * so putting both behind one loading boundary is a design change, not a cache.
+ */
+const REPO_CACHE_TTL_MS = 5 * 60 * 1000;
+const REPO_CACHE_MAX_ENTRIES = 25;
+
+type CachedRepoSource = {
+  root: string;
+  recentlyChanged: string[];
+  files: Record<string, string>;
+  truncated: boolean;
+  fileCount: number;
+  expiresAt: number;
+};
+
+const repoCache = new Map<string, CachedRepoSource>();
+
+function repoCacheKey(owner: string, repo: string, revision: string): string {
+  // GitHub treats owner and repository names case-insensitively, so fold them to
+  // avoid caching the same repository under several keys.
+  return `${owner.toLowerCase()}/${repo.toLowerCase()}@${revision}`;
+}
+
+function readRepoCache(key: string): CachedRepoSource | null {
+  const hit = repoCache.get(key);
+  if (!hit) return null;
+  if (hit.expiresAt <= Date.now()) {
+    repoCache.delete(key);
+    return null;
+  }
+  // Refresh insertion order so the least recently used entry is evicted first.
+  repoCache.delete(key);
+  repoCache.set(key, hit);
+  return hit;
+}
+
+function writeRepoCache(key: string, value: Omit<CachedRepoSource, "expiresAt">): void {
+  repoCache.set(key, { ...value, expiresAt: Date.now() + REPO_CACHE_TTL_MS });
+  while (repoCache.size > REPO_CACHE_MAX_ENTRIES) {
+    const oldest = repoCache.keys().next();
+    if (oldest.done) break;
+    repoCache.delete(oldest.value);
+  }
+}
+
+/** Exposed for tests: cached repositories must not leak between cases. */
+export function clearRepoCacheForTests(): void {
+  repoCache.clear();
+}
+
 function rawPath(path: string): string {
   return path.split("/").map(encodeURIComponent).join("/");
+}
+
+function buildRepoData(
+  owner: string,
+  repo: string,
+  ref: string | undefined,
+  resolvedRevision: string,
+  description: unknown,
+  source: Pick<CachedRepoSource, "root" | "recentlyChanged" | "files">,
+): RepoData {
+  return {
+    name: `${owner}/${repo}${ref ? `@${resolvedRevision.slice(0, 7)}` : ""}`,
+    slug: `${owner}-${repo}${ref ? `-${resolvedRevision.slice(0, 7)}` : ""}`,
+    description: typeof description === "string" && description ? description : `${owner}/${repo}`,
+    root: source.root,
+    recentlyChanged: source.recentlyChanged,
+    files: source.files,
+  };
 }
 
 /**
@@ -215,19 +309,56 @@ export async function POST(request: Request) {
     }
     const revision = ref || meta.default_branch || "main";
 
-    const treeRes = await fetchWithTimeout(
-      `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(revision)}?recursive=1`,
+    const commitRes = await fetchWithTimeout(
+      `https://api.github.com/repos/${owner}/${repo}/commits/${encodeURIComponent(revision)}`,
       { headers: ghHeaders() },
     );
-    if (treeRes.status === 404) {
+    if (commitRes.status === 404) {
       return NextResponse.json({ error: `Commit or branch “${revision}” was not found.` }, { status: 404 });
     }
+    if (!commitRes.ok) return NextResponse.json({ error: "Could not resolve the repository revision." }, { status: 502 });
+    const commit = await commitRes.json().catch(() => null);
+    const resolvedRevision = typeof commit?.sha === "string" ? commit.sha : "";
+    const treeSha = typeof commit?.commit?.tree?.sha === "string" ? commit.commit.tree.sha : "";
+    if (!resolvedRevision || !treeSha) {
+      return NextResponse.json({ error: "GitHub returned an invalid repository revision." }, { status: 502, headers: rateHeaders });
+    }
+    const cacheKey = repoCacheKey(owner, repo, resolvedRevision);
+    const cached = readRepoCache(cacheKey);
+    if (cached) {
+      // Metadata is rebuilt per request rather than served from the cache, so
+      // name, slug and description match this request rather than the one that
+      // filled the entry.
+      const repoData = buildRepoData(owner, repo, ref, resolvedRevision, meta.description, cached);
+      // The metric means "a user successfully loaded a repository", so a hit has
+      // to count. Emitting only on a miss would make `Repos loaded (30d)` quietly
+      // become "cache misses" and undercount exactly the repeat loads this cache
+      // was added to serve.
+      track({
+        event: "repo_loaded",
+        userId,
+        properties: {
+          repo: `${owner}/${repo}`,
+          files: cached.fileCount,
+          truncated: cached.truncated,
+          cached: true,
+        },
+      });
+      return NextResponse.json(
+        { repo: repoData, truncated: cached.truncated, fileCount: cached.fileCount },
+        { headers: rateHeaders },
+      );
+    }
+
+    const treeRes = await fetchWithTimeout(
+      `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(treeSha)}?recursive=1`,
+      { headers: ghHeaders() },
+    );
     if (!treeRes.ok) return NextResponse.json({ error: "Could not read the repo file tree." }, { status: 502 });
     const tree = await treeRes.json().catch(() => null);
     if (!tree || typeof tree !== "object" || !Array.isArray(tree.tree)) {
       return NextResponse.json({ error: "GitHub returned an invalid repository tree." }, { status: 502, headers: rateHeaders });
     }
-    const resolvedRevision = String(tree.sha || revision);
 
     const candidates = (tree.tree as { path: string; type: string; size?: number }[])
       .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
@@ -295,26 +426,33 @@ export async function POST(request: Request) {
       recentlyChanged = [];
     }
 
-    const repoData: RepoData = {
-      name: `${owner}/${repo}${ref ? `@${resolvedRevision.slice(0, 7)}` : ""}`,
-      slug: `${owner}-${repo}${ref ? `-${resolvedRevision.slice(0, 7)}` : ""}`,
-      description: meta.description || `${owner}/${repo}`,
-      root: commonRoot(Object.keys(fileMap)),
+    const root = commonRoot(Object.keys(fileMap));
+    const fileCount = Object.keys(fileMap).length;
+    const repoData = buildRepoData(owner, repo, ref, resolvedRevision, meta.description, {
+      root,
       recentlyChanged,
       files: fileMap,
-    };
+    });
+    writeRepoCache(cacheKey, {
+      root,
+      recentlyChanged,
+      files: fileMap,
+      truncated,
+      fileCount,
+    });
     track({
       event: "repo_loaded",
       userId,
       properties: {
         repo: `${owner}/${repo}`,
-        files: Object.keys(fileMap).length,
+        files: fileCount,
         truncated,
+        cached: false,
       },
     });
 
     return NextResponse.json(
-      { repo: repoData, truncated, fileCount: Object.keys(fileMap).length },
+      { repo: repoData, truncated, fileCount },
       { headers: rateHeaders },
     );
   } catch (error) {
