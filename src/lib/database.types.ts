@@ -377,6 +377,30 @@ export type Database = {
         };
         Returns: boolean;
       };
+      // R17: Stripe writes that refuse stale grants and resolve same-second
+      // ambiguity toward the more restrictive subscription state.
+      upsert_stripe_subscription: {
+        Args: {
+          p_user_id: string;
+          p_customer_id: string;
+          p_subscription_id: string;
+          p_plan: string;
+          p_status: string;
+          p_event_id: string;
+          p_event_created: string;
+        };
+        Returns: Array<{ applied: boolean; skipped_reason: string | null }>;
+      };
+      apply_stripe_subscription_event: {
+        Args: {
+          p_subscription_id: string;
+          p_status: string;
+          p_plan: string | null;
+          p_event_id: string;
+          p_event_created: string;
+        };
+        Returns: Array<{ applied: boolean; skipped_reason: string | null }>;
+      };
       // R12: counts a user's active and daily Runs and inserts the Run in one
       // transaction. `reason` is null when the claim was allowed.
       claim_agent_run_slot: {

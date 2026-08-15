@@ -24,7 +24,7 @@ risk that was quietly downgraded.
 | R14 | P2 Medium/High | `31fd609` | Model resolution fails closed against a production allowlist |
 | R15 | P2 Medium | `3a91b80` | Secrets redacted by value shape, not only field name |
 | R16 | P2 Medium | `3a91b80` | Security headers pinned by tests rather than living unasserted in config |
-| R17 | P3 Medium/Low | `3a91b80` | Webhook body bounded in front of the read (ceiling only, see below) |
+| R17 | P3 Medium/Low | `3a91b80`, `5f77eb7` | Webhook body bounded in front of the read; row-local ordering guard added but not a full closure (see below) |
 
 The additions are security regression tests that execute the attacks: a
 symlinked escape, a Slice-search symlink leak, an MCP root escape, an oversized
@@ -48,7 +48,41 @@ These are real and should not be forgotten because the row above says closed.
   the review's literal recommendation, which is a least-privilege database role
   with Clerk to Supabase JWT so RLS applies per user. What shipped removes the
   default cross-tenant failure mode; it does not remove the service role.
-- **R17.** The body ceiling shipped. The idempotency ledger did not.
+- **R17.** The body ceiling shipped. The idempotency ledger did not, and on
+  inspection it was not the live risk: all three Stripe handlers are
+  last-write-wins writes, so processing one event twice writes the same values,
+  and Stripe's signature timestamp tolerance already rejects a captured body
+  replayed later. What was live is *ordering*. Stripe does not guarantee delivery
+  order, and a delayed `customer.subscription.updated` carrying `status: active`
+  arriving after `customer.subscription.deleted` restored paid access to a
+  cancelled account - reproduced against this schema, `free/cancelled` becoming
+  `free/active`. Migration 017 records which event last wrote each subscription
+  row, backfills legacy null watermarks, refuses strictly older events in both
+  directions, makes cancellation terminal for an already-cancelled row, and
+  resolves same-second ambiguity toward the more restrictive state: same-second
+  `inactive` or `cancelled` applies, while same-second `active` is refused. The
+  comparison and the write are one statement, because reading the watermark and
+  then writing would reintroduce the race closed in 016. The route also had no
+  tests at all despite granting and revoking paid access; it now has ten, five
+  of which fail against the previous implementation.
+
+  **Residual R17 pre-row restrictive event.** A watermark stored on the
+  `subscriptions` row cannot order an event that arrives before that row exists.
+  Concrete remaining sequence: `checkout.session.completed` is created at T0,
+  the subscription is cancelled at T1, Stripe delivers
+  `customer.subscription.deleted` first, `apply_stripe_subscription_event`
+  updates zero rows as unknown and the route acknowledges it, then the older
+  checkout event reaches `upsert_stripe_subscription` and creates an active/pro
+  row. Closing this requires a watermark keyed on `stripe_subscription_id` that
+  outlives the `subscriptions` row - a table, which is the ledger R17 originally
+  named, needed here for ordering rather than deduplication. This is deliberately
+  deferred: billing is hard-disabled in `alpha-capabilities.ts`, where
+  `billing` is false for every user, there is no billing UI, and no Stripe keys
+  are configured. This repository already records the same policy for R4: a
+  dormant surface is finished in the change that enables the feature. Migration
+  017 still strictly improves the previous behaviour, because this remaining
+  sequence was equally open before it, but it must not be read as R17 fully
+  closed.
 - **CSRF on mutation routes.** `POST /api/agent/runs/[id]/approve` used an inline
   `sec-fetch-site === "cross-site"` check while every other mutation route used the
   shared `sameOriginMutation` guard. The inline form allowed `same-site` (a sibling
@@ -84,8 +118,9 @@ audit of who can write what all depend on that. It also means `004`, whose whole
 purpose is restricting public writes, has never been exercised from a clean
 state.
 
-Once that single grant is supplied, all sixteen migrations apply in order and
-produce the expected 16 public tables, so this is the only blocker.
+Once that single grant is supplied, migrations through `016` apply in order and
+produce the expected 16 public tables, so this is the only blocker known from
+that reproduction.
 
 Fixing it properly means granting explicitly next to each table's creation, which
 edits migrations that already ran in production. That is safe only if the added
