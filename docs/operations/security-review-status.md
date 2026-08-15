@@ -92,12 +92,13 @@ These are real and should not be forgotten because the row above says closed.
   was unreachable. Now on the shared guard, with three regression tests covering the
   cases the inline form let through.
 
-## The migration chain does not apply to a fresh database
+## The migration chain now applies to a fresh database
 
-Found while standing up a local database to test the R12 fix, and unresolved
-because it is a decision rather than a patch.
+Found while standing up a local database to test the R12 fix, and since closed.
 
-`004_harden_public_writes.sql` aborts on a new database with
+### What was wrong
+
+`004_harden_public_writes.sql` aborted on a new database with
 `service_role must retain INSERT on public.events`. Its `do $$` block is a
 precondition assertion that runs before any revoke, and the assertion is correct:
 `service_role` genuinely has no INSERT.
@@ -118,9 +119,49 @@ audit of who can write what all depend on that. It also means `004`, whose whole
 purpose is restricting public writes, has never been exercised from a clean
 state.
 
-Once that single grant is supplied, migrations through `016` apply in order and
-produce the expected 16 public tables, so this is the only blocker known from
-that reproduction.
+### The fix
+
+`001_initial_schema.sql` now opens with
+
+```sql
+alter default privileges in schema public
+  grant all on tables to anon, authenticated, service_role;
+```
+
+which states the privileges the hosted database already holds rather than
+inventing a new posture. That distinction matters: the permissive Supabase
+default is what production actually has, and `004` and `015` are what narrow it.
+Starting a rebuilt database from a tighter set would make it diverge from
+production, which is a worse failure than the one being fixed. The statement
+applies to tables created afterwards by the current role, which is every table in
+the chain.
+
+Verified by execution against a real Postgres: dropping and recreating `public`,
+then applying all seventeen migrations in order with no shim, succeeds and
+produces 16 tables. The resulting privileges are the intended hardened state
+rather than merely "it ran":
+
+```
+service_role INSERT events    = true      anon INSERT events        = false
+service_role SELECT events    = true      anon UPDATE events        = false
+rls on events                 = true      anon INSERT waitlist      = false
+                                          authenticated INSERT waitlist = false
+```
+
+So `004`'s revokes now remove real privileges on a fresh database instead of
+finding nothing to remove, and the hardening it describes is exercised from a
+clean state for the first time.
+
+### What this does not prove
+
+The grant matches production by inference, not by inspection. Production's
+Supabase environment variables are marked Sensitive in Vercel and cannot be read
+back, so the ACLs there were never read directly. The inference rests on two
+things: `004` applied successfully in production, which requires
+`service_role` to have held INSERT on `events` and `waitlist`; and the deployed
+application reads and writes these tables through the service role. If the hosted
+project is ever found to hold a narrower set, this statement is the place to
+correct.
 
 Fixing it properly means granting explicitly next to each table's creation, which
 edits migrations that already ran in production. That is safe only if the added

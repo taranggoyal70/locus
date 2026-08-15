@@ -1,3 +1,27 @@
+-- Make the API-role grants explicit instead of inherited.
+--
+-- Supabase attaches default privileges in `public` to objects created by
+-- `supabase_admin`, but migrations run as `postgres`, so a database built from
+-- this chain gave anon, authenticated and service_role nothing at all. The
+-- hosted project has those grants because of how its tables were created, not
+-- because anything here said so, and the difference is invisible until you try
+-- to rebuild: `004_harden_public_writes.sql` aborts with
+-- `service_role must retain INSERT on public.events`, and its revokes have
+-- nothing to revoke. Staging, disaster recovery and any audit of who can write
+-- what all depend on this chain reproducing the real thing.
+--
+-- This states the privileges the hosted database already has, so a fresh
+-- database starts from the same place and the later hardening migrations do the
+-- same work here that they did there. It is deliberately the permissive Supabase
+-- default rather than a tighter set invented now: 004 and 015 are what narrow it,
+-- and changing the starting point would make a rebuilt database diverge from
+-- production in a way that is worse than the gap it closes.
+--
+-- Applies to tables created after this statement by the current role, which is
+-- every table in this chain.
+alter default privileges in schema public
+  grant all on tables to anon, authenticated, service_role;
+
 -- Projects: saved analyses users can return to
 create table projects (
   id uuid primary key default gen_random_uuid(),
