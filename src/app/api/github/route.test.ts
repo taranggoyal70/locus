@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const authMock = vi.hoisted(() => vi.fn());
 const serviceClientMock = vi.hoisted(() => vi.fn());
 const consumeRateLimitMock = vi.hoisted(() => vi.fn());
+const trackMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
 vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
+vi.mock("@/lib/analytics", () => ({ track: trackMock }));
 
 import { POST } from "@/app/api/github/route";
 
@@ -212,5 +214,45 @@ describe("GitHub repository API call budget", () => {
 
     expect(upper.status).toBe(200);
     expect(apiCalls).toEqual(["https://api.github.com/repos/Owner/Repo"]);
+  });
+
+  // `Repos loaded (30d)` counts this event. Emitting it only when the cache
+  // misses would silently redefine the metric as "cache misses" and undercount
+  // precisely the repeat loads the cache exists to serve.
+  it("counts a repository load whether or not the cache served it", async () => {
+    trackMock.mockClear();
+
+    await POST(request('{"url":"owner/repo"}', "198.51.100.24"));
+    const [fresh] = trackMock.mock.calls.at(-1) ?? [];
+    expect(fresh).toMatchObject({
+      event: "repo_loaded",
+      properties: expect.objectContaining({ repo: "owner/repo", cached: false }),
+    });
+
+    trackMock.mockClear();
+    const second = await POST(request('{"url":"owner/repo"}', "198.51.100.24"));
+    expect(second.status).toBe(200);
+
+    const [hit] = trackMock.mock.calls.at(-1) ?? [];
+    expect(trackMock).toHaveBeenCalledTimes(1);
+    expect(hit).toMatchObject({
+      event: "repo_loaded",
+      properties: expect.objectContaining({ repo: "owner/repo", cached: true }),
+    });
+  });
+
+  it("reports the same file count on a hit as on the load that filled it", async () => {
+    trackMock.mockClear();
+    await POST(request('{"url":"owner/repo"}', "198.51.100.25"));
+    const [fresh] = trackMock.mock.calls.at(-1) ?? [];
+
+    trackMock.mockClear();
+    await POST(request('{"url":"owner/repo"}', "198.51.100.25"));
+    const [hit] = trackMock.mock.calls.at(-1) ?? [];
+
+    // A hit that reported a different count would corrupt the metric rather than
+    // merely undercount it.
+    expect(hit.properties.files).toBe(fresh.properties.files);
+    expect(hit.properties.truncated).toBe(fresh.properties.truncated);
   });
 });

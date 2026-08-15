@@ -119,6 +119,14 @@ function parseRepo(input: string): { owner: string; repo: string; ref?: string }
  * which is the realistic exhaustion path; it is not a cross-instance cache. A
  * shared cache (Vercel Runtime Cache) would be stronger and needs its own
  * design decision about invalidation.
+ *
+ * Scoped to web imports only. `POST /api/v1/locate` loads repositories through
+ * its own `fetchRepo` and is deliberately not routed through this cache, so an
+ * API-key caller can still spend the shared server token on repeat loads of the
+ * same repository. That path is tracked as an open residual in
+ * `docs/operations/security-review-status.md` rather than closed here: it
+ * rechecks repository visibility on every request and authenticates differently,
+ * so putting both behind one loading boundary is a design change, not a cache.
  */
 const REPO_CACHE_TTL_MS = 5 * 60 * 1000;
 const REPO_CACHE_MAX_ENTRIES = 25;
@@ -279,6 +287,20 @@ export async function POST(request: Request) {
     const cacheKey = repoCacheKey(owner, repo, revision);
     const cached = readRepoCache(cacheKey);
     if (cached) {
+      // The metric means "a user successfully loaded a repository", so a hit has
+      // to count. Emitting only on a miss would make `Repos loaded (30d)` quietly
+      // become "cache misses" and undercount exactly the repeat loads this cache
+      // was added to serve.
+      track({
+        event: "repo_loaded",
+        userId,
+        properties: {
+          repo: `${owner}/${repo}`,
+          files: cached.fileCount,
+          truncated: cached.truncated,
+          cached: true,
+        },
+      });
       return NextResponse.json(
         { repo: cached.repo, truncated: cached.truncated, fileCount: cached.fileCount },
         { headers: rateHeaders },
@@ -385,6 +407,7 @@ export async function POST(request: Request) {
         repo: `${owner}/${repo}`,
         files: Object.keys(fileMap).length,
         truncated,
+        cached: false,
       },
     });
 
