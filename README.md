@@ -142,9 +142,22 @@ Signed-out visitors see the public product site; signed-in users go to `/workspa
 ### Persistence
 
 Supabase stores Agent Tasks, durable Runs, evidence, saved analyses, API keys, and
-usage analytics. Apply every migration in order:
+usage analytics.
 
-Use the history-aware procedure in
+For local development, use the committed Supabase CLI config:
+
+```bash
+pnpm dlx supabase@2.111.0 start
+pnpm dlx supabase@2.111.0 db reset
+pnpm dlx supabase@2.111.0 status
+```
+
+`db reset` replays the migration chain. Local ports and migration settings are
+owned by [`supabase/config.toml`](supabase/config.toml); use `status` to copy the
+local URL, anon key, and service-role key into `.env.local`.
+
+For a linked or hosted database, apply migrations with the history-aware
+procedure in
 [`docs/operations/release-0-controlled-alpha-rollout.md`](docs/operations/release-0-controlled-alpha-rollout.md).
 Do not apply migrations with an untracked shell loop.
 Release 1 migrations `012`–`016` use the separate
