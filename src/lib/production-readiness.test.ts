@@ -4,6 +4,7 @@ import { productionReadiness } from "@/lib/production-readiness";
 
 const complete = {
   NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_test_value_that_is_long_enough",
   SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test_value_that_is_long_enough",
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_value",
   CLERK_SECRET_KEY: "sk_test_value",
@@ -34,6 +35,9 @@ describe("production readiness", () => {
 
   it.each([
     { name: "an invalid Supabase URL", environment: { ...complete, NEXT_PUBLIC_SUPABASE_URL: "not-a-url" } },
+    { name: "a non-Supabase database URL", environment: { ...complete, NEXT_PUBLIC_SUPABASE_URL: "https://database.example.com" } },
+    { name: "a missing browser key", environment: { ...complete, NEXT_PUBLIC_SUPABASE_ANON_KEY: "" } },
+    { name: "a placeholder browser key", environment: { ...complete, NEXT_PUBLIC_SUPABASE_ANON_KEY: "***********" } },
     { name: "a placeholder service key", environment: { ...complete, SUPABASE_SERVICE_ROLE_KEY: "***********" } },
   ])("fails closed for $name", ({ environment }) => {
     expect(productionReadiness(environment)).toMatchObject({

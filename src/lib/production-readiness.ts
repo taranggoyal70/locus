@@ -4,13 +4,29 @@ function configured(value: string | undefined): boolean {
   return Boolean(value?.trim());
 }
 
-function httpsUrl(value: string | undefined): boolean {
-  if (!configured(value)) return false;
+function parsedHttpsUrl(value: string | undefined): URL | null {
+  if (!configured(value)) return null;
   try {
-    return new URL(value as string).protocol === "https:";
+    const url = new URL(value as string);
+    return url.protocol === "https:" ? url : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function httpsUrl(value: string | undefined): boolean {
+  return parsedHttpsUrl(value) !== null;
+}
+
+function supabaseUrl(value: string | undefined): boolean {
+  const url = parsedHttpsUrl(value);
+  return Boolean(url && /^[a-z0-9-]+\.supabase\.co$/i.test(url.hostname));
+}
+
+function supabasePublicKey(value: string | undefined): boolean {
+  const key = value?.trim() ?? "";
+  return (key.startsWith("sb_publishable_") && key.length >= 24)
+    || (key.startsWith("eyJ") && key.length >= 100);
 }
 
 function supabaseServiceKey(value: string | undefined): boolean {
@@ -22,7 +38,8 @@ function supabaseServiceKey(value: string | undefined): boolean {
 export function productionReadiness(environment: Environment = process.env) {
   const missing: string[] = [];
   if (
-    !httpsUrl(environment.NEXT_PUBLIC_SUPABASE_URL)
+    !supabaseUrl(environment.NEXT_PUBLIC_SUPABASE_URL)
+    || !supabasePublicKey(environment.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     || !supabaseServiceKey(environment.SUPABASE_SERVICE_ROLE_KEY)
   ) missing.push("database");
   if (
