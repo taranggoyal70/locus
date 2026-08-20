@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildGraph, locate } from "@/lib/localizer";
-import { BUNDLED, githubSource, parseRepoData } from "@/lib/sources";
+import { BUNDLED, githubSource, parseRepoData, RepositorySourceError } from "@/lib/sources";
 import type { RepoData } from "@/lib/types";
 
 // Guards the class of bug where the auto-loaded bundled repo was renamed away
@@ -32,6 +32,22 @@ describe("GitHub repository source", () => {
     await expect(githubSource("owner/repo").load()).rejects.toThrow(
       "GitHub analysis is temporarily unavailable. Please try again.",
     );
+  });
+
+  it.each([
+    { status: 404, code: "unavailable", retryable: false },
+    { status: 429, code: "rate-limited", retryable: true },
+    { status: 503, code: "temporary", retryable: true },
+  ] as const)("classifies $status responses for recovery", async ({ status, code, retryable }) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(
+      { error: "Repository load failed." },
+      { status },
+    )));
+
+    const failure = await githubSource("owner/repo").load().catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(RepositorySourceError);
+    expect(failure).toMatchObject({ code, retryable });
   });
 
   it("rejects malformed repository data instead of crashing the localizer", () => {
