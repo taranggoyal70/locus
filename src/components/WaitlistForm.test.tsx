@@ -16,6 +16,9 @@ describe("alpha access form", () => {
     expect(html).toContain('aria-label="Close alpha access form"');
     expect(html).toContain('for="alpha-access-email"');
     expect(html).toContain('for="alpha-access-use-case"');
+    expect(html).toContain(">Email address</label>");
+    expect(html).toContain('autoComplete="email"');
+    expect(html).toContain("For example: fix a failing CI check");
     expect(html).not.toContain("Pro waitlist");
     expect(html).not.toContain("Private repos");
     expect(html).not.toContain("higher throughput");
