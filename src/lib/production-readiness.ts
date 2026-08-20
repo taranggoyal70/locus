@@ -13,11 +13,17 @@ function httpsUrl(value: string | undefined): boolean {
   }
 }
 
+function supabaseServiceKey(value: string | undefined): boolean {
+  const key = value?.trim() ?? "";
+  return (key.startsWith("sb_secret_") && key.length >= 24)
+    || (key.startsWith("eyJ") && key.length >= 100);
+}
+
 export function productionReadiness(environment: Environment = process.env) {
   const missing: string[] = [];
   if (
-    !configured(environment.NEXT_PUBLIC_SUPABASE_URL)
-    || !configured(environment.SUPABASE_SERVICE_ROLE_KEY)
+    !httpsUrl(environment.NEXT_PUBLIC_SUPABASE_URL)
+    || !supabaseServiceKey(environment.SUPABASE_SERVICE_ROLE_KEY)
   ) missing.push("database");
   if (
     !configured(environment.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
