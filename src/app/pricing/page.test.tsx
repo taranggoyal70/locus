@@ -10,6 +10,7 @@ describe("controlled-alpha access page", () => {
     expect(html).toContain("Controlled alpha");
     expect(html).toContain("Free for invited design partners");
     expect(html).toContain("Request alpha access");
+    expect(html).toContain('id="request-access"');
     expect(html).toContain("Public JavaScript and TypeScript repositories");
     expect(html).not.toContain("$29");
     expect(html).not.toContain("Enterprise");

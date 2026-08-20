@@ -10,6 +10,9 @@ describe("controlled-alpha marketing navigation", () => {
     expect(html).toContain("Alpha access");
     expect(html).toContain('href="/evidence/release-1"');
     expect(html).toContain("Request access");
+    const signInLink = html.match(/<a[^>]*href="\/sign-in"[^>]*>Sign in<\/a>/)?.[0];
+    expect(signInLink).toBeTruthy();
+    expect(signInLink).not.toContain("hidden");
     expect(html).toContain('aria-label="Locus home"');
     expect(html).toContain("Public-Repo proposals with visible context evidence");
     expect(html).not.toContain("Pricing");

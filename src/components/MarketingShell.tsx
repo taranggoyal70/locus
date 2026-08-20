@@ -17,7 +17,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             <Link href="/docs" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Docs</Link>
             <Link href="/pricing" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper md:block md:px-3">Alpha access</Link>
             <a href={REPO_URL} className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block">Source</a>
-            <Link href="/sign-in" className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:bg-surface hover:text-paper md:block">Sign in</Link>
+            <Link href="/sign-in" className="rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:px-3">Sign in</Link>
             <Link href="/pricing" className="ml-1 rounded-lg bg-paper px-3 py-2 text-white transition hover:bg-paper/90 sm:px-4">Request access</Link>
           </nav>
         </div>

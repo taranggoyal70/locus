@@ -18,7 +18,7 @@ export default function PricingPage() {
 
   return (
     <MarketingShell>
-      <main className="mx-auto max-w-5xl px-5 py-16 sm:px-8 sm:py-24">
+      <main className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
         <div className="text-center">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
             Controlled alpha
@@ -32,7 +32,7 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <section className="mx-auto mt-12 max-w-3xl rounded-[26px] border border-accent/35 bg-surface p-6 shadow-[0_28px_80px_rgba(20,35,59,0.10)] sm:p-9">
+        <section id="request-access" className="mx-auto mt-8 max-w-3xl scroll-mt-24 rounded-[26px] border border-accent/35 bg-surface p-6 shadow-[0_28px_80px_rgba(20,35,59,0.10)] sm:p-9">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">
