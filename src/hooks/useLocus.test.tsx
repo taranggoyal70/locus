@@ -51,6 +51,8 @@ describe("Repo loading lifecycle", () => {
 
     const { result } = renderHook(() => useLocus());
     await waitFor(() => expect(result.current.repo?.slug).toBe("taxonomy"));
+    const initialSlice = result.current.result?.slice.map((file) => file.path);
+    expect(initialSlice).toEqual(["src/app/page.tsx"]);
 
     act(() => result.current.setGhUrl("owner/repo"));
     await act(async () => {
@@ -58,6 +60,7 @@ describe("Repo loading lifecycle", () => {
     });
 
     expect(result.current.repo?.slug).toBe("taxonomy");
+    expect(result.current.result?.slice.map((file) => file.path)).toEqual(initialSlice);
     expect(result.current.loadIssue).toMatchObject({
       code: "temporary",
       attemptedRepoSpecifier: "owner/repo",

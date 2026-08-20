@@ -59,6 +59,14 @@ export function parseRepoData(value: unknown): RepoData {
   return candidate as RepoData;
 }
 
+function incompleteGithubRepo(): RepoSourceError {
+  return new RepoSourceError(
+    "GitHub returned an incomplete Repo response. Please try again.",
+    "temporary",
+    true,
+  );
+}
+
 export const BUNDLED = [
   {
     slug: "taxonomy",
@@ -128,12 +136,12 @@ export function githubSource(url: string): RepoSource {
           code === "rate-limited" || code === "temporary",
         );
       }
-      if (!data?.repo) throw new Error("GitHub returned an incomplete repository response. Please try again.");
+      if (!data?.repo) throw incompleteGithubRepo();
       let repo: RepoData;
       try {
         repo = parseRepoData(data.repo);
       } catch {
-        throw new Error("GitHub returned an incomplete repository response. Please try again.");
+        throw incompleteGithubRepo();
       }
       const truncated = data.truncated === true;
       const fileCount = Number.isInteger(data.fileCount) && data.fileCount > 0

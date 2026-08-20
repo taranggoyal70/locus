@@ -75,8 +75,13 @@ describe("GitHub repository source", () => {
       fileCount: 0,
     })));
 
-    await expect(githubSource("owner/repo").load()).rejects.toThrow(
-      "GitHub returned an incomplete repository response. Please try again.",
-    );
+    const failure = await githubSource("owner/repo").load().catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(RepoSourceError);
+    expect(failure).toMatchObject({
+      message: "GitHub returned an incomplete Repo response. Please try again.",
+      code: "temporary",
+      retryable: true,
+    });
   });
 });
