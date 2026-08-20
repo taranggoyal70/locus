@@ -61,6 +61,12 @@ function supabaseConfig(environment: Environment) {
   return publicKey && serviceKey ? { url, publicKey, serviceKey } : null;
 }
 
+function databaseProbeHeaders(key: string): Record<string, string> {
+  return key.startsWith("eyJ")
+    ? { apikey: key, Authorization: `Bearer ${key}` }
+    : { apikey: key };
+}
+
 async function databaseCredentialsWork(
   config: NonNullable<ReturnType<typeof supabaseConfig>>,
   request: DatabaseRequest,
@@ -69,7 +75,7 @@ async function databaseCredentialsWork(
   try {
     const responses = await Promise.all([config.publicKey, config.serviceKey].map((key) => request(endpoint, {
       method: "GET",
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      headers: databaseProbeHeaders(key),
       signal: AbortSignal.timeout(5_000),
     })));
     return responses.every((response) => response.ok);
