@@ -9,6 +9,7 @@ import { AgentRunPanel } from "@/components/AgentRunPanel";
 import { ContextLens } from "@/components/ContextLens";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
+import { RepositoryLoadFeedback } from "@/components/RepositoryLoadFeedback";
 import { TaskEvidence } from "@/components/TaskEvidence";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
@@ -37,7 +38,7 @@ export function LocusApp({
     ghUrl,
     loadedRepositorySpecifier,
     loading,
-    error,
+    loadIssue,
     note,
     evidence,
     examples,
@@ -245,6 +246,9 @@ export function LocusApp({
                       {loading ? "…" : "Load"}
                     </button>
                   </div>
+                  <p className="mt-2 text-[10px] leading-4 text-muted">
+                    Public GitHub Repos only during the controlled alpha. Failed loads keep your current Slice open.
+                  </p>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {bundled.map((source) => (
                       <button
@@ -330,16 +334,21 @@ export function LocusApp({
                 </div>
               </div>
 
-              {(error || note) && (
+              {loadIssue ? (
+                <RepositoryLoadFeedback
+                  issue={loadIssue}
+                  activeRepoName={repo?.name ?? null}
+                  onRetry={() => loadGithub()}
+                  onUseDemo={() => pickBundled(bundled[0].slug)}
+                />
+              ) : note ? (
                 <div
-                  role={error ? "alert" : "status"}
-                  className={`border-t border-line px-5 py-3 text-xs leading-5 ${
-                    error ? "text-recent" : "text-muted-light"
-                  }`}
+                  role="status"
+                  className="border-t border-line px-5 py-3 text-xs leading-5 text-muted-light"
                 >
-                  {error ?? note}
+                  {note}
                 </div>
-              )}
+              ) : null}
             </div>
           </aside>
 
