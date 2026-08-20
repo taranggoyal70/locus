@@ -230,7 +230,10 @@ export async function POST(request: Request) {
   } as Record<string, string>;
 
   if (!sameOriginMutation(request)) {
-    return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403, headers: rateHeaders });
+    return NextResponse.json(
+      { error: "Cross-site requests are not allowed.", code: "invalid" },
+      { status: 403, headers: rateHeaders },
+    );
   }
 
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
@@ -274,7 +277,7 @@ export async function POST(request: Request) {
       });
     } catch {
       return NextResponse.json(
-        { error: "Repository request limits could not be verified. Try again shortly." },
+        { error: "Repo request limits could not be verified. Try again shortly.", code: "temporary" },
         { status: 503 },
       );
     }
@@ -284,7 +287,7 @@ export async function POST(request: Request) {
     };
     if (!rate.allowed) {
       return NextResponse.json(
-        { error: "Too many repository requests. Try again shortly." },
+        { error: "Too many repository requests. Try again shortly.", code: "rate-limited" },
         { status: 429, headers: { ...rateHeaders, "Retry-After": String(rate.retryAfterSeconds) } },
       );
     }
@@ -292,7 +295,10 @@ export async function POST(request: Request) {
     const info = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders() });
     if (info.status === 404) {
       return NextResponse.json(
-        { error: "Repo not found. Controlled alpha currently supports public repositories only." },
+        {
+          error: "Repo not found. Controlled alpha currently supports public repositories only.",
+          code: "unavailable",
+        },
         { status: 404, headers: rateHeaders },
       );
     }
@@ -303,7 +309,7 @@ export async function POST(request: Request) {
     }
     if (meta.private === true || (typeof meta.visibility === "string" && meta.visibility !== "public")) {
       return NextResponse.json(
-        { error: "Controlled alpha supports public repositories only." },
+        { error: "Controlled alpha supports public repositories only.", code: "unavailable" },
         { status: 403, headers: rateHeaders },
       );
     }
@@ -314,7 +320,10 @@ export async function POST(request: Request) {
       { headers: ghHeaders() },
     );
     if (commitRes.status === 404) {
-      return NextResponse.json({ error: `Commit or branch “${revision}” was not found.` }, { status: 404 });
+      return NextResponse.json(
+        { error: `Commit or branch “${revision}” was not found.`, code: "invalid" },
+        { status: 404, headers: rateHeaders },
+      );
     }
     if (!commitRes.ok) return NextResponse.json({ error: "Could not resolve the repository revision." }, { status: 502 });
     const commit = await commitRes.json().catch(() => null);

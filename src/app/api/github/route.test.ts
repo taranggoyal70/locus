@@ -49,6 +49,10 @@ describe("GitHub repository API request guards", () => {
   it("rejects browser requests initiated by another site", async () => {
     const response = await POST(request('{"url":"owner/repo"}', "198.51.100.5", { "sec-fetch-site": "cross-site" }));
     expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      error: "Cross-site requests are not allowed.",
+      code: "invalid",
+    });
   });
 
   it("enforces the durable repository-read limit", async () => {
@@ -58,6 +62,10 @@ describe("GitHub repository API request guards", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("42");
+    await expect(response.json()).resolves.toEqual({
+      error: "Too many repository requests. Try again shortly.",
+      code: "rate-limited",
+    });
     expect(consumeRateLimitMock).toHaveBeenCalledWith({
       namespace: "github-repository-read",
       identity: "198.51.100.3",
@@ -89,6 +97,7 @@ describe("GitHub repository API request guards", () => {
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({
       error: "Repo not found. Controlled alpha currently supports public repositories only.",
+      code: "unavailable",
     });
     expect(serviceClientMock).not.toHaveBeenCalled();
     fetchMock.mockRestore();
@@ -103,8 +112,24 @@ describe("GitHub repository API request guards", () => {
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
       error: "Controlled alpha supports public repositories only.",
+      code: "unavailable",
     });
     expect(fetchMock).toHaveBeenCalledOnce();
+    fetchMock.mockRestore();
+  });
+
+  it("distinguishes a missing revision from an unavailable Repo", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(Response.json({ default_branch: "main", private: false, visibility: "public" }))
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+
+    const response = await POST(request('{"url":"owner/repo@missing"}', "198.51.100.24"));
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: "Commit or branch “missing” was not found.",
+      code: "invalid",
+    });
     fetchMock.mockRestore();
   });
 
