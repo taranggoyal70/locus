@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import packageJson from "../../../../package.json";
 import { productionReadiness } from "@/lib/production-readiness";
 
-export function GET() {
-  const readiness = productionReadiness();
+export async function GET() {
+  const readiness = await productionReadiness();
   return NextResponse.json(
     {
       status: readiness.ready ? "ok" : "degraded",

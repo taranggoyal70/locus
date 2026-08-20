@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { productionReadiness } from "@/lib/production-readiness";
 
@@ -15,18 +15,26 @@ const complete = {
   OPS_ALERT_WEBHOOK_URL: "https://alerts.example/locus",
 };
 
+const databaseReady = vi.fn(async () => new Response(null, { status: 200 }));
+
+function legacyKey(role: "anon" | "service_role", ref = "project") {
+  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ iss: "supabase", ref, role })).toString("base64url");
+  return `${header}.${payload}.${"x".repeat(64)}`;
+}
+
 describe("production readiness", () => {
-  it("reports the runtime ready without exposing environment values", () => {
-    expect(productionReadiness(complete)).toEqual({
+  it("reports the runtime ready without exposing environment values", async () => {
+    await expect(productionReadiness(complete, databaseReady)).resolves.toEqual({
       ready: true,
       missing: [],
       alerting: "webhook",
     });
   });
 
-  it("fails closed for missing retention or provider configuration", () => {
+  it("fails closed for missing retention or provider configuration", async () => {
     const incomplete = { ...complete, CRON_SECRET: "", GOOGLE_GENERATIVE_AI_API_KEY: "" };
-    expect(productionReadiness(incomplete)).toEqual({
+    await expect(productionReadiness(incomplete, databaseReady)).resolves.toEqual({
       ready: false,
       missing: ["agent_provider", "retention_cron"],
       alerting: "webhook",
@@ -39,15 +47,40 @@ describe("production readiness", () => {
     { name: "a missing browser key", environment: { ...complete, NEXT_PUBLIC_SUPABASE_ANON_KEY: "" } },
     { name: "a placeholder browser key", environment: { ...complete, NEXT_PUBLIC_SUPABASE_ANON_KEY: "***********" } },
     { name: "a placeholder service key", environment: { ...complete, SUPABASE_SERVICE_ROLE_KEY: "***********" } },
-  ])("fails closed for $name", ({ environment }) => {
-    expect(productionReadiness(environment)).toMatchObject({
+  ])("fails closed for $name", async ({ environment }) => {
+    await expect(productionReadiness(environment, databaseReady)).resolves.toMatchObject({
       ready: false,
       missing: ["database"],
     });
   });
 
-  it("makes logs-only alerting visible without exposing its destination", () => {
-    expect(productionReadiness({ ...complete, OPS_ALERT_WEBHOOK_URL: "" })).toMatchObject({
+  it("rejects swapped legacy Supabase roles before probing the backend", async () => {
+    const probe = vi.fn(async () => new Response(null, { status: 200 }));
+
+    await expect(productionReadiness({
+      ...complete,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: legacyKey("service_role"),
+      SUPABASE_SERVICE_ROLE_KEY: legacyKey("anon"),
+    }, probe)).resolves.toMatchObject({ ready: false, missing: ["database"] });
+    expect(probe).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when Supabase rejects a well-shaped credential", async () => {
+    const rejectedCredential = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+
+    await expect(productionReadiness(complete, rejectedCredential)).resolves.toMatchObject({
+      ready: false,
+      missing: ["database"],
+    });
+  });
+
+  it("makes logs-only alerting visible without exposing its destination", async () => {
+    await expect(productionReadiness(
+      { ...complete, OPS_ALERT_WEBHOOK_URL: "" },
+      databaseReady,
+    )).resolves.toMatchObject({
       ready: true,
       alerting: "structured_logs_only",
     });
