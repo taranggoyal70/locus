@@ -14,10 +14,10 @@ describe("legacy demo route", () => {
     mocks.redirect.mockReset();
   });
 
-  it("sends signed-out visitors to login", async () => {
+  it("sends signed-out visitors to the alpha access path", async () => {
     mocks.auth.mockResolvedValue({ userId: null });
     await DemoPage({ searchParams: emptySearchParams });
-    expect(mocks.redirect).toHaveBeenCalledWith("/sign-in");
+    expect(mocks.redirect).toHaveBeenCalledWith("/pricing#request-access");
   });
 
   it("sends signed-in visitors to their workspace", async () => {

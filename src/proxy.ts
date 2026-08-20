@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { sameOriginMutation } from "@/lib/request-security";
 
 export function isProtectedPagePathname(pathname: string): boolean {
-  return ["/workspace", "/demo", "/settings", "/projects"].some(
+  return ["/workspace", "/settings", "/projects"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }

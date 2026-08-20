@@ -10,7 +10,7 @@ type DemoProps = {
 // Keep old demo links safe without exposing a second, public product entry.
 export default async function DemoPage({ searchParams }: DemoProps) {
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  if (!userId) redirect("/pricing#request-access");
   const sharedView = sharedWorkspaceViewFrom(await searchParams);
   redirect(sharedView ? buildWorkspacePath(sharedView) : "/workspace");
 }
