@@ -72,4 +72,16 @@ describe("Repo loading lifecycle", () => {
     expect(result.current.repo?.slug).toBe("owner-repo");
     expect(result.current.loadIssue).toBeNull();
   });
+
+  it("does not offer a Retry action when there is no failed Repo specifier", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })));
+
+    const { result } = renderHook(() => useLocus());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.loadIssue).toMatchObject({
+      retryable: false,
+      attemptedRepoSpecifier: null,
+    });
+  });
 });

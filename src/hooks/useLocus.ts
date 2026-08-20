@@ -33,7 +33,7 @@ function repoLoadIssue(cause: unknown, source: RepoSource): RepoLoadIssue {
   return {
     message: cause instanceof Error ? cause.message : "Could not load Repo.",
     code: sourceError?.code ?? "unknown",
-    retryable: sourceError?.retryable ?? false,
+    retryable: Boolean(source.repositorySpecifier && sourceError?.retryable),
     attemptedRepoSpecifier: source.repositorySpecifier ?? null,
   };
 }
