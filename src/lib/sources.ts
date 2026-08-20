@@ -6,6 +6,19 @@ import type { RepoData } from "@/lib/types";
 
 export type LoadedRepo = { repo: RepoData; note?: string };
 
+export type RepositorySourceErrorCode = "unavailable" | "rate-limited" | "temporary" | "invalid";
+
+export class RepositorySourceError extends Error {
+  constructor(
+    message: string,
+    readonly code: RepositorySourceErrorCode,
+    readonly retryable: boolean,
+  ) {
+    super(message);
+    this.name = "RepositorySourceError";
+  }
+}
+
 export interface RepoSource {
   readonly kind: "bundled" | "github";
   readonly label: string;
@@ -101,7 +114,18 @@ export function githubSource(url: string): RepoSource {
         const fallback = res.status >= 500
           ? "GitHub analysis is temporarily unavailable. Please try again."
           : "Could not load repository. Check the owner/name and try again.";
-        throw new Error(data?.error ?? fallback);
+        const code: RepositorySourceErrorCode = res.status === 429
+          ? "rate-limited"
+          : res.status === 403 || res.status === 404
+            ? "unavailable"
+            : res.status >= 500
+              ? "temporary"
+              : "invalid";
+        throw new RepositorySourceError(
+          data?.error ?? fallback,
+          code,
+          res.status === 429 || res.status >= 500,
+        );
       }
       if (!data?.repo) throw new Error("GitHub returned an incomplete repository response. Please try again.");
       let repo: RepoData;
