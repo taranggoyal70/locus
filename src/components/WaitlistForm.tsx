@@ -83,7 +83,7 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
@@ -94,14 +94,14 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
         aria-describedby="alpha-access-description"
         className="relative w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl"
       >
-        <button type="button" aria-label="Close alpha access form" onClick={onClose} className="absolute right-4 top-4 text-muted hover:text-paper">
+        <button type="button" aria-label="Close alpha access form" onClick={onClose} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg text-muted transition hover:bg-ink hover:text-paper">
           <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
 
         {result?.ok ? (
-          <div className="py-6 text-center">
+          <div className="py-6 text-center" role="status" aria-live="polite">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent/10">
               <svg viewBox="0 0 24 24" className="h-6 w-6 text-accent" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M20 6 9 17l-5-5" />
@@ -117,48 +117,58 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
             <p id="alpha-access-description" className="mt-1 text-sm text-muted-light">Tell us about one public Repo task. We&apos;re inviting a small group of design partners and reviewing every request manually.</p>
 
             {result && !result.ok && (
-              <div className="mt-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-2 text-xs text-recent">{result.message}</div>
+              <div role="alert" aria-live="assertive" className="mt-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-2 text-xs text-recent">{result.message}</div>
             )}
 
-            <form onSubmit={submit} className="mt-5 space-y-3">
-              <label htmlFor="alpha-access-email" className="sr-only">Email address</label>
-              <input
-                id="alpha-access-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
-              />
-              <label htmlFor="alpha-access-name" className="sr-only">Name (optional)</label>
-              <input
-                id="alpha-access-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Name (optional)"
-                maxLength={200}
-                className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
-              />
-              <label htmlFor="alpha-access-company" className="sr-only">Company (optional)</label>
-              <input
-                id="alpha-access-company"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="Company (optional)"
-                maxLength={200}
-                className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
-              />
-              <label htmlFor="alpha-access-use-case" className="sr-only">Public Repo task (optional)</label>
-              <textarea
-                id="alpha-access-use-case"
-                value={useCase}
-                onChange={(e) => setUseCase(e.target.value)}
-                placeholder="How do you plan to use Locus? (optional)"
-                maxLength={1000}
-                rows={3}
-                className="w-full resize-none rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
-              />
+            <form onSubmit={submit} className="mt-5 space-y-4">
+              <div>
+                <label htmlFor="alpha-access-email" className="mb-1.5 block text-xs font-medium text-muted-light">Email address</label>
+                <input
+                  id="alpha-access-email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  maxLength={320}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="alpha-access-name" className="mb-1.5 block text-xs font-medium text-muted-light">Name <span className="text-muted">(optional)</span></label>
+                <input
+                  id="alpha-access-name"
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={200}
+                  className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper focus:border-accent/50 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="alpha-access-company" className="mb-1.5 block text-xs font-medium text-muted-light">Company <span className="text-muted">(optional)</span></label>
+                <input
+                  id="alpha-access-company"
+                  autoComplete="organization"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  maxLength={200}
+                  className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper focus:border-accent/50 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label htmlFor="alpha-access-use-case" className="mb-1.5 block text-xs font-medium text-muted-light">Public Repo task <span className="text-muted">(optional)</span></label>
+                <textarea
+                  id="alpha-access-use-case"
+                  value={useCase}
+                  onChange={(e) => setUseCase(e.target.value)}
+                  placeholder="For example: fix a failing CI check"
+                  maxLength={1000}
+                  rows={3}
+                  className="w-full resize-none rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+                />
+              </div>
               <button
                 type="submit"
                 disabled={submitting}
