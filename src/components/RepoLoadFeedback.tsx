@@ -1,18 +1,18 @@
-import type { RepositoryLoadIssue } from "@/hooks/useLocus";
+import type { RepoLoadIssue } from "@/hooks/useLocus";
 
-type RepositoryLoadFeedbackProps = {
-  issue: RepositoryLoadIssue;
+type RepoLoadFeedbackProps = {
+  issue: RepoLoadIssue;
   activeRepoName: string | null;
   onRetry: () => void;
   onUseDemo: () => void;
 };
 
-export function RepositoryLoadFeedback({
+export function RepoLoadFeedback({
   issue,
   activeRepoName,
   onRetry,
   onUseDemo,
-}: RepositoryLoadFeedbackProps) {
+}: RepoLoadFeedbackProps) {
   return (
     <div role="alert" className="border-t border-recent/25 bg-recent/5 px-5 py-4 text-xs leading-5 text-recent">
       <p className="font-medium">{issue.message}</p>

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildGraph, locate } from "@/lib/localizer";
-import { BUNDLED, githubSource, parseRepoData, RepositorySourceError } from "@/lib/sources";
+import { BUNDLED, githubSource, parseRepoData, RepoSourceError } from "@/lib/sources";
 import type { RepoData } from "@/lib/types";
 
 // Guards the class of bug where the auto-loaded bundled repo was renamed away
@@ -35,19 +35,32 @@ describe("GitHub repository source", () => {
   });
 
   it.each([
-    { status: 404, code: "unavailable", retryable: false },
-    { status: 429, code: "rate-limited", retryable: true },
-    { status: 503, code: "temporary", retryable: true },
-  ] as const)("classifies $status responses for recovery", async ({ status, code, retryable }) => {
+    { status: 404, apiCode: "unavailable", code: "unavailable", retryable: false },
+    { status: 404, apiCode: "invalid", code: "invalid", retryable: false },
+    { status: 403, apiCode: "invalid", code: "invalid", retryable: false },
+    { status: 429, apiCode: "rate-limited", code: "rate-limited", retryable: true },
+    { status: 503, apiCode: "temporary", code: "temporary", retryable: true },
+  ] as const)("classifies $status/$apiCode responses for recovery", async ({ status, apiCode, code, retryable }) => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(
-      { error: "Repository load failed." },
+      { error: "Repo load failed.", code: apiCode },
       { status },
     )));
 
     const failure = await githubSource("owner/repo").load().catch((error: unknown) => error);
 
-    expect(failure).toBeInstanceOf(RepositorySourceError);
+    expect(failure).toBeInstanceOf(RepoSourceError);
     expect(failure).toMatchObject({ code, retryable });
+  });
+
+  it("does not infer the public-Repo boundary from HTTP status alone", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(
+      { error: "Commit or branch was not found." },
+      { status: 404 },
+    )));
+
+    const failure = await githubSource("owner/repo@missing").load().catch((error: unknown) => error);
+
+    expect(failure).toMatchObject({ code: "invalid", retryable: false });
   });
 
   it("rejects malformed repository data instead of crashing the localizer", () => {

@@ -1,17 +1,17 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { RepositoryLoadFeedback } from "@/components/RepositoryLoadFeedback";
+import { RepoLoadFeedback } from "@/components/RepoLoadFeedback";
 
 describe("repository load recovery", () => {
   it("keeps the active Slice visible and offers recovery for a temporary failure", () => {
     const html = renderToStaticMarkup(
-      <RepositoryLoadFeedback
+      <RepoLoadFeedback
         issue={{
           message: "Repository requests are temporarily unavailable.",
           code: "temporary",
           retryable: true,
-          attemptedRepository: "owner/repo",
+          attemptedRepoSpecifier: "owner/repo",
         }}
         activeRepoName="Taxonomy"
         onRetry={vi.fn()}
@@ -27,12 +27,12 @@ describe("repository load recovery", () => {
 
   it("explains the public-Repo boundary without offering a futile retry", () => {
     const html = renderToStaticMarkup(
-      <RepositoryLoadFeedback
+      <RepoLoadFeedback
         issue={{
           message: "Repo not found.",
           code: "unavailable",
           retryable: false,
-          attemptedRepository: "owner/private",
+          attemptedRepoSpecifier: "owner/private",
         }}
         activeRepoName={null}
         onRetry={vi.fn()}

@@ -6,21 +6,20 @@ import type { RepoData } from "@/lib/types";
 
 export type LoadedRepo = { repo: RepoData; note?: string };
 
-export type RepositorySourceErrorCode = "unavailable" | "rate-limited" | "temporary" | "invalid";
+export type RepoSourceErrorCode = "unavailable" | "rate-limited" | "temporary" | "invalid";
 
-export class RepositorySourceError extends Error {
+export class RepoSourceError extends Error {
   constructor(
     message: string,
-    readonly code: RepositorySourceErrorCode,
+    readonly code: RepoSourceErrorCode,
     readonly retryable: boolean,
   ) {
     super(message);
-    this.name = "RepositorySourceError";
+    this.name = "RepoSourceError";
   }
 }
 
 export interface RepoSource {
-  readonly kind: "bundled" | "github";
   readonly label: string;
   readonly repositorySpecifier?: string;
   load(signal?: AbortSignal): Promise<LoadedRepo>;
@@ -39,9 +38,9 @@ async function fetchRepository(input: RequestInfo | URL, init: RequestInit, pare
   } catch (error) {
     if (parent?.aborted) throw error;
     if (error instanceof DOMException && error.name === "TimeoutError") {
-      throw new Error("Repository request timed out. Please try again.");
+      throw new RepoSourceError("Repo request timed out. Please try again.", "temporary", true);
     }
-    throw error;
+    throw new RepoSourceError("Could not reach the Repo source. Please try again.", "temporary", true);
   }
 }
 
@@ -88,11 +87,10 @@ export const BUNDLED = [
 
 export function bundledSource(slug: string): RepoSource {
   return {
-    kind: "bundled",
     label: BUNDLED.find((b) => b.slug === slug)?.name ?? slug,
     async load(signal) {
       const res = await fetchRepository(`/repos/${slug}.json`, {}, signal);
-      if (!res.ok) throw new Error("Could not load demo repo.");
+      if (!res.ok) throw new RepoSourceError("Could not load demo Repo.", "temporary", true);
       return { repo: parseRepoData(await res.json()) };
     },
   };
@@ -100,7 +98,6 @@ export function bundledSource(slug: string): RepoSource {
 
 export function githubSource(url: string): RepoSource {
   return {
-    kind: "github",
     label: url,
     repositorySpecifier: url.trim(),
     async load(signal) {
@@ -113,18 +110,22 @@ export function githubSource(url: string): RepoSource {
       if (!res.ok) {
         const fallback = res.status >= 500
           ? "GitHub analysis is temporarily unavailable. Please try again."
-          : "Could not load repository. Check the owner/name and try again.";
-        const code: RepositorySourceErrorCode = res.status === 429
-          ? "rate-limited"
-          : res.status === 403 || res.status === 404
-            ? "unavailable"
+          : "Could not load Repo. Check the owner/name and try again.";
+        const apiCode = data?.code;
+        const code: RepoSourceErrorCode = apiCode === "unavailable"
+          || apiCode === "rate-limited"
+          || apiCode === "temporary"
+          || apiCode === "invalid"
+          ? apiCode
+          : res.status === 429
+            ? "rate-limited"
             : res.status >= 500
               ? "temporary"
               : "invalid";
-        throw new RepositorySourceError(
+        throw new RepoSourceError(
           data?.error ?? fallback,
           code,
-          res.status === 429 || res.status >= 500,
+          code === "rate-limited" || code === "temporary",
         );
       }
       if (!data?.repo) throw new Error("GitHub returned an incomplete repository response. Please try again.");

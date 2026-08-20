@@ -9,7 +9,7 @@ import { AgentRunPanel } from "@/components/AgentRunPanel";
 import { ContextLens } from "@/components/ContextLens";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
-import { RepositoryLoadFeedback } from "@/components/RepositoryLoadFeedback";
+import { RepoLoadFeedback } from "@/components/RepoLoadFeedback";
 import { TaskEvidence } from "@/components/TaskEvidence";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
@@ -48,6 +48,7 @@ export function LocusApp({
     setGhUrl,
     pickBundled,
     loadGithub,
+    retryRepoLoad,
     addEvidence,
     removeEvidence,
     recentRepos,
@@ -335,10 +336,10 @@ export function LocusApp({
               </div>
 
               {loadIssue ? (
-                <RepositoryLoadFeedback
+                <RepoLoadFeedback
                   issue={loadIssue}
                   activeRepoName={repo?.name ?? null}
-                  onRetry={() => loadGithub()}
+                  onRetry={() => retryRepoLoad()}
                   onUseDemo={() => pickBundled(bundled[0].slug)}
                 />
               ) : note ? (
