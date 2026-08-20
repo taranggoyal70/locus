@@ -4,7 +4,14 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 
 import { buildGraph, locate } from "@/lib/localizer";
 import { sharedWorkspaceViewFrom } from "@/lib/share";
-import { BUNDLED, bundledSource, githubSource, type RepoSource } from "@/lib/sources";
+import {
+  BUNDLED,
+  bundledSource,
+  githubSource,
+  type RepoSource,
+  RepositorySourceError,
+  type RepositorySourceErrorCode,
+} from "@/lib/sources";
 import type { RepoData, TaskEvidence } from "@/lib/types";
 
 // Recent repositories are kept as identifiers only (e.g. "owner/repo") — never
@@ -13,6 +20,13 @@ import type { RepoData, TaskEvidence } from "@/lib/types";
 // reads hydration-safe without a setState-in-effect.
 const MAX_RECENTS = 6;
 const EMPTY_RECENTS: string[] = [];
+
+export type RepositoryLoadIssue = {
+  message: string;
+  code: RepositorySourceErrorCode | "unknown";
+  retryable: boolean;
+  attemptedRepository: string | null;
+};
 
 let recentsCache: string[] = EMPTY_RECENTS;
 const recentsListeners = new Set<() => void>();
@@ -39,7 +53,7 @@ export function useLocus() {
   const [selected, setSelected] = useState<string | null>(null);
   const [ghUrl, setGhUrl] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadIssue, setLoadIssue] = useState<RepositoryLoadIssue | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [loadedRepositorySpecifier, setLoadedRepositorySpecifier] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<TaskEvidence[]>([]);
@@ -65,12 +79,12 @@ export function useLocus() {
     const controller = new AbortController();
     activeRequest.current = controller;
     const version = ++loadVersion.current;
-    setLoading(true); setError(null); setNote(null); setSelected(null); setRepo(null);
-    setLoadedRepositorySpecifier(null);
+    setLoading(true); setLoadIssue(null); setNote(null);
     try {
       const { repo: r, note: n } = await source.load(controller.signal);
       if (version !== loadVersion.current) return;
       setRepo(r);
+      setSelected(null);
       setLoadedRepositorySpecifier(source.repositorySpecifier ?? null);
       rememberRepo(source.repositorySpecifier);
       if (nextTask !== undefined) setTask(nextTask);
@@ -78,7 +92,12 @@ export function useLocus() {
     } catch (e) {
       if (version !== loadVersion.current) return;
       if (e instanceof DOMException && e.name === "AbortError") return;
-      setError(e instanceof Error ? e.message : "Could not load repo.");
+      setLoadIssue({
+        message: e instanceof Error ? e.message : "Could not load Repo.",
+        code: e instanceof RepositorySourceError ? e.code : "unknown",
+        retryable: source.kind === "github" && (!(e instanceof RepositorySourceError) || e.retryable),
+        attemptedRepository: source.repositorySpecifier ?? null,
+      });
     } finally {
       if (version === loadVersion.current) {
         activeRequest.current = null;
@@ -106,7 +125,14 @@ export function useLocus() {
         setTask(sharedTask);
         if (sharedNote) setNote(sharedNote);
       }).catch((cause: unknown) => {
-        if (active && version === loadVersion.current) setError(cause instanceof Error ? cause.message : "Could not load repo.");
+        if (active && version === loadVersion.current) {
+          setLoadIssue({
+            message: cause instanceof Error ? cause.message : "Could not load Repo.",
+            code: cause instanceof RepositorySourceError ? cause.code : "unknown",
+            retryable: !(cause instanceof RepositorySourceError) || cause.retryable,
+            attemptedRepository: sharedRepositorySpecifier,
+          });
+        }
       }).finally(() => {
         if (active && version === loadVersion.current) setLoading(false);
       });
@@ -118,7 +144,14 @@ export function useLocus() {
       setRepo(initialRepo);
       if (initialNote) setNote(initialNote);
     }).catch((cause: unknown) => {
-      if (active && version === loadVersion.current) setError(cause instanceof Error ? cause.message : "Could not load repo.");
+      if (active && version === loadVersion.current) {
+        setLoadIssue({
+          message: cause instanceof Error ? cause.message : "Could not load Repo.",
+          code: "unknown",
+          retryable: false,
+          attemptedRepository: null,
+        });
+      }
     }).finally(() => {
       if (active && version === loadVersion.current) setLoading(false);
     });
@@ -140,7 +173,8 @@ export function useLocus() {
   );
 
   return {
-    repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading, error, note, examples, evidence,
+    repo, graph, result, task, selected, ghUrl, loadedRepositorySpecifier, loading,
+    error: loadIssue?.message ?? null, loadIssue, note, examples, evidence,
     bundled: BUNDLED,
     recentRepos, clearRecents,
     setTask, setSelected, setGhUrl,
