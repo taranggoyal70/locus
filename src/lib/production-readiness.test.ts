@@ -17,6 +17,14 @@ const complete = {
 
 const databaseReady = vi.fn(async () => new Response(null, { status: 200 }));
 
+function recordingProbe() {
+  return vi.fn(async (input: string | URL, init?: RequestInit) => {
+    void input;
+    void init;
+    return new Response(null, { status: 200 });
+  });
+}
+
 function legacyKey(role: "anon" | "service_role", ref = "project") {
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
   const payload = Buffer.from(JSON.stringify({ iss: "supabase", ref, role })).toString("base64url");
@@ -63,6 +71,34 @@ describe("production readiness", () => {
       SUPABASE_SERVICE_ROLE_KEY: legacyKey("anon"),
     }, probe)).resolves.toMatchObject({ ready: false, missing: ["database"] });
     expect(probe).not.toHaveBeenCalled();
+  });
+
+  it("probes modern Supabase keys only through the apikey header", async () => {
+    const probe = recordingProbe();
+
+    await productionReadiness(complete, probe);
+
+    expect(probe.mock.calls.map(([, init]) => init?.headers)).toEqual([
+      { apikey: complete.NEXT_PUBLIC_SUPABASE_ANON_KEY },
+      { apikey: complete.SUPABASE_SERVICE_ROLE_KEY },
+    ]);
+  });
+
+  it("adds bearer authorization only for legacy JWT keys", async () => {
+    const publicKey = legacyKey("anon");
+    const serviceKey = legacyKey("service_role");
+    const probe = recordingProbe();
+
+    await productionReadiness({
+      ...complete,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: publicKey,
+      SUPABASE_SERVICE_ROLE_KEY: serviceKey,
+    }, probe);
+
+    expect(probe.mock.calls.map(([, init]) => init?.headers)).toEqual([
+      { apikey: publicKey, Authorization: `Bearer ${publicKey}` },
+      { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+    ]);
   });
 
   it("fails closed when Supabase rejects a well-shaped credential", async () => {
