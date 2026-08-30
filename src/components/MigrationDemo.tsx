@@ -210,50 +210,58 @@ export function MigrationDemo() {
               <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "The fix, automated checks, and a clear summary of what changed." : "A proposed patch plus factual evidence—not an automatic approval."}</p>
 
               <div aria-hidden={stage < 3} className={`migration-diff mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[#081322] transition ${stage >= 3 ? "migration-diff--visible" : ""}`}>
-                {plainLanguage ? (
-                  <div className="p-4">
-                    <div className="migration-diff__line migration-diff__line--add rounded-xl border border-[#8ef0c0]/15 p-4" style={{ transitionDelay: "55ms" }}>
-                      <p className="text-sm font-semibold text-white">One payment file updated</p>
-                      <p className="mt-2 text-xs leading-5 text-[#aebdcc]">The old checkout connection was replaced with the new version.</p>
+                <div className="migration-reveal__inner">
+                  {plainLanguage ? (
+                    <div className="p-4">
+                      <div className="migration-diff__line migration-diff__line--add rounded-xl border border-[#8ef0c0]/15 p-4" style={{ transitionDelay: "55ms" }}>
+                        <p className="text-sm font-semibold text-white">One payment file updated</p>
+                        <p className="mt-2 text-xs leading-5 text-[#aebdcc]">The old checkout connection was replaced with the new version.</p>
+                      </div>
+                      <div className="migration-diff__line migration-diff__line--context mt-3 flex items-center justify-between rounded-xl border border-white/10 px-4 py-3" style={{ transitionDelay: "165ms" }}>
+                        <span className="text-xs text-[#bdcad8]">Other customer features</span>
+                        <span className="text-xs font-semibold text-[#8ef0c0]">Left untouched</span>
+                      </div>
                     </div>
-                    <div className="migration-diff__line migration-diff__line--context mt-3 flex items-center justify-between rounded-xl border border-white/10 px-4 py-3" style={{ transitionDelay: "165ms" }}>
-                      <span className="text-xs text-[#bdcad8]">Other customer features</span>
-                      <span className="text-xs font-semibold text-[#8ef0c0]">Left untouched</span>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                        <p className="font-mono text-[11px] text-[#d7e2ec]">src/server/payments.ts</p>
+                        <p className="font-mono text-[10px] text-[#91a4b6]">+4 −1</p>
+                      </div>
+                      <div className="overflow-x-auto py-3 font-mono text-xs leading-6">
+                        {diffLines.map((line, index) => (
+                          <div key={`${line.kind}-${index}`} className={`migration-diff__line migration-diff__line--${line.kind} min-w-[440px] px-4`} style={{ transitionDelay: `${index * 55}ms` }}>
+                            {line.text}
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className={`migration-checks mt-5 ${stage >= 3 ? "migration-checks--visible" : ""}`}>
+                <div className="migration-reveal__inner space-y-2.5">
+                  {checks.map(([label, value], index) => (
+                    <div aria-hidden={stage < 3} key={label} className={`migration-check flex items-center justify-between rounded-xl border border-white/10 px-3.5 py-3 ${stage >= 3 ? "migration-check--visible" : ""}`} style={{ transitionDelay: `${420 + index * 110}ms` }}>
+                      <span className="font-mono text-[11px] text-[#bdcad8]">{label}</span>
+                      <span className="flex items-center gap-2 font-mono text-[11px] font-semibold text-[#8ef0c0]"><span aria-hidden="true">✓</span>{value}</span>
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-                      <p className="font-mono text-[11px] text-[#d7e2ec]">src/server/payments.ts</p>
-                      <p className="font-mono text-[10px] text-[#91a4b6]">+4 −1</p>
-                    </div>
-                    <div className="overflow-x-auto py-3 font-mono text-xs leading-6">
-                      {diffLines.map((line, index) => (
-                        <div key={`${line.kind}-${index}`} className={`migration-diff__line migration-diff__line--${line.kind} min-w-[440px] px-4`} style={{ transitionDelay: `${index * 55}ms` }}>
-                          {line.text}
+                  ))}
+                </div>
+              </div>
+
+              <div aria-hidden={stage < 4} className={`migration-review-stamp lg:mt-auto ${stage >= 4 ? "migration-review-stamp--visible" : ""}`}>
+                <div className="migration-reveal__inner">
+                  <div className="pt-7">
+                    <div className="rounded-2xl border border-[#8ef0c0]/25 bg-[#8ef0c0]/[.07] p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#8ef0c0] font-bold text-[#14233b]">✓</span>
+                        <div>
+                          <p className="text-sm font-semibold text-white">{plainLanguage ? "Fix ready for approval" : "Evidence packet assembled"}</p>
+                          <p className="mt-1 text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "The customer reviews the update and decides whether to accept it. Locus never makes that decision for them." : "A maintainer still decides whether the change is correct and whether a pull request may be opened."}</p>
                         </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className={`migration-checks mt-5 space-y-2.5 ${stage >= 3 ? "migration-checks--visible" : ""}`}>
-                {checks.map(([label, value], index) => (
-                  <div aria-hidden={stage < 3} key={label} className={`migration-check flex items-center justify-between rounded-xl border border-white/10 px-3.5 py-3 ${stage >= 3 ? "migration-check--visible" : ""}`} style={{ transitionDelay: `${420 + index * 110}ms` }}>
-                    <span className="font-mono text-[11px] text-[#bdcad8]">{label}</span>
-                    <span className="flex items-center gap-2 font-mono text-[11px] font-semibold text-[#8ef0c0]"><span aria-hidden="true">✓</span>{value}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div aria-hidden={stage < 4} className={`migration-review-stamp pt-7 lg:mt-auto ${stage >= 4 ? "migration-review-stamp--visible" : ""}`}>
-                <div className="rounded-2xl border border-[#8ef0c0]/25 bg-[#8ef0c0]/[.07] p-4">
-                  <div className="flex items-start gap-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#8ef0c0] font-bold text-[#14233b]">✓</span>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{plainLanguage ? "Fix ready for approval" : "Evidence packet assembled"}</p>
-                      <p className="mt-1 text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "The customer reviews the update and decides whether to accept it. Locus never makes that decision for them." : "A maintainer still decides whether the change is correct and whether a pull request may be opened."}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
