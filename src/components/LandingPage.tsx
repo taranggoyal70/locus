@@ -6,7 +6,7 @@ const runPhases = [
   ["Locate", "Build a deterministic dependency graph and admit the smallest defensible Slice."],
   ["Implement", "Work inside an isolated Sandbox. Every Widen stays visible in the ledger."],
   ["Check", "Run allowlisted commands and store their exact exit status and relevant output."],
-  ["Review", "Inspect the complete proposal. External GitHub writes stay disabled in the alpha."],
+  ["Review", "Inspect the complete proposal. External GitHub writes stay disabled in early access."],
 ];
 
 export function LandingPage() {
@@ -17,22 +17,23 @@ export function LandingPage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface/75 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Invite-only alpha
+              Public early access
             </div>
             <h1 className="mt-7 font-display text-[clamp(3.6rem,8vw,7.8rem)] font-semibold leading-[.82] tracking-[-0.075em] text-paper">
               Ship the task.
               <span className="mt-2 block text-accent">Not the repo.</span>
             </h1>
             <p className="mt-8 max-w-2xl text-lg leading-8 text-muted-light sm:text-xl">
-              Locus localizes a public JavaScript or TypeScript Repo, works in an isolated
-              Sandbox, and returns a review-ready, check-passing proposal with every Included,
-              Excluded, and Widened file visible.
+              Anyone can localize a public JavaScript or TypeScript Repo and inspect every
+              Included, Excluded, and Widened file. Invited design partners can continue into an
+              isolated Sandbox and a review-ready, check-passing proposal.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/pricing" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Request alpha access</Link>
+              <Link href="/workspace" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Try Repo localization</Link>
+              <Link href="/pricing" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Request Agent Run access</Link>
               <a href="#evidence" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">See benchmark evidence</a>
             </div>
-            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Controlled alpha · public Repos only · external writes disabled</p>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Public early access · public Repos only · Agent Runs invite-gated</p>
           </div>
 
           <div className="relative">
@@ -117,11 +118,11 @@ export function LandingPage() {
         <section className="mx-auto max-w-7xl px-5 pb-24 sm:px-8">
           <div className="overflow-hidden rounded-[30px] bg-paper px-6 py-10 text-white sm:px-10 lg:grid lg:grid-cols-[1fr_auto] lg:items-end lg:px-14 lg:py-14">
             <div>
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">The alpha contract</p>
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">The early-access contract</p>
               <h2 className="mt-4 max-w-3xl font-display text-4xl font-semibold leading-[.95] tracking-[-0.05em] sm:text-6xl">A smaller admitted context—with every exclusion visible.</h2>
-              <p className="mt-5 max-w-2xl text-sm leading-6 text-[#bdcad8]">Token efficiency is the hypothesis. The alpha records factual usage, checks, and failures before making any whole-loop Savings claim.</p>
+              <p className="mt-5 max-w-2xl text-sm leading-6 text-[#bdcad8]">Token efficiency is the hypothesis. Early access records factual usage, checks, and failures before making any whole-loop Savings claim.</p>
             </div>
-            <Link href="/pricing" className="mt-8 inline-flex rounded-xl bg-[#8ef0c0] px-5 py-3.5 text-sm font-semibold text-[#14233b] transition hover:bg-white lg:mt-0">Request alpha access →</Link>
+            <Link href="/workspace" className="mt-8 inline-flex rounded-xl bg-[#8ef0c0] px-5 py-3.5 text-sm font-semibold text-[#14233b] transition hover:bg-white lg:mt-0">Try Locus →</Link>
           </div>
         </section>
       </main>

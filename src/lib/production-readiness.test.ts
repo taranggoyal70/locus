@@ -123,13 +123,25 @@ describe("production readiness", () => {
     });
   });
 
-  it("makes logs-only alerting visible without exposing its destination", async () => {
+  it("fails closed when logs are the only alerting channel", async () => {
     await expect(productionReadiness(
       { ...complete, OPS_ALERT_WEBHOOK_URL: "" },
       databaseReady,
     )).resolves.toMatchObject({
-      ready: true,
+      ready: false,
+      missing: ["alerting"],
       alerting: "structured_logs_only",
+    });
+  });
+
+  it("accepts the independent GitHub Actions production health check", async () => {
+    await expect(productionReadiness(
+      { ...complete, OPS_ALERT_WEBHOOK_URL: "", OPS_EXTERNAL_HEALTHCHECK: "github_actions" },
+      databaseReady,
+    )).resolves.toMatchObject({
+      ready: true,
+      missing: [],
+      alerting: "external_health_check",
     });
   });
 });

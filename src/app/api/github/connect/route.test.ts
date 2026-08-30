@@ -16,7 +16,7 @@ describe("controlled-alpha GitHub connection", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: "GitHub connections are not available during the controlled alpha.",
+      error: "GitHub connections are not available during early access.",
     });
   });
 });

@@ -6,11 +6,12 @@ Locus maps a natural-language task to a focused JavaScript/TypeScript code Slice
 matching files, their dependency closure, nearby integration points, and relevant
 recent changes. When the evidence is weak, it returns the whole repo instead of a
 speculative small slice and explains which terms were not found, possible starting
-files, and repository language that can refine the task. During the invite-only
-controlled alpha, the web product can run an Agent Task in an isolated Sandbox,
-collect factual check evidence, and stop at a review-ready proposal. External
-GitHub writes and billing are disabled. Active Runs survive refresh and can be
-resumed, cancelled, and reviewed from the Runs ledger.
+files, and repository language that can refine the task. Public early access lets
+any signed-in user localize a supported public Repo and inspect the resulting
+Slice. Invited design partners can continue into an isolated Sandbox, collect
+factual Check evidence, and stop at a review-ready proposal. External GitHub
+writes and billing are disabled. Active Runs survive refresh and can be resumed,
+cancelled, and reviewed from the Runs ledger.
 
 **Live:** https://locus-five-iota.vercel.app
 
@@ -18,7 +19,7 @@ resumed, cancelled, and reviewed from the Runs ledger.
 
 | Surface | Use case |
 |---------|----------|
-| **Invite-only web alpha** | Localize, execute, run allowlisted checks, and review a proposal for a public Repo |
+| **Public web early access** | Self-serve localization for public Repos; Agent Runs remain invite-gated |
 | **Experimental REST API** | Programmatic localization for public Repos |
 | **Source runtimes** | CLI and MCP implementations used from a source checkout; no npm package is published |
 
@@ -123,6 +124,7 @@ pnpm dev
 | `LOCUS_AGENT_MODEL` | Frozen provider/model identifier for Agent Runs |
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Direct Google provider credential (server-side only) |
 | `CRON_SECRET` | Authorizes the daily retention job |
+| `OPS_EXTERNAL_HEALTHCHECK` | Set to `github_actions` when the committed external production monitor is active |
 
 ### Optional environment variables
 
@@ -132,7 +134,7 @@ pnpm dev
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
 | `LOCUS_RUN_TOKEN_BUDGET` | Per-Run hard budget; safe default is 180,000 |
-| `OPS_ALERT_WEBHOOK_URL` | HTTPS operational alert destination; required for Release 1 promotion |
+| `OPS_ALERT_WEBHOOK_URL` | HTTPS operational alert destination; takes precedence over the external health-check marker |
 
 ### Authentication
 

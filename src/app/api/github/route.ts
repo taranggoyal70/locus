@@ -296,7 +296,7 @@ export async function POST(request: Request) {
     if (info.status === 404) {
       return NextResponse.json(
         {
-          error: "Repo not found. Controlled alpha currently supports public repositories only.",
+          error: "Repo not found. Public early access supports public repositories only.",
           code: "unavailable",
         },
         { status: 404, headers: rateHeaders },
@@ -309,7 +309,7 @@ export async function POST(request: Request) {
     }
     if (meta.private === true || (typeof meta.visibility === "string" && meta.visibility !== "public")) {
       return NextResponse.json(
-        { error: "Controlled alpha supports public repositories only.", code: "unavailable" },
+        { error: "Public early access supports public repositories only.", code: "unavailable" },
         { status: 403, headers: rateHeaders },
       );
     }

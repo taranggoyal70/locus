@@ -96,7 +96,7 @@ describe("GitHub repository API request guards", () => {
 
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toEqual({
-      error: "Repo not found. Controlled alpha currently supports public repositories only.",
+      error: "Repo not found. Public early access supports public repositories only.",
       code: "unavailable",
     });
     expect(serviceClientMock).not.toHaveBeenCalled();
@@ -111,7 +111,7 @@ describe("GitHub repository API request guards", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: "Controlled alpha supports public repositories only.",
+      error: "Public early access supports public repositories only.",
       code: "unavailable",
     });
     expect(fetchMock).toHaveBeenCalledOnce();

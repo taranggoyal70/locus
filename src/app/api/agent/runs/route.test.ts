@@ -107,7 +107,7 @@ describe("controlled-alpha Agent Run starts", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: "Agent Runs are limited to invited design partners during the controlled alpha.",
+      error: "Agent Runs are limited to invited design partners during early access.",
     });
   });
 

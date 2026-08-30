@@ -77,7 +77,7 @@ select
 
 Required results: no duplicate proposal artifact kinds, zero active Runs, and a non-null SHA-256 digest function. Temporarily clear `ALPHA_ALLOWED_USER_IDS` and deploy that environment-only change before applying migrations so no Run can start during the window.
 
-Confirm these production variables by name without printing values: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, Clerk keys, `LOCUS_AGENT_MODEL`, `GOOGLE_GENERATIVE_AI_API_KEY`, `ALPHA_ALLOWED_USER_IDS`, `CRON_SECRET`, and `OPS_ALERT_WEBHOOK_URL`. `LOCUS_RUN_TOKEN_BUDGET` may be omitted for the safe 180,000 default or must parse to 10,000–240,000. The Release 1 evaluation contract freezes 180,000.
+Confirm these production variables by name without printing values: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, Clerk keys, `LOCUS_AGENT_MODEL`, `GOOGLE_GENERATIVE_AI_API_KEY`, `ALPHA_ALLOWED_USER_IDS`, and `CRON_SECRET`. Alerting requires either an HTTPS `OPS_ALERT_WEBHOOK_URL` or `OPS_EXTERNAL_HEALTHCHECK=github_actions`. `LOCUS_RUN_TOKEN_BUDGET` may be omitted for the safe 180,000 default or must parse to 10,000–240,000. The Release 1 evaluation contract freezes 180,000.
 
 ## Safe apply
 

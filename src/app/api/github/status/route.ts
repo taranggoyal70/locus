@@ -10,7 +10,7 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!alphaCapabilitiesForUser(userId).privateRepoRead) {
     return NextResponse.json(
-      { error: "Private repository reads are unavailable during controlled alpha." },
+      { error: "Private repository reads are unavailable during early access." },
       { status: 403 },
     );
   }

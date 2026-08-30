@@ -20,7 +20,7 @@ export function RepoLoadFeedback({
         <p className="mt-1 text-muted-light">{activeRepoName} is still open, so your current Slice was not interrupted.</p>
       )}
       {issue.code === "unavailable" && (
-        <p className="mt-1 text-muted-light">Public GitHub Repos only during the controlled alpha.</p>
+        <p className="mt-1 text-muted-light">Public GitHub Repos only during early access.</p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         {issue.retryable && (

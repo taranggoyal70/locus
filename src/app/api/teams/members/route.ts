@@ -6,7 +6,7 @@ import { globalClient } from "@/lib/supabase-tenant";
 
 function disabledResponse() {
   return NextResponse.json(
-    { error: "Teams are unavailable during controlled alpha." },
+    { error: "Teams are unavailable during early access." },
     { status: 403 },
   );
 }

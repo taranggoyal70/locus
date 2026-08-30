@@ -8,7 +8,7 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!alphaCapabilitiesForUser(userId).billing) {
     return NextResponse.json(
-      { error: "Billing is unavailable during controlled alpha." },
+      { error: "Billing is unavailable during early access." },
       { status: 403 },
     );
   }

@@ -111,11 +111,16 @@ export async function productionReadiness(
   if (!providerReady) missing.push("agent_provider");
   if (!configured(environment.CRON_SECRET)) missing.push("retention_cron");
 
+  const alerting = httpsUrl(environment.OPS_ALERT_WEBHOOK_URL)
+    ? "webhook" as const
+    : environment.OPS_EXTERNAL_HEALTHCHECK?.trim() === "github_actions"
+      ? "external_health_check" as const
+      : "structured_logs_only" as const;
+  if (alerting === "structured_logs_only") missing.push("alerting");
+
   return {
     ready: missing.length === 0,
     missing,
-    alerting: httpsUrl(environment.OPS_ALERT_WEBHOOK_URL)
-      ? "webhook" as const
-      : "structured_logs_only" as const,
+    alerting,
   };
 }

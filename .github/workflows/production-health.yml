@@ -1,0 +1,70 @@
+name: Production health
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      expected_revision:
+        description: "Optional seven-character production revision to verify"
+        required: false
+        type: string
+      test_alert:
+        description: "Fail after a healthy probe to verify alert delivery"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-health
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      PRODUCTION_HEALTH_URL: https://locus-five-iota.vercel.app/api/health
+    steps:
+      - name: Verify health and deployed revision
+        env:
+          EXPECTED_REVISION: ${{ inputs.expected_revision }}
+        run: |
+          response_file="$(mktemp)"
+          for attempt in {1..6}; do
+            if curl --silent --show-error --fail-with-body \
+              --connect-timeout 10 --max-time 20 \
+              --output "$response_file" "$PRODUCTION_HEALTH_URL" \
+              && node - "$response_file" "${EXPECTED_REVISION:0:7}" <<'NODE'
+          const fs = require("node:fs");
+          const health = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          const expectedRevision = process.argv[3];
+          if (
+            health.status !== "ok"
+            || (expectedRevision && health.revision !== expectedRevision)
+            || health.readiness?.missing?.length !== 0
+            || !["webhook", "external_health_check"].includes(health.readiness?.alerting)
+          ) {
+            console.error("Production health did not satisfy the public-launch contract.");
+            process.exit(1);
+          }
+          console.log(`Production ${health.revision} is healthy with ${health.readiness.alerting}.`);
+          NODE
+            then
+              exit 0
+            fi
+            if [ "$attempt" -lt 6 ]; then
+              echo "Health contract not ready (attempt $attempt/6); retrying in 10 seconds."
+              sleep 10
+            fi
+          done
+          exit 1
+
+      - name: Test alert delivery
+        if: ${{ inputs.test_alert == true }}
+        run: |
+          echo "Intentional production-health failure for alert-delivery verification."
+          exit 1

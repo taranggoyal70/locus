@@ -213,7 +213,7 @@ export function AgentRunsList() {
                 widened={selectedSnapshot.run.widened_files}
               />
               <p className="rounded-xl border border-line-strong bg-ink/60 px-3 py-2.5 text-[11px] leading-5 text-muted-light">
-                Token usage is factual. Locus does not publish a Savings claim during the controlled alpha.
+                Token usage is factual. Locus does not publish a Savings claim during early access.
               </p>
               {summary?.content && <p className="text-sm leading-6 text-muted-light">{summary.content}</p>}
               {diff?.content && (
@@ -225,7 +225,7 @@ export function AgentRunsList() {
               {selectedSnapshot.run.error && <p role="alert" className="text-xs leading-5 text-recent">{selectedSnapshot.run.error}</p>}
               {selectedSnapshot.run.status === "awaiting_approval" && (
                 <p className="rounded-xl border border-line-strong bg-ink px-4 py-3 text-xs leading-5 text-muted-light">
-                  Ready for review. External GitHub writes remain disabled during the controlled alpha.
+                  Ready for review. External GitHub writes remain disabled during early access.
                 </p>
               )}
               {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}

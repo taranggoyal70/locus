@@ -170,7 +170,7 @@ export function LocusApp({
           <div className="relative py-2">
             <div className="mb-5 flex flex-wrap items-center gap-3">
               <span className="rounded-full bg-[#14233b] px-3 py-1.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">
-                {isWorkspace ? "Mission workspace" : "Controlled alpha"}
+                {isWorkspace ? "Mission workspace" : "Public early access"}
               </span>
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#52647a]">
                 Slice → Run → Evidence
@@ -248,7 +248,7 @@ export function LocusApp({
                     </button>
                   </div>
                   <p className="mt-2 text-[10px] leading-4 text-muted">
-                    Public GitHub Repos only during the controlled alpha. Failed loads keep your current Slice open.
+                    Public GitHub Repos only during early access. Failed loads keep your current Slice open.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {bundled.map((source) => (

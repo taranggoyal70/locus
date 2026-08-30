@@ -5,14 +5,15 @@ import { describe, expect, it } from "vitest";
 
 import { LandingPage } from "@/components/LandingPage";
 
-describe("controlled-alpha landing contract", () => {
+describe("public early-access landing contract", () => {
   it("states the supported workflow and benchmark limits", () => {
     const html = renderToStaticMarkup(<LandingPage />);
     const evidencePath = process.env.NO_MISTAKES_RENDERED_LANDING_HTML;
     if (evidencePath) writeFileSync(evidencePath, `${html}\n`);
 
-    expect(html).toContain("Invite-only alpha");
-    expect(html).toContain("Request alpha access");
+    expect(html).toContain("Public early access");
+    expect(html).toContain("Try Repo localization");
+    expect(html).toContain("Request Agent Run access");
     expect(html).toContain("review-ready, check-passing proposal");
     expect(html).toContain("Illustrative example");
     expect(html).toContain("recall on the cases in our suite");

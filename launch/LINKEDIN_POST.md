@@ -1,4 +1,4 @@
-# LinkedIn launch post — Locus beta
+# LinkedIn launch post — Locus public early access
 
 I didn’t build Locus because I wanted another AI project.
 
@@ -26,13 +26,13 @@ So I added task evidence to Locus.
 
 You can now attach a screenshot, PDF, DOCX, Markdown, or text file. Locus extracts the useful details, keeps them visible for inspection, and uses that evidence when mapping the task to the codebase.
 
-Nothing is saved. Documents are processed in memory, and screenshot OCR runs inside the browser.
+Uploaded binaries are processed in memory and are not intentionally retained. Screenshot OCR runs inside the browser. If you submit a task, extracted text can become part of its durable Run record under the published retention policy.
 
 I also replayed a real historical fix from one of my projects. For that task, Locus selected 8 of 57 files, left 49 unrelated files out, and included the file changed next in the real fix—using an estimated 89% fewer tokens.
 
 That is a historical replay, not a claim that an agent autonomously solved the task. I would rather be precise about what worked than hide the limitation behind a polished demo.
 
-Locus is still an open-source beta, and I’m looking for 10 developers who regularly use Codex, Claude Code, Cursor, or another coding agent.
+Locus is now in public early access. Anyone can create an account and try public-Repo localization; I’m also looking for 10 developers who regularly use Codex, Claude Code, Cursor, or another coding agent to test complete Agent Runs.
 
 Try it on one real task. Attach the messy bug report. Then tell me where it breaks.
 

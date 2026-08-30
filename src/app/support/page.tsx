@@ -18,8 +18,8 @@ export default function SupportPage() {
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Operations</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Support and service status</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-light">
-          Locus is an invite-only alpha. These are response targets, not guarantees, and external
-          repository writes remain disabled.
+          Locus is in public early access, with Agent Runs limited to invited design partners.
+          These are response targets, not guarantees, and external repository writes remain disabled.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
