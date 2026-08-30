@@ -333,7 +333,7 @@ export function AgentRunPanel({
                 role="alert"
                 className="mt-4 rounded-xl border border-recent/40 bg-recent/10 px-3 py-3 text-xs leading-5 text-recent"
               >
-                The repository scan reached the controlled-alpha file cap. Some files are outside both
+                The repository scan reached the early-access file cap. Some files are outside both
                 the included and excluded lists; review the diff carefully or start a narrower run.
               </p>
             )}

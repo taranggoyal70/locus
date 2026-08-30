@@ -14,7 +14,7 @@ const RETRY_AFTER_SECONDS: Record<QuotaReason, number> = {
 
 const DENIAL_MESSAGES: Record<QuotaReason, string> = {
   active: "Two agent runs are already active. Wait for one to finish.",
-  daily: "Controlled-alpha daily Agent Run quota reached. Try again tomorrow.",
+  daily: "Early-access daily Agent Run quota reached. Try again tomorrow.",
 };
 
 export function isQuotaReason(value: unknown): value is QuotaReason {

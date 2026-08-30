@@ -90,11 +90,11 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="alpha-access-title"
-        aria-describedby="alpha-access-description"
+        aria-labelledby="agent-access-title"
+        aria-describedby="agent-access-description"
         className="relative w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl"
       >
-        <button type="button" aria-label="Close alpha access form" onClick={onClose} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg text-muted transition hover:bg-ink hover:text-paper">
+        <button type="button" aria-label="Close Agent Run access form" onClick={onClose} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg text-muted transition hover:bg-ink hover:text-paper">
           <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
@@ -107,14 +107,14 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                 <path d="M20 6 9 17l-5-5" />
               </svg>
             </div>
-            <p id="alpha-access-title" className="text-lg font-semibold text-paper">{result.message}</p>
-            <p id="alpha-access-description" className="sr-only">Your Agent Run access request was received.</p>
+            <p id="agent-access-title" className="text-lg font-semibold text-paper">{result.message}</p>
+            <p id="agent-access-description" className="sr-only">Your Agent Run access request was received.</p>
             <button type="button" onClick={onClose} className="mt-4 text-sm text-accent hover:underline">Close</button>
           </div>
         ) : (
           <>
-            <h2 id="alpha-access-title" className="font-display text-2xl font-semibold tracking-[-0.04em] text-paper">Request Agent Run access</h2>
-            <p id="alpha-access-description" className="mt-1 text-sm text-muted-light">Repo localization is already open. Tell us about one public Repo task if you want to test a complete Agent Run; every request is reviewed manually.</p>
+            <h2 id="agent-access-title" className="font-display text-2xl font-semibold tracking-[-0.04em] text-paper">Request Agent Run access</h2>
+            <p id="agent-access-description" className="mt-1 text-sm text-muted-light">Repo localization is already open. Tell us about one public Repo task if you want to test a complete Agent Run; every request is reviewed manually.</p>
 
             {result && !result.ok && (
               <div role="alert" aria-live="assertive" className="mt-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-2 text-xs text-recent">{result.message}</div>

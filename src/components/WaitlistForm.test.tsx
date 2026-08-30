@@ -13,8 +13,8 @@ describe("Agent Run access form", () => {
     expect(html).toContain("Request access");
     expect(html).toContain('role="dialog"');
     expect(html).toContain('aria-modal="true"');
-    expect(html).toContain('aria-labelledby="alpha-access-title"');
-    expect(html).toContain('aria-label="Close alpha access form"');
+    expect(html).toContain('aria-labelledby="agent-access-title"');
+    expect(html).toContain('aria-label="Close Agent Run access form"');
     expect(html).toContain('for="alpha-access-email"');
     expect(html).toContain('for="alpha-access-use-case"');
     expect(html).toContain(">Email address</label>");

@@ -59,6 +59,6 @@ describe("agent run request", () => {
       repository: "acme/widgets",
       task: "Prepare a review-ready proposal",
       dataPolicyAcceptance: { version: "outdated-policy" },
-    })).toThrow("Confirm the controlled-alpha data policy before starting an Agent Run");
+    })).toThrow("Confirm the early-access data policy before starting an Agent Run");
   });
 });

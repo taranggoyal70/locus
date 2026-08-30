@@ -10,20 +10,20 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Locus — evidence-first coding agent alpha",
+  title: "Locus — evidence-first code localization",
   description:
-    "Localize a public Repo, run a task in an isolated Sandbox, and review a check-passing proposal with every Included, Excluded, and Widened file visible.",
+    "Localize a public JavaScript or TypeScript Repo into a task-sized Slice with every Included, Excluded, and Widened file visible.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://locus-five-iota.vercel.app"),
   openGraph: {
-    title: "Locus — evidence-first coding agent alpha",
-    description: "Ship the task, not the repository. Focus context, implement, check, and review.",
+    title: "Locus — evidence-first code localization",
+    description: "Ship the task, not the repository. Build a task-sized Slice with visible context evidence.",
     siteName: "Locus",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Locus — evidence-first coding agent alpha",
-    description: "Ship the task, not the repository. Focus context, implement, check, and review.",
+    title: "Locus — evidence-first code localization",
+    description: "Ship the task, not the repository. Build a task-sized Slice with visible context evidence.",
   },
   keywords: [
     "AI coding agent", "context window", "code context", "public repository",
