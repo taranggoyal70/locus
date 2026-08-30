@@ -7,9 +7,9 @@
 
 ### What does your company make?
 
-Locus turns an API change and a customer repository into a verified migration pull request. An API company supplies a changelog, SDK diff, or schema change; Locus finds affected code, creates the patch, runs the required checks, and gives the maintainer evidence explaining the scope.
+Today, Locus compiles a software task and a public JavaScript or TypeScript repository into an evidence-backed context boundary for a coding agent. It identifies the relevant code, keeps excluded files unavailable during a run, and records scope and proposal evidence against an exact commit.
 
-Underneath, Locus is a context compiler for coding agents. It admits only evidence-backed code for a task and records every scope expansion, making the result cheaper to run and easier to review.
+I am now validating the first paid workflow: turning an API change and a customer repository into a verified migration pull request. The intended flow is that an API company supplies a changelog, SDK diff, or schema change; Locus finds affected code, creates the patch, runs the required checks, and gives the maintainer evidence explaining the scope. That migration workflow is not yet validated or fully automated.
 
 ### Product link
 
@@ -159,7 +159,7 @@ Use this as a structure, not a teleprompter.
 >
 > API companies publish breaking changes, but their customers still have to find every affected use and migrate it themselves. This creates support work for the provider and delays adoption.
 >
-> Locus turns an API change and a customer repository into a verified migration pull request. Its context compiler finds the smallest evidence-backed part of the codebase needed for the task, keeps excluded code unavailable, and records every scope expansion for the reviewer.
+> Today, Locus compiles a software task into an evidence-backed code boundary for an agent. I am now testing the first paid workflow: using that context compiler to turn API changes into verified migration pull requests. The migration workflow is not yet fully automated.
 >
 > I built and launched the first version in about seven weeks. Today I have [truthful user/revenue evidence]. Over the next six weeks I am running real migration pilots with API providers. [Why you personally will pursue this for years.]
 
