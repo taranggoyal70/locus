@@ -94,12 +94,12 @@ describe("locate API analytics", () => {
       event: "api_locate",
       userId: "user_123",
       properties: expect.objectContaining({
-        repo: "owner/repo",
         taskShape: expect.stringMatching(/^[a-f0-9]{16}$/),
         taskCharacters: "Fix the checkout path".length,
       }),
     });
     expect(trackMock.mock.calls[0][0].properties).not.toHaveProperty("task");
+    expect(trackMock.mock.calls[0][0].properties).not.toHaveProperty("repo");
   });
 
   it("includes the first source file when the sparse warning precedes a tiny budget", async () => {

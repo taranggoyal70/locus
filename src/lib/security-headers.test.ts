@@ -16,7 +16,7 @@ describe("security headers", () => {
     ["Permissions-Policy", "camera=(), microphone=(), geolocation=(), usb=()"],
     ["Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload"],
   ])("pins %s", (key, value) => {
-    expect(byKey.get(key)).toBe(value);
+    expect(byKey.get(key)).toEqual(value);
   });
 
   it("does not weaken frame protection to a permissive value", () => {

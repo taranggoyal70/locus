@@ -325,8 +325,9 @@ describe("GitHub repository API call budget", () => {
     const [fresh] = trackMock.mock.calls.at(-1) ?? [];
     expect(fresh).toMatchObject({
       event: "repo_loaded",
-      properties: expect.objectContaining({ repo: "owner/repo", cached: false }),
+      properties: expect.objectContaining({ cached: false }),
     });
+    expect(fresh.properties).not.toHaveProperty("repo");
 
     trackMock.mockClear();
     const second = await POST(request('{"url":"owner/repo"}', "198.51.100.24"));
@@ -336,8 +337,9 @@ describe("GitHub repository API call budget", () => {
     expect(trackMock).toHaveBeenCalledTimes(1);
     expect(hit).toMatchObject({
       event: "repo_loaded",
-      properties: expect.objectContaining({ repo: "owner/repo", cached: true }),
+      properties: expect.objectContaining({ cached: true }),
     });
+    expect(hit.properties).not.toHaveProperty("repo");
   });
 
   it("reports the same file count on a hit as on the load that filled it", async () => {

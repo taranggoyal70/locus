@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { track } from "@/lib/analytics";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { globalClient } from "@/lib/supabase-tenant";
@@ -57,10 +58,14 @@ export async function POST(request: Request) {
 
   if (error) {
     if (error.code === "23505") {
+      await track({ event: "alpha_access_requested", properties: { result: "existing" } });
       return NextResponse.json({ ok: true, message: "You're already on the waitlist." });
     }
     return NextResponse.json({ error: "Failed to join waitlist." }, { status: 500 });
   }
 
+  // Record only the conversion outcome. Email, name, company, and task text
+  // remain exclusively in the waitlist row and never enter analytics.
+  await track({ event: "alpha_access_requested", properties: { result: "new" } });
   return NextResponse.json({ ok: true, message: "You're on the list. We'll be in touch." });
 }

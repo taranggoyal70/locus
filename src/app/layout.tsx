@@ -1,6 +1,8 @@
-import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import { connection } from "next/server";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -29,23 +31,21 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Clerk's strict CSP creates a nonce per request. Rendering against the
+  // incoming request lets Next apply that nonce to its framework, Analytics,
+  // and Speed Insights scripts instead of serving nonce-less static HTML.
+  await connection();
+
   return (
-    <ClerkProvider
-      dynamic
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-      afterSignOutUrl="/"
-      localization={{
-        signIn: { start: { title: "Sign in to Locus" } },
-        signUp: { start: { title: "Create your Locus account" } },
-      }}
-    >
-      <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} h-full antialiased`}>
-        <body className="min-h-full">{children}</body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} h-full antialiased`}>
+      <body className="min-h-full">
+        {children}
+        <Analytics />
+        <SpeedInsights />
+      </body>
+    </html>
   );
 }

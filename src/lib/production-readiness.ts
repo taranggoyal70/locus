@@ -71,13 +71,21 @@ async function databaseCredentialsWork(
   config: NonNullable<ReturnType<typeof supabaseConfig>>,
   request: DatabaseRequest,
 ): Promise<boolean> {
-  const endpoint = new URL("/rest/v1/", config.url);
+  // Supabase's PostgREST OpenAPI root is intentionally admin-only. A valid
+  // publishable/anon key receives 401 there, so using the same endpoint for
+  // both credentials produces a false degraded health signal. Auth settings
+  // is a safe public-key probe; the service-key PostgREST probe still proves
+  // that the database API is reachable with elevated server credentials.
+  const probes = [
+    { endpoint: new URL("/auth/v1/settings", config.url), key: config.publicKey },
+    { endpoint: new URL("/rest/v1/", config.url), key: config.serviceKey },
+  ];
   try {
-    const responses = await Promise.all([config.publicKey, config.serviceKey].map((key) => request(endpoint, {
-      method: "GET",
-      headers: databaseProbeHeaders(key),
-      signal: AbortSignal.timeout(5_000),
-    })));
+    const responses = await Promise.all(probes.map(({ endpoint, key }) => request(endpoint, {
+        method: "GET",
+        headers: databaseProbeHeaders(key),
+        signal: AbortSignal.timeout(5_000),
+      })));
     return responses.every((response) => response.ok);
   } catch {
     return false;

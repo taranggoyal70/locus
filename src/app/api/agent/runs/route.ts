@@ -21,6 +21,7 @@ import {
 } from "@/lib/agent/run-store";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
+import { track } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
@@ -355,6 +356,12 @@ export async function POST(request: Request) {
   if (updateError) {
     logger.error("agent.workflow.correlation_failed", {}, run.id);
   }
+
+  await track({
+    event: "agent_run_started",
+    userId,
+    properties: { workflowCorrelated: !updateError },
+  });
 
   return NextResponse.json(
     {

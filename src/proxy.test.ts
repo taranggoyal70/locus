@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  config,
   isProtectedPagePathname,
   isProtectedPathname,
   shouldRejectProtectedMutation,
@@ -23,6 +24,13 @@ describe("authenticated product routes", () => {
     for (const path of ["/", "/demo", "/sign-in", "/api/github", "/repos/taxonomy.json", "/docs"]) {
       expect(isProtectedPagePathname(path), path).toBe(false);
     }
+  });
+
+  it("runs middleware for public pages and every API route", () => {
+    expect(config.matcher).toContain("/(api|trpc)(.*)");
+    expect(config.matcher).toContain(
+      "/((?!_next|\\.well-known/workflow/|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    );
   });
 
   it("rejects hostile-origin protected mutations before Clerk can rewrite them", () => {
