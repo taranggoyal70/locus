@@ -40,9 +40,9 @@ The chain must be exactly `001`–`017`, the dry run must be empty, and advisors
 
 Production must set either an HTTPS `OPS_ALERT_WEBHOOK_URL` or `OPS_EXTERNAL_HEALTHCHECK=github_actions`. Without one, `/api/health` fails closed with `missing: ["alerting"]`.
 
-The `.github/workflows/production-health.yml` monitor runs every five minutes and checks health, readiness, alerting mode, and the deployed `main` revision. Repository owners must keep GitHub Actions failure notifications enabled. Vercel error-anomaly and usage-anomaly rules provide a second signal.
+The `.github/workflows/production-health.yml` monitor runs every five minutes and checks health, readiness, and alerting mode. Scheduled probes intentionally do not compare production to the latest `main` SHA because Vercel promotion can lag a merge. Repository owners must keep GitHub Actions failure notifications enabled. Vercel error-anomaly and usage-anomaly rules provide a second signal.
 
-Before launch, dispatch the workflow normally and once with `test_alert=true`. The normal run must pass. The intentional test must fail after the healthy probe and appear in the configured GitHub notification channel; record the run URL, then rerun normally.
+Before launch, dispatch the workflow with `expected_revision` set to the deployed seven-character SHA, then once more with the same revision and `test_alert=true`. The normal run must pass. The intentional test must fail after the healthy probe and appear in the configured GitHub notification channel; record the run URL, then rerun normally.
 
 ## Production verification
 

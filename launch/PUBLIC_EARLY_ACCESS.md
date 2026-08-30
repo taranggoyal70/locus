@@ -9,7 +9,7 @@ The launch must not claim autonomous task completion, verified token savings, pr
 ## Go/no-go gates
 
 - Production `/api/health` returns `200`, the current `main` revision, no missing readiness dependency, and `webhook` or `external_health_check` alerting.
-- The scheduled `Production health` workflow has completed successfully against the production revision.
+- A manual `Production health` workflow run has completed successfully with `expected_revision` set to the production SHA; scheduled probes remain green.
 - CI, CodeQL, dependency audit, production build, browser smoke test, accessibility, and mobile Lighthouse are green.
 - Supabase migration history is contiguous through `017`, the dry run is empty, and database advisors report no findings.
 - Privacy, terms, support, retention, incident response, and rollback instructions describe public early access accurately.

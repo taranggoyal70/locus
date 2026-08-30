@@ -5,6 +5,10 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch:
     inputs:
+      expected_revision:
+        description: "Optional seven-character production revision to verify"
+        required: false
+        type: string
       test_alert:
         description: "Fail after a healthy probe to verify alert delivery"
         required: false
@@ -27,7 +31,7 @@ jobs:
     steps:
       - name: Verify health and deployed revision
         env:
-          EXPECTED_REVISION: ${{ github.sha }}
+          EXPECTED_REVISION: ${{ inputs.expected_revision }}
         run: |
           response_file="$(mktemp)"
           for attempt in {1..6}; do
@@ -40,7 +44,7 @@ jobs:
           const expectedRevision = process.argv[3];
           if (
             health.status !== "ok"
-            || health.revision !== expectedRevision
+            || (expectedRevision && health.revision !== expectedRevision)
             || health.readiness?.missing?.length !== 0
             || !["webhook", "external_health_check"].includes(health.readiness?.alerting)
           ) {
