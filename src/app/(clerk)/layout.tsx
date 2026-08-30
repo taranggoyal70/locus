@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 export default function ClerkLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider
+      dynamic
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       afterSignOutUrl="/"
