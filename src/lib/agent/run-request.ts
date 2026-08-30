@@ -87,7 +87,7 @@ export function parseAgentRunRequest(input: unknown): AgentRunRequest {
       !== CONTROLLED_ALPHA_DATA_POLICY_VERSION
   ) {
     throw new Error(
-      "Confirm the controlled-alpha data policy before starting an Agent Run",
+      "Confirm the early-access data policy before starting an Agent Run",
     );
   }
 

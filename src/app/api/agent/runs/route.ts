@@ -290,7 +290,7 @@ export async function POST(request: Request) {
       sequence: 0,
       kind: "approval",
       status: "completed",
-      title: "Controlled-alpha data policy accepted",
+      title: "Early-access data policy accepted",
       detail: {
         policyVersion: input.dataPolicyVersion,
         acceptedAt: policyAcceptedAt,
