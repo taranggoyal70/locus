@@ -73,7 +73,7 @@ export default function PrivacyPage() {
             <p>
               Terminal Agent Runs and their task, Step, proposal, and review evidence are
               automatically deleted after 30 days. Active and review-ready Runs remain available
-              until they reach a terminal decision. Operational analytics and unfulfilled alpha
+              until they reach a terminal decision. Operational analytics and unfulfilled Agent Run
               access requests are deleted after 90 days. You may request earlier deletion of
               account-linked data through the Locus issue tracker without including private data in
               the request. Backup and provider deletion can take additional time.

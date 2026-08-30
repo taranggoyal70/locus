@@ -40,7 +40,7 @@ export default function PricingPage() {
                 Design-partner access
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-paper">
-                One honest alpha contract
+                One honest early-access contract
               </h2>
             </div>
             <span className="rounded-full border border-line-strong bg-ink px-3 py-1.5 text-xs font-semibold text-paper">

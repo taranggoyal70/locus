@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
-export const alt = "Locus — evidence-first coding agent alpha";
+export const alt = "Locus — evidence-first code localization";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -63,7 +63,7 @@ export default function OgImage() {
             lineHeight: 1.4,
           }}
         >
-          Review-ready proposals with visible context evidence.
+          Task-sized code context with visible evidence.
         </p>
         <div
           style={{
