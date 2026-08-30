@@ -40,7 +40,7 @@ describe("repository load recovery", () => {
       />,
     );
 
-    expect(html).toContain("Public GitHub Repos only during the controlled alpha");
+    expect(html).toContain("Public GitHub Repos only during early access");
     expect(html).not.toContain(">Retry</button>");
     expect(html).toContain("Open demo Repo");
   });

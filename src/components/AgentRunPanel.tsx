@@ -306,7 +306,7 @@ export function AgentRunPanel({
             </button>
             <p className="mt-3 text-[11px] leading-5 text-muted">
               {canStartRun
-                ? "Executes in an isolated Sandbox. GitHub delivery is disabled during the controlled alpha."
+                ? "Executes in an isolated Sandbox. GitHub delivery is disabled during early access."
                 : "Agent Runs are available only to invited design partners. You can still inspect the complete Slice above."}
             </p>
           </>

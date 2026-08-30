@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <main className="mx-auto max-w-3xl px-5 py-12">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Trust</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Privacy Policy</h1>
-        <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 3, 2026 · What Locus processes, keeps, and shares.</p>
+        <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 30, 2026 · What Locus processes, keeps, and shares.</p>
         <div className="aperture-rule mt-8" />
 
         <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
@@ -30,11 +30,11 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-lg font-semibold text-paper">Repository data</h2>
             <p>
-              The hosted alpha supports public repositories only. Source is fetched from GitHub and
+              Hosted early access supports public repositories only. Source is fetched from GitHub and
               processed by Locus, the configured model provider, and its execution Sandbox. Locus
               does not intentionally retain a complete repository copy after execution, but generated
               diffs and source excerpts can appear in durable Run records. New GitHub OAuth
-              connections are disabled during the controlled alpha.
+              connections are disabled during early access.
             </p>
           </section>
 

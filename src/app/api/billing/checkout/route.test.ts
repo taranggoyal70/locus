@@ -16,7 +16,7 @@ describe("controlled-alpha checkout", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: "Billing is disabled during the controlled alpha.",
+      error: "Billing is disabled during early access.",
     });
   });
 });

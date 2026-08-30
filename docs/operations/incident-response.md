@@ -2,7 +2,7 @@
 
 ## Detection and ownership
 
-The release operator owns first response until an incident lead is recorded. Detection sources are Vercel function/workflow logs, the `/api/health` revision, Supabase Run/Step evidence, provider dashboards, and the optional `OPS_ALERT_WEBHOOK_URL` channel. Stable events include `agent.run.failed`, `agent.run.review_ready`, `agent.alert.delivery_failed`, provider-lease failures, and retention-job failures. Use Run IDs as correlation identifiers; never copy source, diffs, credentials, task text, or user identifiers into incident chat.
+The release operator owns first response until an incident lead is recorded. Detection sources are the scheduled GitHub `Production health` workflow, Vercel alert rules and function/workflow logs, the `/api/health` revision, Supabase Run/Step evidence, provider dashboards, and an optional `OPS_ALERT_WEBHOOK_URL` channel. Stable events include `agent.run.failed`, `agent.run.review_ready`, `agent.alert.delivery_failed`, provider-lease failures, and retention-job failures. Use Run IDs as correlation identifiers; never copy source, diffs, credentials, task text, or user identifiers into incident chat.
 
 ## Severity
 

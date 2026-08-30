@@ -23,7 +23,7 @@ describe("controlled-alpha Run delivery", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: "GitHub delivery is disabled during the controlled alpha.",
+      error: "GitHub delivery is disabled during early access.",
     });
   });
 });

@@ -68,7 +68,7 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
         </div>
 
         <footer className="flex flex-col gap-2 border-t border-line-strong py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-          <span>Invite-only controlled alpha</span>
+          <span>Public early access</span>
           <span>Public Repos · Secure authentication by Clerk</span>
         </footer>
       </div>

@@ -9,7 +9,7 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!alphaCapabilitiesForUser(userId).githubConnect) {
     return NextResponse.json(
-      { error: "GitHub connections are not available during the controlled alpha." },
+      { error: "GitHub connections are not available during early access." },
       { status: 403 },
     );
   }

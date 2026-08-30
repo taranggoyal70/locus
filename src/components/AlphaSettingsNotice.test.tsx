@@ -7,7 +7,7 @@ describe("controlled-alpha Settings notice", () => {
   it("states the current product boundary without advertising disabled capabilities", () => {
     const html = renderToStaticMarkup(<AlphaSettingsNotice />);
 
-    expect(html).toContain("Controlled alpha");
+    expect(html).toContain("Public early access");
     expect(html).toContain("public repositories");
     expect(html).toContain("invited design partners");
     expect(html).not.toContain("subscription");

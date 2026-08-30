@@ -90,7 +90,7 @@ export async function POST(request: Request) {
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!alphaCapabilitiesForUser(userId).runStart) {
     return NextResponse.json(
-      { error: "Agent Runs are limited to invited design partners during the controlled alpha." },
+      { error: "Agent Runs are limited to invited design partners during early access." },
       { status: 403 },
     );
   }

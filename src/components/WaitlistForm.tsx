@@ -108,13 +108,13 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
               </svg>
             </div>
             <p id="alpha-access-title" className="text-lg font-semibold text-paper">{result.message}</p>
-            <p id="alpha-access-description" className="sr-only">Your alpha access request was received.</p>
+            <p id="alpha-access-description" className="sr-only">Your Agent Run access request was received.</p>
             <button type="button" onClick={onClose} className="mt-4 text-sm text-accent hover:underline">Close</button>
           </div>
         ) : (
           <>
-            <h2 id="alpha-access-title" className="font-display text-2xl font-semibold tracking-[-0.04em] text-paper">Request alpha access</h2>
-            <p id="alpha-access-description" className="mt-1 text-sm text-muted-light">Tell us about one public Repo task. We&apos;re inviting a small group of design partners and reviewing every request manually.</p>
+            <h2 id="alpha-access-title" className="font-display text-2xl font-semibold tracking-[-0.04em] text-paper">Request Agent Run access</h2>
+            <p id="alpha-access-description" className="mt-1 text-sm text-muted-light">Repo localization is already open. Tell us about one public Repo task if you want to test a complete Agent Run; every request is reviewed manually.</p>
 
             {result && !result.ok && (
               <div role="alert" aria-live="assertive" className="mt-3 rounded-lg border border-recent/30 bg-recent/5 px-4 py-2 text-xs text-recent">{result.message}</div>

@@ -15,7 +15,7 @@ export default function TermsPage() {
       <main className="mx-auto max-w-3xl px-5 py-12">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Terms</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Terms of Service</h1>
-        <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 3, 2026 · Terms for the Locus invite-only controlled alpha.</p>
+        <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 30, 2026 · Terms for Locus public early access.</p>
         <div className="aperture-rule mt-8" />
 
         <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
@@ -23,9 +23,10 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-paper">Service</h2>
             <p>
               Locus is an experimental, open-source agent workspace operated by Tarang Goyal. It
-              localizes tasks for public JavaScript and TypeScript repositories, generates changes
-              in an isolated Sandbox, records allowlisted check results, and presents a proposal for
-              human review. External repository writes and billing are disabled during the alpha.
+              localizes tasks for public JavaScript and TypeScript repositories for every signed-in
+              user. Invited design partners can continue in an isolated Sandbox, record allowlisted
+              check results, and inspect a proposal for human review. External repository writes and
+              billing are disabled during early access.
               The hosted version at {new URL(SITE_URL).hostname} is provided as-is, without warranty.
             </p>
           </section>
@@ -89,7 +90,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-paper">Changes</h2>
             <p>
-              We may update these terms as the service evolves. Questions and alpha support requests
+              We may update these terms as the service evolves. Questions and early-access support requests
               can be submitted through the{" "}
               <a
                 href="https://github.com/taranggoyal70/locus/issues/new"

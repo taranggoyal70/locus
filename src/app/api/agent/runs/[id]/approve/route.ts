@@ -33,7 +33,7 @@ export async function POST(request: Request, context: RouteContext) {
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!alphaCapabilitiesForUser(userId).delivery) {
     return NextResponse.json(
-      { error: "GitHub delivery is disabled during the controlled alpha." },
+      { error: "GitHub delivery is disabled during early access." },
       { status: 403 },
     );
   }

@@ -1,33 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), redirect: vi.fn() }));
+const mocks = vi.hoisted(() => ({ redirect: vi.fn() }));
 const emptySearchParams = Promise.resolve({});
 
-vi.mock("@clerk/nextjs/server", () => ({ auth: mocks.auth }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 
 import DemoPage from "@/app/(clerk)/demo/page";
 
 describe("legacy demo route", () => {
   beforeEach(() => {
-    mocks.auth.mockReset();
     mocks.redirect.mockReset();
   });
 
-  it("sends signed-out visitors to the alpha access path", async () => {
-    mocks.auth.mockResolvedValue({ userId: null });
-    await DemoPage({ searchParams: emptySearchParams });
-    expect(mocks.redirect).toHaveBeenCalledWith("/pricing#request-access");
-  });
-
-  it("sends signed-in visitors to their workspace", async () => {
-    mocks.auth.mockResolvedValue({ userId: "user_123" });
+  it("sends visitors through the public early-access workspace", async () => {
     await DemoPage({ searchParams: emptySearchParams });
     expect(mocks.redirect).toHaveBeenCalledWith("/workspace");
   });
 
-  it("preserves authenticated legacy deep links", async () => {
-    mocks.auth.mockResolvedValue({ userId: "user_123" });
+  it("preserves legacy deep links through authentication", async () => {
     await DemoPage({
       searchParams: Promise.resolve({ repo: "owner/repo", task: "fix auth" }),
     });

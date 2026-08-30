@@ -3,11 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { nextDialogFocusIndex, WaitlistForm } from "@/components/WaitlistForm";
 
-describe("alpha access form", () => {
+describe("Agent Run access form", () => {
   it("requests design-partner access without paid capability promises", () => {
     const html = renderToStaticMarkup(<WaitlistForm onClose={vi.fn()} />);
 
-    expect(html).toContain("Request alpha access");
+    expect(html).toContain("Request Agent Run access");
+    expect(html).toContain("Repo localization is already open");
     expect(html).toContain("public Repo");
     expect(html).toContain("Request access");
     expect(html).toContain('role="dialog"');

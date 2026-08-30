@@ -1,8 +1,9 @@
 # Locus launch kit
 
-This folder contains the founder-led LinkedIn launch package for the Locus open-source beta.
+This folder contains the founder-led launch package for Locus public early access.
 
-- `LINKEDIN_POST.md` — launch post and first comment
+- `LINKEDIN_POST.md` — launch post
+- `PUBLIC_EARLY_ACCESS.md` — launch-day sequence, channel copy, metrics, and rollback triggers
 - `locus-linkedin-video/BRIEF.md` — locked video brief
 - `locus-linkedin-video/STORYBOARD.md` — six-scene, 50-second storyboard
 - `locus-linkedin-video/index.html` — assembled silent video composition

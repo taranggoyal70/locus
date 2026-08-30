@@ -74,7 +74,7 @@ receive a Savings claim only after completion.
 
 ## Deliberate exclusions
 
-- No autonomous merge or production deploy in public beta.
+- No autonomous merge or production deploy in public early access.
 - No savings claim for failed or cancelled Runs.
 - No silent access to excluded files; the agent must Widen with a reason.
 - No generic chat surface. Agent Tasks and Run evidence remain the interface.

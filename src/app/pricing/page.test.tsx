@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest";
 
 import PricingPage from "@/app/pricing/page";
 
-describe("controlled-alpha access page", () => {
+describe("public early-access access page", () => {
   it("offers one free design-partner program without paid or enterprise promises", () => {
     const html = renderToStaticMarkup(<PricingPage />);
 
-    expect(html).toContain("Controlled alpha");
-    expect(html).toContain("Free for invited design partners");
-    expect(html).toContain("Request alpha access");
+    expect(html).toContain("Public early access");
+    expect(html).toContain("Repo localization is open");
+    expect(html).toContain("Request Agent Run access");
+    expect(html).toContain("Self-serve Repo localization");
     expect(html).toContain('id="request-access"');
     expect(html).toContain("Public JavaScript and TypeScript repositories");
     expect(html).not.toContain("$29");

@@ -6,6 +6,7 @@ import { MarketingShell } from "@/components/MarketingShell";
 import { WaitlistForm } from "@/components/WaitlistForm";
 
 const alphaBoundaries = [
+  "Self-serve Repo localization for every signed-in user",
   "Public JavaScript and TypeScript repositories",
   "Durable Included, Excluded, and Widened file evidence",
   "Isolated Sandbox execution with allowlisted checks",
@@ -21,14 +22,14 @@ export default function PricingPage() {
       <main className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
         <div className="text-center">
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            Controlled alpha
+            Public early access
           </p>
           <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-6xl">
-            Free for invited design partners.
+            Repo localization is open. Agent Runs are invite-gated.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
-            We are working directly with a small group of developers before introducing paid
-            plans. The goal is to prove that the complete Run is useful, safe, and economical.
+            Create a free account to inspect a task-sized Slice for any supported public Repo.
+            We are inviting a smaller group to test complete Agent Runs before introducing paid plans.
           </p>
         </div>
 
@@ -43,7 +44,7 @@ export default function PricingPage() {
               </h2>
             </div>
             <span className="rounded-full border border-line-strong bg-ink px-3 py-1.5 text-xs font-semibold text-paper">
-              $0 during alpha
+              $0 during early access
             </span>
           </div>
 
@@ -61,7 +62,7 @@ export default function PricingPage() {
             onClick={() => setShowAccessForm(true)}
             className="mt-8 w-full rounded-xl bg-accent px-5 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim"
           >
-            Request alpha access
+            Request Agent Run access
           </button>
           <p className="mt-3 text-center text-xs leading-5 text-muted">
             Access is manually approved. No payment information is requested.
