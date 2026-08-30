@@ -29,9 +29,9 @@ export function LandingPage() {
               isolated Sandbox and a review-ready, check-passing proposal.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/workspace" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Try Repo localization</Link>
+              <Link href="/demo" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Watch migration demo</Link>
+              <Link href="/workspace" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Try Repo localization</Link>
               <Link href="/pricing" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Request Agent Run access</Link>
-              <a href="#evidence" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">See benchmark evidence</a>
             </div>
             <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Public early access · public Repos only · Agent Runs invite-gated</p>
           </div>

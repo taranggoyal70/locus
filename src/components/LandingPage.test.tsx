@@ -12,6 +12,8 @@ describe("public early-access landing contract", () => {
     if (evidencePath) writeFileSync(evidencePath, `${html}\n`);
 
     expect(html).toContain("Public early access");
+    expect(html).toContain("Watch migration demo");
+    expect(html).toContain('href="/demo"');
     expect(html).toContain("Try Repo localization");
     expect(html).toContain("Request Agent Run access");
     expect(html).toContain("review-ready, check-passing proposal");
