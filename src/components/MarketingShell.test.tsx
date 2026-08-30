@@ -9,6 +9,7 @@ describe("public early-access marketing navigation", () => {
 
     expect(html).toContain("Agent access");
     expect(html).toContain("Try Locus");
+    expect(html).toContain('href="/demo"');
     expect(html).toContain('href="/evidence/release-1"');
     const signInLink = html.match(/<a[^>]*href="\/sign-in"[^>]*>Sign in<\/a>/)?.[0];
     expect(signInLink).toBeTruthy();

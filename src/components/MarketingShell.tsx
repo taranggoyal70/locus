@@ -13,6 +13,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             <span className="hidden font-display text-[17px] font-semibold tracking-[-0.03em] sm:inline">Locus</span>
           </Link>
           <nav className="flex items-center gap-1 text-xs font-medium sm:gap-2 sm:text-sm" aria-label="Main navigation">
+            <Link href="/demo" className="rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:px-3">Demo</Link>
             <Link href="/evidence/release-1" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Evidence</Link>
             <Link href="/docs" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Docs</Link>
             <Link href="/pricing" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper md:block md:px-3">Agent access</Link>
@@ -33,6 +34,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             <p className="mt-3 max-w-md text-xs leading-5 text-muted-light">Public-Repo localization with visible context evidence. Agent Runs remain invite-gated during early access.</p>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-light sm:justify-end">
+            <Link href="/demo" className="hover:text-paper">Demo</Link>
             <Link href="/docs" className="hover:text-paper">API</Link>
             <Link href="/evidence/release-1" className="hover:text-paper">Evidence</Link>
             <Link href="/pricing" className="hover:text-paper">Agent access</Link>
