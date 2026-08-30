@@ -291,7 +291,6 @@ export async function POST(request: Request) {
       event: "api_locate",
       userId: apiKey.userId,
       properties: {
-        repo: body.repo,
         // R13: the task is what a user typed about their own codebase. The
         // shape is enough to count and correlate requests; the words are not
         // needed here and are retained on a different schedule than the Run

@@ -3,15 +3,30 @@ import { NextResponse } from "next/server";
 
 import { sameOriginMutation } from "@/lib/request-security";
 
+export const PROTECTED_PAGE_PREFIXES = ["/workspace", "/settings", "/projects"] as const;
+
+export const PROTECTED_RESOURCE_PREFIXES = [
+  "/api/github",
+  "/api/agent",
+  "/api/attachments",
+  "/api/keys",
+  "/api/projects",
+  "/api/usage",
+  "/api/track",
+  "/api/teams",
+  "/api/billing",
+  "/repos",
+] as const;
+
 export function isProtectedPagePathname(pathname: string): boolean {
-  return ["/workspace", "/settings", "/projects"].some(
+  return PROTECTED_PAGE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
 export function isProtectedPathname(pathname: string): boolean {
   if (pathname === "/api/billing/webhook") return false;
-  return isProtectedPagePathname(pathname) || ["/api/github", "/api/agent", "/api/attachments", "/api/keys", "/api/projects", "/api/usage", "/api/track", "/api/teams", "/api/billing", "/repos"].some(
+  return isProtectedPagePathname(pathname) || PROTECTED_RESOURCE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }

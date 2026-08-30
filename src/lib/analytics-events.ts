@@ -15,7 +15,7 @@ import type { Json } from "@/lib/database.types";
 
 type PropertyRule = { kind: "number" } | { kind: "enum"; values: readonly string[] };
 
-const EVENT_PROPERTIES: Record<string, Record<string, PropertyRule>> = {
+const EVENT_PROPERTIES = {
   context_copied: {
     format: { kind: "enum", values: ["generic", "claude", "cursor"] },
     method: { kind: "enum", values: ["download"] },
@@ -34,11 +34,13 @@ const EVENT_PROPERTIES: Record<string, Record<string, PropertyRule>> = {
   // by design, so declare before relying on a value being stored.
   task_analyzed: {},
   project_saved: {},
-};
+} as const satisfies Record<string, Record<string, PropertyRule>>;
+
+export type ClientAnalyticsEvent = keyof typeof EVENT_PROPERTIES;
 
 export const ALLOWED_EVENTS: readonly string[] = Object.keys(EVENT_PROPERTIES);
 
-export function isAllowedEvent(event: string): boolean {
+export function isAllowedEvent(event: string): event is ClientAnalyticsEvent {
   return Object.prototype.hasOwnProperty.call(EVENT_PROPERTIES, event);
 }
 
@@ -48,7 +50,9 @@ export function isAllowedEvent(event: string): boolean {
  * result directly.
  */
 export function filterEventProperties(event: string, raw: unknown): Record<string, Json> {
-  const rules = EVENT_PROPERTIES[event];
+  const rules = EVENT_PROPERTIES[event as ClientAnalyticsEvent] as
+    | Record<string, PropertyRule>
+    | undefined;
   if (!rules || typeof raw !== "object" || raw === null || Array.isArray(raw)) return {};
 
   const filtered: Record<string, Json> = {};

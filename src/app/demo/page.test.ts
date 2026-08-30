@@ -6,7 +6,7 @@ const emptySearchParams = Promise.resolve({});
 vi.mock("@clerk/nextjs/server", () => ({ auth: mocks.auth }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 
-import DemoPage from "@/app/demo/page";
+import DemoPage from "@/app/(clerk)/demo/page";
 
 describe("legacy demo route", () => {
   beforeEach(() => {

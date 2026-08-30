@@ -347,7 +347,6 @@ export async function POST(request: Request) {
         event: "repo_loaded",
         userId,
         properties: {
-          repo: `${owner}/${repo}`,
           files: cached.fileCount,
           truncated: cached.truncated,
           cached: true,
@@ -453,7 +452,6 @@ export async function POST(request: Request) {
       event: "repo_loaded",
       userId,
       properties: {
-        repo: `${owner}/${repo}`,
         files: fileCount,
         truncated,
         cached: false,

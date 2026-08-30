@@ -84,6 +84,17 @@ describe("production readiness", () => {
     ]);
   });
 
+  it("validates the public key through Auth and the service key through PostgREST", async () => {
+    const probe = recordingProbe();
+
+    await productionReadiness(complete, probe);
+
+    expect(probe.mock.calls.map(([input]) => String(input))).toEqual([
+      "https://project.supabase.co/auth/v1/settings",
+      "https://project.supabase.co/rest/v1/",
+    ]);
+  });
+
   it("adds bearer authorization only for legacy JWT keys", async () => {
     const publicKey = legacyKey("anon");
     const serviceKey = legacyKey("service_role");

@@ -7,7 +7,9 @@ const transitionRunMock = vi.hoisted(() => vi.fn());
 const releaseRunProviderLeaseMock = vi.hoisted(() => vi.fn());
 const serviceClientMock = vi.hoisted(() => vi.fn());
 const startMock = vi.hoisted(() => vi.fn());
+const trackMock = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
+vi.mock("@/lib/analytics", () => ({ track: trackMock }));
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 vi.mock("@/lib/agent/run-store", () => ({
   appendRunStep: appendRunStepMock,
@@ -96,6 +98,7 @@ describe("controlled-alpha Agent Run starts", () => {
     releaseRunProviderLeaseMock.mockResolvedValue(undefined);
     serviceClientMock.mockReset();
     startMock.mockReset();
+    trackMock.mockReset();
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_design_partner");
   });
 
@@ -132,6 +135,11 @@ describe("controlled-alpha Agent Run starts", () => {
 
     expect(response.status).toBe(202);
     expect(events).toEqual(["policy", "workflow"]);
+    expect(trackMock).toHaveBeenCalledWith({
+      event: "agent_run_started",
+      userId: "user_design_partner",
+      properties: { workflowCorrelated: true },
+    });
     expect(appendRunStepMock).toHaveBeenCalledWith(expect.objectContaining({
       runId: "run-id",
       sequence: 0,

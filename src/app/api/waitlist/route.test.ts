@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const consumeRateLimitMock = vi.hoisted(() => vi.fn());
 const serviceClientMock = vi.hoisted(() => vi.fn());
+const trackMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
+vi.mock("@/lib/analytics", () => ({ track: trackMock }));
 
 import { POST } from "@/app/api/waitlist/route";
 
@@ -20,6 +22,7 @@ describe("waitlist request protection", () => {
   beforeEach(() => {
     consumeRateLimitMock.mockReset();
     serviceClientMock.mockReset();
+    trackMock.mockReset();
   });
 
   it("rejects cross-origin browser submissions before database access", async () => {
@@ -37,5 +40,19 @@ describe("waitlist request protection", () => {
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("900");
     expect(serviceClientMock).not.toHaveBeenCalled();
+  });
+
+  it("records an anonymous conversion without retaining form content in analytics", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({ allowed: true, remaining: 4, retryAfterSeconds: 0 });
+    const insert = vi.fn(async () => ({ error: null }));
+    serviceClientMock.mockReturnValueOnce({ from: vi.fn(() => ({ insert })) });
+
+    const response = await POST(request());
+
+    expect(response.status).toBe(200);
+    expect(trackMock).toHaveBeenCalledWith({
+      event: "alpha_access_requested",
+      properties: { result: "new" },
+    });
   });
 });
