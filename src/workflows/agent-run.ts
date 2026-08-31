@@ -210,6 +210,23 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       baselineContextTokens: localized.baselineTokens,
       includedContextTokens: localized.includedTokens,
       tokenBudgetTokens: localized.tokenBudget,
+      onStepStart: ({ stepNumber, provider, modelId }) => {
+        logger.info(
+          "agent.model.step_started",
+          { stepNumber, provider, modelId },
+          localized.runId,
+        );
+      },
+      onToolExecutionStart: ({ toolName }) => {
+        logger.info("agent.tool.started", { toolName }, localized.runId);
+      },
+      onToolExecutionEnd: ({ toolName, durationMs, failed }) => {
+        logger.info(
+          "agent.tool.completed",
+          { toolName, durationMs, failed },
+          localized.runId,
+        );
+      },
       onStepEnd: async (usage) => {
         cumulativeUsage.inputTokens += Math.max(0, usage.inputTokens ?? 0);
         cumulativeUsage.cachedInputTokens += Math.max(

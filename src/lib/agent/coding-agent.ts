@@ -305,6 +305,19 @@ export type CodingRunInput = {
   tokenBudgetTokens?: number;
   timeouts?: CodingAgentTimeouts;
   abortSignal?: AbortSignal;
+  onStepStart?: (event: {
+    stepNumber: number;
+    provider: string;
+    modelId: string;
+  }) => Promise<void> | void;
+  onToolExecutionStart?: (event: {
+    toolName: string;
+  }) => Promise<void> | void;
+  onToolExecutionEnd?: (event: {
+    toolName: string;
+    durationMs: number;
+    failed: boolean;
+  }) => Promise<void> | void;
   onStepEnd?: (usage: LanguageModelUsage) => Promise<void> | void;
 };
 
@@ -321,6 +334,16 @@ export async function runCodingTask(input: CodingRunInput) {
       prompt: input.prompt,
       abortSignal: input.abortSignal,
       timeout: input.timeouts ?? CODING_AGENT_TIMEOUTS,
+      onStepStart: async ({ stepNumber, provider, modelId }) =>
+        input.onStepStart?.({ stepNumber, provider, modelId }),
+      onToolExecutionStart: async ({ toolCall }) =>
+        input.onToolExecutionStart?.({ toolName: toolCall.toolName }),
+      onToolExecutionEnd: async ({ toolCall, toolExecutionMs, toolOutput }) =>
+        input.onToolExecutionEnd?.({
+          toolName: toolCall.toolName,
+          durationMs: toolExecutionMs,
+          failed: toolOutput.type === "tool-error",
+        }),
       onStepEnd: async ({ usage }) => input.onStepEnd?.(usage),
     });
   } catch (error) {

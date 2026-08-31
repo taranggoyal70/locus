@@ -141,6 +141,7 @@ describe("coding agent configuration", () => {
   });
 
   it("aborts a provider call that never returns", async () => {
+    const startedSteps: Array<{ stepNumber: number; provider: string; modelId: string }> = [];
     const model = new MockLanguageModelV4({
       doGenerate: async ({ abortSignal }) =>
         await new Promise<never>((_resolve, reject) => {
@@ -158,6 +159,9 @@ describe("coding agent configuration", () => {
       baselineContextTokens: 100,
       includedContextTokens: 10,
       model,
+      onStepStart: (event) => {
+        startedSteps.push(event);
+      },
       timeouts: {
         totalMs: 100,
         stepMs: 20,
@@ -165,5 +169,8 @@ describe("coding agent configuration", () => {
         tools: { run_checksMs: 80 },
       },
     })).rejects.toBeInstanceOf(CodingAgentTimeoutError);
+    expect(startedSteps).toEqual([
+      { stepNumber: 0, provider: "mock-provider", modelId: "mock-model-id" },
+    ]);
   });
 });
