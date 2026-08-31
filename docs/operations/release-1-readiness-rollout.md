@@ -77,7 +77,7 @@ select
 
 Required results: no duplicate proposal artifact kinds, zero active Runs, and a non-null SHA-256 digest function. Temporarily clear `ALPHA_ALLOWED_USER_IDS` and deploy that environment-only change before applying migrations so no Run can start during the window.
 
-Confirm these production variables by name without printing values: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, Clerk keys, `LOCUS_AGENT_MODEL`, `GOOGLE_GENERATIVE_AI_API_KEY`, `ALPHA_ALLOWED_USER_IDS`, and `CRON_SECRET`. Alerting requires either an HTTPS `OPS_ALERT_WEBHOOK_URL` or `OPS_EXTERNAL_HEALTHCHECK=github_actions`. `LOCUS_RUN_TOKEN_BUDGET` may be omitted for the safe 180,000 default or must parse to 10,000–240,000. The Release 1 evaluation contract freezes 180,000.
+Confirm these production variables by name without printing values: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, Clerk keys, `LOCUS_AGENT_MODEL`, `ALPHA_ALLOWED_USER_IDS`, and `CRON_SECRET`. `LOCUS_AGENT_MODEL` must be `openai/gpt-5.6-sol`; Vercel AI Gateway authenticates the deployment with short-lived OIDC credentials. Alerting requires either an HTTPS `OPS_ALERT_WEBHOOK_URL` or `OPS_EXTERNAL_HEALTHCHECK=github_actions`. `LOCUS_RUN_TOKEN_BUDGET` may be omitted for the safe 180,000 default or must parse to 10,000–240,000. The Release 1 evaluation contract freezes 180,000.
 
 ## Safe apply
 
@@ -182,7 +182,7 @@ values (
   '00000000-0000-4000-8000-000000000101',
   'release1-rollout-canary',
   'executing',
-  'google/gemini-3.5-flash',
+  'openai/gpt-5.6-sol',
   180000
 );
 
@@ -222,7 +222,7 @@ where id = '00000000-0000-4000-8000-000000000102';
 
 select * from public.acquire_agent_provider_lease(
   '00000000-0000-4000-8000-000000000102',
-  'google/gemini-3.5-flash',
+  'openai/gpt-5.6-sol',
   1,
   60
 );

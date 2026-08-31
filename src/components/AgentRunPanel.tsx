@@ -290,8 +290,8 @@ export function AgentRunPanel({
                 />
                 <span>
                   I confirm this public Repo, task, and criteria contain no private,
-                  confidential, or personal data. Gemini free-tier content may be used
-                  to improve Google products and may be reviewed by people.
+                  confidential, or personal data. Run content is processed by OpenAI
+                  through Vercel AI Gateway with prompt training disabled.
                 </span>
               </label>
             )}
