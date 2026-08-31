@@ -38,7 +38,7 @@ export async function PUT(request: Request) {
         : {},
     );
     await saveCloudflareCredential({ userId, credential });
-    return NextResponse.json({ configured: true, accountIdSuffix: credential.accountId.slice(-6) });
+    return NextResponse.json({ configured: true });
   } catch (error) {
     const message = error instanceof Error && (
       error.message.includes("Cloudflare Account ID")
@@ -58,7 +58,7 @@ export async function DELETE(request: Request) {
   }
   try {
     await deleteCloudflareCredential(userId);
-    return NextResponse.json({ configured: false, accountIdSuffix: null });
+    return NextResponse.json({ configured: false });
   } catch {
     return NextResponse.json({ error: "Could not remove provider connection." }, { status: 503 });
   }

@@ -73,9 +73,9 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
     .select("*")
     .eq("id", runId)
     .single();
-  if (runError || !run) throw new FatalError("Agent run was not found");
+  if (runError || !run) throw new FatalError("Agent Run was not found");
   if (run.provider !== CLOUDFLARE_PROVIDER || !isAgentExecutionMode(run.execution_mode)) {
-    throw new FatalError("Agent run provider policy is unavailable");
+    throw new FatalError("Agent Run provider policy is unavailable");
   }
 
   const { data: task, error: taskError } = await db
@@ -444,8 +444,10 @@ async function releaseProviderLeaseStep(runId: string): Promise<void> {
 export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<void> {
   "use workflow";
 
+  let executionMode: AgentExecutionMode | undefined;
   try {
     const localized = await localizeRunStep(input.runId);
+    executionMode = localized.executionMode;
     await executeRunStep(localized);
   } catch (error) {
     const failureKind = classifyAgentFailure(error);
@@ -453,7 +455,7 @@ export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<vo
     // wrong or what to do, so this one failure carries its own message.
     const message = error instanceof IncompleteRepositoryError
       ? error.message
-      : agentFailureMessage(failureKind);
+      : agentFailureMessage(failureKind, executionMode);
     await failRunStep(
       input.runId,
       message,

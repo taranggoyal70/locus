@@ -110,14 +110,33 @@ export function classifyAgentFailure(error: unknown): AgentFailureKind {
   return "workflow_error";
 }
 
-export function agentFailureMessage(kind: AgentFailureKind): string {
+export function agentFailureMessage(
+  kind: AgentFailureKind,
+  executionMode?: "shared" | "byok",
+): string {
+  if (kind === "quota_exhausted") {
+    if (executionMode === "shared") {
+      return "The shared Cloudflare Workers AI capacity is exhausted for today. Try again after the UTC reset or connect your own Cloudflare account.";
+    }
+    if (executionMode === "byok") {
+      return "Your Cloudflare account has reached a Workers AI quota or rate limit. Check that account's limits before retrying.";
+    }
+    return "Cloudflare Workers AI quota is temporarily exhausted. The Run stopped safely; retry after the provider window resets.";
+  }
+  if (kind === "provider_error") {
+    if (executionMode === "shared") {
+      return "The shared Cloudflare Workers AI service could not complete this limited-beta Run. No proposal was published; connect your own Cloudflare account or retry later.";
+    }
+    if (executionMode === "byok") {
+      return "Cloudflare Workers AI could not complete this Run with your connection. No proposal was published; check the connection in Settings before retrying.";
+    }
+    return "Cloudflare Workers AI could not complete this Run. No proposal was published.";
+  }
   const messages: Record<AgentFailureKind, string> = {
-    quota_exhausted:
-      "The model provider quota is temporarily exhausted. The Run stopped safely; retry after the provider window resets.",
+    quota_exhausted: "Cloudflare Workers AI quota is temporarily exhausted.",
     token_budget_exhausted:
       "The Run reached its token budget before it could produce a review-ready proposal. Narrow the task or Slice before retrying.",
-    provider_error:
-      "The model provider could not complete this Run. No proposal was published.",
+    provider_error: "Cloudflare Workers AI could not complete this Run. No proposal was published.",
     sandbox_error:
       "The isolated workspace could not complete this Run. No proposal was published.",
     verification_error:
