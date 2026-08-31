@@ -196,10 +196,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       baselineTokens: localized.baselineTokens,
       sparse: localized.sparse && !localized.widened,
       edgeDensity: localized.edgeDensity,
-      included: localized.included.flatMap((path) => {
-        const content = localized.repo.files[path];
-        return content === undefined ? [] : [{ path, content }];
-      }),
+      included: localized.included,
       excluded: localized.excluded,
     });
     const cumulativeUsage = {
