@@ -73,6 +73,9 @@ describe("agent Run token budget", () => {
     const codingAgentTimeout = new Error("Coding Agent execution exceeded its deadline");
     codingAgentTimeout.name = "CodingAgentTimeoutError";
     expect(classifyAgentFailure(codingAgentTimeout)).toBe("provider_error");
+    expect(classifyAgentFailure(new Error(
+      "FatalError: executeRunStep failed: Coding Agent execution exceeded its deadline.",
+    ))).toBe("provider_error");
     expect(classifyAgentFailure(new Error("Unknown failure"))).toBe("workflow_error");
   });
 

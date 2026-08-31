@@ -101,7 +101,7 @@ export function classifyAgentFailure(error: unknown): AgentFailureKind {
     return "sandbox_error";
   }
   if (
-    /provider|language model|ai_apicallerror|model response|codingagenttimeouterror/.test(
+    /provider|language model|ai_apicallerror|model response|codingagenttimeouterror|coding agent execution exceeded its deadline/.test(
       text,
     )
   ) {
