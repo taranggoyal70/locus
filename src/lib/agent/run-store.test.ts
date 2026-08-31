@@ -58,4 +58,21 @@ describe("transitionRun", () => {
       next: "localizing",
     })).rejects.toThrow("Run could not transition from queued to localizing");
   });
+
+  it("never hides a competing transition to the same terminal status", async () => {
+    const update = updateQuery({ data: null, error: { code: "PGRST116" } });
+    const current = currentStatusQuery("failed");
+    const from = vi.fn()
+      .mockReturnValueOnce(update)
+      .mockReturnValueOnce(current);
+    serviceClientMock.mockReturnValue({ from });
+
+    await expect(transitionRun({
+      runId: "run_terminal_race",
+      userId: "user_owner",
+      current: "queued",
+      next: "failed",
+      values: { error: "provider capacity failed" },
+    })).rejects.toThrow("Run could not transition from queued to failed");
+  });
 });
