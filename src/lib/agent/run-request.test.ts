@@ -11,6 +11,7 @@ describe("agent run request", () => {
       parseAgentRunRequest({
         repository: " taranggoyal70/locus ",
         task: " Fix the settings save flow ",
+        executionMode: "byok",
         acceptanceCriteria: ["Persists after refresh", "Tests pass"],
         dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
       }),
@@ -18,6 +19,7 @@ describe("agent run request", () => {
       repository: "taranggoyal70/locus",
       baseRef: "main",
       task: "Fix the settings save flow",
+      executionMode: "byok",
       acceptanceCriteria: ["Persists after refresh", "Tests pass"],
       dataPolicyVersion: CONTROLLED_ALPHA_DATA_POLICY_VERSION,
     });
@@ -60,5 +62,20 @@ describe("agent run request", () => {
       task: "Prepare a review-ready proposal",
       dataPolicyAcceptance: { version: "outdated-policy" },
     })).toThrow("Confirm the early-access data policy before starting an Agent Run");
+  });
+
+  it("defaults to shared capacity and rejects unknown execution modes", () => {
+    expect(parseAgentRunRequest({
+      repository: "acme/widgets",
+      task: "Prepare a review-ready proposal",
+      dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
+    })).toMatchObject({ executionMode: "shared" });
+
+    expect(() => parseAgentRunRequest({
+      repository: "acme/widgets",
+      task: "Prepare a review-ready proposal",
+      executionMode: "fastest-provider",
+      dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
+    })).toThrow("Execution mode must be shared or byok");
   });
 });

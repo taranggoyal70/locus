@@ -40,4 +40,17 @@ describe("controlled-alpha capabilities", () => {
       billing: false,
     });
   });
+
+  it("opens only Run starts to signed-in users when the public beta is explicitly enabled", () => {
+    expect(alphaCapabilitiesForUser("user_public", "", "true")).toEqual({
+      runStart: true,
+      githubConnect: false,
+      privateRepoRead: false,
+      teams: false,
+      savingsClaims: false,
+      delivery: false,
+      billing: false,
+    });
+    expect(alphaCapabilitiesForUser(null, "", "true").runStart).toBe(false);
+  });
 });
