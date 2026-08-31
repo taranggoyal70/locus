@@ -1,7 +1,10 @@
 import { normalizePublicGitHubRepository } from "@/lib/agent/vercel-workspace";
 import type { RepoData } from "@/lib/types";
 
-const MAX_FILES = 240;
+// The byte budget is the primary memory bound. Keep enough file slots for
+// documentation-heavy application Repos whose many small files remain well
+// below that bound (the production Locus canary has 246 files at ~1.1 MB).
+const MAX_FILES = 500;
 const MAX_FILE_BYTES = 100_000;
 const MAX_TOTAL_BYTES = 5_000_000;
 const FETCH_TIMEOUT_MS = 10_000;

@@ -56,6 +56,36 @@ describe("agent GitHub source", () => {
     expect(fetcher.mock.calls.some(([url]) => String(url).includes("/git/trees/tree-sha"))).toBe(true);
     expect(fetcher.mock.calls.some(([url]) => String(url).includes("/commit-sha/src/index.ts"))).toBe(true);
   });
+
+  it("fully ingests a small 246-file repository within the byte budget", async () => {
+    const tree = Array.from({ length: 246 }, (_, index) => ({
+      path: `src/file-${index}.ts`,
+      type: "blob",
+      size: 4_000,
+    }));
+    const fetcher = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.endsWith("/repos/acme/repo")) {
+        return Response.json({ default_branch: "main", description: "Test repository" });
+      }
+      if (url.endsWith("/repos/acme/repo/commits/main")) {
+        return Response.json({ sha: "commit-sha", commit: { tree: { sha: "tree-sha" } } });
+      }
+      if (url.includes("/git/trees/tree-sha")) {
+        return Response.json({ sha: "tree-sha", tree });
+      }
+      if (url.includes("/commit-sha/src/file-")) {
+        return new Response("export const ready = true;\n");
+      }
+      return new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+
+    const result = await fetchAgentRepository("acme/repo", "main");
+
+    expect(Object.keys(result.repo.files)).toHaveLength(246);
+    expect(() => assertCompleteRepository(result)).not.toThrow();
+  });
 });
 
 // R11: a capped ingestion does not merely give the Agent less context, it
