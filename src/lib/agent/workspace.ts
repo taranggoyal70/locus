@@ -129,8 +129,10 @@ const READ_BASE64_SCRIPT = CONTAINMENT_PRELUDE + [
 const READ_SLICE_SCRIPT = CONTAINMENT_PRELUDE + [
   "const target=contain(process.env.LOCUS_PATH);",
   "const limit=Number(process.env.LOCUS_MAX_LINES)||320;",
+  "const start=Math.max(1,Number(process.env.LOCUS_START_LINE)||1);",
   'const lines=fs.readFileSync(target,"utf8").split("\\n");',
-  'process.stdout.write(lines.slice(0,limit).join("\\n"));',
+  "const end=Math.min(lines.length,start-1+limit);",
+  'process.stdout.write(`lines ${start}-${end} of ${lines.length}\\n`+lines.slice(start-1,end).join("\\n"));',
 ].join("");
 
 // R3: `rg` does not follow symlinks while walking a directory, but it does read a
@@ -254,15 +256,28 @@ export class WorkspaceController {
     return evidence(result);
   }
 
-  async readFile(input: string, abortSignal?: AbortSignal): Promise<string> {
+  async readFile(input: string, options: {
+    startLine?: number;
+    maxLines?: number;
+    abortSignal?: AbortSignal;
+  } = {}): Promise<string> {
     const path = validateRepoPath(input);
     if (!this.slice.canRead(path)) {
       throw new Error(`${path} is outside the active Slice`);
     }
+    const startLine = Math.max(1, Math.round(options.startLine ?? 1));
+    const maxLines = Math.min(
+      READ_SLICE_LINES,
+      Math.max(1, Math.round(options.maxLines ?? READ_SLICE_LINES)),
+    );
     const result = await this.workspace.run({
       command: `node -e ${shellQuote(READ_SLICE_SCRIPT)}`,
-      env: { LOCUS_PATH: path, LOCUS_MAX_LINES: String(READ_SLICE_LINES) },
-      abortSignal,
+      env: {
+        LOCUS_PATH: path,
+        LOCUS_START_LINE: String(startLine),
+        LOCUS_MAX_LINES: String(maxLines),
+      },
+      abortSignal: options.abortSignal,
       timeoutMs: 30_000,
     });
     return evidence(result);
@@ -272,7 +287,7 @@ export class WorkspaceController {
   // dropped, so it reaches the approval evidence a human actually reads.
   async widenFile(input: string, reason: string, abortSignal?: AbortSignal): Promise<string> {
     const path = this.slice.widen(input, reason);
-    return this.readFile(path, abortSignal);
+    return this.readFile(path, { abortSignal });
   }
 
   async search(query: string, abortSignal?: AbortSignal): Promise<string> {
