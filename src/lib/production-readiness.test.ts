@@ -9,8 +9,7 @@ const complete = {
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_value",
   CLERK_SECRET_KEY: "sk_test_value",
   ALPHA_ALLOWED_USER_IDS: "user_partner",
-  LOCUS_AGENT_MODEL: "google/gemini-3.5-flash",
-  GOOGLE_GENERATIVE_AI_API_KEY: "google-secret",
+  LOCUS_AGENT_MODEL: "openai/gpt-5.6-sol",
   CRON_SECRET: "cron-secret",
   OPS_ALERT_WEBHOOK_URL: "https://alerts.example/locus",
 };
@@ -41,11 +40,21 @@ describe("production readiness", () => {
   });
 
   it("fails closed for missing retention or provider configuration", async () => {
-    const incomplete = { ...complete, CRON_SECRET: "", GOOGLE_GENERATIVE_AI_API_KEY: "" };
+    const incomplete = { ...complete, CRON_SECRET: "", LOCUS_AGENT_MODEL: "" };
     await expect(productionReadiness(incomplete, databaseReady)).resolves.toEqual({
       ready: false,
       missing: ["agent_provider", "retention_cron"],
       alerting: "webhook",
+    });
+  });
+
+  it("fails closed for an unreviewed Gateway model", async () => {
+    await expect(productionReadiness({
+      ...complete,
+      LOCUS_AGENT_MODEL: "google/gemini-3.5-flash",
+    }, databaseReady)).resolves.toMatchObject({
+      ready: false,
+      missing: ["agent_provider"],
     });
   });
 

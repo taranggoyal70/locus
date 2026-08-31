@@ -9,7 +9,6 @@ import {
   agentStepSettings,
   agentStepBudgetSettings,
   calculateTokenLedger,
-  resolveAgentLanguageModel,
   resolveAgentModel,
   runCodingTask,
 } from "@/lib/agent/coding-agent";
@@ -59,29 +58,6 @@ describe("coding agent configuration", () => {
     for (const model of ALLOWED_AGENT_MODELS) {
       expect(resolveAgentModel({ LOCUS_AGENT_MODEL: model })).toBe(model);
     }
-  });
-
-  it("routes an explicitly configured Google model directly on the free tier", () => {
-    const model = resolveAgentLanguageModel("google/gemini-3.5-flash", {
-      GOOGLE_GENERATIVE_AI_API_KEY: "test-google-key",
-    });
-
-    expect(model).toMatchObject({
-      modelId: "gemini-3.5-flash",
-      provider: "google.generative-ai",
-    });
-  });
-
-  it("keeps Gateway routing when no direct-provider credential is configured", () => {
-    expect(resolveAgentLanguageModel("google/gemini-3.5-flash", {})).toBe(
-      "google/gemini-3.5-flash",
-    );
-  });
-
-  it("fails closed when a Google credential is paired with another provider", () => {
-    expect(() => resolveAgentLanguageModel("openai/gpt-5.6-sol", {
-      GOOGLE_GENERATIVE_AI_API_KEY: "test-google-key",
-    })).toThrow("requires LOCUS_AGENT_MODEL to use the google/<model> format");
   });
 
   it("reports Slice savings separately from actual model usage", () => {
