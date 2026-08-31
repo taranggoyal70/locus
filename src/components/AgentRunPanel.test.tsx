@@ -39,7 +39,7 @@ describe("AgentRunTimeline", () => {
 });
 
 describe("controlled-alpha Agent Run start", () => {
-  it("requires the free-tier data acknowledgement before launch", () => {
+  it("requires the Gateway data acknowledgement before launch", () => {
     const html = renderToStaticMarkup(
       <AgentRunPanel
         repository="taranggoyal70/locus"
@@ -51,8 +51,8 @@ describe("controlled-alpha Agent Run start", () => {
       />,
     );
 
-    expect(html).toContain("Gemini free-tier content may be used to improve Google products");
-    expect(html).toContain("may be reviewed by people");
+    expect(html).toContain("processed by OpenAI through Vercel AI Gateway");
+    expect(html).toContain("prompt training disabled");
     expect(html).toContain("private, confidential, or personal data");
     expect(html).toMatch(/<button[^>]*disabled/);
   });

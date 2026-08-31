@@ -90,19 +90,21 @@ order by table_name, role_name, privilege_name;
 Before apply, production must also have server-only
 `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, Clerk keys, and a
 non-empty `ALPHA_ALLOWED_USER_IDS` containing only approved design partners.
-It must also have an Agent provider configured. The no-card controlled-alpha
-configuration is `LOCUS_AGENT_MODEL=google/gemini-3.5-flash` plus the
-server-only `GOOGLE_GENERATIVE_AI_API_KEY`. Google's free tier may use submitted
-content to improve its products and people may review it, so this configuration
-is restricted to public Repos and must never receive private, confidential, or
-personal Repo or task data. The start UI requires an unchecked acknowledgement,
-and the API rejects a request without it. Review the current
-[pricing](https://ai.google.dev/gemini-api/docs/pricing) and
-[terms](https://ai.google.dev/gemini-api/terms) before every promotion.
+It must also have an Agent provider configured. The controlled-alpha
+configuration is `LOCUS_AGENT_MODEL=openai/gpt-5.6-sol`, routed through Vercel
+AI Gateway with the deployment's short-lived OIDC credential. No direct
+provider credential is installed. Agent calls request the Gateway's
+no-prompt-training policy. The alpha remains restricted to public Repos and
+must never receive private, confidential, or personal Repo or task data. The
+start UI requires an unchecked acknowledgement, and the API rejects a request
+without it. Review the current [Gateway catalog and
+pricing](https://vercel.com/ai-gateway/models), [Vercel AI product
+terms](https://vercel.com/legal/ai-product-terms), and [OpenAI business-data
+policy](https://openai.com/business-data/) before every promotion.
 
-Install the exact reviewed provider configuration from a permission-restricted
-credential file. These commands replace any stale values without printing them;
-the current deployment does not observe the change until it is redeployed.
+Install the exact reviewed model configuration. These commands replace a stale
+value without printing it; the current deployment does not observe the change
+until it is redeployed.
 
 ```bash
 : "${EXPECTED_VERCEL_PROJECT_ID:?Set the reviewed Vercel project ID}"
@@ -113,20 +115,9 @@ node -e '
   if (linked.projectId !== process.env.EXPECTED_VERCEL_PROJECT_ID
     || linked.orgId !== process.env.EXPECTED_VERCEL_ORG_ID) process.exit(1);
 '
-: "${GOOGLE_GENERATIVE_AI_API_KEY_FILE:?Set the path to the reviewed key file}"
-test -f "$GOOGLE_GENERATIVE_AI_API_KEY_FILE"
-test -s "$GOOGLE_GENERATIVE_AI_API_KEY_FILE"
-test -O "$GOOGLE_GENERATIVE_AI_API_KEY_FILE"
-test "$(stat -f '%Lp' "$GOOGLE_GENERATIVE_AI_API_KEY_FILE" 2>/dev/null \
-  || stat -c '%a' "$GOOGLE_GENERATIVE_AI_API_KEY_FILE")" = 600
-test "$(wc -c < "$GOOGLE_GENERATIVE_AI_API_KEY_FILE")" -le 200
 vercel env add LOCUS_AGENT_MODEL production \
-  --value 'google/gemini-3.5-flash' --no-sensitive --force --yes \
+  --value 'openai/gpt-5.6-sol' --no-sensitive --force --yes \
   --project "$EXPECTED_VERCEL_PROJECT_ID" --scope "$EXPECTED_VERCEL_ORG_ID"
-vercel env add GOOGLE_GENERATIVE_AI_API_KEY production \
-  --sensitive --force --yes \
-  --project "$EXPECTED_VERCEL_PROJECT_ID" --scope "$EXPECTED_VERCEL_ORG_ID" \
-  < "$GOOGLE_GENERATIVE_AI_API_KEY_FILE"
 ```
 
 Do not print environment values into rollout logs.
@@ -138,8 +129,7 @@ for required_name in \
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
   CLERK_SECRET_KEY \
   ALPHA_ALLOWED_USER_IDS \
-  LOCUS_AGENT_MODEL \
-  GOOGLE_GENERATIVE_AI_API_KEY; do
+  LOCUS_AGENT_MODEL; do
   vercel env ls production \
     --project "$EXPECTED_VERCEL_PROJECT_ID" \
     --scope "$EXPECTED_VERCEL_ORG_ID" \

@@ -69,7 +69,7 @@ function successfulDatabase(
         task_id: "task-id",
         user_id: "user_design_partner",
         status: "queued",
-        model: "google/gemini-3.5-flash",
+        model: "openai/gpt-5.6-sol",
       },
       error: null,
     }))

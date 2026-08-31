@@ -121,8 +121,7 @@ pnpm dev
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client configuration |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side only) |
-| `LOCUS_AGENT_MODEL` | Frozen provider/model identifier for Agent Runs |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Direct Google provider credential (server-side only) |
+| `LOCUS_AGENT_MODEL` | Reviewed Vercel AI Gateway model identifier for Agent Runs |
 | `CRON_SECRET` | Authorizes the daily retention job |
 | `OPS_EXTERNAL_HEALTHCHECK` | Set to `github_actions` when the committed external production monitor is active |
 
@@ -135,6 +134,10 @@ pnpm dev
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
 | `LOCUS_RUN_TOKEN_BUDGET` | Per-Run hard budget; safe default is 180,000 |
 | `OPS_ALERT_WEBHOOK_URL` | HTTPS operational alert destination; takes precedence over the external health-check marker |
+
+On Vercel, AI Gateway authentication uses the deployment's short-lived OIDC
+credential automatically. Local development can use `AI_GATEWAY_API_KEY`; do
+not add a direct model-provider key to the application.
 
 ### Authentication
 
