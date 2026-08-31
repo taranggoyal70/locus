@@ -17,6 +17,12 @@ import {
   classifyAgentFailure,
   type AgentFailureKind,
 } from "@/lib/agent/run-budget";
+import { resolveRunAgentModel } from "@/lib/agent/provider";
+import {
+  CLOUDFLARE_PROVIDER,
+  isAgentExecutionMode,
+  type AgentExecutionMode,
+} from "@/lib/agent/provider-config";
 import {
   appendRunStep,
   failRun,
@@ -54,6 +60,8 @@ type LocalizedRun = {
   baselineTokens: number;
   includedTokens: number;
   tokenBudget: number;
+  model: string;
+  executionMode: AgentExecutionMode;
 };
 
 async function localizeRunStep(runId: string): Promise<LocalizedRun> {
@@ -66,6 +74,9 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
     .eq("id", runId)
     .single();
   if (runError || !run) throw new FatalError("Agent run was not found");
+  if (run.provider !== CLOUDFLARE_PROVIDER || !isAgentExecutionMode(run.execution_mode)) {
+    throw new FatalError("Agent run provider policy is unavailable");
+  }
 
   const { data: task, error: taskError } = await db
     .from("agent_tasks")
@@ -149,11 +160,19 @@ async function localizeRunStep(runId: string): Promise<LocalizedRun> {
     baselineTokens: result.totalTokens,
     includedTokens: result.sliceTokens,
     tokenBudget: run.token_budget,
+    model: run.model,
+    executionMode: run.execution_mode,
   };
 }
 
 async function executeRunStep(localized: LocalizedRun): Promise<void> {
   "use step";
+
+  const languageModel = await resolveRunAgentModel({
+    userId: localized.userId,
+    executionMode: localized.executionMode,
+    frozenModel: localized.model,
+  });
 
   await transitionRun({
     runId: localized.runId,
@@ -209,6 +228,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       controller,
       baselineContextTokens: localized.baselineTokens,
       includedContextTokens: localized.includedTokens,
+      model: languageModel,
       tokenBudgetTokens: localized.tokenBudget,
       onStepStart: ({ stepNumber, provider, modelId }) => {
         logger.info(

@@ -108,6 +108,8 @@ type AgentRunRow = {
   user_id: string;
   status: string;
   model: string;
+  provider: string;
+  execution_mode: string;
   workflow_run_id: string | null;
   sandbox_id: string | null;
   branch_name: string | null;
@@ -187,6 +189,22 @@ type AgentProviderLeaseRow = {
   acquired_at: string;
   released_at: string | null;
   expires_at: string;
+};
+
+type AgentProviderCredentialRow = {
+  user_id: string;
+  provider: string;
+  account_id: string;
+  encrypted_api_token: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type AgentProviderDailyClaimRow = {
+  run_id: string;
+  provider: string;
+  usage_day: string;
+  claimed_at: string;
 };
 
 export type Database = {
@@ -337,6 +355,20 @@ export type Database = {
         Update: Partial<Pick<AgentProviderLeaseRow, "released_at" | "expires_at">>;
         Relationships: [];
       };
+      agent_provider_credentials: {
+        Row: AgentProviderCredentialRow;
+        Insert: Omit<AgentProviderCredentialRow, "created_at" | "updated_at"> & {
+          updated_at?: string;
+        };
+        Update: Partial<Omit<AgentProviderCredentialRow, "user_id" | "provider" | "created_at">>;
+        Relationships: [];
+      };
+      agent_provider_daily_claims: {
+        Row: AgentProviderDailyClaimRow;
+        Insert: Omit<AgentProviderDailyClaimRow, "claimed_at"> & { claimed_at?: string };
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -398,6 +430,14 @@ export type Database = {
         };
         Returns: boolean;
       };
+      claim_agent_provider_daily_slot: {
+        Args: {
+          p_run_id: string;
+          p_provider: string;
+          p_max_daily?: number;
+        };
+        Returns: Array<{ allowed: boolean; retry_after_seconds: number }>;
+      };
       // R17: Stripe writes that refuse stale grants and resolve same-second
       // ambiguity toward the more restrictive subscription state.
       upsert_stripe_subscription: {
@@ -433,6 +473,8 @@ export type Database = {
           p_active_statuses: string[];
           p_max_active: number;
           p_max_daily: number;
+          p_provider: string;
+          p_execution_mode: string;
         };
         Returns: Array<{ allowed: boolean; reason: string | null; run_id: string | null }>;
       };

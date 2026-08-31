@@ -8,8 +8,12 @@ const releaseRunProviderLeaseMock = vi.hoisted(() => vi.fn());
 const serviceClientMock = vi.hoisted(() => vi.fn());
 const startMock = vi.hoisted(() => vi.fn());
 const trackMock = vi.hoisted(() => vi.fn());
+const credentialStatusMock = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
 vi.mock("@/lib/analytics", () => ({ track: trackMock }));
+vi.mock("@/lib/agent/provider-credential-store", () => ({
+  cloudflareCredentialStatus: credentialStatusMock,
+}));
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 vi.mock("@/lib/agent/run-store", () => ({
   appendRunStep: appendRunStepMock,
@@ -46,7 +50,7 @@ import { runQuotaForTier } from "@/lib/admission";
 const PARTNER_QUOTA = runQuotaForTier("partner");
 import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/run-request";
 
-function runRequest() {
+function runRequest(executionMode: "shared" | "byok" = "shared") {
   return new Request("http://localhost/api/agent/runs", {
     method: "POST",
     headers: { "content-type": "application/json", origin: "http://localhost" },
@@ -54,6 +58,7 @@ function runRequest() {
       repository: "vercel/next.js",
       baseRef: "main",
       task: "Fix the documented alpha capability guard",
+      executionMode,
       acceptanceCriteria: ["The guarded route rejects users outside the alpha"],
       dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
     }),
@@ -80,6 +85,7 @@ function successfulDatabase(
   workflowUpdateError: Record<string, unknown> | null = null,
   claim: Record<string, unknown> | null = ALLOWED_CLAIM,
   claimError: Record<string, unknown> | null = null,
+  dailyCapacity = { allowed: true, retry_after_seconds: 0 },
 ) {
   const from = vi.fn()
     .mockReturnValueOnce(queryResult({ count: 0, error: null }))
@@ -91,7 +97,9 @@ function successfulDatabase(
         task_id: "task-id",
         user_id: "user_design_partner",
         status: "queued",
-        model: "openai/gpt-5.6-sol",
+        model: "@cf/qwen/qwen3.8-27b",
+        provider: "cloudflare-workers-ai",
+        execution_mode: "shared",
       },
       error: null,
     }))
@@ -102,6 +110,9 @@ function successfulDatabase(
   const rpc = vi.fn(async (name: string) => {
     if (name === "claim_agent_run_slot") {
       return { data: claim ? [claim] : null, error: claimError };
+    }
+    if (name === "claim_agent_provider_daily_slot") {
+      return { data: [dailyCapacity], error: null };
     }
     return { data: [capacity], error: null };
   });
@@ -121,7 +132,12 @@ describe("controlled-alpha Agent Run starts", () => {
     serviceClientMock.mockReset();
     startMock.mockReset();
     trackMock.mockReset();
+    credentialStatusMock.mockReset();
+    credentialStatusMock.mockResolvedValue({ configured: true, accountIdSuffix: "abcdef" });
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_design_partner");
+    vi.stubEnv("LOCUS_AGENT_MODEL", "@cf/qwen/qwen3.8-27b");
+    vi.stubEnv("CLOUDFLARE_ACCOUNT_ID", "0123456789abcdef0123456789abcdef");
+    vi.stubEnv("CLOUDFLARE_API_TOKEN", "cloudflare-token-that-is-long-enough");
   });
 
   it("rejects authenticated users outside the design-partner allowlist", async () => {
@@ -141,6 +157,17 @@ describe("controlled-alpha Agent Run starts", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("37");
+  });
+
+  it("admits any signed-in user only when the public beta flag is enabled", async () => {
+    vi.stubEnv("LOCUS_PUBLIC_BETA_ENABLED", "true");
+    successfulDatabase();
+    appendRunStepMock.mockResolvedValue(undefined);
+    startMock.mockResolvedValue({ runId: "workflow-id" });
+
+    const response = await POST(runRequest());
+
+    expect(response.status).toBe(202);
   });
 
   it("records versioned data-policy evidence before starting the workflow", async () => {
@@ -193,6 +220,8 @@ describe("controlled-alpha Agent Run starts", () => {
       p_max_active: PARTNER_QUOTA.maxActiveRuns,
       p_max_daily: PARTNER_QUOTA.maxDailyRuns,
       p_active_statuses: [...ACTIVE_RUN_STATUSES],
+      p_provider: "cloudflare-workers-ai",
+      p_execution_mode: "shared",
     }));
     // No workflow, and no provider lease taken for a Run that was never created.
     expect(rpc).not.toHaveBeenCalledWith("acquire_agent_provider_lease", expect.anything());
@@ -254,9 +283,47 @@ describe("controlled-alpha Agent Run starts", () => {
     expect(response.headers.get("retry-after")).toBe("41");
     expect(rpc).toHaveBeenCalledWith("acquire_agent_provider_lease", expect.objectContaining({
       p_run_id: "run-id",
+      p_model: "cloudflare-workers-ai:shared",
       p_max_concurrent: 1,
     }));
     expect(startMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses a shared Run after the UTC daily provider allowance is claimed", async () => {
+    authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
+    successfulDatabase(
+      { allowed: true, retry_after_seconds: 0 },
+      null,
+      ALLOWED_CLAIM,
+      null,
+      { allowed: false, retry_after_seconds: 7_200 },
+    );
+    transitionRunMock.mockResolvedValue(undefined);
+
+    const response = await POST(runRequest("shared"));
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("7200");
+    expect(startMock).not.toHaveBeenCalled();
+  });
+
+  it("uses an owner's reviewed connection without spending the shared daily slot", async () => {
+    authMock.mockResolvedValueOnce({ userId: "user_design_partner" });
+    const { rpc } = successfulDatabase();
+    appendRunStepMock.mockResolvedValue(undefined);
+    startMock.mockResolvedValue({ runId: "workflow-id" });
+
+    const response = await POST(runRequest("byok"));
+
+    expect(response.status).toBe(202);
+    expect(credentialStatusMock).toHaveBeenCalledWith("user_design_partner");
+    expect(rpc).not.toHaveBeenCalledWith(
+      "claim_agent_provider_daily_slot",
+      expect.anything(),
+    );
+    expect(rpc).toHaveBeenCalledWith("acquire_agent_provider_lease", expect.objectContaining({
+      p_model: "cloudflare-workers-ai:byok:user_design_partner",
+    }));
   });
 
   it("fails closed when data-policy evidence cannot be recorded", async () => {

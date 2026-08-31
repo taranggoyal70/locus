@@ -3,6 +3,13 @@ import { NextResponse } from "next/server";
 import { start } from "workflow/api";
 
 import { calculateTokenLedger, resolveAgentModel } from "@/lib/agent/coding-agent";
+import { cloudflareCredentialStatus } from "@/lib/agent/provider-credential-store";
+import {
+  CLOUDFLARE_PROVIDER,
+  providerCapacityKey,
+  sharedCloudflareConfigured,
+  SHARED_DAILY_RUN_LIMIT,
+} from "@/lib/agent/provider-config";
 import { resolveRunTokenBudget } from "@/lib/agent/run-budget";
 import {
   agentRunQuotaDecision,
@@ -128,6 +135,29 @@ export async function POST(request: Request) {
     );
   }
 
+  if (input.executionMode === "shared" && !sharedCloudflareConfigured()) {
+    return NextResponse.json(
+      { error: "Shared Agent Run capacity is not configured." },
+      { status: 503 },
+    );
+  }
+  if (input.executionMode === "byok") {
+    try {
+      const credential = await cloudflareCredentialStatus(userId);
+      if (!credential.configured) {
+        return NextResponse.json(
+          { error: "Connect your Cloudflare Workers AI account in Settings first." },
+          { status: 409 },
+        );
+      }
+    } catch {
+      return NextResponse.json(
+        { error: "Your Cloudflare connection could not be verified." },
+        { status: 503 },
+      );
+    }
+  }
+
   let startRate;
   try {
     startRate = await consumeRateLimit({
@@ -196,8 +226,13 @@ export async function POST(request: Request) {
     p_model: model,
     p_token_budget: tokenBudget,
     p_active_statuses: [...ACTIVE_RUN_STATUSES],
+    // Tier quota from Admission, provider route from the free-beta branch. The
+    // two are independent: Admission decides how many Runs this account may
+    // hold, the provider columns record which engine executed them.
     p_max_active: admission.runQuota.maxActiveRuns,
     p_max_daily: admission.runQuota.maxDailyRuns,
+    p_provider: CLOUDFLARE_PROVIDER,
+    p_execution_mode: input.executionMode,
   });
   const claim = claimData?.[0];
   if (claimError || !claim) {
@@ -236,7 +271,7 @@ export async function POST(request: Request) {
     "acquire_agent_provider_lease",
     {
       p_run_id: run.id,
-      p_model: model,
+      p_model: providerCapacityKey({ executionMode: input.executionMode, userId }),
       p_max_concurrent: 1,
       p_lease_seconds: 3_600,
     },
@@ -280,6 +315,57 @@ export async function POST(request: Request) {
     );
   }
 
+  if (input.executionMode === "shared") {
+    const { data: dailyData, error: dailyError } = await db.rpc(
+      "claim_agent_provider_daily_slot",
+      {
+        p_run_id: run.id,
+        p_provider: CLOUDFLARE_PROVIDER,
+        p_max_daily: SHARED_DAILY_RUN_LIMIT,
+      },
+    );
+    const daily = dailyData?.[0];
+    if (dailyError || !daily) {
+      await releaseProviderCapacity(run.id);
+      await transitionRun({
+        runId: run.id,
+        userId,
+        current: "queued",
+        next: "failed",
+        values: {
+          error: "Shared daily capacity could not be verified.",
+          failure_kind: "workflow_error",
+          completed_at: new Date().toISOString(),
+        },
+      });
+      return NextResponse.json(
+        { error: "Shared Agent Run capacity could not be verified." },
+        { status: 503 },
+      );
+    }
+    if (!daily.allowed) {
+      await releaseProviderCapacity(run.id);
+      await transitionRun({
+        runId: run.id,
+        userId,
+        current: "queued",
+        next: "failed",
+        values: {
+          error: "Today's shared Agent Run has already been claimed.",
+          failure_kind: "quota_exhausted",
+          completed_at: new Date().toISOString(),
+        },
+      });
+      return NextResponse.json(
+        { error: "Today's shared Agent Run is used. Try again after the UTC reset or use your Cloudflare account." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(daily.retry_after_seconds) },
+        },
+      );
+    }
+  }
+
   const policyAcceptedAt = new Date().toISOString();
   try {
     await appendRunStep({
@@ -292,6 +378,8 @@ export async function POST(request: Request) {
       detail: {
         policyVersion: input.dataPolicyVersion,
         acceptedAt: policyAcceptedAt,
+        provider: CLOUDFLARE_PROVIDER,
+        executionMode: input.executionMode,
       },
     });
   } catch {
