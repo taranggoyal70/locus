@@ -112,7 +112,11 @@ export async function productionReadiness(
 
   const model = environment.LOCUS_AGENT_MODEL?.trim();
   const gatewayAuthenticated = configured(environment.VERCEL_OIDC_TOKEN)
-    || configured(environment.AI_GATEWAY_API_KEY);
+    || configured(environment.AI_GATEWAY_API_KEY)
+    // Vercel supplies a short-lived OIDC credential to Gateway requests at
+    // runtime. The platform marker is visible to Functions even when the token
+    // itself is not exposed through a dynamically indexed process.env object.
+    || environment.VERCEL === "1";
   const providerReady = configured(model)
     && GATEWAY_AGENT_MODELS.has(model as string)
     && gatewayAuthenticated;

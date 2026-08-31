@@ -81,6 +81,18 @@ describe("production readiness", () => {
     });
   });
 
+  it("accepts Vercel's runtime when its OIDC token is platform-managed", async () => {
+    await expect(productionReadiness({
+      ...complete,
+      AI_GATEWAY_API_KEY: "",
+      VERCEL_OIDC_TOKEN: "",
+      VERCEL: "1",
+    }, databaseReady)).resolves.toMatchObject({
+      ready: true,
+      missing: [],
+    });
+  });
+
   it.each([
     { name: "an invalid Supabase URL", environment: { ...complete, NEXT_PUBLIC_SUPABASE_URL: "not-a-url" } },
     { name: "a non-Supabase database URL", environment: { ...complete, NEXT_PUBLIC_SUPABASE_URL: "https://database.example.com" } },
