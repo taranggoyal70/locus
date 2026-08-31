@@ -100,11 +100,7 @@ export function classifyAgentFailure(error: unknown): AgentFailureKind {
   if (/sandbox|workspace stopped|workspace provisioning/.test(text)) {
     return "sandbox_error";
   }
-  if (
-    /provider|language model|ai_apicallerror|model response|timeouterror|timed out|due to timeout/.test(
-      text,
-    )
-  ) {
+  if (/provider|language model|ai_apicallerror|model response/.test(text)) {
     return "provider_error";
   }
   return "workflow_error";
