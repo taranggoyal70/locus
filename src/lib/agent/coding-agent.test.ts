@@ -4,6 +4,7 @@ import { MockLanguageModelV4 } from "ai/test";
 import {
   AGENT_MAX_STEPS,
   ALLOWED_AGENT_MODELS,
+  CodingAgentTimeoutError,
   DisallowedAgentModelError,
   agentStepBudgetSettings,
   calculateTokenLedger,
@@ -163,6 +164,6 @@ describe("coding agent configuration", () => {
         toolMs: 50,
         tools: { run_checksMs: 80 },
       },
-    })).rejects.toMatchObject({ name: "TimeoutError" });
+    })).rejects.toBeInstanceOf(CodingAgentTimeoutError);
   });
 });
