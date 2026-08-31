@@ -130,9 +130,10 @@ export const READ_SLICE_SCRIPT = CONTAINMENT_PRELUDE + [
   "const target=contain(process.env.LOCUS_PATH);",
   "const limit=Number(process.env.LOCUS_MAX_CHARACTERS)||10000;",
   "const source=fs.readFileSync(target,'utf8');",
-  "const start=Math.min(source.length,Math.max(0,Number(process.env.LOCUS_OFFSET)||0));",
-  "const end=Math.min(source.length,start+limit);",
-  'process.stdout.write(`characters ${start}-${end} of ${source.length}\\n`+source.slice(start,end));',
+  "const characters=Array.from(source);",
+  "const start=Math.min(characters.length,Math.max(0,Number(process.env.LOCUS_OFFSET)||0));",
+  "const end=Math.min(characters.length,start+limit);",
+  'process.stdout.write(`characters ${start}-${end} of ${characters.length}\\n`+characters.slice(start,end).join(""));',
 ].join("");
 
 // R3: `rg` does not follow symlinks while walking a directory, but it does read a

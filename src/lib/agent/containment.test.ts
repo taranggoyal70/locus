@@ -123,6 +123,20 @@ describe("slice read paging", () => {
     expect(second).toBe(`characters 10000-20000 of 20004\n${"B".repeat(10_000)}`);
     expect(tail).toBe("characters 20000-20004 of 20004\nTAIL");
   });
+
+  it("never splits a non-BMP Unicode character at a window boundary", () => {
+    writeFileSync(
+      path.join(root, "src", "unicode.ts"),
+      `${"A".repeat(9_999)}😀B`,
+    );
+
+    const first = readWindow("src/unicode.ts", 0, 10_000);
+    const second = readWindow("src/unicode.ts", 10_000, 10_000);
+
+    expect(first).toBe(`characters 0-10000 of 10001\n${"A".repeat(9_999)}😀`);
+    expect(second).toBe("characters 10000-10001 of 10001\nB");
+    expect(first).not.toContain("�");
+  });
 });
 
 // R3 residual: search used to hand Slice paths to `rg` as explicit arguments.
