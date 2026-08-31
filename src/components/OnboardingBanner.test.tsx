@@ -9,7 +9,7 @@ describe("controlled-alpha onboarding", () => {
 
     expect(html).toContain("public Repo");
     expect(html).toContain("Review the proposal");
-    expect(html).toContain("Start an invited Run");
+    expect(html).toContain("Start a limited Run");
     expect(html).not.toContain("exact files");
     expect(html).not.toContain("Copy the context");
   });

@@ -41,12 +41,12 @@ describe("findBannedAlphaClaims", () => {
     ]);
   });
 
-  it("accepts controlled-alpha language", () => {
+  it("accepts bounded beta language without treating it as an outcome claim", () => {
     expect(
       findBannedAlphaClaims([
         {
           path: "landing.tsx",
-          content: "Controlled alpha for review-ready proposals.",
+          content: "Limited public beta: one shared Agent Run per UTC day.",
         },
       ]),
     ).toEqual([]);

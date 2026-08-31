@@ -33,7 +33,7 @@ export function LandingPage() {
               <Link href="/workspace" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Try Repo localization</Link>
               <Link href="/pricing" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Request Agent Run access</Link>
             </div>
-            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Public early access · public Repos only · Agent Runs invite-gated</p>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Limited public beta · public Repos only · one shared Run daily</p>
           </div>
 
           <div className="relative">

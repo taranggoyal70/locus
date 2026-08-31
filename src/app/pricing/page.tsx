@@ -25,7 +25,7 @@ export default function PricingPage() {
             Public early access
           </p>
           <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-6xl">
-            Repo localization is open. Agent Runs are invite-gated.
+            Repo localization is open. Agent Runs use one shared daily slot or capacity you connect.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
             Create a free account to inspect a task-sized Slice for any supported public Repo.

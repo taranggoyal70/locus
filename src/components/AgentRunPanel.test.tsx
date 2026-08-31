@@ -59,7 +59,7 @@ describe("controlled-alpha Agent Run start", () => {
     expect(html).toMatch(/<button[^>]*disabled/);
   });
 
-  it("shows a disabled invite state outside the allowlist", () => {
+  it("shows a disabled beta state when Run starts are closed", () => {
     const html = renderToStaticMarkup(
       <AgentRunPanel
         repository="taranggoyal70/locus"

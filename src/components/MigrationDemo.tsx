@@ -294,7 +294,7 @@ export function MigrationDemo() {
         <section className="mt-8 grid gap-4 md:grid-cols-2" aria-label="Demo capability boundaries">
           <div className="rounded-2xl border border-white/15 bg-white/[.035] p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8ef0c0]">{plainLanguage ? "Available today" : "Real in early access today"}</p>
-            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "Try Locus on a public JavaScript or TypeScript project. It shows which files appear relevant to a task and which files it leaves out." : "Public JavaScript and TypeScript Repo localization, visible Included and Excluded files, evidence-backed Widening, and invite-gated isolated Agent Runs."}</p>
+            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "Try Locus on a public JavaScript or TypeScript project. It shows which files appear relevant to a task and which files it leaves out." : "Public JavaScript and TypeScript Repo localization, visible Included and Excluded files, evidence-backed Widening, and limited isolated Agent Runs."}</p>
           </div>
           <div className="rounded-2xl border border-[#e7b853]/20 bg-[#e7b853]/[.04] p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f2c76d]">{plainLanguage ? "What we’re proving next" : "Being validated next"}</p>
