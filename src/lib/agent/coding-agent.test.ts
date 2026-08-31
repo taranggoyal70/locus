@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MockLanguageModelV4 } from "ai/test";
 
 import {
   AGENT_MAX_STEPS,
@@ -8,7 +9,9 @@ import {
   calculateTokenLedger,
   resolveAgentLanguageModel,
   resolveAgentModel,
+  runCodingTask,
 } from "@/lib/agent/coding-agent";
+import type { WorkspaceController } from "@/lib/agent/workspace";
 
 describe("coding agent configuration", () => {
   it("caps the agent loop at the frozen Release 1 limit", () => {
@@ -134,5 +137,32 @@ describe("coding agent configuration", () => {
       messages: "x".repeat(120_000),
       priorUsages,
     })).toThrow("Run token budget exhausted");
+  });
+
+  it("aborts a provider call that never returns", async () => {
+    const model = new MockLanguageModelV4({
+      doGenerate: async ({ abortSignal }) =>
+        await new Promise<never>((_resolve, reject) => {
+          abortSignal?.addEventListener(
+            "abort",
+            () => reject(abortSignal.reason),
+            { once: true },
+          );
+        }),
+    });
+
+    await expect(runCodingTask({
+      prompt: "Make a small change",
+      controller: {} as WorkspaceController,
+      baselineContextTokens: 100,
+      includedContextTokens: 10,
+      model,
+      timeouts: {
+        totalMs: 100,
+        stepMs: 20,
+        toolMs: 50,
+        tools: { run_checksMs: 80 },
+      },
+    })).rejects.toMatchObject({ name: "TimeoutError" });
   });
 });
