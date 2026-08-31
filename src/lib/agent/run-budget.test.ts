@@ -76,6 +76,9 @@ describe("agent Run token budget", () => {
     expect(classifyAgentFailure(new Error(
       "FatalError: executeRunStep failed: Coding Agent execution exceeded its deadline.",
     ))).toBe("provider_error");
+    expect(classifyAgentFailure(new Error(
+      "AI_NoOutputGeneratedError: No output generated.",
+    ))).toBe("provider_error");
     expect(classifyAgentFailure(new Error("Unknown failure"))).toBe("workflow_error");
   });
 
