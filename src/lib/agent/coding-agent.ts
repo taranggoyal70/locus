@@ -153,14 +153,14 @@ function createWorkspaceTools(controller: WorkspaceController) {
     }),
     read_file: tool({
       description:
-        "Read a page of a file already available in the active Slice. Use startLine to continue past the first page.",
+        "Read an exact character window from a file in the active Slice. Use the returned end offset to continue without gaps.",
       inputSchema: z.object({
         path: z.string().max(500),
-        startLine: z.number().int().min(1).optional(),
-        maxLines: z.number().int().min(1).max(320).optional(),
+        offset: z.number().int().min(0).optional(),
+        maxCharacters: z.number().int().min(1).max(10_000).optional(),
       }),
-      execute: async ({ path, startLine, maxLines }, { abortSignal }) =>
-        controller.readFile(path, { startLine, maxLines, abortSignal }),
+      execute: async ({ path, offset, maxCharacters }, { abortSignal }) =>
+        controller.readFile(path, { offset, maxCharacters, abortSignal }),
     }),
     search_slice: tool({
       description: "Search exact text only within files currently available in the active Slice.",

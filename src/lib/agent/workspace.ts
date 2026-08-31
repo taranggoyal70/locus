@@ -96,7 +96,7 @@ export const CONTAINMENT_PRELUDE = [
   "}",
 ].join("");
 
-const READ_SLICE_LINES = 320;
+const READ_SLICE_CHARACTERS = 10_000;
 
 const WRITE_SCRIPT = CONTAINMENT_PRELUDE + [
   "const target=contain(process.env.LOCUS_PATH);",
@@ -126,13 +126,13 @@ const READ_BASE64_SCRIPT = CONTAINMENT_PRELUDE + [
 
 // Replaces `sed -n '1,320p'`, which follows symlinks and would happily print a
 // file outside the workspace that an admitted path pointed at.
-const READ_SLICE_SCRIPT = CONTAINMENT_PRELUDE + [
+export const READ_SLICE_SCRIPT = CONTAINMENT_PRELUDE + [
   "const target=contain(process.env.LOCUS_PATH);",
-  "const limit=Number(process.env.LOCUS_MAX_LINES)||320;",
-  "const start=Math.max(1,Number(process.env.LOCUS_START_LINE)||1);",
-  'const lines=fs.readFileSync(target,"utf8").split("\\n");',
-  "const end=Math.min(lines.length,start-1+limit);",
-  'process.stdout.write(`lines ${start}-${end} of ${lines.length}\\n`+lines.slice(start-1,end).join("\\n"));',
+  "const limit=Number(process.env.LOCUS_MAX_CHARACTERS)||10000;",
+  "const source=fs.readFileSync(target,'utf8');",
+  "const start=Math.min(source.length,Math.max(0,Number(process.env.LOCUS_OFFSET)||0));",
+  "const end=Math.min(source.length,start+limit);",
+  'process.stdout.write(`characters ${start}-${end} of ${source.length}\\n`+source.slice(start,end));',
 ].join("");
 
 // R3: `rg` does not follow symlinks while walking a directory, but it does read a
@@ -257,25 +257,25 @@ export class WorkspaceController {
   }
 
   async readFile(input: string, options: {
-    startLine?: number;
-    maxLines?: number;
+    offset?: number;
+    maxCharacters?: number;
     abortSignal?: AbortSignal;
   } = {}): Promise<string> {
     const path = validateRepoPath(input);
     if (!this.slice.canRead(path)) {
       throw new Error(`${path} is outside the active Slice`);
     }
-    const startLine = Math.max(1, Math.round(options.startLine ?? 1));
-    const maxLines = Math.min(
-      READ_SLICE_LINES,
-      Math.max(1, Math.round(options.maxLines ?? READ_SLICE_LINES)),
+    const offset = Math.max(0, Math.round(options.offset ?? 0));
+    const maxCharacters = Math.min(
+      READ_SLICE_CHARACTERS,
+      Math.max(1, Math.round(options.maxCharacters ?? READ_SLICE_CHARACTERS)),
     );
     const result = await this.workspace.run({
       command: `node -e ${shellQuote(READ_SLICE_SCRIPT)}`,
       env: {
         LOCUS_PATH: path,
-        LOCUS_START_LINE: String(startLine),
-        LOCUS_MAX_LINES: String(maxLines),
+        LOCUS_OFFSET: String(offset),
+        LOCUS_MAX_CHARACTERS: String(maxCharacters),
       },
       abortSignal: options.abortSignal,
       timeoutMs: 30_000,
