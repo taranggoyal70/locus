@@ -1,5 +1,9 @@
 import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/data-policy";
 import { publicGitHubCoordinates } from "@/lib/agent/github-source";
+import {
+  isAgentExecutionMode,
+  type AgentExecutionMode,
+} from "@/lib/agent/provider-config";
 
 export { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/data-policy";
 
@@ -7,6 +11,7 @@ export type AgentRunRequest = {
   repository: string;
   baseRef: string;
   task: string;
+  executionMode: AgentExecutionMode;
   acceptanceCriteria: string[];
   dataPolicyVersion: typeof CONTROLLED_ALPHA_DATA_POLICY_VERSION;
 };
@@ -53,6 +58,11 @@ export function parseAgentRunRequest(input: unknown): AgentRunRequest {
   const requestedBaseRef = typeof body.baseRef === "string" && body.baseRef.trim()
     ? body.baseRef.trim()
     : undefined;
+  const executionMode = body.executionMode === undefined ? "shared" : body.executionMode;
+
+  if (!isAgentExecutionMode(executionMode)) {
+    throw new Error("Execution mode must be shared or byok");
+  }
 
   if (!repositorySpecifier || repositorySpecifier.length > 300) {
     throw new Error("Repository is required and must be under 300 characters");
@@ -95,6 +105,7 @@ export function parseAgentRunRequest(input: unknown): AgentRunRequest {
     repository,
     baseRef,
     task,
+    executionMode,
     acceptanceCriteria,
     dataPolicyVersion: CONTROLLED_ALPHA_DATA_POLICY_VERSION,
   };

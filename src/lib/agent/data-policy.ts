@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 export const CONTROLLED_ALPHA_DATA_POLICY_VERSION =
-  "openai-gateway-public-data-no-training-2026-08-30" as const;
+  "cloudflare-workers-ai-public-data-2026-08-30" as const;
 
 // R13: task text and similar free-form content is what a user typed about
 // their own codebase. It belongs in the Run record the user can see and delete,
