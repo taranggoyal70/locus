@@ -5,7 +5,11 @@ import path from "node:path";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { CONTAINMENT_PRELUDE, SEARCH_SCRIPT } from "@/lib/agent/workspace";
+import {
+  CONTAINMENT_PRELUDE,
+  READ_SLICE_SCRIPT,
+  SEARCH_SCRIPT,
+} from "@/lib/agent/workspace";
 
 // R3: lexical path validation cannot defeat repository-controlled symlinks.
 // These tests execute the containment script that ships inside the sandbox
@@ -87,6 +91,37 @@ describe("sandbox path containment", () => {
 
   it("rejects an empty path", () => {
     expect(() => contain("")).toThrow(/missing path/);
+  });
+});
+
+function readWindow(target: string, offset: number, maxCharacters: number): string {
+  return execFileSync(process.execPath, ["-e", READ_SLICE_SCRIPT], {
+    cwd: root,
+    env: {
+      ...process.env,
+      LOCUS_PATH: target,
+      LOCUS_OFFSET: String(offset),
+      LOCUS_MAX_CHARACTERS: String(maxCharacters),
+    },
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+}
+
+describe("slice read paging", () => {
+  it("returns exact adjacent windows without skipping a long source line", () => {
+    writeFileSync(
+      path.join(root, "src", "large.ts"),
+      `${"A".repeat(10_000)}${"B".repeat(10_000)}TAIL`,
+    );
+
+    const first = readWindow("src/large.ts", 0, 10_000);
+    const second = readWindow("src/large.ts", 10_000, 10_000);
+    const tail = readWindow("src/large.ts", 20_000, 10_000);
+
+    expect(first).toBe(`characters 0-10000 of 20004\n${"A".repeat(10_000)}`);
+    expect(second).toBe(`characters 10000-20000 of 20004\n${"B".repeat(10_000)}`);
+    expect(tail).toBe("characters 20000-20004 of 20004\nTAIL");
   });
 });
 

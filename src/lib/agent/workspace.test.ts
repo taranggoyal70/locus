@@ -34,9 +34,9 @@ class FakeWorkspace implements AgentWorkspace {
         stderr: "",
       };
     }
-    // Slice reads are the only operation that passes a line budget, which keeps
+    // Slice reads are the only operation that passes a character budget, which keeps
     // them distinguishable from the base64 whole-file capture below.
-    if (command.env?.LOCUS_MAX_LINES) {
+    if (command.env?.LOCUS_MAX_CHARACTERS) {
       return { exitCode: 0, stdout: "export const value = 1;\n", stderr: "" };
     }
     if (command.command.startsWith("git diff --name-status")) {
@@ -103,15 +103,15 @@ describe("agent workspace", () => {
     expect(controller.ledger().widened).toEqual(["src/excluded.ts"]);
   });
 
-  it("can page beyond the first 320 lines of a large included file", async () => {
+  it("can page through a large included file without skipping hidden characters", async () => {
     const { controller, workspace } = setup();
 
-    await controller.readFile("src/included.ts", { startLine: 321, maxLines: 120 });
+    await controller.readFile("src/included.ts", { offset: 10_000, maxCharacters: 8_000 });
 
     expect(workspace.commands[0].env).toMatchObject({
       LOCUS_PATH: "src/included.ts",
-      LOCUS_START_LINE: "321",
-      LOCUS_MAX_LINES: "120",
+      LOCUS_OFFSET: "10000",
+      LOCUS_MAX_CHARACTERS: "8000",
     });
   });
 
