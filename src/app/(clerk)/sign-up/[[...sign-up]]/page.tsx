@@ -13,7 +13,7 @@ export default function SignUpPage() {
     <AuthShell
       eyebrow="Create your workspace"
       title="Start with the files that matter."
-      description="Create a free account and localize a real TypeScript or Next.js task. Agent Runs are available to invited design partners."
+      description="Create a free account, localize a real TypeScript or Next.js task, and request a limited shared Agent Run—or connect Cloudflare capacity you control."
     >
       <SignUp
         appearance={AUTH_APPEARANCE}

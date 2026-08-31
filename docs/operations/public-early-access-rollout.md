@@ -2,7 +2,7 @@
 
 ## Ownership and scope
 
-The release operator owns launch, incident response, and rollback until another owner is recorded. The public surface is account creation plus public-Repo localization. Agent Runs remain an explicitly separate, invite-gated capability.
+The release operator owns launch, incident response, and rollback until another owner is recorded. The public surface is account creation, public-Repo localization, and a clearly capped Agent Run beta. Private Repo access and external delivery remain closed.
 
 The production application, Supabase project, Clerk application, Vercel project, GitHub repository, and model provider are the systems in scope. Do not widen access to billing, teams, private Repos, or external delivery as part of this rollout.
 
@@ -34,7 +34,7 @@ pnpm dlx supabase@2.111.0 db push --linked --dry-run
 pnpm dlx supabase@2.111.0 db advisors --linked
 ```
 
-The chain must be exactly `001`–`017`, the dry run must be empty, and advisors must return no findings.
+The chain must be exactly `001`–`018`, the dry run must be empty, and advisors must return no findings.
 
 ## Monitoring contract
 
@@ -61,8 +61,8 @@ Verify `/`, `/docs`, `/pricing`, `/privacy`, `/support`, `/terms`, `/sign-in`, a
 
 ## Rollback
 
-1. Clear `ALPHA_ALLOWED_USER_IDS` and redeploy if Agent Run behavior or provider capacity is in question.
+1. Set `LOCUS_PUBLIC_BETA_ENABLED=false`, clear `ALPHA_ALLOWED_USER_IDS`, and redeploy if Agent Run behavior or provider capacity is in question.
 2. Promote the previous known-good Vercel production deployment or revert the launch PR through a new reviewed PR.
-3. Leave migrations `001`–`017` installed; they are additive and already serve the prior application.
+3. Leave migrations `001`–`018` installed; they are additive and already serve the prior application.
 4. Verify `/api/health`, the production monitor, sign-in, public localization, and logs before declaring recovery.
 5. Follow `docs/operations/incident-response.md` for security, data-integrity, or evidence concerns.

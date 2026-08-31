@@ -61,10 +61,22 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-paper">Providers and operational data</h2>
             <p>
               Clerk, Supabase, GitHub, and Vercel process data needed for authentication, persistence,
-              repository intake, hosting, workflow execution, and Sandbox operation. A configured AI
-              model provider processes task instructions, admitted source, and tool results. Server
+              repository intake, hosting, workflow execution, and Sandbox operation. Cloudflare Workers
+              AI processes task instructions, admitted source, and tool results. Cloudflare states that
+              Workers AI customer content is not used for model training without explicit consent. Server
               logs may include IP address, timestamp, user agent, route, Run identifier, latency, and
               redacted error details. We do not sell personal data.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-paper">Your Cloudflare connection</h2>
+            <p>
+              You may optionally connect a Cloudflare Account ID and Workers AI API token so Runs
+              use capacity from your account. Locus encrypts the token before storing it in Supabase,
+              never returns it after submission, and uses it only for your Agent Runs. Removing the
+              connection from Settings deletes the stored encrypted credential. Cloudflare&apos;s terms,
+              limits, and data policy also apply to those requests.
             </p>
           </section>
 

@@ -9,8 +9,9 @@ describe("public early-access terms", () => {
 
     expect(html).toContain("Effective August 30, 2026");
     expect(html).toContain("public early access");
-    expect(html).toContain("External repository writes and billing are disabled");
+    expect(html).toContain("limited free beta");
+    expect(html).toContain("connect their own Cloudflare Workers AI account");
+    expect(html).toContain("External repository writes and Locus billing are disabled");
     expect(html).toContain("operated by Tarang Goyal");
-    expect(html).not.toContain("public beta");
   });
 });

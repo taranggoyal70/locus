@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { AlphaSettingsNotice } from "@/components/AlphaSettingsNotice";
 import { ApiKeysPanel } from "@/components/ApiKeysPanel";
+import { CloudflareConnectionPanel } from "@/components/CloudflareConnectionPanel";
 import { SettingsShell } from "@/components/SettingsShell";
 import { UsageStats } from "@/components/UsageStats";
 
@@ -18,6 +19,13 @@ export default async function SettingsPage() {
       <div className="aperture-rule mt-7" />
       <div className="mt-8 space-y-10">
         <AlphaSettingsNotice />
+        <section>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Agent capacity</h2>
+          <p className="mt-1 text-sm text-muted-light">Use the shared daily Run or connect capacity you control.</p>
+          <div className="mt-4">
+            <CloudflareConnectionPanel />
+          </div>
+        </section>
         <section>
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Usage</h2>
           <p className="mt-1 text-sm text-muted-light">Your Agent Run and API activity over the last 30 days.</p>

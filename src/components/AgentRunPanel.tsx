@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { RunContextLedger } from "@/components/RunContextLedger";
@@ -108,11 +109,28 @@ export function AgentRunPanel({
   const [reviewing, setReviewing] = useState<"accepted" | "rejected" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dataPolicyAccepted, setDataPolicyAccepted] = useState(false);
+  const [executionMode, setExecutionMode] = useState<"shared" | "byok">("shared");
+  const [byokConfigured, setByokConfigured] = useState<boolean | null>(null);
   const [reviewCriteria, setReviewCriteria] = useState<AgentCriterionDecision[]>(
     () => acceptanceCriteria.map((criterion) => ({ criterion, satisfied: false })),
   );
   const status = snapshot?.run.status ?? null;
   const shouldPoll = Boolean(runId) && (!status || isActiveRun(status));
+
+  useEffect(() => {
+    if (!canStartRun) return;
+    const controller = new AbortController();
+    void fetch("/api/provider-credential", { signal: controller.signal, cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok) throw new Error();
+        setByokConfigured(Boolean(payload.configured));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setByokConfigured(false);
+      });
+    return () => controller.abort();
+  }, [canStartRun]);
 
   function rememberRun(nextRunId: string) {
     setRunId(nextRunId);
@@ -171,6 +189,7 @@ export function AgentRunPanel({
         body: JSON.stringify({
           repository,
           task,
+          executionMode,
           acceptanceCriteria,
           dataPolicyAcceptance: {
             version: CONTROLLED_ALPHA_DATA_POLICY_VERSION,
@@ -237,7 +256,8 @@ export function AgentRunPanel({
     && Boolean(repository)
     && task.trim().length >= 10
     && acceptanceCriteria.length > 0
-    && dataPolicyAccepted;
+    && dataPolicyAccepted
+    && (executionMode === "shared" || byokConfigured === true);
   const diff = snapshot?.artifacts.find((artifact) => artifact.kind === "diff");
   const summary = snapshot?.artifacts.find((artifact) => artifact.kind === "summary");
   const pullRequest = snapshot?.artifacts.find((artifact) => artifact.kind === "pull_request");
@@ -281,6 +301,58 @@ export function AgentRunPanel({
               ))}
             </div>
             {canStartRun && (
+              <fieldset className="mt-4 rounded-xl border border-line p-3">
+                <legend className="px-1 font-mono text-[9px] font-semibold uppercase tracking-[0.13em] text-muted">
+                  Choose capacity
+                </legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className={`cursor-pointer rounded-lg border p-3 transition ${
+                    executionMode === "shared" ? "border-accent bg-accent/[0.07]" : "border-line"
+                  }`}>
+                    <span className="flex items-center gap-2 text-xs font-semibold text-paper">
+                      <input
+                        type="radio"
+                        name="execution-mode"
+                        value="shared"
+                        checked={executionMode === "shared"}
+                        onChange={() => setExecutionMode("shared")}
+                        className="accent-[var(--accent)]"
+                      />
+                      Use the shared beta Run
+                    </span>
+                    <span className="mt-1 block pl-5 text-[10px] leading-4 text-muted">
+                      Free. One substantial Run per UTC day across Locus. Availability is confirmed when you start.
+                    </span>
+                  </label>
+                  <label className={`cursor-pointer rounded-lg border p-3 transition ${
+                    executionMode === "byok" ? "border-accent bg-accent/[0.07]" : "border-line"
+                  }`}>
+                    <span className="flex items-center gap-2 text-xs font-semibold text-paper">
+                      <input
+                        type="radio"
+                        name="execution-mode"
+                        value="byok"
+                        checked={executionMode === "byok"}
+                        onChange={() => setExecutionMode("byok")}
+                        className="accent-[var(--accent)]"
+                      />
+                      Use my Cloudflare account
+                    </span>
+                    <span className="mt-1 block pl-5 text-[10px] leading-4 text-muted">
+                      {byokConfigured
+                        ? "Connected. This Run uses capacity from your account."
+                        : "Not connected yet. Setup takes about two minutes."}
+                    </span>
+                  </label>
+                </div>
+                {executionMode === "byok" && byokConfigured !== true && (
+                  <Link href="/settings" className="mt-3 inline-block text-[11px] font-semibold text-accent hover:underline">
+                    Connect Cloudflare in Settings →
+                  </Link>
+                )}
+              </fieldset>
+            )}
+            {canStartRun && (
               <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-line px-3 py-3 text-[11px] leading-5 text-muted-light">
                 <input
                   type="checkbox"
@@ -290,8 +362,8 @@ export function AgentRunPanel({
                 />
                 <span>
                   I confirm this public Repo, task, and criteria contain no private,
-                  confidential, or personal data. Run content is processed by OpenAI
-                  through Vercel AI Gateway with prompt training disabled.
+                  confidential, or personal data. Run content is processed by Cloudflare
+                  Workers AI under its customer-data policy.
                 </span>
               </label>
             )}
@@ -301,13 +373,13 @@ export function AgentRunPanel({
               disabled={!canLaunch || launching}
               className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span>{launching ? "Starting durable run…" : canStartRun ? "Run task with Locus" : "Invite required"}</span>
+              <span>{launching ? "Starting durable run…" : canStartRun ? "Run task with Locus" : "Beta access required"}</span>
               <span aria-hidden>→</span>
             </button>
             <p className="mt-3 text-[11px] leading-5 text-muted">
               {canStartRun
-                ? "Executes in an isolated Sandbox. GitHub delivery is disabled during early access."
-                : "Agent Runs are available only to invited design partners. You can still inspect the complete Slice above."}
+                ? "Executes in an isolated Sandbox. GitHub delivery remains disabled until you review the proposal."
+                : "Agent Run starts are currently closed. You can still inspect the complete Slice above."}
             </p>
           </>
         ) : (

@@ -1,6 +1,7 @@
 export const CLOUDFLARE_AGENT_MODEL = "@cf/qwen/qwen3.8-27b";
 export const CLOUDFLARE_PROVIDER = "cloudflare-workers-ai";
 export const SHARED_DAILY_RUN_LIMIT = 1;
+export const SHARED_RUN_TOKEN_BUDGET = 100_000;
 
 export type AgentExecutionMode = "shared" | "byok";
 

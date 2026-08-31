@@ -9,6 +9,7 @@ import {
   providerCapacityKey,
   sharedCloudflareConfigured,
   SHARED_DAILY_RUN_LIMIT,
+  SHARED_RUN_TOKEN_BUDGET,
 } from "@/lib/agent/provider-config";
 import { resolveRunTokenBudget } from "@/lib/agent/run-budget";
 import {
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!alphaCapabilitiesForUser(userId).runStart) {
     return NextResponse.json(
-      { error: "Agent Runs are limited to invited design partners during early access." },
+      { error: "Agent Run starts are not enabled for this account." },
       { status: 403 },
     );
   }
@@ -121,6 +122,9 @@ export async function POST(request: Request) {
   try {
     model = resolveAgentModel();
     tokenBudget = resolveRunTokenBudget();
+    if (input.executionMode === "shared") {
+      tokenBudget = Math.min(tokenBudget, SHARED_RUN_TOKEN_BUDGET);
+    }
   } catch {
     return NextResponse.json(
       { error: "Agent Run deployment limits are not configured safely." },

@@ -5,12 +5,12 @@ export function AlphaSettingsNotice() {
         Public early access
       </p>
       <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-paper">
-        Agent Runs for invited design partners
+        A real Agent Run, with an honest free limit
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">
-        Repo localization is free for signed-in users during public early access. Agent Runs
-        remain limited to invited design partners working with public repositories while the
-        review and delivery boundaries are hardened.
+        Repo localization is free for signed-in users. Locus offers one shared Agent Run per UTC
+        day across the beta; you can connect your own Cloudflare account when the shared Run is
+        already used. Public Repos only, with external writes still disabled.
       </p>
     </section>
   );

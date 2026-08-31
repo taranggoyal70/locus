@@ -123,7 +123,7 @@ describe("controlled-alpha Agent Run starts", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: "Agent Runs are limited to invited design partners during early access.",
+      error: "Agent Run starts are not enabled for this account.",
     });
   });
 
@@ -200,6 +200,7 @@ describe("controlled-alpha Agent Run starts", () => {
       p_active_statuses: [...ACTIVE_RUN_STATUSES],
       p_provider: "cloudflare-workers-ai",
       p_execution_mode: "shared",
+      p_token_budget: 100_000,
     }));
     // No workflow, and no provider lease taken for a Run that was never created.
     expect(rpc).not.toHaveBeenCalledWith("acquire_agent_provider_lease", expect.anything());
@@ -301,6 +302,10 @@ describe("controlled-alpha Agent Run starts", () => {
     );
     expect(rpc).toHaveBeenCalledWith("acquire_agent_provider_lease", expect.objectContaining({
       p_model: "cloudflare-workers-ai:byok:user_design_partner",
+    }));
+    expect(rpc).toHaveBeenCalledWith("claim_agent_run_slot", expect.objectContaining({
+      p_token_budget: 180_000,
+      p_execution_mode: "byok",
     }));
   });
 

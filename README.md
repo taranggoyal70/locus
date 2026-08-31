@@ -117,11 +117,15 @@ pnpm dev
 |----------|---------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk authentication |
 | `CLERK_SECRET_KEY` | Clerk server-side auth |
-| `ALPHA_ALLOWED_USER_IDS` | Comma-separated Clerk user IDs allowed to start Agent Runs |
+| `LOCUS_PUBLIC_BETA_ENABLED` | Set to `true` only after the public-beta launch gate passes |
+| `ALPHA_ALLOWED_USER_IDS` | Optional Clerk user IDs allowed while public beta is closed |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client configuration |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side only) |
-| `LOCUS_AGENT_MODEL` | Reviewed Vercel AI Gateway model identifier for Agent Runs |
+| `LOCUS_AGENT_MODEL` | Must be the reviewed `@cf/qwen/qwen3.8-27b` model |
+| `CLOUDFLARE_ACCOUNT_ID` | Shared Workers AI account |
+| `CLOUDFLARE_API_TOKEN` | Shared Workers AI token (server-side only) |
+| `LOCUS_CREDENTIAL_ENCRYPTION_KEY` | Base64-encoded 32-byte key for encrypting BYOK tokens |
 | `CRON_SECRET` | Authorizes the daily retention job |
 | `OPS_EXTERNAL_HEALTHCHECK` | Set to `github_actions` when the committed external production monitor is active |
 
@@ -132,12 +136,13 @@ pnpm dev
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
-| `LOCUS_RUN_TOKEN_BUDGET` | Per-Run hard budget; safe default is 180,000 |
+| `LOCUS_RUN_TOKEN_BUDGET` | BYOK hard budget; safe default 180,000. Shared Runs are additionally capped at 100,000 |
 | `OPS_ALERT_WEBHOOK_URL` | HTTPS operational alert destination; takes precedence over the external health-check marker |
 
-On Vercel, AI Gateway authentication uses the deployment's short-lived OIDC
-credential automatically. Local development can use `AI_GATEWAY_API_KEY`; do
-not add a direct model-provider key to the application.
+Agent Runs call Cloudflare Workers AI directly through its OpenAI-compatible
+endpoint. Shared capacity is capped to one admitted Run per UTC day. Users may
+optionally connect their own Cloudflare Account ID and API token in Settings;
+tokens are encrypted before persistence and never returned after submission.
 
 ### Authentication
 
@@ -165,8 +170,10 @@ For a linked or hosted database, apply migrations with the history-aware
 procedure in
 [`docs/operations/release-0-controlled-alpha-rollout.md`](docs/operations/release-0-controlled-alpha-rollout.md).
 Do not apply migrations with an untracked shell loop.
-Release 1 migrations `012`–`017` use the separate
+Release 1 migrations `012`–`017` use the
 [`Release 1 readiness rollout`](docs/operations/release-1-readiness-rollout.md).
+Migration `018` and the direct Cloudflare launch use the separate
+[`free public beta rollout`](docs/operations/free-public-beta-rollout.md).
 
 ### Export formats
 
