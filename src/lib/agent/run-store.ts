@@ -28,9 +28,20 @@ export async function transitionRun(input: {
     .eq("status", input.current)
     .select("id")
     .single();
-  if (error || !data) {
-    throw new Error(`Run could not transition from ${input.current} to ${input.next}`);
-  }
+  if (!error && data) return;
+
+  // Durable Workflow can replay a step after the database update committed but
+  // before the step result was acknowledged. Treat that exact replay as
+  // success while preserving the compare-and-swap guard for every other state.
+  const { data: currentRun, error: currentError } = await db
+    .from("agent_runs")
+    .select("status")
+    .eq("id", input.runId)
+    .eq("user_id", input.userId)
+    .single();
+  if (!currentError && currentRun?.status === input.next) return;
+
+  throw new Error(`Run could not transition from ${input.current} to ${input.next}`);
 }
 
 export async function patchRun(input: {
