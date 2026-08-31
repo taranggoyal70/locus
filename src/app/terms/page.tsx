@@ -25,9 +25,11 @@ export default function TermsPage() {
             <p>
               Locus is an experimental, open-source agent workspace operated by Tarang Goyal. It
               localizes tasks for public JavaScript and TypeScript repositories for every signed-in
-              user. Invited design partners can continue in an isolated Sandbox, record allowlisted
-              check results, and inspect a proposal for human review. External repository writes and
-              billing are disabled during early access.
+              user. During the limited free beta, signed-in users can request a shared Agent Run or
+              connect their own Cloudflare Workers AI account, continue in an isolated Sandbox,
+              record allowlisted Check results, and inspect a proposal for human Review. Shared
+              capacity is limited and may be unavailable until its next UTC reset. External repository
+              writes and Locus billing are disabled during early access.
               The hosted version at {new URL(SITE_URL).hostname} is provided as-is, without warranty.
             </p>
           </section>
@@ -46,8 +48,9 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-paper">Accounts</h2>
             <p>
               Authentication is handled by Clerk. You are responsible for maintaining the security
-              of your account credentials. We may suspend accounts that violate these terms or
-              abuse the service.
+              of your account credentials and any provider token you connect. You authorize Locus to
+              use a connected token only for Agent Runs you request. We may suspend accounts that
+              violate these terms or abuse the service.
             </p>
           </section>
 

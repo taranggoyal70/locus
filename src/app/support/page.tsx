@@ -21,7 +21,9 @@ export default function SupportPage() {
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Support and service status</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-light">
           {supportAvailability(selfServeOpen())}
-          These are response targets, not guarantees, and external repository writes remain disabled.
+          {" "}Shared Agent Run capacity resets daily at 00:00 UTC; connected Cloudflare accounts
+          use their own limits. These are response targets, not guarantees, and external repository
+          writes remain disabled.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">

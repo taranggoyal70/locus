@@ -39,7 +39,7 @@ describe("AgentRunTimeline", () => {
 });
 
 describe("controlled-alpha Agent Run start", () => {
-  it("requires the Gateway data acknowledgement before launch", () => {
+  it("explains shared and user-owned capacity before launch", () => {
     const html = renderToStaticMarkup(
       <AgentRunPanel
         repository="taranggoyal70/locus"
@@ -51,8 +51,10 @@ describe("controlled-alpha Agent Run start", () => {
       />,
     );
 
-    expect(html).toContain("processed by OpenAI through Vercel AI Gateway");
-    expect(html).toContain("prompt training disabled");
+    expect(html).toContain("Use the shared beta Run");
+    expect(html).toContain("One substantial Run per UTC day across Locus");
+    expect(html).toContain("Use my Cloudflare account");
+    expect(html).toContain("processed by Cloudflare Workers AI");
     expect(html).toContain("private, confidential, or personal data");
     expect(html).toMatch(/<button[^>]*disabled/);
   });

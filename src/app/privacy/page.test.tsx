@@ -11,6 +11,9 @@ describe("public early-access privacy policy", () => {
     expect(html).toContain("public repositories only");
     expect(html).toContain("Durable Run records");
     expect(html).toContain("Clerk, Supabase, GitHub, and Vercel");
+    expect(html).toContain("Cloudflare Workers AI");
+    expect(html).toContain("encrypts the token before storing it");
+    expect(html).toContain("Removing the connection from Settings deletes");
     expect(html).toContain("30 days");
     expect(html).toContain("90 days");
     expect(html).toContain("request deletion");

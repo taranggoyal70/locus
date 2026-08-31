@@ -14,7 +14,8 @@ presenting a small provider allowance as unlimited production capacity.
    the public beta. Existing invite-only behavior remains the safe default.
 2. The shared beta uses Cloudflare Workers AI model
    `@cf/qwen/qwen3.8-27b`, one Run at a time and at most one admitted shared Run
-   per UTC day across the deployment.
+   per UTC day across the deployment. Shared Runs have a 100,000-token ceiling;
+   user-owned Runs keep the configured bounded Run ceiling.
 3. A user may optionally connect their own Cloudflare Account ID and Workers AI
    API token. BYOK Runs do not consume the shared daily slot, but remain subject
    to the existing per-user and concurrency controls.

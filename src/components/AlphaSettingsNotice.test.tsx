@@ -51,3 +51,20 @@ describe("Settings access notice", () => {
     }
   });
 });
+
+describe("shared free execution capacity", () => {
+  it("tells an admitted account that free capacity is shared, not personal", () => {
+    // The Tier allowance and the shared pool bound different things: the tier is
+    // what one account may hold, the pool is what the deployment can spend on
+    // free Cloudflare inference in a UTC day. Stating only the tier would let a
+    // free account read "3 per day" as three guaranteed Runs.
+    const html = renderToStaticMarkup(<AlphaSettingsNotice tier="free" />);
+    expect(html).toContain("one Agent Run per UTC day");
+    expect(html).toContain("Connect your own Cloudflare account");
+  });
+
+  it("does not offer shared capacity to an account that cannot run at all", () => {
+    const html = renderToStaticMarkup(<AlphaSettingsNotice tier="visitor" />);
+    expect(html).not.toContain("Connect your own Cloudflare account");
+  });
+});

@@ -46,6 +46,14 @@ export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
         {tier === "visitor" ? "Agent Runs are not enabled for this account" : "Your current access"}
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">{body}</p>
+      {tier !== "visitor" && (
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">
+          Free execution capacity is shared: the beta runs one Agent Run per UTC day across all
+          accounts. Your plan allowance above is what you may hold; the shared pool is what the
+          deployment can spend. Connect your own Cloudflare account to run when the shared Run is
+          already used.
+        </p>
+      )}
     </section>
   );
 }

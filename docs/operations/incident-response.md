@@ -16,6 +16,7 @@ Response targets are four hours for Critical, one business day for High, and thr
 
 1. Record UTC start time, production revision, reporter, incident lead, and one redacted correlation ID.
 2. Confirm scope from durable evidence. Do not infer success from HTTP status or a single passing Check.
+<<<<<<< HEAD
 3. Disable new Agent Runs. This takes **two** changes when self-serve is open, and doing only the first is the most likely mistake in this runbook: clear `ALPHA_ALLOWED_USER_IDS` **and** clear `LOCUS_SELF_SERVE`, then redeploy. Confirm containment against `/api/health`, which must report `readiness.admission: "invite_only"` and an empty allowlist — a deploy that did not take looks identical to one that did from the dashboard. Neither change cancels Runs already queued behind the provider lease; cancel those separately if the incident requires it. Do not delete existing evidence.
 4. To contain a single account rather than everyone, store an explicit refusal instead of closing the product. This takes effect on that account's next request with no deploy, and it beats the allowlist and an active subscription:
 
@@ -30,6 +31,12 @@ Response targets are four hours for Critical, one business day for High, and thr
 5. For credential exposure, revoke and rotate the affected provider, Supabase, Clerk, GitHub, or Vercel credential. Never paste the replacement into the incident record.
 6. For unexpected external writes, keep delivery capability off and revoke stored connections. Do not re-enable a public write policy.
 7. For provider quota incidents, leave the global lease/cooldown enabled, inspect `failure_kind`, and wait for the provider window before a single controlled retry.
+=======
+3. Disable new Agent Runs by setting `LOCUS_PUBLIC_BETA_ENABLED=false`, clearing `ALPHA_ALLOWED_USER_IDS`, and redeploying. Do not delete existing evidence.
+4. For credential exposure, revoke and rotate the affected provider, Supabase, Clerk, GitHub, or Vercel credential. Never paste the replacement into the incident record.
+5. For unexpected external writes, keep delivery capability off and revoke stored connections. Do not re-enable a public write policy.
+6. For provider quota incidents, leave the global lease and UTC daily claim enabled, inspect `failure_kind`, and wait for the documented provider reset before a single controlled retry.
+>>>>>>> 8982add (feat(ui): explain limited shared runs and Cloudflare setup)
 
 ## Diagnose and recover
 

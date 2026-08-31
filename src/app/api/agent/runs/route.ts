@@ -9,6 +9,7 @@ import {
   providerCapacityKey,
   sharedCloudflareConfigured,
   SHARED_DAILY_RUN_LIMIT,
+  SHARED_RUN_TOKEN_BUDGET,
 } from "@/lib/agent/provider-config";
 import { resolveRunTokenBudget } from "@/lib/agent/run-budget";
 import {
@@ -128,6 +129,9 @@ export async function POST(request: Request) {
   try {
     model = resolveAgentModel();
     tokenBudget = resolveRunTokenBudget();
+    if (input.executionMode === "shared") {
+      tokenBudget = Math.min(tokenBudget, SHARED_RUN_TOKEN_BUDGET);
+    }
   } catch {
     return NextResponse.json(
       { error: "Agent Run deployment limits are not configured safely." },

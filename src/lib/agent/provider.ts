@@ -13,7 +13,7 @@ import {
 
 export function createCloudflareAgentModel(
   credential: CloudflareCredential,
-): LanguageModel {
+) {
   return createOpenAICompatible({
     name: CLOUDFLARE_PROVIDER,
     baseURL: cloudflareOpenAIBaseUrl(credential.accountId),
