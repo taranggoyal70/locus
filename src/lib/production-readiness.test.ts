@@ -9,8 +9,10 @@ const complete = {
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_value",
   CLERK_SECRET_KEY: "sk_test_value",
   ALPHA_ALLOWED_USER_IDS: "user_partner",
-  LOCUS_AGENT_MODEL: "openai/gpt-5.6-sol",
-  AI_GATEWAY_API_KEY: "gateway-secret",
+  LOCUS_AGENT_MODEL: "@cf/qwen/qwen3.8-27b",
+  CLOUDFLARE_ACCOUNT_ID: "0123456789abcdef0123456789abcdef",
+  CLOUDFLARE_API_TOKEN: "cloudflare-token-that-is-long-enough",
+  LOCUS_CREDENTIAL_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
   CRON_SECRET: "cron-secret",
   OPS_ALERT_WEBHOOK_URL: "https://alerts.example/locus",
 };
@@ -49,7 +51,7 @@ describe("production readiness", () => {
     });
   });
 
-  it("fails closed for an unreviewed Gateway model", async () => {
+  it("fails closed for an unreviewed Agent model", async () => {
     await expect(productionReadiness({
       ...complete,
       LOCUS_AGENT_MODEL: "google/gemini-3.5-flash",
@@ -59,37 +61,34 @@ describe("production readiness", () => {
     });
   });
 
-  it("fails closed when Gateway authentication is unavailable", async () => {
+  it("fails closed when shared Cloudflare authentication is unavailable", async () => {
     await expect(productionReadiness({
       ...complete,
-      AI_GATEWAY_API_KEY: "",
-      VERCEL_OIDC_TOKEN: "",
+      CLOUDFLARE_API_TOKEN: "",
     }, databaseReady)).resolves.toMatchObject({
       ready: false,
       missing: ["agent_provider"],
     });
   });
 
-  it("accepts Vercel's short-lived OIDC credential", async () => {
+  it("accepts public beta admission without an invite list", async () => {
     await expect(productionReadiness({
       ...complete,
-      AI_GATEWAY_API_KEY: "",
-      VERCEL_OIDC_TOKEN: "oidc-token",
+      ALPHA_ALLOWED_USER_IDS: "",
+      LOCUS_PUBLIC_BETA_ENABLED: "true",
     }, databaseReady)).resolves.toMatchObject({
       ready: true,
       missing: [],
     });
   });
 
-  it("accepts Vercel's runtime when its OIDC token is platform-managed", async () => {
+  it("requires a valid credential-encryption key before BYOK is exposed", async () => {
     await expect(productionReadiness({
       ...complete,
-      AI_GATEWAY_API_KEY: "",
-      VERCEL_OIDC_TOKEN: "",
-      VERCEL: "1",
+      LOCUS_CREDENTIAL_ENCRYPTION_KEY: "not-a-32-byte-key",
     }, databaseReady)).resolves.toMatchObject({
-      ready: true,
-      missing: [],
+      ready: false,
+      missing: ["agent_provider"],
     });
   });
 

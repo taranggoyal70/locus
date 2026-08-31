@@ -29,6 +29,7 @@ const TENANT_COLUMN = "user_id";
 export const TENANT_TABLES: ReadonlySet<string> = new Set([
   "agent_approvals",
   "agent_artifacts",
+  "agent_provider_credentials",
   "agent_reviews",
   "agent_runs",
   "agent_steps",

@@ -20,9 +20,9 @@ describe("coding agent configuration", () => {
   });
 
   it("uses the current coding model unless a deployment overrides it", () => {
-    expect(resolveAgentModel({})).toBe("openai/gpt-5.6-sol");
-    expect(resolveAgentModel({ LOCUS_AGENT_MODEL: "openai/gpt-5.6-terra" })).toBe(
-      "openai/gpt-5.6-terra",
+    expect(resolveAgentModel({})).toBe("@cf/qwen/qwen3.8-27b");
+    expect(resolveAgentModel({ LOCUS_AGENT_MODEL: "@cf/qwen/qwen3.8-27b" })).toBe(
+      "@cf/qwen/qwen3.8-27b",
     );
   });
 
@@ -42,15 +42,15 @@ describe("coding agent configuration", () => {
 
   it("names the permitted models when it refuses", () => {
     expect(() => resolveAgentModel({ LOCUS_AGENT_MODEL: "openai/gpt-4o" })).toThrow(
-      /Permitted models: openai\/gpt-5\.6-sol/,
+      /Permitted models: @cf\/qwen\/qwen3\.8-27b/,
     );
   });
 
   // Trimming surrounding whitespace is correct handling of an environment
   // variable, not a way around the allowlist.
   it("tolerates whitespace around an allowlisted model", () => {
-    expect(resolveAgentModel({ LOCUS_AGENT_MODEL: "  openai/gpt-5.6-sol  " })).toBe(
-      "openai/gpt-5.6-sol",
+    expect(resolveAgentModel({ LOCUS_AGENT_MODEL: "  @cf/qwen/qwen3.8-27b  " })).toBe(
+      "@cf/qwen/qwen3.8-27b",
     );
   });
 

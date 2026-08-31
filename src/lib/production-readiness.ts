@@ -1,13 +1,19 @@
+import { sharedCloudflareConfigured } from "@/lib/agent/provider-config";
+
 type Environment = Record<string, string | undefined>;
 type DatabaseRequest = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
-const GATEWAY_AGENT_MODELS = new Set([
-  "openai/gpt-5.6-sol",
-  "openai/gpt-5.6-terra",
-]);
-
 function configured(value: string | undefined): boolean {
   return Boolean(value?.trim());
+}
+
+function credentialEncryptionConfigured(value: string | undefined): boolean {
+  if (!value) return false;
+  try {
+    return Buffer.from(value, "base64").length === 32;
+  } catch {
+    return false;
+  }
 }
 
 function parsedHttpsUrl(value: string | undefined): URL | null {
@@ -108,18 +114,13 @@ export async function productionReadiness(
     !configured(environment.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
     || !configured(environment.CLERK_SECRET_KEY)
   ) missing.push("authentication");
-  if (!configured(environment.ALPHA_ALLOWED_USER_IDS)) missing.push("run_admission");
+  const publicBetaEnabled = environment.LOCUS_PUBLIC_BETA_ENABLED?.trim().toLowerCase() === "true";
+  if (!configured(environment.ALPHA_ALLOWED_USER_IDS) && !publicBetaEnabled) {
+    missing.push("run_admission");
+  }
 
-  const model = environment.LOCUS_AGENT_MODEL?.trim();
-  const gatewayAuthenticated = configured(environment.VERCEL_OIDC_TOKEN)
-    || configured(environment.AI_GATEWAY_API_KEY)
-    // Vercel supplies a short-lived OIDC credential to Gateway requests at
-    // runtime. The platform marker is visible to Functions even when the token
-    // itself is not exposed through a dynamically indexed process.env object.
-    || environment.VERCEL === "1";
-  const providerReady = configured(model)
-    && GATEWAY_AGENT_MODELS.has(model as string)
-    && gatewayAuthenticated;
+  const providerReady = sharedCloudflareConfigured(environment)
+    && credentialEncryptionConfigured(environment.LOCUS_CREDENTIAL_ENCRYPTION_KEY);
   if (!providerReady) missing.push("agent_provider");
   if (!configured(environment.CRON_SECRET)) missing.push("retention_cron");
 
