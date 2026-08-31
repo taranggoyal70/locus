@@ -70,6 +70,9 @@ describe("agent Run token budget", () => {
     expect(classifyAgentFailure(new Error("Sandbox stopped unexpectedly"))).toBe(
       "sandbox_error",
     );
+    const codingAgentTimeout = new Error("Coding Agent execution exceeded its deadline");
+    codingAgentTimeout.name = "CodingAgentTimeoutError";
+    expect(classifyAgentFailure(codingAgentTimeout)).toBe("provider_error");
     expect(classifyAgentFailure(new Error("Unknown failure"))).toBe("workflow_error");
   });
 

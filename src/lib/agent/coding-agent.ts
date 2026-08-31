@@ -69,6 +69,13 @@ export const CODING_AGENT_TIMEOUTS: CodingAgentTimeouts = {
   tools: { run_checksMs: 310_000 },
 };
 
+export class CodingAgentTimeoutError extends Error {
+  constructor(cause: unknown) {
+    super("Coding Agent execution exceeded its deadline.", { cause });
+    this.name = "CodingAgentTimeoutError";
+  }
+}
+
 export type TokenLedger = {
   baselineContextTokens: number;
   includedContextTokens: number;
@@ -308,12 +315,20 @@ export async function runCodingTask(input: CodingRunInput) {
     input.model,
     tokenBudgetTokens,
   );
-  const result = await agent.generate({
-    prompt: input.prompt,
-    abortSignal: input.abortSignal,
-    timeout: input.timeouts ?? CODING_AGENT_TIMEOUTS,
-    onStepEnd: async ({ usage }) => input.onStepEnd?.(usage),
-  });
+  let result;
+  try {
+    result = await agent.generate({
+      prompt: input.prompt,
+      abortSignal: input.abortSignal,
+      timeout: input.timeouts ?? CODING_AGENT_TIMEOUTS,
+      onStepEnd: async ({ usage }) => input.onStepEnd?.(usage),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      throw new CodingAgentTimeoutError(error);
+    }
+    throw error;
+  }
   const tokenLedger = calculateTokenLedger({
     baselineContextTokens: input.baselineContextTokens,
     includedContextTokens: input.includedContextTokens,
