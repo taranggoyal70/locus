@@ -10,6 +10,7 @@ const complete = {
   CLERK_SECRET_KEY: "sk_test_value",
   ALPHA_ALLOWED_USER_IDS: "user_partner",
   LOCUS_AGENT_MODEL: "openai/gpt-5.6-sol",
+  AI_GATEWAY_API_KEY: "gateway-secret",
   CRON_SECRET: "cron-secret",
   OPS_ALERT_WEBHOOK_URL: "https://alerts.example/locus",
 };
@@ -55,6 +56,28 @@ describe("production readiness", () => {
     }, databaseReady)).resolves.toMatchObject({
       ready: false,
       missing: ["agent_provider"],
+    });
+  });
+
+  it("fails closed when Gateway authentication is unavailable", async () => {
+    await expect(productionReadiness({
+      ...complete,
+      AI_GATEWAY_API_KEY: "",
+      VERCEL_OIDC_TOKEN: "",
+    }, databaseReady)).resolves.toMatchObject({
+      ready: false,
+      missing: ["agent_provider"],
+    });
+  });
+
+  it("accepts Vercel's short-lived OIDC credential", async () => {
+    await expect(productionReadiness({
+      ...complete,
+      AI_GATEWAY_API_KEY: "",
+      VERCEL_OIDC_TOKEN: "oidc-token",
+    }, databaseReady)).resolves.toMatchObject({
+      ready: true,
+      missing: [],
     });
   });
 

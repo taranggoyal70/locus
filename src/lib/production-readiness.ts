@@ -111,7 +111,11 @@ export async function productionReadiness(
   if (!configured(environment.ALPHA_ALLOWED_USER_IDS)) missing.push("run_admission");
 
   const model = environment.LOCUS_AGENT_MODEL?.trim();
-  const providerReady = configured(model) && GATEWAY_AGENT_MODELS.has(model as string);
+  const gatewayAuthenticated = configured(environment.VERCEL_OIDC_TOKEN)
+    || configured(environment.AI_GATEWAY_API_KEY);
+  const providerReady = configured(model)
+    && GATEWAY_AGENT_MODELS.has(model as string)
+    && gatewayAuthenticated;
   if (!providerReady) missing.push("agent_provider");
   if (!configured(environment.CRON_SECRET)) missing.push("retention_cron");
 
