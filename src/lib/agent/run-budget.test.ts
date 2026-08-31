@@ -70,6 +70,9 @@ describe("agent Run token budget", () => {
     expect(classifyAgentFailure(new Error("Sandbox stopped unexpectedly"))).toBe(
       "sandbox_error",
     );
+    expect(classifyAgentFailure(
+      new DOMException("The operation was aborted due to timeout", "TimeoutError"),
+    )).toBe("provider_error");
     expect(classifyAgentFailure(new Error("Unknown failure"))).toBe("workflow_error");
   });
 
