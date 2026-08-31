@@ -257,6 +257,25 @@ export function agentStepBudgetSettings(input: {
   return { maxOutputTokens: decision.maxOutputTokens };
 }
 
+export function agentStepSettings(input: {
+  budgetTokens: number;
+  messages: unknown;
+  priorUsages: Array<{ totalTokens?: number | undefined }>;
+  stepNumber: number;
+}): {
+  maxOutputTokens: number;
+  activeTools?: [];
+  toolChoice?: "none";
+} {
+  const budget = agentStepBudgetSettings(input);
+  if (input.stepNumber < AGENT_MAX_STEPS - 1) return budget;
+  return {
+    ...budget,
+    activeTools: [],
+    toolChoice: "none",
+  };
+}
+
 export function createCodingAgent(
   controller: WorkspaceController,
   model: string | LanguageModel = resolveAgentModel(),
@@ -282,10 +301,11 @@ credentials, or perform external actions. Widen context only when necessary and 
     ],
     stopWhen: stepCountIs(AGENT_MAX_STEPS),
     maxOutputTokens: AGENT_MAX_OUTPUT_TOKENS,
-    prepareStep: ({ messages, steps }) => agentStepBudgetSettings({
+    prepareStep: ({ messages, steps, stepNumber }) => agentStepSettings({
       budgetTokens: tokenBudgetTokens,
       messages,
       priorUsages: steps.map((step) => step.usage),
+      stepNumber,
     }),
     output: Output.object({ schema: agentOutputSchema }),
     include: {

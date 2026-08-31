@@ -6,6 +6,7 @@ import {
   ALLOWED_AGENT_MODELS,
   CodingAgentTimeoutError,
   DisallowedAgentModelError,
+  agentStepSettings,
   agentStepBudgetSettings,
   calculateTokenLedger,
   resolveAgentLanguageModel,
@@ -138,6 +139,23 @@ describe("coding agent configuration", () => {
       messages: "x".repeat(120_000),
       priorUsages,
     })).toThrow("Run token budget exhausted");
+  });
+
+  it("reserves the final Agent step for the structured proposal", () => {
+    const base = {
+      budgetTokens: 180_000,
+      messages: "small prompt",
+      priorUsages: [],
+    };
+
+    expect(agentStepSettings({ ...base, stepNumber: AGENT_MAX_STEPS - 2 })).toEqual({
+      maxOutputTokens: 6_000,
+    });
+    expect(agentStepSettings({ ...base, stepNumber: AGENT_MAX_STEPS - 1 })).toEqual({
+      maxOutputTokens: 6_000,
+      activeTools: [],
+      toolChoice: "none",
+    });
   });
 
   it("aborts a provider call that never returns", async () => {
