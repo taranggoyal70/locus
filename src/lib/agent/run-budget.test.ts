@@ -83,7 +83,12 @@ describe("agent Run token budget", () => {
   });
 
   it("shows actionable failure copy without leaking provider payloads", () => {
-    expect(agentFailureMessage("quota_exhausted")).toContain("provider quota");
+    expect(agentFailureMessage("quota_exhausted", "shared")).toContain(
+      "shared Cloudflare Workers AI capacity",
+    );
+    expect(agentFailureMessage("quota_exhausted", "shared")).toContain("UTC reset");
+    expect(agentFailureMessage("quota_exhausted", "byok")).toMatch(/your Cloudflare account/i);
+    expect(agentFailureMessage("provider_error", "byok")).toContain("Cloudflare Workers AI");
     expect(agentFailureMessage("token_budget_exhausted")).toContain("token budget");
     expect(agentFailureMessage("provider_error")).not.toContain("API key");
   });

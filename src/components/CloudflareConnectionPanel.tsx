@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 
 type ConnectionStatus = {
   configured: boolean;
-  accountIdSuffix: string | null;
 };
 
 export function CloudflareConnectionPanel() {
@@ -83,12 +82,12 @@ export function CloudflareConnectionPanel() {
               ? "border-accent/35 bg-accent/10 text-accent"
               : "border-line-strong text-muted"
           }`}>
-            {status?.configured ? `Connected · •••${status.accountIdSuffix}` : "Not connected"}
+            {status?.configured ? "Connected" : "Not connected"}
           </span>
         </div>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-light">
-          The shared beta has one Agent Run per day across Locus. Connect your own free Cloudflare
-          account when you want to run without waiting for that shared slot.
+          When your account has Agent access, Locus offers one shared Agent Run per day across the
+          beta. Connect your own Cloudflare account to avoid waiting for that shared slot.
         </p>
       </div>
 

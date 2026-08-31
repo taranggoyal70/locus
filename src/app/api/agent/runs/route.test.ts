@@ -133,7 +133,7 @@ describe("controlled-alpha Agent Run starts", () => {
     startMock.mockReset();
     trackMock.mockReset();
     credentialStatusMock.mockReset();
-    credentialStatusMock.mockResolvedValue({ configured: true, accountIdSuffix: "abcdef" });
+    credentialStatusMock.mockResolvedValue({ configured: true });
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_design_partner");
     vi.stubEnv("LOCUS_AGENT_MODEL", "@cf/qwen/qwen3.8-27b");
     vi.stubEnv("CLOUDFLARE_ACCOUNT_ID", "0123456789abcdef0123456789abcdef");

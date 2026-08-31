@@ -35,14 +35,15 @@ describe("Cloudflare provider credential route", () => {
   });
 
   it("returns connection status without returning credential material", async () => {
-    statusMock.mockResolvedValue({ configured: true, accountIdSuffix: "abcdef" });
+    statusMock.mockResolvedValue({ configured: true });
 
     const response = await GET();
 
     expect(response.status).toBe(200);
     const payload = await response.json();
-    expect(payload).toEqual({ configured: true, accountIdSuffix: "abcdef" });
+    expect(payload).toEqual({ configured: true });
     expect(JSON.stringify(payload)).not.toContain("token");
+    expect(JSON.stringify(payload)).not.toContain("account");
   });
 
   it("saves a valid credential without echoing the API token", async () => {
@@ -62,7 +63,7 @@ describe("Cloudflare provider credential route", () => {
         apiToken,
       },
     }));
-    expect(JSON.stringify(await response.json())).not.toContain(apiToken);
+    expect(await response.json()).toEqual({ configured: true });
   });
 
   it("rejects cross-site writes and lets the owner remove a connection", async () => {
@@ -81,6 +82,7 @@ describe("Cloudflare provider credential route", () => {
     });
     const response = await DELETE(remove);
     expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ configured: false });
     expect(deleteMock).toHaveBeenCalledWith("user-owner");
   });
 });

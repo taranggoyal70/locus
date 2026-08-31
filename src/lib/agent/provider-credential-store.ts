@@ -20,18 +20,15 @@ function encryptionKey(environment: Record<string, string | undefined> = process
 export async function cloudflareCredentialStatus(
   userId: string,
   db: CredentialDatabase = tenantClient(userId),
-): Promise<{ configured: boolean; accountIdSuffix: string | null }> {
+): Promise<{ configured: boolean }> {
   const { data, error } = await db
     .from("agent_provider_credentials")
-    .select("account_id")
+    .select("user_id")
     .eq("user_id", userId)
     .eq("provider", CLOUDFLARE_PROVIDER)
     .maybeSingle();
   if (error) throw new Error("Could not read provider connection status.");
-  return {
-    configured: Boolean(data),
-    accountIdSuffix: data?.account_id.slice(-6) ?? null,
-  };
+  return { configured: Boolean(data) };
 }
 
 export async function saveCloudflareCredential(input: {

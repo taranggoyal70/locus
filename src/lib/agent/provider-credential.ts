@@ -4,7 +4,10 @@ import {
   randomBytes,
 } from "node:crypto";
 
-import { normalizeCloudflareAccountId } from "@/lib/agent/provider-config";
+import {
+  normalizeCloudflareAccountId,
+  normalizeCloudflareApiToken,
+} from "@/lib/agent/provider-config";
 
 const CIPHER = "aes-256-gcm";
 const CREDENTIAL_VERSION = "v1";
@@ -43,10 +46,7 @@ export function parseCloudflareCredentialInput(input: CredentialInput): {
     throw new Error("Cloudflare API token is required.");
   }
   const accountId = normalizeCloudflareAccountId(input.accountId);
-  const apiToken = input.apiToken.trim();
-  if (apiToken.length < 20 || apiToken.length > 512) {
-    throw new Error("Cloudflare API token must be between 20 and 512 characters.");
-  }
+  const apiToken = normalizeCloudflareApiToken(input.apiToken);
   return { accountId, apiToken };
 }
 

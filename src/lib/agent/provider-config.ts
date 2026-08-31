@@ -33,6 +33,16 @@ export function normalizeCloudflareAccountId(value: string): string {
   return accountId;
 }
 
+export function normalizeCloudflareApiToken(value: string): string {
+  const apiToken = value.trim();
+  if (apiToken.length < 20 || apiToken.length > 512) {
+    throw new AgentProviderConfigurationError(
+      "Cloudflare API token must be between 20 and 512 characters.",
+    );
+  }
+  return apiToken;
+}
+
 export function cloudflareOpenAIBaseUrl(accountId: string): string {
   const normalized = normalizeCloudflareAccountId(accountId);
   return `https://api.cloudflare.com/client/v4/accounts/${normalized}/ai/v1`;
@@ -50,12 +60,7 @@ export function resolveSharedCloudflareCredential(
   const accountId = normalizeCloudflareAccountId(
     environment.CLOUDFLARE_ACCOUNT_ID ?? "",
   );
-  const apiToken = environment.CLOUDFLARE_API_TOKEN?.trim() ?? "";
-  if (apiToken.length < 20 || apiToken.length > 512) {
-    throw new AgentProviderConfigurationError(
-      "Cloudflare API token must be between 20 and 512 characters.",
-    );
-  }
+  const apiToken = normalizeCloudflareApiToken(environment.CLOUDFLARE_API_TOKEN ?? "");
   return { accountId, apiToken };
 }
 
