@@ -9,6 +9,7 @@ describe("public early-access access page", () => {
 
     expect(html).toContain("Public early access");
     expect(html).toContain("Repo localization is open");
+    expect(html).toContain("access-gated until the production canary passes");
     expect(html).toContain("Request Agent Run access");
     expect(html).toContain("Self-serve Repo localization");
     expect(html).toContain('id="request-access"');

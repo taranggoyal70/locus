@@ -4,6 +4,13 @@ import { sharedCloudflareConfigured } from "@/lib/agent/provider-config";
 type Environment = Record<string, string | undefined>;
 type DatabaseRequest = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
+const FREE_BETA_SCHEMA_PATHS = [
+  "/agent_provider_credentials",
+  "/agent_provider_daily_claims",
+  "/rpc/claim_agent_provider_daily_slot",
+  "/rpc/claim_agent_run_slot",
+] as const;
+
 function configured(value: string | undefined): boolean {
   return Boolean(value?.trim());
 }
@@ -88,9 +95,13 @@ async function databaseCredentialsWork(
   // both credentials produces a false degraded health signal. Auth settings
   // is a safe public-key probe; the service-key PostgREST probe still proves
   // that the database API is reachable with elevated server credentials.
+  const agentRunColumns = new URL("/rest/v1/agent_runs", config.url);
+  agentRunColumns.searchParams.set("select", "provider,execution_mode");
+  agentRunColumns.searchParams.set("limit", "0");
   const probes = [
     { endpoint: new URL("/auth/v1/settings", config.url), key: config.publicKey },
     { endpoint: new URL("/rest/v1/", config.url), key: config.serviceKey },
+    { endpoint: agentRunColumns, key: config.serviceKey },
   ];
   try {
     const responses = await Promise.all(probes.map(({ endpoint, key }) => request(endpoint, {
@@ -98,7 +109,9 @@ async function databaseCredentialsWork(
         headers: databaseProbeHeaders(key),
         signal: AbortSignal.timeout(5_000),
       })));
-    return responses.every((response) => response.ok);
+    if (!responses.every((response) => response.ok)) return false;
+    const openApi = await responses[1].json() as { paths?: Record<string, unknown> };
+    return FREE_BETA_SCHEMA_PATHS.every((path) => Object.hasOwn(openApi.paths ?? {}, path));
   } catch {
     return false;
   }

@@ -15,7 +15,8 @@ describe("public early-access marketing navigation", () => {
     expect(signInLink).toBeTruthy();
     expect(signInLink).not.toContain("hidden");
     expect(html).toContain('aria-label="Locus home"');
-    expect(html).toContain("Public-Repo localization with visible context evidence");
+    expect(html).toContain("Public-Repo localization with visible Slice evidence");
+    expect(html).toContain("enabled beta accounts");
     expect(html).not.toContain("Pricing");
     expect(html).not.toContain("Verified engineering tasks");
   });

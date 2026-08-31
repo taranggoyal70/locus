@@ -58,15 +58,16 @@ while leaving `LOCUS_PUBLIC_BETA_ENABLED=false`.
 
 1. Save and remove a test Cloudflare connection in Settings. The API response,
    browser storage, logs, Steps, and Artifacts must contain no token.
-2. Save the connection again and complete one BYOK Run. It must reach
+2. Save the connection again and run one BYOK Agent Task. Its Run must reach
    Review-ready, use `provider=cloudflare-workers-ai`, use
    `execution_mode=byok`, pass isolated Checks, and create no external write.
-3. Start one shared Run after 00:00 UTC. It must complete against the same frozen
-   model and create one `agent_provider_daily_claims` row for that UTC day.
+3. Start one shared Run after 00:00 UTC. It must reach Review-ready against the
+   same frozen model and create one `agent_provider_daily_claims` row for that UTC day.
 4. A second shared start must return `429` with `Retry-After` pointing to the
    next UTC reset. A BYOK Run must remain independently admissible.
-5. Reject or accept the proposal against every frozen criterion, verify the
-   immutable proposal hash, and confirm provider capacity enters cooldown.
+5. Review the proposal against every frozen criterion, verify the immutable
+   proposal hash, and confirm provider capacity enters cooldown. Only an
+   explicit Review may complete the Run; Review never authorizes an external write.
 
 The shared canary consumes that day’s free slot. Enable public admission at the
 next UTC reset, not immediately after the canary.

@@ -276,7 +276,7 @@ export function AgentRunPanel({
         <div className="flex items-start justify-between gap-5">
           <div>
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
-              Agent run
+              Agent Run
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-paper">
               Turn the Slice into a review-ready proposal.

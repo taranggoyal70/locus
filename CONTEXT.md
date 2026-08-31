@@ -100,8 +100,31 @@ _Avoid_: saved analysis, prompt, chat.
 
 **Run**:
 One durable attempt to complete an Agent Task. A Run owns its status, model,
-Sandbox identity, Slice ledger, Steps, Artifacts, Reviews, Approvals, and token usage.
+provider, **Agent execution mode**, Sandbox identity, Slice ledger, Steps,
+Artifacts, Reviews, Approvals, and token usage.
 _Avoid_: session, conversation, request.
+
+**Agent execution mode** (`AgentExecutionMode`):
+The provider-capacity source frozen onto a Run at admission. `shared` uses
+Locus's reviewed Cloudflare Workers AI connection and its global daily claim;
+`byok` uses the Run owner's saved **Provider connection** and an owner-isolated
+capacity lease. The mode never changes during a Run and never selects a
+different model or data policy.
+_Avoid_: plan, tier, billing mode, provider fallback.
+
+**Provider connection**:
+A user-owned Cloudflare Account ID and Workers AI API token, encrypted before
+storage and read only by server-side Agent execution. User-facing surfaces
+expose connection status, never the stored identifier, token, or ciphertext.
+Removing it deletes the stored credential; it does not rewrite existing Runs.
+_Avoid_: API key record, integration secret, shared credential.
+
+**Provider daily claim**:
+The durable, atomic UTC-day admission record for shared Agent capacity. A claim
+survives Run failure so retrying cannot multiply free-provider usage. It is
+distinct from the short-lived provider capacity lease that prevents concurrent
+use while a Run is active.
+_Avoid_: per-user quota, reservation, billing record.
 
 **Step**:
 An ordered, auditable unit inside a Run: Localize, plan, tool, Widen, verify,
@@ -232,6 +255,9 @@ _Avoid_: feature flag, toggle, permission.
   Artifacts, and Approvals.
 - `supabase/migrations/012_release1_run_evidence.sql` — immutable proposal
   hashes, Reviews, and atomic review-ready publication.
+- `supabase/migrations/018_free_public_beta.sql` — frozen provider and **Agent
+  execution mode**, encrypted **Provider connections**, and atomic **Provider
+  daily claims**.
 
 ## Invariants
 

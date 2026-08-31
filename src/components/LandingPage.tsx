@@ -20,7 +20,7 @@ export function LandingPage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface/75 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Public early access
+              Free public localization
             </div>
             <h1 className="mt-7 font-display text-[clamp(3.6rem,8vw,7.8rem)] font-semibold leading-[.82] tracking-[-0.075em] text-paper">
               Ship the task.

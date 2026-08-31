@@ -41,7 +41,7 @@ describe("findBannedAlphaClaims", () => {
     ]);
   });
 
-  it("accepts bounded beta language without treating it as an outcome claim", () => {
+  it("rejects shared-capacity claims that bypass the production canary", () => {
     expect(
       findBannedAlphaClaims([
         {
@@ -49,6 +49,13 @@ describe("findBannedAlphaClaims", () => {
           content: "Limited public beta: one shared Agent Run per UTC day.",
         },
       ]),
-    ).toEqual([]);
+    ).toEqual(["landing.tsx: ungated public Agent beta"]);
+  });
+
+  it("accepts bounded beta language that keeps Agent access gated", () => {
+    expect(findBannedAlphaClaims([{
+      path: "landing.tsx",
+      content: "Agent Runs remain access-gated until the production canary passes.",
+    }])).toEqual([]);
   });
 });

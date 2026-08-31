@@ -11,11 +11,12 @@ describe("public early-access landing contract", () => {
     const evidencePath = process.env.NO_MISTAKES_RENDERED_LANDING_HTML;
     if (evidencePath) writeFileSync(evidencePath, `${html}\n`);
 
-    expect(html).toContain("Public early access");
+    expect(html).toContain("Free public localization");
     expect(html).toContain("Watch migration demo");
     expect(html).toContain('href="/demo"');
     expect(html).toContain("Try Repo localization");
     expect(html).toContain("Request Agent Run access");
+    expect(html).toContain("access required");
     expect(html).toContain("review-ready, check-passing proposal");
     expect(html).toContain("Illustrative example");
     expect(html).toContain("recall on the cases in our suite");

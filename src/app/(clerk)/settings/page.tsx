@@ -4,18 +4,17 @@ import { redirect } from "next/navigation";
 import { AccountEmailPanel } from "@/components/AccountEmailPanel";
 import { AlphaSettingsNotice } from "@/components/AlphaSettingsNotice";
 import { ApiKeysPanel } from "@/components/ApiKeysPanel";
-<<<<<<< HEAD
-import { ProjectsList } from "@/components/ProjectsList";
-=======
 import { CloudflareConnectionPanel } from "@/components/CloudflareConnectionPanel";
->>>>>>> 8982add (feat(ui): explain limited shared runs and Cloudflare setup)
+import { ProjectsList } from "@/components/ProjectsList";
 import { SettingsShell } from "@/components/SettingsShell";
 import { admissionForAccount } from "@/lib/admission-server";
 import { UsageStats } from "@/components/UsageStats";
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 
 export default async function SettingsPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
+  const runStartEnabled = alphaCapabilitiesForUser(userId).runStart;
 
   const [user, admission] = await Promise.all([
     currentUser(),
@@ -35,9 +34,12 @@ export default async function SettingsPage() {
           email={primaryEmail?.emailAddress ?? null}
           verified={primaryEmail?.verification?.status === "verified"}
         />
+        {/* BYOK capacity, from the free-beta branch: an account that has used the
+            shared daily Run can connect its own Cloudflare account and continue. */}
+        <CloudflareConnectionPanel />
         <section>
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Agent capacity</h2>
-          <p className="mt-1 text-sm text-muted-light">Use the shared daily Run or connect capacity you control.</p>
+          <p className="mt-1 text-sm text-muted-light">Prepare a Cloudflare connection, or use shared capacity when Agent access is enabled.</p>
           <div className="mt-4">
             <CloudflareConnectionPanel />
           </div>
