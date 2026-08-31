@@ -198,20 +198,23 @@ describe("agent command boundary", () => {
 
 describe("agent context budget", () => {
   it("keeps Slice contents behind read_file instead of repeating them on every model turn", () => {
-    const sentinel = "private-implementation-detail".repeat(8_000);
+    const included = Array.from(
+      { length: 500 },
+      (_, index) => `src/features/feature-${index.toString().padStart(3, "0")}.ts`,
+    );
     const prompt = buildAgentPrompt({
       task: "Fix the dashboard total",
       acceptanceCriteria: ["The total matches the API response"],
       reason: "dashboard path and source matched",
       baselineTokens: 180_000,
-      included: ["src/dashboard.ts"],
+      included,
       excluded: ["src/billing.ts"],
     });
 
-    expect(prompt).toContain("src/dashboard.ts");
+    expect(prompt).toContain(included[0]);
+    expect(prompt).toContain(included[499]);
     expect(prompt).toContain("read_file");
-    expect(prompt).not.toContain(sentinel);
-    expect(prompt.length).toBeLessThan(5_000);
+    expect(prompt.length).toBeLessThan(25_000);
   });
 
   it("starts with included and excluded path ledgers", () => {

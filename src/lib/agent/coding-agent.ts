@@ -152,9 +152,15 @@ function createWorkspaceTools(controller: WorkspaceController) {
       execute: async () => controller.listFiles(),
     }),
     read_file: tool({
-      description: "Read a file already available in the active Slice.",
-      inputSchema: z.object({ path: z.string().max(500) }),
-      execute: async ({ path }, { abortSignal }) => controller.readFile(path, abortSignal),
+      description:
+        "Read a page of a file already available in the active Slice. Use startLine to continue past the first page.",
+      inputSchema: z.object({
+        path: z.string().max(500),
+        startLine: z.number().int().min(1).optional(),
+        maxLines: z.number().int().min(1).max(320).optional(),
+      }),
+      execute: async ({ path, startLine, maxLines }, { abortSignal }) =>
+        controller.readFile(path, { startLine, maxLines, abortSignal }),
     }),
     search_slice: tool({
       description: "Search exact text only within files currently available in the active Slice.",

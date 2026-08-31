@@ -103,6 +103,18 @@ describe("agent workspace", () => {
     expect(controller.ledger().widened).toEqual(["src/excluded.ts"]);
   });
 
+  it("can page beyond the first 320 lines of a large included file", async () => {
+    const { controller, workspace } = setup();
+
+    await controller.readFile("src/included.ts", { startLine: 321, maxLines: 120 });
+
+    expect(workspace.commands[0].env).toMatchObject({
+      LOCUS_PATH: "src/included.ts",
+      LOCUS_START_LINE: "321",
+      LOCUS_MAX_LINES: "120",
+    });
+  });
+
   it("searches only files currently readable by the agent", async () => {
     const { controller, workspace } = setup();
 
