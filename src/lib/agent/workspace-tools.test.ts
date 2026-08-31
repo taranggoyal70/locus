@@ -197,25 +197,37 @@ describe("agent command boundary", () => {
 });
 
 describe("agent context budget", () => {
-  it("starts with included contents and an excluded path ledger", () => {
+  it("keeps Slice contents behind read_file instead of repeating them on every model turn", () => {
+    const sentinel = "private-implementation-detail".repeat(8_000);
+    const prompt = buildAgentPrompt({
+      task: "Fix the dashboard total",
+      acceptanceCriteria: ["The total matches the API response"],
+      reason: "dashboard path and source matched",
+      baselineTokens: 180_000,
+      included: ["src/dashboard.ts"],
+      excluded: ["src/billing.ts"],
+    });
+
+    expect(prompt).toContain("src/dashboard.ts");
+    expect(prompt).toContain("read_file");
+    expect(prompt).not.toContain(sentinel);
+    expect(prompt.length).toBeLessThan(5_000);
+  });
+
+  it("starts with included and excluded path ledgers", () => {
     const prompt = buildAgentPrompt({
       task: "Fix the dashboard total",
       acceptanceCriteria: ["The total matches the API response"],
       reason: "dashboard path and source matched",
       baselineTokens: 12_000,
-      included: [
-        {
-          path: "src/dashboard.ts",
-          content: "export const total = 0;",
-        },
-      ],
+      included: ["src/dashboard.ts"],
       excluded: ["src/billing.ts"],
     });
 
     expect(prompt).toContain("src/dashboard.ts");
-    expect(prompt).toContain("export const total = 0;");
     expect(prompt).toContain("src/billing.ts");
     expect(prompt).toContain("12,000");
+    expect(prompt).toContain("read_file");
     expect(prompt).toContain("widen_file");
   });
 
@@ -227,18 +239,13 @@ describe("agent context budget", () => {
       baselineTokens: 12_000,
       sparse: true,
       edgeDensity: 0,
-      included: [
-        {
-          path: "src/dashboard.ts",
-          content: "export const total = 0;",
-        },
-      ],
+      included: ["src/dashboard.ts"],
       excluded: ["src/billing.ts"],
     });
 
     expect(prompt).toContain("Warning: few internal imports resolved (0.00 edges/file)");
     expect(prompt.indexOf("Warning: few internal imports resolved")).toBeLessThan(
-      prompt.indexOf("===== src/dashboard.ts ====="),
+      prompt.indexOf("- src/dashboard.ts"),
     );
   });
 
