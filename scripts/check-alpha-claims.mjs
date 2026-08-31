@@ -38,6 +38,8 @@ const bannedClaims = [
   ["verified delivery", /verified delivery/i],
   ["unreleased upgrade", /upgrade\s+(?:for|to).*?(?:private repo|team|pro)/i],
   ["unsupported verified-run quota", /(?:ten|10)\s+verified\s+agent\s+runs/i],
+  ["ungated public Agent beta", /(?:Locus is in|Limited public beta\s*[:·])[^\n]*shared Agent Run/i],
+  ["pre-canary shared capacity", /Agent Runs use one shared daily/i],
 ];
 
 export function findBannedAlphaClaims(sources) {

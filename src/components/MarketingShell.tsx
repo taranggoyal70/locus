@@ -31,7 +31,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
               <Image src="/locus-mark.svg" width={24} height={24} alt="" />
               <span className="font-display font-semibold text-paper">Locus</span>
             </div>
-            <p className="mt-3 max-w-md text-xs leading-5 text-muted-light">Public-Repo localization with visible context evidence. Use the shared daily Run or connect your own Cloudflare capacity.</p>
+            <p className="mt-3 max-w-md text-xs leading-5 text-muted-light">Public-Repo localization with visible Slice evidence. Agent Runs are available only to enabled beta accounts.</p>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-light sm:justify-end">
             <Link href="/demo" className="hover:text-paper">Demo</Link>

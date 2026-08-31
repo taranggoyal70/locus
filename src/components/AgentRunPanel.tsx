@@ -273,7 +273,7 @@ export function AgentRunPanel({
         <div className="flex items-start justify-between gap-5">
           <div>
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
-              Agent run
+              Agent Run
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-paper">
               Turn the Slice into a review-ready proposal.
@@ -378,7 +378,7 @@ export function AgentRunPanel({
             </button>
             <p className="mt-3 text-[11px] leading-5 text-muted">
               {canStartRun
-                ? "Executes in an isolated Sandbox. GitHub delivery remains disabled until you review the proposal."
+                ? "Executes in an isolated Sandbox. External GitHub delivery is unavailable in early access; Review records correctness and never authorizes a write."
                 : "Agent Run starts are currently closed. You can still inspect the complete Slice above."}
             </p>
           </>

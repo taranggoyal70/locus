@@ -19,7 +19,7 @@ cancelled, and reviewed from the Runs ledger.
 
 | Surface | Use case |
 |---------|----------|
-| **Limited public beta** | Self-serve localization plus one shared Agent Run per UTC day or connected Cloudflare capacity |
+| **Agent beta rollout** | Self-serve localization is open; Agent access remains gated until the frozen production canary passes |
 | **Experimental REST API** | Programmatic localization for public Repos |
 | **Source runtimes** | CLI and MCP implementations used from a source checkout; no npm package is published |
 

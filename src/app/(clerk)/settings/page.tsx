@@ -6,10 +6,12 @@ import { ApiKeysPanel } from "@/components/ApiKeysPanel";
 import { CloudflareConnectionPanel } from "@/components/CloudflareConnectionPanel";
 import { SettingsShell } from "@/components/SettingsShell";
 import { UsageStats } from "@/components/UsageStats";
+import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 
 export default async function SettingsPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
+  const runStartEnabled = alphaCapabilitiesForUser(userId).runStart;
 
   return (
     <SettingsShell>
@@ -18,10 +20,10 @@ export default async function SettingsPage() {
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">Connections, limits, and credentials for your agent workspace.</p>
       <div className="aperture-rule mt-7" />
       <div className="mt-8 space-y-10">
-        <AlphaSettingsNotice />
+        <AlphaSettingsNotice runStartEnabled={runStartEnabled} />
         <section>
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Agent capacity</h2>
-          <p className="mt-1 text-sm text-muted-light">Use the shared daily Run or connect capacity you control.</p>
+          <p className="mt-1 text-sm text-muted-light">Prepare a Cloudflare connection, or use shared capacity when Agent access is enabled.</p>
           <div className="mt-4">
             <CloudflareConnectionPanel />
           </div>

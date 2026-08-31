@@ -17,7 +17,7 @@ export function LandingPage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface/75 px-3 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Public early access
+              Free public localization
             </div>
             <h1 className="mt-7 font-display text-[clamp(3.6rem,8vw,7.8rem)] font-semibold leading-[.82] tracking-[-0.075em] text-paper">
               Ship the task.
@@ -33,7 +33,7 @@ export function LandingPage() {
               <Link href="/workspace" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Try Repo localization</Link>
               <Link href="/pricing" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Request Agent Run access</Link>
             </div>
-            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Limited public beta · public Repos only · one shared Run daily</p>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Agent Runs are limited beta · public Repos only · access required</p>
           </div>
 
           <div className="relative">

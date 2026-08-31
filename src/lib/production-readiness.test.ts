@@ -17,13 +17,25 @@ const complete = {
   OPS_ALERT_WEBHOOK_URL: "https://alerts.example/locus",
 };
 
-const databaseReady = vi.fn(async () => new Response(null, { status: 200 }));
+const requiredSchemaPaths = {
+  "/agent_provider_credentials": {},
+  "/agent_provider_daily_claims": {},
+  "/rpc/claim_agent_provider_daily_slot": {},
+  "/rpc/claim_agent_run_slot": {},
+};
+
+function successfulProbeResponse(input: string | URL): Response {
+  return String(input).endsWith("/rest/v1/")
+    ? Response.json({ paths: requiredSchemaPaths })
+    : new Response(null, { status: 200 });
+}
+
+const databaseReady = vi.fn(async (input: string | URL) => successfulProbeResponse(input));
 
 function recordingProbe() {
   return vi.fn(async (input: string | URL, init?: RequestInit) => {
-    void input;
     void init;
-    return new Response(null, { status: 200 });
+    return successfulProbeResponse(input);
   });
 }
 
@@ -124,6 +136,7 @@ describe("production readiness", () => {
     expect(probe.mock.calls.map(([, init]) => init?.headers)).toEqual([
       { apikey: complete.NEXT_PUBLIC_SUPABASE_ANON_KEY },
       { apikey: complete.SUPABASE_SERVICE_ROLE_KEY },
+      { apikey: complete.SUPABASE_SERVICE_ROLE_KEY },
     ]);
   });
 
@@ -135,6 +148,7 @@ describe("production readiness", () => {
     expect(probe.mock.calls.map(([input]) => String(input))).toEqual([
       "https://project.supabase.co/auth/v1/settings",
       "https://project.supabase.co/rest/v1/",
+      "https://project.supabase.co/rest/v1/agent_runs?select=provider%2Cexecution_mode&limit=0",
     ]);
   });
 
@@ -152,13 +166,26 @@ describe("production readiness", () => {
     expect(probe.mock.calls.map(([, init]) => init?.headers)).toEqual([
       { apikey: publicKey, Authorization: `Bearer ${publicKey}` },
       { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+      { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
     ]);
+  });
+
+  it("fails closed until the free-beta tables, columns, and RPCs are visible", async () => {
+    const staleSchema = vi.fn(async (input: string | URL) => String(input).endsWith("/rest/v1/")
+      ? Response.json({ paths: { "/agent_runs": {} } })
+      : new Response(null, { status: 200 }));
+
+    await expect(productionReadiness(complete, staleSchema)).resolves.toMatchObject({
+      ready: false,
+      missing: ["database"],
+    });
   });
 
   it("fails closed when Supabase rejects a well-shaped credential", async () => {
     const rejectedCredential = vi.fn()
       .mockResolvedValueOnce(new Response(null, { status: 200 }))
-      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
 
     await expect(productionReadiness(complete, rejectedCredential)).resolves.toMatchObject({
       ready: false,
