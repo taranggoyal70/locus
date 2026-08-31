@@ -19,7 +19,7 @@ cancelled, and reviewed from the Runs ledger.
 
 | Surface | Use case |
 |---------|----------|
-| **Public web early access** | Self-serve localization for public Repos; Agent Runs remain invite-gated |
+| **Limited public beta** | Self-serve localization plus one shared Agent Run per UTC day or connected Cloudflare capacity |
 | **Experimental REST API** | Programmatic localization for public Repos |
 | **Source runtimes** | CLI and MCP implementations used from a source checkout; no npm package is published |
 

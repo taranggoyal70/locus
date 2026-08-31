@@ -25,7 +25,6 @@ function discoverPublicSurfaces() {
 const bannedClaims = [
   ["paid price", /\$29/i],
   ["private repository support", /private repositories/i],
-  ["public-beta availability", /public beta/i],
   ["verified-run availability", /start a verified run/i],
   ["whole-task token savings", /fewer total tokens per verified task/i],
   ["verified token savings", /verified token savings/i],
