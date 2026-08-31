@@ -39,7 +39,7 @@ export async function transitionRun(input: {
     .eq("id", input.runId)
     .eq("user_id", input.userId)
     .single();
-  if (!currentError && currentRun?.status === input.next) return;
+  if (!isTerminalRun(input.next) && !currentError && currentRun?.status === input.next) return;
 
   throw new Error(`Run could not transition from ${input.current} to ${input.next}`);
 }
