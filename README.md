@@ -117,7 +117,7 @@ pnpm dev
 |----------|---------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk authentication |
 | `CLERK_SECRET_KEY` | Clerk server-side auth |
-| `ALPHA_ALLOWED_USER_IDS` | Comma-separated Clerk user IDs allowed to start Agent Runs |
+| `ALPHA_ALLOWED_USER_IDS` | Comma-separated Clerk user IDs admitted to the `partner` Tier |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client configuration |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side only) |
@@ -129,6 +129,7 @@ pnpm dev
 
 | Variable | Purpose |
 |----------|---------|
+| `LOCUS_SELF_SERVE` | Set to `open` to admit any signed-in account to the `free` Tier. Absent keeps the deployment invite-only |
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
@@ -138,6 +139,31 @@ pnpm dev
 On Vercel, AI Gateway authentication uses the deployment's short-lived OIDC
 credential automatically. Local development can use `AI_GATEWAY_API_KEY`; do
 not add a direct model-provider key to the application.
+
+### Admission and Tiers
+
+Every signed-in account resolves to one **Tier**, and the Tier decides both what
+the account may do and how many Agent Runs it may hold open.
+
+| Tier | How it is reached | Runs (active / daily) | Public Repos | Private Repos | PR delivery | Billing |
+|------|-------------------|----------------------|--------------|---------------|-------------|---------|
+| `visitor` | Signed out, waitlisted, or suspended | 0 / 0 | read only | no | no | no |
+| `free` | Any signed-in account while `LOCUS_SELF_SERVE=open` | 1 / 3 | yes | no | no | yes |
+| `partner` | Listed in `ALPHA_ALLOWED_USER_IDS` | 2 / 10 | yes | yes | yes | comped |
+| `pro` | Active Stripe subscription | 5 / 50 | yes | yes | yes | yes |
+
+Several rules can match at once; the highest Tier wins, so a design partner who
+later subscribes gains the paid Tier rather than keeping the comped one.
+
+An operator row in `account_admissions` can raise an account above what these
+rules give it, or refuse one outright by storing `visitor`. A stored refusal
+beats every other rule, including an active subscription.
+
+Capabilities are withheld separately by `CAPABILITY_RELEASE` in
+[`src/lib/admission.ts`](src/lib/admission.ts). The table above is the ladder as
+designed; the release record is what has actually shipped, and the two are
+intersected. Opening self-serve therefore cannot release a capability by
+accident: that is always a separate, reviewable commit.
 
 ### Authentication
 
