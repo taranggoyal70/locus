@@ -2,19 +2,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const readStoredAdmission = vi.fn();
 const hasActiveSubscription = vi.fn();
+const admitSelfServe = vi.fn();
 
 vi.mock("@/lib/admission-store", () => ({
   readStoredAdmission: (userId: string) => readStoredAdmission(userId),
   hasActiveSubscription: (userId: string) => hasActiveSubscription(userId),
+  admitSelfServe: (userId: string) => admitSelfServe(userId),
 }));
 
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 
-const { admissionForAccount } = await import("@/lib/admission-server");
+const { admissionForAccount, admitOnFirstUse } = await import("@/lib/admission-server");
 
 beforeEach(() => {
   readStoredAdmission.mockResolvedValue(null);
   hasActiveSubscription.mockResolvedValue(false);
+  admitSelfServe.mockResolvedValue({ tier: "free", source: "self_serve" });
   vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "");
   vi.stubEnv("LOCUS_SELF_SERVE", "");
 });
@@ -93,5 +96,38 @@ describe("admissionForAccount", () => {
       const admission = await admissionForAccount("user_customer");
       expect(admission.tier).toBe("visitor");
     });
+  });
+});
+
+describe("admitOnFirstUse", () => {
+  it("records the grant for a stranger admitted by self-serve", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    const admission = await admitOnFirstUse("user_stranger");
+    expect(admission).toMatchObject({ tier: "free", reason: "self_serve" });
+    expect(admitSelfServe).toHaveBeenCalledWith("user_stranger");
+  });
+
+  it("writes nothing for an account admitted by any other rule", async () => {
+    // A partner, a subscriber, and an account that already has a stored record
+    // all resolve without self-serve. Writing for them would either duplicate a
+    // row or invent a `self_serve` provenance for a grant that was not.
+    vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_partner");
+    await admitOnFirstUse("user_partner");
+    readStoredAdmission.mockResolvedValue({ tier: "pro", source: "operator" });
+    await admitOnFirstUse("user_customer");
+    expect(admitSelfServe).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing for a signed-out request", async () => {
+    await admitOnFirstUse(null);
+    expect(admitSelfServe).not.toHaveBeenCalled();
+  });
+
+  it("still renders the workspace when the grant cannot be written", async () => {
+    // The row is an audit record, not the access decision. Refusing to serve the
+    // product over missing paperwork trades the thing for the record of it.
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    admitSelfServe.mockRejectedValue(new Error("write failed"));
+    await expect(admitOnFirstUse("user_stranger")).resolves.toMatchObject({ tier: "free" });
   });
 });

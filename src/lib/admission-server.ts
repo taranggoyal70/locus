@@ -6,7 +6,7 @@ import {
   type AccountAdmission,
   type AdmissionCapabilities,
 } from "@/lib/admission";
-import { hasActiveSubscription, readStoredAdmission } from "@/lib/admission-store";
+import { admitSelfServe, hasActiveSubscription, readStoredAdmission } from "@/lib/admission-store";
 import { logger } from "@/lib/logger";
 
 export type { AccountAdmission };
@@ -81,4 +81,34 @@ export async function accountCan(
 ): Promise<boolean> {
   if (!CAPABILITY_RELEASE[capability]) return false;
   return (await admissionForAccount(userId)).capabilities[capability];
+}
+
+/**
+ * Resolve the Admission and, for a stranger arriving while self-serve is open,
+ * write the `free` grant that resolution would otherwise only imply.
+ *
+ * Called from the workspace, which is the moment an account first uses the
+ * product rather than merely holds credentials. Deriving `free` from the flag on
+ * every request would work, so this is not about access - it is about there
+ * being a row. A row carries `granted_at`, which is the only record of when an
+ * account arrived, and it gives an operator something to edit when they need to
+ * change one account's tier.
+ *
+ * A failed write is logged and swallowed. The Admission it would have recorded
+ * is the same one resolution already produced, so refusing to render the
+ * workspace over a missing audit row would trade the product for the paperwork.
+ */
+export async function admitOnFirstUse(userId: string | null): Promise<AccountAdmission> {
+  const admission = await admissionForAccount(userId);
+  if (!userId) return admission;
+  if (admission.reason !== "self_serve") return admission;
+
+  try {
+    await admitSelfServe(userId);
+  } catch (error) {
+    logger.error("admission.self_serve_record_failed", {
+      reason: error instanceof Error ? error.message : "unknown",
+    });
+  }
+  return admission;
 }

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LocusApp } from "@/components/LocusApp";
-import { admissionForAccount } from "@/lib/admission-server";
+import { admitOnFirstUse } from "@/lib/admission-server";
 
 type WorkspacePageProps = {
   searchParams: Promise<{ run?: string | string[] }>;
@@ -23,7 +23,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
   // awaiting them in sequence would add a database round trip to every load.
   const [user, admission] = await Promise.all([
     currentUser(),
-    admissionForAccount(userId),
+    admitOnFirstUse(userId),
   ]);
   const accountName = user?.firstName ?? user?.primaryEmailAddress?.emailAddress?.split("@")[0];
 
