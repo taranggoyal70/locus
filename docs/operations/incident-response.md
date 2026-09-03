@@ -16,10 +16,20 @@ Response targets are four hours for Critical, one business day for High, and thr
 
 1. Record UTC start time, production revision, reporter, incident lead, and one redacted correlation ID.
 2. Confirm scope from durable evidence. Do not infer success from HTTP status or a single passing Check.
-3. Disable new Agent Runs by clearing `ALPHA_ALLOWED_USER_IDS` in production and redeploying. Do not delete existing evidence.
-4. For credential exposure, revoke and rotate the affected provider, Supabase, Clerk, GitHub, or Vercel credential. Never paste the replacement into the incident record.
-5. For unexpected external writes, keep delivery capability off and revoke stored connections. Do not re-enable a public write policy.
-6. For provider quota incidents, leave the global lease/cooldown enabled, inspect `failure_kind`, and wait for the provider window before a single controlled retry.
+3. Disable new Agent Runs. This takes **two** changes when self-serve is open, and doing only the first is the most likely mistake in this runbook: clear `ALPHA_ALLOWED_USER_IDS` **and** clear `LOCUS_SELF_SERVE`, then redeploy. Confirm containment against `/api/health`, which must report `readiness.admission: "invite_only"` and an empty allowlist — a deploy that did not take looks identical to one that did from the dashboard. Neither change cancels Runs already queued behind the provider lease; cancel those separately if the incident requires it. Do not delete existing evidence.
+4. To contain a single account rather than everyone, store an explicit refusal instead of closing the product. This takes effect on that account's next request with no deploy, and it beats the allowlist and an active subscription:
+
+   ```sql
+   insert into public.account_admissions (user_id, tier, source, note)
+   values ('user_2abc…', 'visitor', 'operator', 'Incident <id>: <one line>')
+   on conflict (user_id) do update
+     set tier = 'visitor', source = 'operator', note = excluded.note;
+   ```
+
+   Always write the `note`. "Who let this account in, and who took it out?" is answerable only from the row.
+5. For credential exposure, revoke and rotate the affected provider, Supabase, Clerk, GitHub, or Vercel credential. Never paste the replacement into the incident record.
+6. For unexpected external writes, keep delivery capability off and revoke stored connections. Do not re-enable a public write policy.
+7. For provider quota incidents, leave the global lease/cooldown enabled, inspect `failure_kind`, and wait for the provider window before a single controlled retry.
 
 ## Diagnose and recover
 
@@ -28,6 +38,8 @@ Response targets are four hours for Critical, one business day for High, and thr
 - Roll application code back first when the schema is backward compatible. Release 1 migrations are additive and should normally remain in place.
 - Fix forward database security, RLS, review immutability, and retention defects. Never restore public table writes or deleted legacy OAuth tokens.
 - Run the post-migration and production canaries in `release-1-readiness-rollout.md` before reopening admission to one design partner.
+- Reopen in the order the doors were closed, not together: restore the allowlist first and canary one design partner, then reopen `LOCUS_SELF_SERVE` only after that canary passes. Reopening both at once means a recurrence cannot be attributed to either.
+- Admission fails closed on its own outage: when `account_admissions` cannot be read, only the allowlist is honoured and self-serve is forced closed. A wave of `admission.read_failed` in the logs is therefore a database symptom, not an access-control breach — but it does mean suspensions are not being read, so a suspended account is refused only because self-serve is closed too. Restore the database before reopening.
 
 ## Communication and closure
 
