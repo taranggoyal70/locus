@@ -1,0 +1,97 @@
+name: Release locus-context
+
+# Manual dispatch only. There is deliberately no push, tag, or release trigger:
+# publishing to a public registry is irreversible for a given version number, and
+# a workflow that fires on a branch event will eventually fire on one nobody
+# meant to publish. A human names the version they are releasing.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, and it must already match cli/package.json"
+        required: true
+        type: string
+      dry_run:
+        description: "Pack and verify without publishing"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-cli
+  cancel-in-progress: false
+
+# R8: every action is pinned to a full commit SHA, matching ci.yml. A release
+# workflow holds a registry credential, so an unreviewed code-execution path here
+# is worse than one in CI.
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      # Required for npm provenance: the registry verifies this token against the
+      # workflow run that produced the tarball.
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      # The published files are copies of bin/. Publishing while the two have
+      # drifted would ship source that no test in this repository ever ran.
+      - run: pnpm check-sync
+
+      # The full gate, not a subset. A release is the one moment where skipping a
+      # check to save four minutes is most tempting and least defensible.
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm tsc --noEmit
+      - run: pnpm audit --audit-level high
+
+      - name: Verify the requested version matches the manifest
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          MANIFEST="$(node -p 'require("./cli/package.json").version')"
+          if [ "$MANIFEST" != "$REQUESTED" ]; then
+            echo "Requested $REQUESTED but cli/package.json is $MANIFEST." >&2
+            echo "Commit the version bump first; this workflow does not edit the manifest." >&2
+            exit 1
+          fi
+
+      - name: Refuse to republish an existing version
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          # `npm publish` fails on a duplicate anyway, but it does so after the
+          # tarball has been built and the credential has been used. Failing here
+          # keeps the token out of a doomed request and gives a readable reason.
+          if npm view "locus-context@$REQUESTED" version >/dev/null 2>&1; then
+            echo "locus-context@$REQUESTED is already published. Versions are immutable." >&2
+            exit 1
+          fi
+
+      - name: Pack and show exactly what would ship
+        working-directory: cli
+        run: npm pack --dry-run
+
+      - name: Publish
+        if: ${{ inputs.dry_run == false }}
+        working-directory: cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
