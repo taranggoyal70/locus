@@ -16,7 +16,7 @@ git diff --quiet
 git diff --cached --quiet
 pnpm lint
 pnpm test
-pnpm tsc --noEmit
+pnpm typecheck
 pnpm check:alpha-claims
 pnpm evidence:release1
 pnpm check-sync

@@ -19,7 +19,7 @@ pnpm lint
 pnpm test
 pnpm check:alpha-claims
 pnpm check-sync
-pnpm tsc --noEmit
+pnpm typecheck
 pnpm build
 pnpm audit --prod --audit-level high
 ```

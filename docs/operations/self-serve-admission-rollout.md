@@ -20,7 +20,7 @@ From a clean `main` checkout that matches `origin/main`:
 ```bash
 pnpm lint
 pnpm test
-pnpm tsc --noEmit
+pnpm typecheck
 pnpm check:alpha-claims
 pnpm check-sync
 pnpm build

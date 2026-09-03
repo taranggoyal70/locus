@@ -57,7 +57,7 @@ jobs:
       # check to save four minutes is most tempting and least defensible.
       - run: pnpm lint
       - run: pnpm test
-      - run: pnpm tsc --noEmit
+      - run: pnpm typecheck
       - run: pnpm audit --audit-level high
 
       - name: Verify the requested version matches the manifest

@@ -245,7 +245,7 @@ Run the same checks locally:
 ```bash
 pnpm lint
 pnpm test
-pnpm exec tsc --noEmit
+pnpm typecheck
 pnpm check-sync
 pnpm evidence:release1
 pnpm build
