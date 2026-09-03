@@ -168,9 +168,11 @@ _Avoid_: authorization, gating, entitlement check.
 
 **Capability** (`AdmissionCapabilities`):
 One named thing an account may do: start a Run, connect GitHub, read a private
-Repo, use Teams, see a Savings claim, deliver externally, or manage billing.
-Capabilities are derived from a Tier, never stored per account and never read
-directly from an environment variable at a call site.
+Repo, use Teams, deliver externally, or manage billing. Capabilities are derived
+from a Tier, never stored per account and never read directly from an environment
+variable at a call site. There is deliberately no Capability for **Savings
+claims**: that is decided from paired-baseline evidence by `savingsClaimForRun`,
+and no Tier can buy past it.
 _Avoid_: feature flag, toggle, permission.
 
 ## Where it lives (read these, don't re-crawl)

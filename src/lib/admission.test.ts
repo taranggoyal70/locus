@@ -41,7 +41,6 @@ describe("Capabilities for a Tier", () => {
       githubConnect: false,
       privateRepoRead: false,
       teams: false,
-      savingsClaims: false,
       delivery: false,
       billing: false,
     });
@@ -53,7 +52,6 @@ describe("Capabilities for a Tier", () => {
       githubConnect: true,
       privateRepoRead: false,
       teams: false,
-      savingsClaims: true,
       delivery: false,
       billing: true,
     });
@@ -65,7 +63,6 @@ describe("Capabilities for a Tier", () => {
       githubConnect: true,
       privateRepoRead: true,
       teams: false,
-      savingsClaims: true,
       delivery: true,
       billing: false,
     });
@@ -77,7 +74,6 @@ describe("Capabilities for a Tier", () => {
       githubConnect: true,
       privateRepoRead: true,
       teams: true,
-      savingsClaims: true,
       delivery: true,
       billing: true,
     });
@@ -91,7 +87,6 @@ describe("Capabilities for a Tier", () => {
       "githubConnect",
       "privateRepoRead",
       "teams",
-      "savingsClaims",
       "delivery",
     ] as const;
 
@@ -218,7 +213,6 @@ describe("capability release", () => {
       githubConnect: true,
       privateRepoRead: true,
       teams: true,
-      savingsClaims: true,
       delivery: true,
       billing: true,
     };
@@ -233,7 +227,6 @@ describe("capability release", () => {
       githubConnect: true,
       privateRepoRead: true,
       teams: true,
-      savingsClaims: true,
       delivery: false,
       billing: true,
     };
@@ -253,7 +246,6 @@ describe("capability release", () => {
       githubConnect: false,
       privateRepoRead: false,
       teams: false,
-      savingsClaims: false,
       delivery: false,
       billing: false,
     });

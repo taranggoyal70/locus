@@ -37,7 +37,6 @@ export type AdmissionCapabilities = {
   githubConnect: boolean;
   privateRepoRead: boolean;
   teams: boolean;
-  savingsClaims: boolean;
   delivery: boolean;
   billing: boolean;
 };
@@ -51,6 +50,11 @@ export type AdmissionCapabilities = {
  * reads something private (`privateRepoRead`), which is both the security
  * boundary and the reason to upgrade.
  *
+ * There is no capability for Savings claims, deliberately. Whether a Run may
+ * show one is decided by `savingsClaimForRun` from paired-baseline evidence, and
+ * a Tier cannot buy its way past that. A capability of the same name would be a
+ * second, weaker gate on the same question.
+ *
  * `billing` is the one capability a higher tier can lack: invited partners are
  * comped, so showing them a payment surface would be wrong. Every other axis is
  * monotonic and a test enforces that, because a capability silently revoked by
@@ -62,7 +66,6 @@ const CAPABILITIES_BY_TIER: Record<AdmissionTier, AdmissionCapabilities> = {
     githubConnect: false,
     privateRepoRead: false,
     teams: false,
-    savingsClaims: false,
     delivery: false,
     billing: false,
   },
@@ -71,7 +74,6 @@ const CAPABILITIES_BY_TIER: Record<AdmissionTier, AdmissionCapabilities> = {
     githubConnect: true,
     privateRepoRead: false,
     teams: false,
-    savingsClaims: true,
     delivery: false,
     billing: true,
   },
@@ -80,7 +82,6 @@ const CAPABILITIES_BY_TIER: Record<AdmissionTier, AdmissionCapabilities> = {
     githubConnect: true,
     privateRepoRead: true,
     teams: false,
-    savingsClaims: true,
     delivery: true,
     billing: false,
   },
@@ -89,7 +90,6 @@ const CAPABILITIES_BY_TIER: Record<AdmissionTier, AdmissionCapabilities> = {
     githubConnect: true,
     privateRepoRead: true,
     teams: true,
-    savingsClaims: true,
     delivery: true,
     billing: true,
   },
@@ -157,7 +157,6 @@ export const CAPABILITY_RELEASE: AdmissionCapabilities = {
   githubConnect: false,
   privateRepoRead: false,
   teams: false,
-  savingsClaims: false,
   delivery: false,
   billing: false,
 };
@@ -176,7 +175,6 @@ export function applyCapabilityRelease(
     githubConnect: capabilities.githubConnect && release.githubConnect,
     privateRepoRead: capabilities.privateRepoRead && release.privateRepoRead,
     teams: capabilities.teams && release.teams,
-    savingsClaims: capabilities.savingsClaims && release.savingsClaims,
     delivery: capabilities.delivery && release.delivery,
     billing: capabilities.billing && release.billing,
   };

@@ -19,7 +19,6 @@ describe("shipped controlled-alpha capabilities", () => {
     githubConnect: false,
     privateRepoRead: false,
     teams: false,
-    savingsClaims: false,
     delivery: false,
     billing: false,
   };
