@@ -1,4 +1,5 @@
 import {
+  admissionFromEnvironment,
   admissionWithCapabilities,
   selfServeOpen,
   type AccountAdmission,
@@ -25,15 +26,7 @@ export async function admissionForAccount(
 ): Promise<AccountAdmission> {
   // A signed-out request has no rows to read. Returning before touching the
   // database also means an unauthenticated flood cannot turn into database load.
-  const partnerUserIds = process.env.ALPHA_ALLOWED_USER_IDS;
-  if (!userId) {
-    return admissionWithCapabilities({
-      userId: null,
-      partnerUserIds,
-      subscriptionActive: false,
-      selfServeOpen: false,
-    });
-  }
+  if (!userId) return admissionFromEnvironment(null);
 
   try {
     const [stored, subscriptionActive] = await Promise.all([
@@ -42,7 +35,7 @@ export async function admissionForAccount(
     ]);
     return admissionWithCapabilities({
       userId,
-      partnerUserIds,
+      partnerUserIds: process.env.ALPHA_ALLOWED_USER_IDS,
       subscriptionActive,
       selfServeOpen: selfServeOpen(),
       stored,
@@ -63,11 +56,6 @@ export async function admissionForAccount(
     logger.error("admission.read_failed", {
       reason: error instanceof Error ? error.message : "unknown",
     });
-    return admissionWithCapabilities({
-      userId,
-      partnerUserIds,
-      subscriptionActive: false,
-      selfServeOpen: false,
-    });
+    return admissionFromEnvironment(userId);
   }
 }

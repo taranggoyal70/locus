@@ -316,3 +316,23 @@ export function admissionWithCapabilities(input: AdmissionInput): AccountAdmissi
     runQuota: runQuotaForTier(admission.tier),
   };
 }
+
+/**
+ * Admission from environment state alone: no database read, self-serve forced
+ * closed, no subscription.
+ *
+ * This is the answer for a signed-out request, the fallback when the Admission
+ * rows cannot be read, and the shape a route test wants when it is asserting
+ * something other than tier resolution. Naming it once keeps those three honest
+ * about being the same thing - the outage fallback in particular was a
+ * hand-copied version of this, which is how a fallback drifts from the behavior
+ * it is meant to fall back to.
+ */
+export function admissionFromEnvironment(userId: string | null): AccountAdmission {
+  return admissionWithCapabilities({
+    userId,
+    partnerUserIds: process.env["ALPHA_ALLOWED_USER_IDS"],
+    subscriptionActive: false,
+    selfServeOpen: false,
+  });
+}
