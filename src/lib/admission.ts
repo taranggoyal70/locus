@@ -103,3 +103,36 @@ const CAPABILITIES_BY_TIER: Record<AdmissionTier, AdmissionCapabilities> = {
 export function capabilitiesForTier(tier: AdmissionTier): AdmissionCapabilities {
   return { ...CAPABILITIES_BY_TIER[tier] };
 }
+
+/** How many Runs a Tier may hold open, and how many it may start in a day. */
+export type RunQuota = {
+  maxActiveRuns: number;
+  maxDailyRuns: number;
+};
+
+/**
+ * Run quota is the cost control, so it belongs to the Tier rather than to a pair
+ * of global constants. A free account gets one Run at a time and three a day:
+ * enough to answer "does this work on my repository?" in one sitting, and small
+ * enough that an unattended signup cannot drain provider capacity.
+ *
+ * `partner` intentionally reproduces the 2/10 the controlled alpha already ran
+ * on, so opening self-serve does not quietly change the allowance for the
+ * accounts currently producing Release 1 evidence.
+ *
+ * `visitor` is zero rather than one. A visitor cannot start a Run at all, and a
+ * quota that reads as "one free go" would be a lie the moment someone wired it
+ * to a call site. Zero is outside the range `claim_agent_run_slot` accepts,
+ * which is deliberate: reaching the claim with a visitor quota should fail
+ * loudly rather than admit a Run.
+ */
+const RUN_QUOTA_BY_TIER: Record<AdmissionTier, RunQuota> = {
+  visitor: { maxActiveRuns: 0, maxDailyRuns: 0 },
+  free: { maxActiveRuns: 1, maxDailyRuns: 3 },
+  partner: { maxActiveRuns: 2, maxDailyRuns: 10 },
+  pro: { maxActiveRuns: 5, maxDailyRuns: 50 },
+};
+
+export function runQuotaForTier(tier: AdmissionTier): RunQuota {
+  return { ...RUN_QUOTA_BY_TIER[tier] };
+}

@@ -4,6 +4,7 @@ import {
   ADMISSION_TIERS,
   capabilitiesForTier,
   isAdmissionTier,
+  runQuotaForTier,
   tierAtLeast,
 } from "@/lib/admission";
 
@@ -101,5 +102,44 @@ describe("Capabilities for a Tier", () => {
     const first = capabilitiesForTier("pro");
     first.delivery = false;
     expect(capabilitiesForTier("pro").delivery).toBe(true);
+  });
+});
+
+describe("Run quota for a Tier", () => {
+  it("gives a free account a small allowance it can finish in one sitting", () => {
+    expect(runQuotaForTier("free")).toEqual({ maxActiveRuns: 1, maxDailyRuns: 3 });
+  });
+
+  it("keeps the invited-partner allowance the controlled alpha already ran on", () => {
+    expect(runQuotaForTier("partner")).toEqual({ maxActiveRuns: 2, maxDailyRuns: 10 });
+  });
+
+  it("gives a paid account room to work in parallel", () => {
+    expect(runQuotaForTier("pro")).toEqual({ maxActiveRuns: 5, maxDailyRuns: 50 });
+  });
+
+  it("admits a visitor to nothing", () => {
+    expect(runQuotaForTier("visitor")).toEqual({ maxActiveRuns: 0, maxDailyRuns: 0 });
+  });
+
+  it("never shrinks an allowance as the tier rises", () => {
+    const active = ADMISSION_TIERS.map((tier) => runQuotaForTier(tier).maxActiveRuns);
+    const daily = ADMISSION_TIERS.map((tier) => runQuotaForTier(tier).maxDailyRuns);
+    expect(active).toEqual([...active].sort((a, b) => a - b));
+    expect(daily).toEqual([...daily].sort((a, b) => a - b));
+  });
+
+  it("stays inside the range claim_agent_run_slot will accept for a running tier", () => {
+    // Migration 016 rejects p_max_active outside 1..100 and p_max_daily outside
+    // 1..10000. A tier that can start a Run must therefore carry limits the
+    // authoritative claim can actually be called with.
+    for (const tier of ADMISSION_TIERS) {
+      if (!capabilitiesForTier(tier).runStart) continue;
+      const quota = runQuotaForTier(tier);
+      expect(quota.maxActiveRuns, `${tier} active`).toBeGreaterThanOrEqual(1);
+      expect(quota.maxActiveRuns, `${tier} active`).toBeLessThanOrEqual(100);
+      expect(quota.maxDailyRuns, `${tier} daily`).toBeGreaterThanOrEqual(1);
+      expect(quota.maxDailyRuns, `${tier} daily`).toBeLessThanOrEqual(10_000);
+    }
   });
 });
