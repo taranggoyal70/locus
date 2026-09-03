@@ -57,7 +57,7 @@ describe("controlled-alpha Agent Run start", () => {
     expect(html).toMatch(/<button[^>]*disabled/);
   });
 
-  it("shows a disabled invite state outside the allowlist", () => {
+  it("explains a waitlisted refusal without promising an invitation", () => {
     const html = renderToStaticMarkup(
       <AgentRunPanel
         repository="taranggoyal70/locus"
@@ -69,9 +69,44 @@ describe("controlled-alpha Agent Run start", () => {
       />,
     );
 
-    expect(html).toContain("Invite required");
-    expect(html).toContain("available only to invited design partners");
+    expect(html).toContain("Request access");
+    expect(html).toContain("opening in batches");
+    // The old copy told every refused account it needed an invitation, which
+    // read as "you are next in line" to a suspended user and as a dead end to a
+    // waitlisted one.
+    expect(html).not.toContain("Invite required");
     expect(html).not.toContain("verified saved");
     expect(html).not.toContain("−60%");
+  });
+
+  it("tells a suspended account to contact support instead of to wait", () => {
+    const html = renderToStaticMarkup(
+      <AgentRunPanel
+        repository="taranggoyal70/locus"
+        task="Fix the controlled alpha evidence contract"
+        sliceCount={4}
+        excludedCount={8}
+        acceptanceCriteria={["The evidence contract is factual"]}
+        runAccess={{ canStart: false, tier: "visitor", reason: "suspended", quota: { maxActiveRuns: 0, maxDailyRuns: 0 } }}
+      />,
+    );
+
+    expect(html).toContain("Contact support");
+    expect(html).not.toContain("opening in batches");
+  });
+
+  it("states the plan allowance to an account that can run", () => {
+    const html = renderToStaticMarkup(
+      <AgentRunPanel
+        repository="taranggoyal70/locus"
+        task="Fix the controlled alpha evidence contract"
+        sliceCount={4}
+        excludedCount={8}
+        acceptanceCriteria={["The evidence contract is factual"]}
+        runAccess={{ canStart: true, tier: "free", reason: "self_serve", quota: { maxActiveRuns: 1, maxDailyRuns: 3 } }}
+      />,
+    );
+
+    expect(html).toContain("3 Agent Runs per day");
   });
 });

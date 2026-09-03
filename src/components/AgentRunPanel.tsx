@@ -10,7 +10,7 @@ import {
 } from "@/lib/agent/run-review";
 import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentStepView } from "@/lib/agent/run-view";
-import type { RunAccess } from "@/lib/run-access";
+import { runAccessCopy, type RunAccess } from "@/lib/run-access";
 
 const PHASES: Array<{ label: string; statuses: RunStatus[] }> = [
   { label: "Locate", statuses: ["queued", "localizing"] },
@@ -235,6 +235,7 @@ export function AgentRunPanel({
   }
 
   const canStartRun = runAccess.canStart;
+  const accessCopy = runAccessCopy(runAccess);
   const canLaunch = canStartRun
     && Boolean(repository)
     && task.trim().length >= 10
@@ -303,13 +304,11 @@ export function AgentRunPanel({
               disabled={!canLaunch || launching}
               className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span>{launching ? "Starting durable run…" : canStartRun ? "Run task with Locus" : "Invite required"}</span>
+              <span>{launching ? "Starting durable run…" : accessCopy.action}</span>
               <span aria-hidden>→</span>
             </button>
             <p className="mt-3 text-[11px] leading-5 text-muted">
-              {canStartRun
-                ? "Executes in an isolated Sandbox. GitHub delivery is disabled during early access."
-                : "Agent Runs are available only to invited design partners. You can still inspect the complete Slice above."}
+              {accessCopy.explanation}
             </p>
           </>
         ) : (
