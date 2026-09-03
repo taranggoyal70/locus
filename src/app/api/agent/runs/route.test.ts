@@ -33,6 +33,8 @@ vi.mock("@/lib/admission-server", async () => {
         partnerUserIds: process.env.ALPHA_ALLOWED_USER_IDS,
         subscriptionActive: false,
         selfServeOpen: false,
+        emailVerified: true,
+        selfServeCapacity: true,
       }),
   };
 });

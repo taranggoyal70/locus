@@ -204,6 +204,8 @@ export function selfServeOpen(
 export type AdmissionReason =
   | "signed_out"
   | "waitlist"
+  | "unverified_email"
+  | "at_capacity"
   | "suspended"
   | "self_serve"
   | "partner_allowlist"
@@ -222,6 +224,22 @@ export type AdmissionInput = {
   subscriptionActive: boolean;
   /** Whether a stranger who signs in is admitted to `free` or held on the waitlist. */
   selfServeOpen: boolean;
+  /**
+   * Whether the account's primary email address is verified.
+   *
+   * Required rather than optional, so adding a call site forces a decision. A
+   * default here would be a silent one, and the safe value and the convenient
+   * value point in opposite directions.
+   */
+  emailVerified: boolean;
+  /**
+   * Whether the deployment can admit one more self-serve account right now.
+   *
+   * Only consulted for an account that has no Admission record yet. An account
+   * already admitted is unaffected by the ceiling, which is what makes the
+   * ceiling a limit on growth rather than a limit on use.
+   */
+  selfServeCapacity: boolean;
   /**
    * The account's durable Admission record, or null when it has none. Absent
    * means "not yet decided" and falls through to the rules below; a stored
@@ -281,11 +299,28 @@ export function resolveAdmission(input: AdmissionInput): Admission {
   if (isAllowlistedPartner(input.userId, input.partnerUserIds)) {
     candidates.push({ tier: "partner", reason: "partner_allowlist" });
   }
-  if (input.selfServeOpen) candidates.push({ tier: "free", reason: "self_serve" });
+
+  // Self-serve, and the two reasons it can be open yet not apply.
+  //
+  // Both are checked only for an account with no Admission record. An account
+  // already admitted keeps its tier: the email check is a barrier to creating
+  // accounts, and the ceiling limits growth, so neither should evict someone who
+  // is already through the door.
+  //
+  // Neither applies to the allowlist or a subscription either. Those accounts
+  // are vouched for by a mechanism that already costs something - an invitation,
+  // or a payment - and re-checking a cheap signal on top of an expensive one
+  // only creates a way to lock out a paying customer.
+  let refusal: Admission = { tier: "visitor", reason: "waitlist" };
+  if (input.selfServeOpen && !input.stored) {
+    if (!input.emailVerified) refusal = { tier: "visitor", reason: "unverified_email" };
+    else if (!input.selfServeCapacity) refusal = { tier: "visitor", reason: "at_capacity" };
+    else candidates.push({ tier: "free", reason: "self_serve" });
+  }
 
   return candidates.reduce<Admission>(
     (best, candidate) => (tierAtLeast(candidate.tier, best.tier) ? candidate : best),
-    { tier: "visitor", reason: "waitlist" },
+    refusal,
   );
 }
 
@@ -332,5 +367,7 @@ export function admissionFromEnvironment(userId: string | null): AccountAdmissio
     partnerUserIds: process.env["ALPHA_ALLOWED_USER_IDS"],
     subscriptionActive: false,
     selfServeOpen: false,
+    emailVerified: false,
+    selfServeCapacity: false,
   });
 }

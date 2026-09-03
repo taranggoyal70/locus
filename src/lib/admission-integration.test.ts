@@ -36,6 +36,10 @@ function builder(table: Table) {
   return chain;
 }
 
+vi.mock("@/lib/account-identity", () => ({
+  primaryEmailVerified: async () => true,
+}));
+
 vi.mock("@/lib/supabase", () => ({
   serviceClient: () => ({ from: (table: Table) => builder(table) }),
 }));

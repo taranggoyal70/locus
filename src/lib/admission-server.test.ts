@@ -3,6 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const readStoredAdmission = vi.fn();
 const hasActiveSubscription = vi.fn();
 const admitSelfServe = vi.fn();
+const primaryEmailVerified = vi.fn();
+
+vi.mock("@/lib/account-identity", () => ({
+  primaryEmailVerified: (userId: string) => primaryEmailVerified(userId),
+}));
 
 vi.mock("@/lib/admission-store", () => ({
   readStoredAdmission: (userId: string) => readStoredAdmission(userId),
@@ -21,6 +26,7 @@ beforeEach(() => {
   readStoredAdmission.mockResolvedValue(null);
   hasActiveSubscription.mockResolvedValue(false);
   admitSelfServe.mockResolvedValue({ tier: "free", source: "self_serve" });
+  primaryEmailVerified.mockResolvedValue(true);
   vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "");
   vi.stubEnv("LOCUS_SELF_SERVE", "");
 });
@@ -158,5 +164,69 @@ describe("admission analytics", () => {
   it("records nothing for a signed-out request", async () => {
     await admitOnFirstUse(null);
     expect(track).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("self-serve signup barriers", () => {
+  it("holds an unverified account out of the free tier", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    primaryEmailVerified.mockResolvedValue(false);
+
+    const admission = await admissionForAccount("user_stranger");
+
+    expect(admission).toMatchObject({ tier: "visitor", reason: "unverified_email" });
+    expect(admission.capabilities.runStart).toBe(false);
+  });
+
+  it("does not check the email when self-serve is closed", async () => {
+    // The check costs an identity-provider round trip and can only change the
+    // answer on the self-serve path. Paying for it on every capability check of
+    // an invite-only deployment would be a round trip for nothing.
+    vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_partner");
+    await admissionForAccount("user_partner");
+    expect(primaryEmailVerified).not.toHaveBeenCalled();
+  });
+
+  it("does not check the email for an account that already has a record", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    readStoredAdmission.mockResolvedValue({ tier: "free", source: "self_serve" });
+
+    const admission = await admissionForAccount("user_returning");
+
+    expect(admission.tier).toBe("free");
+    expect(primaryEmailVerified).not.toHaveBeenCalled();
+  });
+
+  it("does not let an unverified email block an invited partner", async () => {
+    // A partner is vouched for by an invitation, which already cost someone
+    // something. Re-checking a cheaper signal on top of it only creates a way to
+    // lock out an account that was deliberately admitted.
+    vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_partner");
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    primaryEmailVerified.mockResolvedValue(false);
+
+    const admission = await admissionForAccount("user_partner");
+
+    expect(admission).toMatchObject({ tier: "partner", reason: "partner_allowlist" });
+  });
+
+  it("does not let an unverified email block a paying account", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    hasActiveSubscription.mockResolvedValue(true);
+    primaryEmailVerified.mockResolvedValue(false);
+
+    const admission = await admissionForAccount("user_customer");
+
+    expect(admission).toMatchObject({ tier: "pro", reason: "subscription" });
+  });
+
+  it("records nothing for an account the email barrier refused", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    primaryEmailVerified.mockResolvedValue(false);
+
+    await admitOnFirstUse("user_stranger");
+
+    expect(admitSelfServe).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,7 @@ import {
   type AccountAdmission,
   type AdmissionCapabilities,
 } from "@/lib/admission";
+import { primaryEmailVerified } from "@/lib/account-identity";
 import { admitSelfServe, hasActiveSubscription, readStoredAdmission } from "@/lib/admission-store";
 import { track } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
@@ -36,11 +37,25 @@ export async function admissionForAccount(
       readStoredAdmission(userId),
       hasActiveSubscription(userId),
     ]);
+
+    // The signup barriers are evaluated only for a stranger arriving under
+    // self-serve, which is the only case the resolver consults them for. An
+    // account with an Admission record, an allowlisted partner, and a subscriber
+    // all resolve without paying for the identity-provider round trip.
+    const open = selfServeOpen();
+    const emailVerified = open && !stored ? await primaryEmailVerified(userId) : false;
+
     return admissionWithCapabilities({
       userId,
       partnerUserIds: process.env.ALPHA_ALLOWED_USER_IDS,
       subscriptionActive,
-      selfServeOpen: selfServeOpen(),
+      selfServeOpen: open,
+      emailVerified,
+      // No ceiling exists yet, so capacity is genuinely unlimited. This is not a
+      // placeholder standing in for a control: it is the accurate answer today,
+      // and it changes when the ceiling lands rather than when someone
+      // remembers to revisit it.
+      selfServeCapacity: true,
       stored,
     });
   } catch (error) {

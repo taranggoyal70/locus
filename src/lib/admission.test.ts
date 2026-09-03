@@ -144,7 +144,15 @@ describe("Run quota for a Tier", () => {
 });
 
 describe("resolveAdmission", () => {
-  const closed = { partnerUserIds: "", subscriptionActive: false, selfServeOpen: false };
+  // Verified and with capacity by default: these cases are about which rule
+  // wins, not about the signup barriers, which have their own describe below.
+  const closed = {
+    partnerUserIds: "",
+    subscriptionActive: false,
+    selfServeOpen: false,
+    emailVerified: true,
+    selfServeCapacity: true,
+  };
 
   it("admits a signed-out visitor to nothing", () => {
     expect(resolveAdmission({ userId: null, ...closed, selfServeOpen: true })).toEqual({
@@ -189,6 +197,8 @@ describe("resolveAdmission", () => {
         partnerUserIds: "user_design_partner",
         subscriptionActive: true,
         selfServeOpen: true,
+        emailVerified: true,
+        selfServeCapacity: true,
       }),
     ).toEqual({ tier: "pro", reason: "subscription" });
   });
@@ -264,6 +274,8 @@ describe("resolveAdmission with a stored record", () => {
     partnerUserIds: "",
     subscriptionActive: false,
     selfServeOpen: true,
+    emailVerified: true,
+    selfServeCapacity: true,
     stored: null,
   };
 
@@ -287,6 +299,8 @@ describe("resolveAdmission with a stored record", () => {
         partnerUserIds: "user_abuser",
         subscriptionActive: true,
         selfServeOpen: true,
+        emailVerified: true,
+        selfServeCapacity: true,
         stored: { tier: "visitor", source: "operator" },
       }),
     ).toEqual({ tier: "visitor", reason: "suspended" });
@@ -328,5 +342,75 @@ describe("selfServeOpen", () => {
     for (const value of ["true", "1", "yes", "on", "enabled", "openish", "closed"]) {
       expect(selfServeOpen({ LOCUS_SELF_SERVE: value }), value).toBe(false);
     }
+  });
+});
+
+describe("self-serve signup barriers", () => {
+  const stranger = {
+    userId: "user_stranger",
+    partnerUserIds: "",
+    subscriptionActive: false,
+    selfServeOpen: true,
+    emailVerified: true,
+    selfServeCapacity: true,
+    stored: null,
+  };
+
+  it("refuses an unverified email with its own reason", () => {
+    expect(resolveAdmission({ ...stranger, emailVerified: false })).toEqual({
+      tier: "visitor",
+      reason: "unverified_email",
+    });
+  });
+
+  it("refuses at the ceiling with its own reason", () => {
+    expect(resolveAdmission({ ...stranger, selfServeCapacity: false })).toEqual({
+      tier: "visitor",
+      reason: "at_capacity",
+    });
+  });
+
+  it("reports the unverified email first when both barriers apply", () => {
+    // The one the user can act on. Telling someone the service is full when
+    // their own address is unverified sends them away to wait for something
+    // that will not change their situation.
+    expect(
+      resolveAdmission({ ...stranger, emailVerified: false, selfServeCapacity: false }),
+    ).toEqual({ tier: "visitor", reason: "unverified_email" });
+  });
+
+  it("still reports the waitlist when self-serve is simply closed", () => {
+    expect(
+      resolveAdmission({
+        ...stranger,
+        selfServeOpen: false,
+        emailVerified: false,
+        selfServeCapacity: false,
+      }),
+    ).toEqual({ tier: "visitor", reason: "waitlist" });
+  });
+
+  it("applies neither barrier to an account that already has a record", () => {
+    // The email check is a barrier to creating accounts and the ceiling limits
+    // growth. Neither should evict somebody already through the door, and a
+    // ceiling that revoked access on every request would be a rolling outage.
+    expect(
+      resolveAdmission({
+        ...stranger,
+        emailVerified: false,
+        selfServeCapacity: false,
+        stored: { tier: "free", source: "self_serve" },
+      }),
+    ).toEqual({ tier: "free", reason: "self_serve" });
+  });
+
+  it("applies neither barrier to an allowlisted partner or a subscriber", () => {
+    const blocked = { ...stranger, emailVerified: false, selfServeCapacity: false };
+    expect(
+      resolveAdmission({ ...blocked, partnerUserIds: "user_stranger" }),
+    ).toMatchObject({ tier: "partner" });
+    expect(
+      resolveAdmission({ ...blocked, subscriptionActive: true }),
+    ).toMatchObject({ tier: "pro" });
   });
 });

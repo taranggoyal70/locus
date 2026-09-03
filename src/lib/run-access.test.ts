@@ -14,6 +14,8 @@ describe("runAccessFromAdmission", () => {
       partnerUserIds: "user_partner",
       subscriptionActive: false,
       selfServeOpen: false,
+      emailVerified: true,
+      selfServeCapacity: true,
     });
     expect(runAccessFromAdmission(admission)).toEqual({
       canStart: true,
