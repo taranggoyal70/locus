@@ -264,3 +264,54 @@ describe("capability release", () => {
     );
   });
 });
+
+describe("resolveAdmission with a stored record", () => {
+  const base = {
+    userId: "user_stranger",
+    partnerUserIds: "",
+    subscriptionActive: false,
+    selfServeOpen: true,
+    stored: null,
+  };
+
+  it("ignores an absent record and falls through to the other rules", () => {
+    expect(resolveAdmission(base)).toEqual({ tier: "free", reason: "self_serve" });
+  });
+
+  it("admits an operator grant above what the other rules would give", () => {
+    expect(
+      resolveAdmission({ ...base, stored: { tier: "pro", source: "operator" } }),
+    ).toEqual({ tier: "pro", reason: "operator_grant" });
+  });
+
+  it("refuses a suspended account even when every other rule would admit it", () => {
+    // A stored `visitor` is an explicit refusal, not an absent decision. It has
+    // to beat the allowlist, the subscription, and self-serve, or suspending an
+    // abusive account would do nothing for anyone who is also a subscriber.
+    expect(
+      resolveAdmission({
+        userId: "user_abuser",
+        partnerUserIds: "user_abuser",
+        subscriptionActive: true,
+        selfServeOpen: true,
+        stored: { tier: "visitor", source: "operator" },
+      }),
+    ).toEqual({ tier: "visitor", reason: "suspended" });
+  });
+
+  it("does not let a stale free record demote a paying account", () => {
+    expect(
+      resolveAdmission({
+        ...base,
+        subscriptionActive: true,
+        stored: { tier: "free", source: "self_serve" },
+      }),
+    ).toEqual({ tier: "pro", reason: "subscription" });
+  });
+
+  it("keeps a signed-out request at visitor without consulting the record", () => {
+    expect(
+      resolveAdmission({ ...base, userId: null, stored: { tier: "pro", source: "operator" } }),
+    ).toEqual({ tier: "visitor", reason: "signed_out" });
+  });
+});

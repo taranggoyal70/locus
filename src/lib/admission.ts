@@ -186,8 +186,10 @@ export function applyCapabilityRelease(
 export type AdmissionReason =
   | "signed_out"
   | "waitlist"
+  | "suspended"
   | "self_serve"
   | "partner_allowlist"
+  | "operator_grant"
   | "subscription";
 
 export type Admission = {
@@ -202,6 +204,21 @@ export type AdmissionInput = {
   subscriptionActive: boolean;
   /** Whether a stranger who signs in is admitted to `free` or held on the waitlist. */
   selfServeOpen: boolean;
+  /**
+   * The account's durable Admission record, or null when it has none. Absent
+   * means "not yet decided" and falls through to the rules below; a stored
+   * `visitor` means "explicitly refused" and overrides all of them.
+   */
+  stored?: { tier: AdmissionTier; source: AdmissionSourceName } | null;
+};
+
+/** Mirrors the source check constraint in migration 018. */
+type AdmissionSourceName = "self_serve" | "operator" | "subscription";
+
+const REASON_FOR_STORED_SOURCE: Record<AdmissionSourceName, AdmissionReason> = {
+  operator: "operator_grant",
+  subscription: "subscription",
+  self_serve: "self_serve",
 };
 
 function isAllowlistedPartner(userId: string, partnerUserIds: string | undefined): boolean {
@@ -229,7 +246,19 @@ export function resolveAdmission(input: AdmissionInput): Admission {
   // userId would admit every anonymous request as a partner.
   if (!input.userId) return { tier: "visitor", reason: "signed_out" };
 
+  // Refusal is not a candidate, it is a verdict. A stored `visitor` has to beat
+  // the allowlist, the subscription, and self-serve alike: if it merely competed
+  // on rank, suspending an abusive account would do nothing at all to one who
+  // also happens to be a subscriber, which is the account most worth suspending.
+  if (input.stored?.tier === "visitor") return { tier: "visitor", reason: "suspended" };
+
   const candidates: Admission[] = [];
+  if (input.stored) {
+    candidates.push({
+      tier: input.stored.tier,
+      reason: REASON_FOR_STORED_SOURCE[input.stored.source],
+    });
+  }
   if (input.subscriptionActive) candidates.push({ tier: "pro", reason: "subscription" });
   if (isAllowlistedPartner(input.userId, input.partnerUserIds)) {
     candidates.push({ tier: "partner", reason: "partner_allowlist" });
