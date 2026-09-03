@@ -12,6 +12,9 @@ vi.mock("@/lib/admission-store", () => ({
 
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 
+const track = vi.fn();
+vi.mock("@/lib/analytics", () => ({ track: (payload: unknown) => track(payload) }));
+
 const { admissionForAccount, admitOnFirstUse } = await import("@/lib/admission-server");
 
 beforeEach(() => {
@@ -129,5 +132,31 @@ describe("admitOnFirstUse", () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
     admitSelfServe.mockRejectedValue(new Error("write failed"));
     await expect(admitOnFirstUse("user_stranger")).resolves.toMatchObject({ tier: "free" });
+  });
+});
+
+describe("admission analytics", () => {
+  it("records the tier and reason on first use", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    await admitOnFirstUse("user_stranger");
+    expect(track).toHaveBeenCalledWith({
+      event: "admission_resolved",
+      userId: "user_stranger",
+      properties: { tier: "free", reason: "self_serve" },
+    });
+  });
+
+  it("records a refusal, which is the half of the funnel that matters", async () => {
+    await admitOnFirstUse("user_stranger");
+    expect(track).toHaveBeenCalledWith({
+      event: "admission_resolved",
+      userId: "user_stranger",
+      properties: { tier: "visitor", reason: "waitlist" },
+    });
+  });
+
+  it("records nothing for a signed-out request", async () => {
+    await admitOnFirstUse(null);
+    expect(track).not.toHaveBeenCalled();
   });
 });

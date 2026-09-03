@@ -7,6 +7,7 @@ import {
   type AdmissionCapabilities,
 } from "@/lib/admission";
 import { admitSelfServe, hasActiveSubscription, readStoredAdmission } from "@/lib/admission-store";
+import { track } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
 
 export type { AccountAdmission };
@@ -101,6 +102,21 @@ export async function accountCan(
 export async function admitOnFirstUse(userId: string | null): Promise<AccountAdmission> {
   const admission = await admissionForAccount(userId);
   if (!userId) return admission;
+
+  // Recorded before the self-serve guard, not after it. A refusal is the half of
+  // the funnel that matters: how many accounts are sitting on the waitlist is
+  // the number that decides whether to open wider, and instrumenting only the
+  // admissions would have measured the successes and nothing else.
+  //
+  // Recorded here rather than in admissionForAccount because that runs on every
+  // authenticated request and every capability check, which would produce a row
+  // per page load and bury the signal under repeat traffic.
+  void track({
+    event: "admission_resolved",
+    userId,
+    properties: { tier: admission.tier, reason: admission.reason },
+  });
+
   if (admission.reason !== "self_serve") return admission;
 
   try {
