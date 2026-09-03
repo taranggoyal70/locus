@@ -28,3 +28,11 @@ overrides:
   # GHSA-2v37-7h3g-55p8 — nanoid infinite loop on zero size
   'nanoid@<3.3.18': ^3.3.18
   'nanoid@>=4.0.0 <5.1.16': ^5.1.16
+  # GHSA: browserslist unbounded cache growth (OOM) and an uncaught crash /
+  # prototype write when normalising an untrusted browserslist-stats.json.
+  # Reaches the tree only through next > styled-jsx > @babel/core, so it is
+  # build-time rather than request-time here. Overridden anyway: this repository
+  # gates CI on `pnpm audit --audit-level high` for every dependency, not only
+  # production ones, precisely because build tooling executes on runners with
+  # repository access.
+  'browserslist@<4.28.7': ^4.28.7
