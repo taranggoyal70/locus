@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type Row = { user_id: string; tier: string; source: string } | null;
+type Row = { user_id: string; tier: string; source: string; status?: string } | null;
 
 const state: {
   row: Row;
@@ -36,7 +36,9 @@ vi.mock("@/lib/supabase-tenant", () => ({
   tenantClient: () => ({ from: () => builder() }),
 }));
 
-const { admitSelfServe, readStoredAdmission } = await import("@/lib/admission-store");
+const { admitSelfServe, hasActiveSubscription, readStoredAdmission } = await import(
+  "@/lib/admission-store"
+);
 
 const USER = "user_stranger";
 
@@ -107,5 +109,32 @@ describe("admitSelfServe", () => {
   it("surfaces an insert failure that is not a lost race", async () => {
     state.insertError = { code: "23514", message: "violates check constraint" };
     await expect(admitSelfServe(USER)).rejects.toThrow(/Admission/i);
+  });
+});
+
+describe("hasActiveSubscription", () => {
+  it("is false when the account has never subscribed", async () => {
+    state.row = null;
+    expect(await hasActiveSubscription(USER)).toBe(false);
+  });
+
+  it("is true for an active subscription", async () => {
+    state.row = { user_id: USER, tier: "", source: "", status: "active" };
+    expect(await hasActiveSubscription(USER)).toBe(true);
+  });
+
+  it("is false once a subscription lapses or is cancelled", async () => {
+    // The webhook writes exactly these three values. Anything else is a status
+    // this code has not been taught, and guessing "probably paid" from an
+    // unknown string is how a lapsed account keeps a paid tier.
+    for (const status of ["inactive", "cancelled", "past_due", ""]) {
+      state.row = { user_id: USER, tier: "", source: "", status };
+      expect(await hasActiveSubscription(USER), status).toBe(false);
+    }
+  });
+
+  it("fails closed on an unreadable subscription", async () => {
+    state.selectError = { message: "connection reset" };
+    await expect(hasActiveSubscription(USER)).rejects.toThrow(/subscription/i);
   });
 });

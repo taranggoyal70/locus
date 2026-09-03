@@ -45,6 +45,32 @@ export async function readStoredAdmission(userId: string): Promise<StoredAdmissi
 }
 
 /**
+ * Whether the account currently has a paying subscription.
+ *
+ * The Stripe webhook writes exactly three statuses: `active`, `inactive`, and
+ * `cancelled`. Only the first grants a tier. The comparison is an equality
+ * against the one known-paid value rather than a check for the known-unpaid
+ * ones, because a status this code has not been taught should read as unpaid;
+ * inferring "probably still paying" from an unfamiliar string is how a lapsed
+ * account keeps a paid tier indefinitely.
+ *
+ * Throws rather than returning false on a read failure, for the same reason
+ * readStoredAdmission does: the caller decides how to degrade, and a store that
+ * silently answers "no subscription" during an outage makes that impossible.
+ */
+export async function hasActiveSubscription(userId: string): Promise<boolean> {
+  const db = tenantClient(userId);
+  const { data, error } = await db
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Account subscription could not be read: ${error.message}`);
+  return data?.status === "active";
+}
+
+/**
  * Admit an account to `free` on its first self-serve visit, and do nothing at
  * all if it already has an Admission.
  *
