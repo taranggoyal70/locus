@@ -8,6 +8,7 @@ import {
   isAdmissionTier,
   resolveAdmission,
   runQuotaForTier,
+  selfServeOpen,
   tierAtLeast,
 } from "@/lib/admission";
 
@@ -313,5 +314,27 @@ describe("resolveAdmission with a stored record", () => {
     expect(
       resolveAdmission({ ...base, userId: null, stored: { tier: "pro", source: "operator" } }),
     ).toEqual({ tier: "visitor", reason: "signed_out" });
+  });
+});
+
+describe("selfServeOpen", () => {
+  it("is closed when the variable is absent or blank", () => {
+    expect(selfServeOpen({})).toBe(false);
+    expect(selfServeOpen({ LOCUS_SELF_SERVE: "" })).toBe(false);
+    expect(selfServeOpen({ LOCUS_SELF_SERVE: "   " })).toBe(false);
+  });
+
+  it("opens only on the exact word `open`", () => {
+    expect(selfServeOpen({ LOCUS_SELF_SERVE: "open" })).toBe(true);
+    expect(selfServeOpen({ LOCUS_SELF_SERVE: " OPEN " })).toBe(true);
+  });
+
+  it("stays closed for every value that merely looks affirmative", () => {
+    // The variable that opens the product to the public should not be
+    // satisfiable by accident. "true", "1", and "yes" are what a hurried edit
+    // or a templated config produces, so none of them count.
+    for (const value of ["true", "1", "yes", "on", "enabled", "openish", "closed"]) {
+      expect(selfServeOpen({ LOCUS_SELF_SERVE: value }), value).toBe(false);
+    }
   });
 });

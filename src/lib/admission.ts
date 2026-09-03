@@ -182,6 +182,26 @@ export function applyCapabilityRelease(
   };
 }
 
+/**
+ * Whether a signed-in stranger is admitted to `free` or held on the waitlist.
+ *
+ * One exact word, `open`, case-insensitive after trimming. Deliberately not
+ * "true", "1", "yes", or "on": this is the variable that exposes provider
+ * capacity to the public internet, and those are exactly the values a hurried
+ * edit or a templated config produces by accident. Requiring a word that means
+ * nothing else in this codebase means the flag can only be set on purpose.
+ *
+ * Absent means closed, so a deployment that has never heard of this variable
+ * stays invite-only.
+ */
+export function selfServeOpen(
+  environment: { LOCUS_SELF_SERVE?: string } = {
+    LOCUS_SELF_SERVE: process.env["LOCUS_SELF_SERVE"],
+  },
+): boolean {
+  return environment.LOCUS_SELF_SERVE?.trim().toLowerCase() === "open";
+}
+
 /** Which rule produced a Tier. Carried so a refusal can explain itself. */
 export type AdmissionReason =
   | "signed_out"
