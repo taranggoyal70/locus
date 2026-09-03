@@ -79,6 +79,18 @@ type SubscriptionRow = {
   updated_at: string;
 };
 
+// The Admission record from migration 018. `user_id` is the primary key rather
+// than a separate surrogate id: an account holds exactly one Admission, and a
+// table that permits two rows per account invites the question of which one wins.
+type AccountAdmissionRow = {
+  user_id: string;
+  tier: string;
+  source: string;
+  note: string | null;
+  granted_at: string;
+  updated_at: string;
+};
+
 type AgentTaskRow = {
   id: string;
   user_id: string;
@@ -226,6 +238,15 @@ export type Database = {
         Row: SubscriptionRow;
         Insert: Omit<SubscriptionRow, "id" | "created_at" | "updated_at">;
         Update: Partial<Omit<SubscriptionRow, "id" | "created_at" | "updated_at">>;
+        Relationships: [];
+      };
+      account_admissions: {
+        Row: AccountAdmissionRow;
+        Insert: Omit<AccountAdmissionRow, "granted_at" | "updated_at" | "note"> & {
+          note?: string | null;
+          granted_at?: string;
+        };
+        Update: Partial<Omit<AccountAdmissionRow, "user_id" | "granted_at" | "updated_at">>;
         Relationships: [];
       };
       agent_tasks: {
