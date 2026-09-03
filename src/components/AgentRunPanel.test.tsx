@@ -47,7 +47,7 @@ describe("controlled-alpha Agent Run start", () => {
         sliceCount={4}
         excludedCount={8}
         acceptanceCriteria={["The evidence contract is factual"]}
-        canStartRun
+        runAccess={{ canStart: true, tier: "partner", reason: "partner_allowlist", quota: { maxActiveRuns: 2, maxDailyRuns: 10 } }}
       />,
     );
 
@@ -65,7 +65,7 @@ describe("controlled-alpha Agent Run start", () => {
         sliceCount={4}
         excludedCount={8}
         acceptanceCriteria={["The evidence contract is factual"]}
-        canStartRun={false}
+        runAccess={{ canStart: false, tier: "visitor", reason: "waitlist", quota: { maxActiveRuns: 0, maxDailyRuns: 0 } }}
       />,
     );
 

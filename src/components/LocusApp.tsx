@@ -14,20 +14,21 @@ import { TaskEvidence } from "@/components/TaskEvidence";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
 import { REPO_URL } from "@/lib/config";
+import { NO_RUN_ACCESS, type RunAccess } from "@/lib/run-access";
 import { buildShareUrl } from "@/lib/share";
 
 type LocusAppProps = {
   accountName?: string;
   isWorkspace?: boolean;
   initialRunId?: string | null;
-  canStartRun?: boolean;
+  runAccess?: RunAccess;
 };
 
 export function LocusApp({
   accountName,
   isWorkspace = false,
   initialRunId = null,
-  canStartRun = false,
+  runAccess = NO_RUN_ACCESS,
 }: LocusAppProps) {
   const {
     repo,
@@ -413,7 +414,7 @@ export function LocusApp({
                     sliceCount={includedCount}
                     excludedCount={excludedCount}
                     initialRunId={initialRunId}
-                    canStartRun={canStartRun}
+                    runAccess={runAccess}
                     acceptanceCriteria={definitionOfDone.split("\n").map((item) => item.trim()).filter(Boolean)}
                   />
                   <TokenMeter

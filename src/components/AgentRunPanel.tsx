@@ -10,6 +10,7 @@ import {
 } from "@/lib/agent/run-review";
 import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentStepView } from "@/lib/agent/run-view";
+import type { RunAccess } from "@/lib/run-access";
 
 const PHASES: Array<{ label: string; statuses: RunStatus[] }> = [
   { label: "Locate", statuses: ["queued", "localizing"] },
@@ -92,7 +93,7 @@ export function AgentRunPanel({
   excludedCount,
   initialRunId = null,
   acceptanceCriteria,
-  canStartRun,
+  runAccess,
 }: {
   repository: string | null;
   task: string;
@@ -100,7 +101,7 @@ export function AgentRunPanel({
   excludedCount: number;
   initialRunId?: string | null;
   acceptanceCriteria: string[];
-  canStartRun: boolean;
+  runAccess: RunAccess;
 }) {
   const [runId, setRunId] = useState<string | null>(initialRunId);
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
@@ -155,7 +156,7 @@ export function AgentRunPanel({
 
   async function launch() {
     if (
-      !canStartRun
+      !runAccess.canStart
       || !repository
       || task.trim().length < 10
       || !dataPolicyAccepted
@@ -233,6 +234,7 @@ export function AgentRunPanel({
     }
   }
 
+  const canStartRun = runAccess.canStart;
   const canLaunch = canStartRun
     && Boolean(repository)
     && task.trim().length >= 10

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LocusApp } from "@/components/LocusApp";
 import { admitOnFirstUse } from "@/lib/admission-server";
+import { runAccessFromAdmission } from "@/lib/run-access";
 
 type WorkspacePageProps = {
   searchParams: Promise<{ run?: string | string[] }>;
@@ -33,7 +34,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
         accountName={accountName}
         isWorkspace
         initialRunId={initialRunId}
-        canStartRun={admission.capabilities.runStart}
+        runAccess={runAccessFromAdmission(admission)}
       />
     </ErrorBoundary>
   );
