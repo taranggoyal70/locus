@@ -1,14 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { admissionForAccount } from "@/lib/admission-server";
+import { accountCan } from "@/lib/admission-server";
 import { verifyGitHubOAuthState } from "@/lib/github-oauth-state";
 import { tenantClient } from "@/lib/supabase-tenant";
 
 export async function GET(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.redirect(new URL("/sign-in", request.url));
-  if (!(await admissionForAccount(userId)).capabilities.githubConnect) {
+  if (!await accountCan(userId, "githubConnect")) {
     return NextResponse.redirect(new URL("/settings?error=github_alpha_disabled", request.url));
   }
 

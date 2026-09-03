@@ -2,7 +2,9 @@ import {
   admissionFromEnvironment,
   admissionWithCapabilities,
   selfServeOpen,
+  CAPABILITY_RELEASE,
   type AccountAdmission,
+  type AdmissionCapabilities,
 } from "@/lib/admission";
 import { hasActiveSubscription, readStoredAdmission } from "@/lib/admission-store";
 import { logger } from "@/lib/logger";
@@ -58,4 +60,25 @@ export async function admissionForAccount(
     });
     return admissionFromEnvironment(userId);
   }
+}
+
+/**
+ * Whether the account holds one capability.
+ *
+ * The short-circuit is the point. An unreleased capability is held by no Tier at
+ * all, so the answer is already known and resolving the Admission would be two
+ * database reads spent to reach a refusal that could not have gone the other
+ * way. Eight of the nine gates are unreleased today, which would otherwise have
+ * meant every disabled route paying for a lookup on every request - including
+ * from anyone who found the endpoint and decided to hold it open.
+ *
+ * The intersection in applyCapabilityRelease already guarantees the two agree,
+ * so this is an optimisation rather than a second policy.
+ */
+export async function accountCan(
+  userId: string | null,
+  capability: keyof AdmissionCapabilities,
+): Promise<boolean> {
+  if (!CAPABILITY_RELEASE[capability]) return false;
+  return (await admissionForAccount(userId)).capabilities[capability];
 }

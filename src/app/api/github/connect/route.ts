@@ -1,13 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { admissionForAccount } from "@/lib/admission-server";
+import { accountCan } from "@/lib/admission-server";
 import { createGitHubOAuthState } from "@/lib/github-oauth-state";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await admissionForAccount(userId)).capabilities.githubConnect) {
+  if (!await accountCan(userId, "githubConnect")) {
     return NextResponse.json(
       { error: "GitHub connections are not available during early access." },
       { status: 403 },

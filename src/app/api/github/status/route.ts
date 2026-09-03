@@ -1,14 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { admissionForAccount } from "@/lib/admission-server";
+import { accountCan } from "@/lib/admission-server";
 import { sameOriginMutation } from "@/lib/request-security";
 import { tenantClient } from "@/lib/supabase-tenant";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!(await admissionForAccount(userId)).capabilities.privateRepoRead) {
+  if (!await accountCan(userId, "privateRepoRead")) {
     return NextResponse.json(
       { error: "Private repository reads are unavailable during early access." },
       { status: 403 },

@@ -8,7 +8,13 @@ vi.mock("@/lib/admission-server", async () => {
   // reach the database, or this test would assert a capability decision that
   // depended on the order of unrelated Supabase stubs.
   const { admissionFromEnvironment } = await import("@/lib/admission");
-  return { admissionForAccount: async (userId: string | null) => admissionFromEnvironment(userId) };
+  const { CAPABILITY_RELEASE } = await import("@/lib/admission");
+  return {
+    admissionForAccount: async (userId: string | null) => admissionFromEnvironment(userId),
+    accountCan: async (userId: string | null, capability: keyof typeof CAPABILITY_RELEASE) =>
+      CAPABILITY_RELEASE[capability]
+      && admissionFromEnvironment(userId).capabilities[capability],
+  };
 });
 
 import { GET } from "@/app/api/github/callback/route";
