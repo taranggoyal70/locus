@@ -298,15 +298,28 @@ export function AgentRunPanel({
                 </span>
               </label>
             )}
-            <button
-              type="button"
-              onClick={launch}
-              disabled={!canLaunch || launching}
-              className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span>{launching ? "Starting durable run…" : accessCopy.action}</span>
-              <span aria-hidden>→</span>
-            </button>
+            {!canStartRun && accessCopy.href ? (
+              // A refused account gets a control that actually goes somewhere.
+              // Rendering "Request access" on a disabled button was a dead end
+              // wearing the costume of a next step.
+              <a
+                href={accessCopy.href}
+                className="mt-4 flex w-full items-center justify-between rounded-xl border border-line-strong px-4 py-3.5 text-sm font-semibold text-paper transition hover:border-accent hover:text-accent"
+              >
+                <span>{accessCopy.action}</span>
+                <span aria-hidden>→</span>
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={launch}
+                disabled={!canLaunch || launching}
+                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span>{launching ? "Starting durable run…" : accessCopy.action}</span>
+                <span aria-hidden>→</span>
+              </button>
+            )}
             <p className="mt-3 text-[11px] leading-5 text-muted">
               {accessCopy.explanation}
             </p>

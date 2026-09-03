@@ -42,6 +42,14 @@ export type RunAccessCopy = {
   action: string;
   /** One sentence under it explaining what the user can do next. */
   explanation: string;
+  /**
+   * Where the action goes when it is not "start a Run". A refusal whose control
+   * names an action the user cannot take is worse than one that says nothing:
+   * "Request access" on a disabled button is a dead end wearing the costume of a
+   * next step. Null means there is genuinely nowhere to send them, and the
+   * control should read as a statement rather than as an offer.
+   */
+  href: string | null;
 };
 
 /**
@@ -61,6 +69,7 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
     const daily = access.quota.maxDailyRuns;
     return {
       action: "Run task with Locus",
+      href: null,
       explanation:
         `Executes in an isolated Sandbox. ${daily} Agent ${daily === 1 ? "Run" : "Runs"} `
         + "per day on this plan. GitHub delivery is disabled during early access.",
@@ -71,6 +80,7 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
     case "signed_out":
       return {
         action: "Sign in to run",
+        href: "/sign-in",
         explanation:
           "Sign in to turn this Slice into a review-ready proposal. The Slice above "
           + "is complete either way.",
@@ -78,6 +88,7 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
     case "suspended":
       return {
         action: "Runs unavailable",
+        href: "/support",
         explanation:
           "This account cannot start Agent Runs. Contact support if you believe that "
           + "is a mistake.",
@@ -85,6 +96,7 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
     case "waitlist":
       return {
         action: "Request access",
+        href: "/pricing#request-access",
         explanation:
           "Agent Runs are opening in batches. Request access and you can still inspect "
           + "the complete Slice above in the meantime.",
@@ -95,6 +107,7 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
       // inventing a reason they could act on.
       return {
         action: "Runs unavailable",
+        href: null,
         explanation:
           "Agent Runs are temporarily unavailable. The complete Slice above is "
           + "unaffected.",

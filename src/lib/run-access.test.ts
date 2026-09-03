@@ -69,3 +69,22 @@ describe("runAccessCopy", () => {
     }
   });
 });
+
+describe("refusals lead somewhere", () => {
+  it("sends every actionable refusal to a real destination", () => {
+    expect(runAccessCopy(access({ reason: "signed_out" })).href).toBe("/sign-in");
+    expect(runAccessCopy(access({ reason: "waitlist" })).href).toBe("/pricing#request-access");
+    expect(runAccessCopy(access({ reason: "suspended" })).href).toBe("/support");
+  });
+
+  it("offers no destination when the account can already run", () => {
+    expect(runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 3 } })).href)
+      .toBeNull();
+  });
+
+  it("offers no destination for a refusal the user cannot act on", () => {
+    // A capability withheld by the release record is a deployment state. Sending
+    // the user somewhere would imply an action that would change nothing.
+    expect(runAccessCopy(access({ reason: "partner_allowlist" })).href).toBeNull();
+  });
+});

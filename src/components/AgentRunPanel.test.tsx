@@ -93,6 +93,25 @@ describe("controlled-alpha Agent Run start", () => {
 
     expect(html).toContain("Contact support");
     expect(html).not.toContain("opening in batches");
+    expect(html).toContain('href="/support"');
+  });
+
+  it("gives a waitlisted account a control that goes somewhere", () => {
+    const html = renderToStaticMarkup(
+      <AgentRunPanel
+        repository="taranggoyal70/locus"
+        task="Fix the controlled alpha evidence contract"
+        sliceCount={4}
+        excludedCount={8}
+        acceptanceCriteria={["The evidence contract is factual"]}
+        runAccess={{ canStart: false, tier: "visitor", reason: "waitlist", quota: { maxActiveRuns: 0, maxDailyRuns: 0 } }}
+      />,
+    );
+
+    // Previously this rendered "Request access" on a disabled button: an action
+    // label with no action behind it.
+    expect(html).toContain('href="/pricing#request-access"');
+    expect(html).not.toContain("disabled");
   });
 
   it("states the plan allowance to an account that can run", () => {
