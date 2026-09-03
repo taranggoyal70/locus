@@ -9,7 +9,7 @@ const state: {
   inserts: unknown[];
 } = { row: null, selectError: null, insertError: null, inserts: [] };
 
-function builder(_table: string) {
+function builder() {
   const chain = {
     select: () => chain,
     eq: () => chain,
@@ -33,7 +33,7 @@ function builder(_table: string) {
 }
 
 vi.mock("@/lib/supabase-tenant", () => ({
-  tenantClient: () => ({ from: (table: string) => builder(table) }),
+  tenantClient: () => ({ from: () => builder() }),
 }));
 
 const { admitSelfServe, readStoredAdmission } = await import("@/lib/admission-store");
