@@ -136,3 +136,63 @@ const RUN_QUOTA_BY_TIER: Record<AdmissionTier, RunQuota> = {
 export function runQuotaForTier(tier: AdmissionTier): RunQuota {
   return { ...RUN_QUOTA_BY_TIER[tier] };
 }
+
+/** Which rule produced a Tier. Carried so a refusal can explain itself. */
+export type AdmissionReason =
+  | "signed_out"
+  | "waitlist"
+  | "self_serve"
+  | "partner_allowlist"
+  | "subscription";
+
+export type Admission = {
+  tier: AdmissionTier;
+  reason: AdmissionReason;
+};
+
+export type AdmissionInput = {
+  userId: string | null | undefined;
+  /** Comma-separated Clerk ids from ALPHA_ALLOWED_USER_IDS. */
+  partnerUserIds: string | undefined;
+  subscriptionActive: boolean;
+  /** Whether a stranger who signs in is admitted to `free` or held on the waitlist. */
+  selfServeOpen: boolean;
+};
+
+function isAllowlistedPartner(userId: string, partnerUserIds: string | undefined): boolean {
+  return (partnerUserIds ?? "")
+    .split(",")
+    .some((entry) => entry.trim() === userId);
+}
+
+/**
+ * The single decision that answers "who is this account?".
+ *
+ * Every rule that matches produces a candidate and the highest-ranked one wins,
+ * rather than the first rule in source order. A design partner who later pays
+ * should gain the paid tier, not keep the comped one because the allowlist
+ * happened to be checked first, and rank comparison makes that automatic for
+ * every future tier.
+ *
+ * `selfServeOpen` is what actually opens the product. Until it is true a signed-in
+ * stranger resolves to `visitor` with reason `waitlist`, which is the current
+ * invite-only behavior expressed as data instead of as a hard-coded `false`.
+ */
+export function resolveAdmission(input: AdmissionInput): Admission {
+  // A signed-out request is decided before the allowlist is consulted. Splitting
+  // "user_founder,," yields an empty entry, and comparing that against an empty
+  // userId would admit every anonymous request as a partner.
+  if (!input.userId) return { tier: "visitor", reason: "signed_out" };
+
+  const candidates: Admission[] = [];
+  if (input.subscriptionActive) candidates.push({ tier: "pro", reason: "subscription" });
+  if (isAllowlistedPartner(input.userId, input.partnerUserIds)) {
+    candidates.push({ tier: "partner", reason: "partner_allowlist" });
+  }
+  if (input.selfServeOpen) candidates.push({ tier: "free", reason: "self_serve" });
+
+  return candidates.reduce<Admission>(
+    (best, candidate) => (tierAtLeast(candidate.tier, best.tier) ? candidate : best),
+    { tier: "visitor", reason: "waitlist" },
+  );
+}

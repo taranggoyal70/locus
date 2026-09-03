@@ -4,6 +4,7 @@ import {
   ADMISSION_TIERS,
   capabilitiesForTier,
   isAdmissionTier,
+  resolveAdmission,
   runQuotaForTier,
   tierAtLeast,
 } from "@/lib/admission";
@@ -141,5 +142,68 @@ describe("Run quota for a Tier", () => {
       expect(quota.maxDailyRuns, `${tier} daily`).toBeGreaterThanOrEqual(1);
       expect(quota.maxDailyRuns, `${tier} daily`).toBeLessThanOrEqual(10_000);
     }
+  });
+});
+
+describe("resolveAdmission", () => {
+  const closed = { partnerUserIds: "", subscriptionActive: false, selfServeOpen: false };
+
+  it("admits a signed-out visitor to nothing", () => {
+    expect(resolveAdmission({ userId: null, ...closed, selfServeOpen: true })).toEqual({
+      tier: "visitor",
+      reason: "signed_out",
+    });
+  });
+
+  it("holds a signed-in account at visitor while self-serve is closed", () => {
+    expect(resolveAdmission({ userId: "user_stranger", ...closed })).toEqual({
+      tier: "visitor",
+      reason: "waitlist",
+    });
+  });
+
+  it("admits any signed-in account to free once self-serve opens", () => {
+    expect(
+      resolveAdmission({ userId: "user_stranger", ...closed, selfServeOpen: true }),
+    ).toEqual({ tier: "free", reason: "self_serve" });
+  });
+
+  it("admits an invited partner even while self-serve is closed", () => {
+    expect(
+      resolveAdmission({
+        ...closed,
+        userId: "user_design_partner",
+        partnerUserIds: " user_founder, user_design_partner ,,",
+      }),
+    ).toEqual({ tier: "partner", reason: "partner_allowlist" });
+  });
+
+  it("admits a paying account to pro without waiting for self-serve", () => {
+    expect(
+      resolveAdmission({ ...closed, userId: "user_customer", subscriptionActive: true }),
+    ).toEqual({ tier: "pro", reason: "subscription" });
+  });
+
+  it("takes the highest tier when more than one rule matches", () => {
+    expect(
+      resolveAdmission({
+        userId: "user_design_partner",
+        partnerUserIds: "user_design_partner",
+        subscriptionActive: true,
+        selfServeOpen: true,
+      }),
+    ).toEqual({ tier: "pro", reason: "subscription" });
+  });
+
+  it("ignores the allowlist entirely for a signed-out request", () => {
+    // A blank userId must never match a blank allowlist entry. Splitting a
+    // trailing comma yields "", and treating that as a member would admit every
+    // anonymous request as a partner.
+    expect(
+      resolveAdmission({ userId: null, ...closed, partnerUserIds: "user_founder,," }),
+    ).toEqual({ tier: "visitor", reason: "signed_out" });
+    expect(
+      resolveAdmission({ userId: "", ...closed, partnerUserIds: "user_founder,," }),
+    ).toEqual({ tier: "visitor", reason: "signed_out" });
   });
 });
