@@ -137,6 +137,51 @@ export function runQuotaForTier(tier: AdmissionTier): RunQuota {
   return { ...RUN_QUOTA_BY_TIER[tier] };
 }
 
+/**
+ * Which capabilities have actually shipped, independent of which Tier deserves
+ * them.
+ *
+ * The Tier table above describes the product ladder as designed. This describes
+ * what is safe to expose today. The two are separate because they answer
+ * different questions and change for different reasons: a tier gains a
+ * capability when the pricing decision is made, and a capability is released
+ * when its rollout, security review, and abuse controls are finished.
+ *
+ * Collapsing them is how a refactor grants external GitHub writes to every
+ * account by accident. Keeping them apart means widening access is always an
+ * edit to this record, reviewable on its own, with a test asserting the exact
+ * shape production ends up in.
+ */
+export const CAPABILITY_RELEASE: AdmissionCapabilities = {
+  runStart: true,
+  githubConnect: false,
+  privateRepoRead: false,
+  teams: false,
+  savingsClaims: false,
+  delivery: false,
+  billing: false,
+};
+
+/**
+ * Intersection, never union. A released capability the Tier does not hold stays
+ * withheld, so this can only ever take access away. That direction is the whole
+ * safety property: a mistake in the release record under-grants.
+ */
+export function applyCapabilityRelease(
+  capabilities: AdmissionCapabilities,
+  release: AdmissionCapabilities,
+): AdmissionCapabilities {
+  return {
+    runStart: capabilities.runStart && release.runStart,
+    githubConnect: capabilities.githubConnect && release.githubConnect,
+    privateRepoRead: capabilities.privateRepoRead && release.privateRepoRead,
+    teams: capabilities.teams && release.teams,
+    savingsClaims: capabilities.savingsClaims && release.savingsClaims,
+    delivery: capabilities.delivery && release.delivery,
+    billing: capabilities.billing && release.billing,
+  };
+}
+
 /** Which rule produced a Tier. Carried so a refusal can explain itself. */
 export type AdmissionReason =
   | "signed_out"

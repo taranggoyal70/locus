@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   ADMISSION_TIERS,
+  applyCapabilityRelease,
+  CAPABILITY_RELEASE,
   capabilitiesForTier,
   isAdmissionTier,
   resolveAdmission,
@@ -205,5 +207,60 @@ describe("resolveAdmission", () => {
     expect(
       resolveAdmission({ userId: "", ...closed, partnerUserIds: "user_founder,," }),
     ).toEqual({ tier: "visitor", reason: "signed_out" });
+  });
+});
+
+describe("capability release", () => {
+  it("can only withhold a capability, never grant one the Tier lacks", () => {
+    const everythingReleased = {
+      runStart: true,
+      githubConnect: true,
+      privateRepoRead: true,
+      teams: true,
+      savingsClaims: true,
+      delivery: true,
+      billing: true,
+    };
+    expect(applyCapabilityRelease(capabilitiesForTier("free"), everythingReleased)).toEqual(
+      capabilitiesForTier("free"),
+    );
+  });
+
+  it("withholds an unreleased capability from every tier", () => {
+    const noDelivery = {
+      runStart: true,
+      githubConnect: true,
+      privateRepoRead: true,
+      teams: true,
+      savingsClaims: true,
+      delivery: false,
+      billing: true,
+    };
+    expect(applyCapabilityRelease(capabilitiesForTier("pro"), noDelivery)).toEqual({
+      ...capabilitiesForTier("pro"),
+      delivery: false,
+    });
+  });
+
+  it("reproduces the controlled alpha exactly for an invited partner", () => {
+    // The shipped release state must keep production where it is: an invited
+    // partner starts Runs and nothing else reaches the outside world. This test
+    // is the tripwire on CAPABILITY_RELEASE, so widening it is a deliberate,
+    // reviewable edit rather than a side effect of adding a tier.
+    expect(applyCapabilityRelease(capabilitiesForTier("partner"), CAPABILITY_RELEASE)).toEqual({
+      runStart: true,
+      githubConnect: false,
+      privateRepoRead: false,
+      teams: false,
+      savingsClaims: false,
+      delivery: false,
+      billing: false,
+    });
+  });
+
+  it("keeps a visitor at nothing whatever is released", () => {
+    expect(applyCapabilityRelease(capabilitiesForTier("visitor"), CAPABILITY_RELEASE)).toEqual(
+      capabilitiesForTier("visitor"),
+    );
   });
 });
