@@ -152,6 +152,27 @@ status, append-only Steps, Artifacts, Reviews, Approvals, Token ledger, and opti
 Savings claim. It is the interface used for refresh, history, and review.
 _Avoid_: response payload, session state, activity feed.
 
+**Tier** (`AdmissionTier`):
+The named level an account occupies: `visitor`, `free`, `partner`, or `pro`. A
+Tier is the single input that decides both which Capabilities an account holds
+and how many Runs it may hold open, so a new level is added by naming a Tier
+rather than by threading another boolean through the Run path.
+_Avoid_: plan, role, permission level, allowlist status.
+
+**Admission**:
+The decision that resolves an account to a Tier. It reads identity, the invited
+design-partner allowlist, subscription state, and whether self-serve is open,
+and it returns a Tier and nothing else. Admission decides who someone is;
+Capabilities decide what that lets them do.
+_Avoid_: authorization, gating, entitlement check.
+
+**Capability** (`AdmissionCapabilities`):
+One named thing an account may do: start a Run, connect GitHub, read a private
+Repo, use Teams, see a Savings claim, deliver externally, or manage billing.
+Capabilities are derived from a Tier, never stored per account and never read
+directly from an environment variable at a call site.
+_Avoid_: feature flag, toggle, permission.
+
 ## Where it lives (read these, don't re-crawl)
 
 - `src/lib/types.ts` — the web/API **Repo**, `Graph`, and **LocateResult**
