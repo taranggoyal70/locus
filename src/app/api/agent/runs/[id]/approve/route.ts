@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 
 import { timingSafeEqual } from "node:crypto";
 
+import { accountCan } from "@/lib/admission-server";
 import { freezeCandidate } from "@/lib/agent/candidate";
 import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import type { AgentChange } from "@/lib/agent/workspace";
-import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 import { tenantClient } from "@/lib/supabase-tenant";
 
 type RouteContext = {
@@ -31,7 +31,7 @@ function timingSafeEquals(a: string, b: string): boolean {
 export async function POST(request: Request, context: RouteContext) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  if (!alphaCapabilitiesForUser(userId).delivery) {
+  if (!(await accountCan(userId, "delivery"))) {
     return NextResponse.json(
       { error: "GitHub delivery is disabled during early access." },
       { status: 403 },

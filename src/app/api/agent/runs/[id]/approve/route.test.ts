@@ -9,10 +9,11 @@ describe("controlled-alpha Run delivery", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_design_partner" });
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_design_partner");
-    // The capability module is mocked file-wide for the R10 tests below, so
-    // this restates the shipped default. That delivery is actually disabled is
-    // asserted against the real module in alpha-capabilities.test.ts.
-    capabilitiesMock.mockReturnValue({ delivery: false });
+    // The capability check is mocked file-wide so the R10 tests below can reach
+    // the delivery path at all. This restates the shipped default; that delivery
+    // is genuinely unreleased is asserted against the real record in
+    // admission.test.ts.
+    deliveryAllowedMock.mockReturnValue(false);
   });
 
   it("cannot approve an external GitHub write", async () => {
@@ -32,8 +33,11 @@ describe("controlled-alpha Run delivery", () => {
 // required only that the Run was awaiting approval, so it approved "whatever
 // proposal is current" rather than the one a human read, making it a second
 // approval path alongside /review that was not bound to a proposal hash.
-const capabilitiesMock = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/alpha-capabilities", () => ({ alphaCapabilitiesForUser: capabilitiesMock }));
+const deliveryAllowedMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/admission-server", () => ({
+  accountCan: (_userId: string | null, capability: string) =>
+    Promise.resolve(capability === "delivery" ? deliveryAllowedMock() : false),
+}));
 
 const tenantClientMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/supabase-tenant", () => ({
@@ -62,7 +66,7 @@ function context() {
 describe("delivery is bound to the reviewed proposal", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_design_partner" });
-    capabilitiesMock.mockReturnValue({ delivery: true });
+    deliveryAllowedMock.mockReturnValue(true);
     // Any query resolves to a Run awaiting approval carrying STORED_HASH.
     const builder: Record<string, unknown> = {};
     for (const method of ["select", "eq", "in", "update", "insert", "single"]) {
@@ -104,7 +108,7 @@ describe("delivery is bound to the reviewed proposal", () => {
 describe("delivery rejects requests a browser would not have made", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_design_partner" });
-    capabilitiesMock.mockReturnValue({ delivery: true });
+    deliveryAllowedMock.mockReturnValue(true);
   });
 
   it("rejects a cross-site request", async () => {
