@@ -161,10 +161,19 @@ _Avoid_: plan, role, permission level, allowlist status.
 
 **Admission**:
 The decision that resolves an account to a Tier. It reads identity, the invited
-design-partner allowlist, subscription state, and whether self-serve is open,
-and it returns a Tier and nothing else. Admission decides who someone is;
-Capabilities decide what that lets them do.
+design-partner allowlist, subscription state, whether self-serve is open, and the
+two **Signup barriers**, and it returns a Tier and nothing else. Admission
+decides who someone is; Capabilities decide what that lets them do.
 _Avoid_: authorization, gating, entitlement check.
+
+**Signup barrier**:
+A condition on *becoming* a `free` account, as opposed to a limit on using one.
+There are two: a verified email address, and the deployment's self-serve account
+ceiling (`LOCUS_SELF_SERVE_MAX_ACCOUNTS`). Both apply only to an account with no
+Admission record, so neither can evict an admitted account, and neither applies
+to an invited partner or a subscriber. They exist because per-account Run quota
+bounds one account's cost and says nothing about how many accounts exist.
+_Avoid_: rate limit, quota (those bound use, not admission).
 
 **Capability** (`AdmissionCapabilities`):
 One named thing an account may do: start a Run, connect GitHub, read a private
@@ -259,6 +268,10 @@ _Avoid_: feature flag, toggle, permission.
 - **Refusal beats every other rule.** A stored `visitor` Admission overrides the
   allowlist, an active subscription, and self-serve. An absent record means "not
   yet decided" and falls through; the two are never collapsed.
+- **Signup barriers gate entry, never use.** The verified-email requirement and
+  the account ceiling are evaluated only for an account with no Admission
+  record. An admitted account is never re-checked against them, because a
+  barrier to creating accounts that is applied on every request is an eviction.
 - **Admission fails closed on its own outage.** When the Admission rows cannot be
   read, only the invited-partner allowlist is honoured and self-serve is forced
   closed, because the suspension list is exactly what could not be read.
