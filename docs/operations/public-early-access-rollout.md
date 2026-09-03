@@ -61,7 +61,7 @@ Verify `/`, `/docs`, `/pricing`, `/privacy`, `/support`, `/terms`, `/sign-in`, a
 
 ## Rollback
 
-1. Clear `ALPHA_ALLOWED_USER_IDS` and redeploy if Agent Run behavior or provider capacity is in question.
+1. Clear both `ALPHA_ALLOWED_USER_IDS` and `LOCUS_SELF_SERVE`, then redeploy, if Agent Run behavior or provider capacity is in question. Verify `/api/health` reports `readiness.admission: "invite_only"`; clearing only the allowlist stops the invited partners and leaves every self-serve account running.
 2. Promote the previous known-good Vercel production deployment or revert the launch PR through a new reviewed PR.
 3. Leave migrations `001`–`017` installed; they are additive and already serve the prior application.
 4. Verify `/api/health`, the production monitor, sign-in, public localization, and logs before declaring recovery.

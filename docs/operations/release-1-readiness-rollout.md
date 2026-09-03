@@ -75,7 +75,7 @@ select
   to_regclass('public.agent_artifacts') as artifacts;
 ```
 
-Required results: no duplicate proposal artifact kinds, zero active Runs, and a non-null SHA-256 digest function. Temporarily clear `ALPHA_ALLOWED_USER_IDS` and deploy that environment-only change before applying migrations so no Run can start during the window.
+Required results: no duplicate proposal artifact kinds, zero active Runs, and a non-null SHA-256 digest function. Temporarily clear both `ALPHA_ALLOWED_USER_IDS` and `LOCUS_SELF_SERVE`, and deploy that environment-only change before applying migrations so no Run can start during the window. Confirm `/api/health` reports `readiness.admission: "invite_only"` before proceeding: clearing only the allowlist leaves self-serve admitting accounts into the migration window.
 
 Confirm these production variables by name without printing values: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, Clerk keys, `LOCUS_AGENT_MODEL`, `ALPHA_ALLOWED_USER_IDS`, and `CRON_SECRET`. `LOCUS_AGENT_MODEL` must be `openai/gpt-5.6-sol`; Vercel AI Gateway authenticates the deployment with short-lived OIDC credentials. Alerting requires either an HTTPS `OPS_ALERT_WEBHOOK_URL` or `OPS_EXTERNAL_HEALTHCHECK=github_actions`. `LOCUS_RUN_TOKEN_BUDGET` may be omitted for the safe 180,000 default or must parse to 10,000–240,000. The Release 1 evaluation contract freezes 180,000.
 
@@ -253,7 +253,7 @@ The cross-origin request must be denied and create no task or Run. Restore exact
 
 ## Rollback boundaries
 
-- Roll application code back first and clear `ALPHA_ALLOWED_USER_IDS`. Migrations `012`–`017` are additive and safe to leave installed for the previous application.
+- Roll application code back first and clear both `ALPHA_ALLOWED_USER_IDS` and `LOCUS_SELF_SERVE`. Migrations `012`–`018` are additive and safe to leave installed for the previous application.
 - Do not drop proposal hashes, reviews, artifacts, or immutability triggers after any Release 1 Run exists. Fix forward.
 - Do not drop provider-lease or quota-claim RPCs while a Release 1 caller is deployed. Old provider leases expire automatically; manual deletion is safe only after admission is disabled and active Runs are zero.
 - Do not call the retention RPC as a rollback. Deleted data is intentionally unrecoverable from the application; provider backups have separate lifetimes.

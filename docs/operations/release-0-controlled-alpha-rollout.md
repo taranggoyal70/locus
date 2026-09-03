@@ -234,7 +234,7 @@ external GitHub write.
 - Do not reverse migration `004`; restoring public writes is a security
   regression.
 - Do not destructively roll back migrations `005`–`009` after Runs exist.
-  Fix forward or disable `ALPHA_ALLOWED_USER_IDS`.
+  Fix forward, or close admission by clearing both `ALPHA_ALLOWED_USER_IDS` and `LOCUS_SELF_SERVE`.
 - Migration `011` is irreversible by design. Deleted OAuth tokens must never be
   restored from logs or backups; users must re-authorize when private Repo
   support is separately released.
