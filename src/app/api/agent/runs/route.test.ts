@@ -25,24 +25,15 @@ vi.mock("workflow/api", () => ({ start: startMock }));
 // order of unrelated table stubs. This keeps the route test about the route
 // while still exercising the real tier, capability, and quota tables.
 vi.mock("@/lib/admission-server", async () => {
-  const admission = await import("@/lib/admission");
+  const { admissionWithCapabilities } = await import("@/lib/admission");
   return {
-    admissionForAccount: async (userId: string | null) => {
-      const resolved = admission.resolveAdmission({
+    admissionForAccount: async (userId: string | null) =>
+      admissionWithCapabilities({
         userId,
         partnerUserIds: process.env.ALPHA_ALLOWED_USER_IDS,
         subscriptionActive: false,
         selfServeOpen: false,
-      });
-      return {
-        ...resolved,
-        capabilities: admission.applyCapabilityRelease(
-          admission.capabilitiesForTier(resolved.tier),
-          admission.CAPABILITY_RELEASE,
-        ),
-        runQuota: admission.runQuotaForTier(resolved.tier),
-      };
-    },
+      }),
   };
 });
 

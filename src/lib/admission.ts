@@ -290,3 +290,29 @@ export function resolveAdmission(input: AdmissionInput): Admission {
     { tier: "visitor", reason: "waitlist" },
   );
 }
+
+/** A resolved Tier together with everything it decides. */
+export type AccountAdmission = Admission & {
+  capabilities: AdmissionCapabilities;
+  runQuota: RunQuota;
+};
+
+/**
+ * Resolve, then attach what the Tier decides, with no I/O anywhere.
+ *
+ * Callers want the capabilities and the quota, not the tier name, and every one
+ * of them looking those up separately is three chances to pair a tier with
+ * another tier's limits. Keeping this pure is what lets a route test exercise
+ * the real tables without a database.
+ */
+export function admissionWithCapabilities(input: AdmissionInput): AccountAdmission {
+  const admission = resolveAdmission(input);
+  return {
+    ...admission,
+    capabilities: applyCapabilityRelease(
+      capabilitiesForTier(admission.tier),
+      CAPABILITY_RELEASE,
+    ),
+    runQuota: runQuotaForTier(admission.tier),
+  };
+}

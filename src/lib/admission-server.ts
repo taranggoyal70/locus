@@ -1,39 +1,20 @@
 import {
-  applyCapabilityRelease,
-  capabilitiesForTier,
-  CAPABILITY_RELEASE,
-  resolveAdmission,
-  runQuotaForTier,
+  admissionWithCapabilities,
   selfServeOpen,
-  type Admission,
-  type AdmissionCapabilities,
-  type RunQuota,
+  type AccountAdmission,
 } from "@/lib/admission";
 import { hasActiveSubscription, readStoredAdmission } from "@/lib/admission-store";
 import { logger } from "@/lib/logger";
 
-export type AccountAdmission = Admission & {
-  capabilities: AdmissionCapabilities;
-  runQuota: RunQuota;
-};
-
-function present(admission: Admission): AccountAdmission {
-  return {
-    ...admission,
-    capabilities: applyCapabilityRelease(
-      capabilitiesForTier(admission.tier),
-      CAPABILITY_RELEASE,
-    ),
-    runQuota: runQuotaForTier(admission.tier),
-  };
-}
+export type { AccountAdmission };
 
 /**
  * The one place a request finds out what an account is allowed to do.
  *
- * Everything the decision needs is gathered here and handed to the pure
- * resolver, so the rules stay readable as a table and this stays a thin adapter
- * over two reads.
+ * This is the impure half: it gathers the two database inputs and hands them to
+ * the pure decision. Everything about which tier wins, what it may do, and how
+ * many Runs it gets lives in `@/lib/admission` and is reachable without a
+ * database.
  *
  * The reads run concurrently because they are independent and this sits in front
  * of every authenticated page render; serialising them would put two round trips
@@ -44,24 +25,28 @@ export async function admissionForAccount(
 ): Promise<AccountAdmission> {
   // A signed-out request has no rows to read. Returning before touching the
   // database also means an unauthenticated flood cannot turn into database load.
-  if (!userId) return present({ tier: "visitor", reason: "signed_out" });
-
   const partnerUserIds = process.env.ALPHA_ALLOWED_USER_IDS;
+  if (!userId) {
+    return admissionWithCapabilities({
+      userId: null,
+      partnerUserIds,
+      subscriptionActive: false,
+      selfServeOpen: false,
+    });
+  }
 
   try {
     const [stored, subscriptionActive] = await Promise.all([
       readStoredAdmission(userId),
       hasActiveSubscription(userId),
     ]);
-    return present(
-      resolveAdmission({
-        userId,
-        partnerUserIds,
-        subscriptionActive,
-        selfServeOpen: selfServeOpen(),
-        stored,
-      }),
-    );
+    return admissionWithCapabilities({
+      userId,
+      partnerUserIds,
+      subscriptionActive,
+      selfServeOpen: selfServeOpen(),
+      stored,
+    });
   } catch (error) {
     // Degrade to the invited-partner allowlist alone, with self-serve forced
     // closed regardless of the environment.
@@ -78,13 +63,11 @@ export async function admissionForAccount(
     logger.error("admission.read_failed", {
       reason: error instanceof Error ? error.message : "unknown",
     });
-    return present(
-      resolveAdmission({
-        userId,
-        partnerUserIds,
-        subscriptionActive: false,
-        selfServeOpen: false,
-      }),
-    );
+    return admissionWithCapabilities({
+      userId,
+      partnerUserIds,
+      subscriptionActive: false,
+      selfServeOpen: false,
+    });
   }
 }
