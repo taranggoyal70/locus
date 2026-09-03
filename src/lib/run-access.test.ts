@@ -98,7 +98,7 @@ describe("signup barrier refusals", () => {
     // would send someone away from a problem they could fix in a minute.
     const copy = runAccessCopy(access({ reason: "unverified_email" }));
     expect(copy.action).toBe("Verify your email");
-    expect(copy.href).toBe("/settings");
+    expect(copy.href).toBe("/settings/account");
     expect(copy.explanation).not.toMatch(/temporarily unavailable/i);
   });
 

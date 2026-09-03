@@ -1,6 +1,7 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
+import { AccountEmailPanel } from "@/components/AccountEmailPanel";
 import { AlphaSettingsNotice } from "@/components/AlphaSettingsNotice";
 import { ApiKeysPanel } from "@/components/ApiKeysPanel";
 import { SettingsShell } from "@/components/SettingsShell";
@@ -10,6 +11,9 @@ export default async function SettingsPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
+  const user = await currentUser();
+  const primaryEmail = user?.primaryEmailAddress;
+
   return (
     <SettingsShell>
       <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Control plane</p>
@@ -18,6 +22,10 @@ export default async function SettingsPage() {
       <div className="aperture-rule mt-7" />
       <div className="mt-8 space-y-10">
         <AlphaSettingsNotice />
+        <AccountEmailPanel
+          email={primaryEmail?.emailAddress ?? null}
+          verified={primaryEmail?.verification?.status === "verified"}
+        />
         <section>
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Usage</h2>
           <p className="mt-1 text-sm text-muted-light">Your Agent Run and API activity over the last 30 days.</p>

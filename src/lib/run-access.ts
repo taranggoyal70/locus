@@ -96,7 +96,7 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
     case "unverified_email":
       return {
         action: "Verify your email",
-        href: "/settings",
+        href: "/settings/account",
         explanation:
           "Confirm your email address to start Agent Runs. We ask because Run "
           + "capacity is limited and a verified address keeps it available to "
