@@ -13,6 +13,11 @@ export async function GET() {
       readiness: {
         missing: readiness.missing,
         alerting: readiness.alerting,
+        // Which door is open. The rollout runbook has the operator confirm this
+        // reads "self_serve" after setting LOCUS_SELF_SERVE, because only the
+        // exact word `open` counts and a rejected value produces an invite-only
+        // deployment with no error anywhere to say so.
+        admission: readiness.admission,
       },
     },
     {
