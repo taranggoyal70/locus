@@ -200,6 +200,36 @@ export function selfServeOpen(
   return environment.LOCUS_SELF_SERVE?.trim().toLowerCase() === "open";
 }
 
+/**
+ * The maximum number of self-serve accounts this deployment will admit, or null
+ * for no ceiling.
+ *
+ * This is the control that actually bounds spend. Per-account Run quota does
+ * not: signup is free, so it bounds one account's cost and nothing about how
+ * many accounts exist. The rollout runbook previously said to "decide the
+ * admitted-account ceiling in advance", which is a procedure standing in for a
+ * control, and procedures do not hold at three in the morning.
+ *
+ * Absent means unlimited, matching every other optional variable here, and
+ * deliberately costs nothing: with no ceiling configured the count query is
+ * never issued.
+ */
+export function selfServeMaxAccounts(
+  environment: { LOCUS_SELF_SERVE_MAX_ACCOUNTS?: string } = {
+    LOCUS_SELF_SERVE_MAX_ACCOUNTS: process.env["LOCUS_SELF_SERVE_MAX_ACCOUNTS"],
+  },
+): number | null {
+  const configured = environment.LOCUS_SELF_SERVE_MAX_ACCOUNTS?.trim();
+  if (!configured) return null;
+  if (!/^\d+$/.test(configured)) {
+    throw new Error("LOCUS_SELF_SERVE_MAX_ACCOUNTS must be a non-negative integer.");
+  }
+  // Zero is meaningful and distinct from absent: it admits nobody new while
+  // leaving existing accounts working, which is the shape of a soft pause that
+  // does not evict anyone.
+  return Number(configured);
+}
+
 /** Which rule produced a Tier. Carried so a refusal can explain itself. */
 export type AdmissionReason =
   | "signed_out"

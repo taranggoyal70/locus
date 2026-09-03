@@ -1,17 +1,36 @@
 import {
   admissionFromEnvironment,
   admissionWithCapabilities,
+  selfServeMaxAccounts,
   selfServeOpen,
   CAPABILITY_RELEASE,
   type AccountAdmission,
   type AdmissionCapabilities,
 } from "@/lib/admission";
 import { primaryEmailVerified } from "@/lib/account-identity";
-import { admitSelfServe, hasActiveSubscription, readStoredAdmission } from "@/lib/admission-store";
+import {
+  admitSelfServe,
+  countSelfServeAdmissions,
+  hasActiveSubscription,
+  readStoredAdmission,
+} from "@/lib/admission-store";
 import { track } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
 
 export type { AccountAdmission };
+
+/**
+ * Whether the deployment can admit one more self-serve account.
+ *
+ * With no ceiling configured this is true without touching the database, so an
+ * operator who has not opted into a ceiling pays nothing for one.
+ */
+async function hasSelfServeCapacity(): Promise<boolean> {
+  const ceiling = selfServeMaxAccounts();
+  if (ceiling === null) return true;
+  if (ceiling === 0) return false;
+  return (await countSelfServeAdmissions()) < ceiling;
+}
 
 /**
  * The one place a request finds out what an account is allowed to do.
@@ -43,7 +62,10 @@ export async function admissionForAccount(
     // account with an Admission record, an allowlisted partner, and a subscriber
     // all resolve without paying for the identity-provider round trip.
     const open = selfServeOpen();
-    const emailVerified = open && !stored ? await primaryEmailVerified(userId) : false;
+    const admittingStranger = open && !stored;
+    const [emailVerified, selfServeCapacity] = admittingStranger
+      ? await Promise.all([primaryEmailVerified(userId), hasSelfServeCapacity()])
+      : [false, false];
 
     return admissionWithCapabilities({
       userId,
@@ -51,11 +73,7 @@ export async function admissionForAccount(
       subscriptionActive,
       selfServeOpen: open,
       emailVerified,
-      // No ceiling exists yet, so capacity is genuinely unlimited. This is not a
-      // placeholder standing in for a control: it is the accurate answer today,
-      // and it changes when the ceiling lands rather than when someone
-      // remembers to revisit it.
-      selfServeCapacity: true,
+      selfServeCapacity,
       stored,
     });
   } catch (error) {

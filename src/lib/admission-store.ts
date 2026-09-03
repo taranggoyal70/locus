@@ -1,5 +1,5 @@
 import { isAdmissionTier, type AdmissionTier } from "@/lib/admission";
-import { tenantClient } from "@/lib/supabase-tenant";
+import { globalClient, tenantClient } from "@/lib/supabase-tenant";
 
 /** How an Admission record came to exist. Mirrors the source check in migration 018. */
 export type AdmissionSource = "self_serve" | "operator" | "subscription";
@@ -100,4 +100,32 @@ export async function admitSelfServe(userId: string): Promise<StoredAdmission> {
     if (settled) return settled;
   }
   throw new Error(`Admission could not be recorded: ${error.message}`);
+}
+
+/**
+ * How many accounts self-serve has admitted on this deployment.
+ *
+ * Genuinely cross-tenant: the ceiling is a property of the deployment, not of
+ * the account asking, so this uses globalClient with a stated reason rather than
+ * the tenant guard. It is one of the enumerable exceptions that module exists to
+ * keep enumerable.
+ *
+ * Counted with `head: true`, so the rows never leave the database - the answer
+ * is a number and transferring the identities of every admitted account to
+ * produce it would be both slower and a needless widening of what this read can
+ * see.
+ *
+ * Operator grants and subscription rows are excluded. The ceiling limits the
+ * door anyone can walk through unaided; an account someone deliberately let in
+ * should not consume that budget, and a paying customer certainly should not.
+ */
+export async function countSelfServeAdmissions(): Promise<number> {
+  const db = globalClient("counting self-serve admissions against the deployment ceiling");
+  const { count, error } = await db
+    .from("account_admissions")
+    .select("user_id", { count: "exact", head: true })
+    .eq("source", "self_serve");
+
+  if (error) throw new Error(`Self-serve admission count failed: ${error.message}`);
+  return count ?? 0;
 }

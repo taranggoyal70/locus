@@ -43,3 +43,19 @@ describe("Account admissions migration", () => {
     expect(migration).toContain("execute function public.update_updated_at()");
   });
 });
+
+describe("Self-serve ceiling migration", () => {
+  const ceiling = readFileSync(
+    new URL("../../supabase/migrations/019_self_serve_admission_ceiling.sql", import.meta.url),
+    "utf8",
+  ).toLowerCase();
+
+  it("indexes only the rows the ceiling counts", () => {
+    // Partial, so the index stays proportional to self-serve accounts rather
+    // than to every Admission row. Operator grants and subscription rows are
+    // excluded from the ceiling, so indexing them would cost space to speed up
+    // a query that never reads them.
+    expect(ceiling).toContain("create index account_admissions_self_serve_idx");
+    expect(ceiling).toContain("where source = 'self_serve'");
+  });
+});

@@ -4,6 +4,7 @@ const readStoredAdmission = vi.fn();
 const hasActiveSubscription = vi.fn();
 const admitSelfServe = vi.fn();
 const primaryEmailVerified = vi.fn();
+const countSelfServeAdmissions = vi.fn();
 
 vi.mock("@/lib/account-identity", () => ({
   primaryEmailVerified: (userId: string) => primaryEmailVerified(userId),
@@ -13,6 +14,7 @@ vi.mock("@/lib/admission-store", () => ({
   readStoredAdmission: (userId: string) => readStoredAdmission(userId),
   hasActiveSubscription: (userId: string) => hasActiveSubscription(userId),
   admitSelfServe: (userId: string) => admitSelfServe(userId),
+  countSelfServeAdmissions: () => countSelfServeAdmissions(),
 }));
 
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
@@ -27,6 +29,8 @@ beforeEach(() => {
   hasActiveSubscription.mockResolvedValue(false);
   admitSelfServe.mockResolvedValue({ tier: "free", source: "self_serve" });
   primaryEmailVerified.mockResolvedValue(true);
+  countSelfServeAdmissions.mockResolvedValue(0);
+  vi.stubEnv("LOCUS_SELF_SERVE_MAX_ACCOUNTS", "");
   vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "");
   vi.stubEnv("LOCUS_SELF_SERVE", "");
 });
@@ -228,5 +232,70 @@ describe("self-serve signup barriers", () => {
     await admitOnFirstUse("user_stranger");
 
     expect(admitSelfServe).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("self-serve account ceiling", () => {
+  it("admits while the deployment is below its ceiling", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    vi.stubEnv("LOCUS_SELF_SERVE_MAX_ACCOUNTS", "100");
+    countSelfServeAdmissions.mockResolvedValue(99);
+
+    expect(await admissionForAccount("user_stranger")).toMatchObject({
+      tier: "free",
+      reason: "self_serve",
+    });
+  });
+
+  it("refuses once the ceiling is reached", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    vi.stubEnv("LOCUS_SELF_SERVE_MAX_ACCOUNTS", "100");
+    countSelfServeAdmissions.mockResolvedValue(100);
+
+    const admission = await admissionForAccount("user_stranger");
+    expect(admission).toMatchObject({ tier: "visitor", reason: "at_capacity" });
+    expect(admission.capabilities.runStart).toBe(false);
+  });
+
+  it("keeps every already-admitted account working at the ceiling", async () => {
+    // The ceiling limits growth, not use. A ceiling that revoked access from
+    // accounts already admitted would be a rolling outage rather than a control.
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    vi.stubEnv("LOCUS_SELF_SERVE_MAX_ACCOUNTS", "100");
+    countSelfServeAdmissions.mockResolvedValue(500);
+    readStoredAdmission.mockResolvedValue({ tier: "free", source: "self_serve" });
+
+    expect(await admissionForAccount("user_returning")).toMatchObject({ tier: "free" });
+    expect(countSelfServeAdmissions).not.toHaveBeenCalled();
+  });
+
+  it("treats zero as a pause that admits nobody new", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    vi.stubEnv("LOCUS_SELF_SERVE_MAX_ACCOUNTS", "0");
+
+    expect(await admissionForAccount("user_stranger")).toMatchObject({ reason: "at_capacity" });
+    // Zero is decided from configuration alone; counting to prove nobody fits
+    // under a ceiling of zero would be a query with one possible answer.
+    expect(countSelfServeAdmissions).not.toHaveBeenCalled();
+  });
+
+  it("counts nothing when no ceiling is configured", async () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+
+    expect(await admissionForAccount("user_stranger")).toMatchObject({ tier: "free" });
+    expect(countSelfServeAdmissions).not.toHaveBeenCalled();
+  });
+
+  it("refuses rather than admits when the count cannot be read", async () => {
+    // Falling back to "probably room" would remove the ceiling exactly when the
+    // database is unhealthy, which is the worst moment to start admitting.
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    vi.stubEnv("LOCUS_SELF_SERVE_MAX_ACCOUNTS", "100");
+    countSelfServeAdmissions.mockRejectedValue(new Error("connection reset"));
+
+    const admission = await admissionForAccount("user_stranger");
+    expect(admission.tier).toBe("visitor");
+    expect(admission.capabilities.runStart).toBe(false);
   });
 });

@@ -8,6 +8,7 @@ import {
   isAdmissionTier,
   resolveAdmission,
   runQuotaForTier,
+  selfServeMaxAccounts,
   selfServeOpen,
   tierAtLeast,
 } from "@/lib/admission";
@@ -412,5 +413,33 @@ describe("self-serve signup barriers", () => {
     expect(
       resolveAdmission({ ...blocked, subscriptionActive: true }),
     ).toMatchObject({ tier: "pro" });
+  });
+});
+
+describe("selfServeMaxAccounts", () => {
+  it("is unlimited when unset or blank", () => {
+    expect(selfServeMaxAccounts({})).toBeNull();
+    expect(selfServeMaxAccounts({ LOCUS_SELF_SERVE_MAX_ACCOUNTS: "  " })).toBeNull();
+  });
+
+  it("reads a configured ceiling", () => {
+    expect(selfServeMaxAccounts({ LOCUS_SELF_SERVE_MAX_ACCOUNTS: " 250 " })).toBe(250);
+  });
+
+  it("treats zero as a soft pause rather than as absent", () => {
+    // Zero admits nobody new while leaving every existing account working. That
+    // is a different thing from "no ceiling", and collapsing them would make the
+    // safest setting unreachable.
+    expect(selfServeMaxAccounts({ LOCUS_SELF_SERVE_MAX_ACCOUNTS: "0" })).toBe(0);
+  });
+
+  it("refuses a value it cannot honour rather than guessing", () => {
+    // A malformed ceiling parsed as NaN would compare false against every count
+    // and silently mean "unlimited" - the opposite of what the operator typed.
+    for (const value of ["many", "-1", "1e3", "10.5", "1_000"]) {
+      expect(() => selfServeMaxAccounts({ LOCUS_SELF_SERVE_MAX_ACCOUNTS: value }), value).toThrow(
+        /LOCUS_SELF_SERVE_MAX_ACCOUNTS/,
+      );
+    }
   });
 });
