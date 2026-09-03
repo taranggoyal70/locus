@@ -19,9 +19,38 @@ vi.mock("@/lib/agent/run-store", () => ({
 vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
 vi.mock("workflow/api", () => ({ start: startMock }));
 
+// The route's Admission is resolved from environment state only. The real
+// resolver would read account_admissions and subscriptions through the mocked
+// service client, which would make every quota assertion below depend on the
+// order of unrelated table stubs. This keeps the route test about the route
+// while still exercising the real tier, capability, and quota tables.
+vi.mock("@/lib/admission-server", async () => {
+  const admission = await import("@/lib/admission");
+  return {
+    admissionForAccount: async (userId: string | null) => {
+      const resolved = admission.resolveAdmission({
+        userId,
+        partnerUserIds: process.env.ALPHA_ALLOWED_USER_IDS,
+        subscriptionActive: false,
+        selfServeOpen: false,
+      });
+      return {
+        ...resolved,
+        capabilities: admission.applyCapabilityRelease(
+          admission.capabilitiesForTier(resolved.tier),
+          admission.CAPABILITY_RELEASE,
+        ),
+        runQuota: admission.runQuotaForTier(resolved.tier),
+      };
+    },
+  };
+});
+
 import { POST } from "@/app/api/agent/runs/route";
 import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
-import { MAX_ACTIVE_RUNS, MAX_DAILY_RUNS } from "@/lib/agent/run-quota";
+import { runQuotaForTier } from "@/lib/admission";
+
+const PARTNER_QUOTA = runQuotaForTier("partner");
 import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/run-request";
 
 function runRequest() {
@@ -168,8 +197,8 @@ describe("controlled-alpha Agent Run starts", () => {
     expect(response.headers.get("retry-after")).toBe("60");
     expect(rpc).toHaveBeenCalledWith("claim_agent_run_slot", expect.objectContaining({
       p_user_id: "user_design_partner",
-      p_max_active: MAX_ACTIVE_RUNS,
-      p_max_daily: MAX_DAILY_RUNS,
+      p_max_active: PARTNER_QUOTA.maxActiveRuns,
+      p_max_daily: PARTNER_QUOTA.maxDailyRuns,
       p_active_statuses: [...ACTIVE_RUN_STATUSES],
     }));
     // No workflow, and no provider lease taken for a Run that was never created.

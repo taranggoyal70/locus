@@ -1,5 +1,4 @@
-export const MAX_ACTIVE_RUNS = 2;
-export const MAX_DAILY_RUNS = 10;
+import type { RunQuota } from "@/lib/admission";
 
 export type QuotaReason = "active" | "daily";
 
@@ -12,10 +11,20 @@ const RETRY_AFTER_SECONDS: Record<QuotaReason, number> = {
   daily: 3_600,
 };
 
-const DENIAL_MESSAGES: Record<QuotaReason, string> = {
-  active: "Two agent runs are already active. Wait for one to finish.",
-  daily: "Early-access daily Agent Run quota reached. Try again tomorrow.",
-};
+// The message states the limit the account actually has. The previous wording
+// hard-coded "Two agent runs", which was true only for the invited-partner
+// allowance and became wrong for three of the four tiers the moment quota
+// started varying. A refusal that misstates the limit teaches the user the wrong
+// thing about the product they are being asked to pay for.
+export function quotaDenialMessage(reason: QuotaReason, quota: RunQuota): string {
+  if (reason === "active") {
+    return quota.maxActiveRuns === 1
+      ? "An agent run is already active. Wait for it to finish."
+      : `${quota.maxActiveRuns} agent runs are already active. Wait for one to finish.`;
+  }
+  return `Daily Agent Run quota reached (${quota.maxDailyRuns}). Try again tomorrow.`;
+}
+
 
 export function isQuotaReason(value: unknown): value is QuotaReason {
   return value === "active" || value === "daily";
@@ -25,12 +34,13 @@ export function quotaRetryAfterSeconds(reason: QuotaReason): number {
   return RETRY_AFTER_SECONDS[reason];
 }
 
-export function quotaDenialMessage(reason: QuotaReason): string {
-  return DENIAL_MESSAGES[reason];
-}
-
 /**
  * Advisory pre-check only.
+ *
+ * The limits arrive as an argument rather than as module constants. Quota is the
+ * cost control and it now varies by Tier, so a single pair of globals could only
+ * ever be right for one kind of account — and would silently be wrong for the
+ * rest.
  *
  * This reads counts and decides, so by the time a caller acts on the answer it
  * may be stale — that gap is exactly the race that let concurrent requests each
@@ -42,13 +52,14 @@ export function quotaDenialMessage(reason: QuotaReason): string {
 export function agentRunQuotaDecision(input: {
   activeRuns: number;
   dailyRuns: number;
+  quota: RunQuota;
 }):
   | { allowed: true }
   | { allowed: false; reason: QuotaReason; retryAfterSeconds: number } {
-  if (input.activeRuns >= MAX_ACTIVE_RUNS) {
+  if (input.activeRuns >= input.quota.maxActiveRuns) {
     return { allowed: false, reason: "active", retryAfterSeconds: RETRY_AFTER_SECONDS.active };
   }
-  if (input.dailyRuns >= MAX_DAILY_RUNS) {
+  if (input.dailyRuns >= input.quota.maxDailyRuns) {
     return { allowed: false, reason: "daily", retryAfterSeconds: RETRY_AFTER_SECONDS.daily };
   }
   return { allowed: true };
