@@ -90,3 +90,35 @@ describe("refusals lead somewhere", () => {
     expect(runAccessCopy(access({ reason: "partner_allowlist" })).href).toBeNull();
   });
 });
+
+describe("signup barrier refusals", () => {
+  it("tells an unverified account what it can do about it", () => {
+    // This is the one refusal in the set the user can clear themselves, so it
+    // must not land in the generic "temporarily unavailable" branch, which
+    // would send someone away from a problem they could fix in a minute.
+    const copy = runAccessCopy(access({ reason: "unverified_email" }));
+    expect(copy.action).toBe("Verify your email");
+    expect(copy.href).toBe("/settings");
+    expect(copy.explanation).not.toMatch(/temporarily unavailable/i);
+  });
+
+  it("says capacity, not suspicion, when the ceiling is reached", () => {
+    // The account did nothing wrong. Reusing the waitlist or suspension wording
+    // would imply a judgement about them rather than a limit on the service.
+    const copy = runAccessCopy(access({ reason: "at_capacity" }));
+    expect(copy.explanation).toMatch(/at capacity/i);
+    expect(copy.explanation).not.toMatch(/contact support|cannot start/i);
+  });
+
+  it("still tells every refusal apart", () => {
+    const reasons = [
+      "signed_out",
+      "waitlist",
+      "unverified_email",
+      "at_capacity",
+      "suspended",
+    ] as const;
+    const explanations = reasons.map((reason) => runAccessCopy(access({ reason })).explanation);
+    expect(new Set(explanations).size).toBe(reasons.length);
+  });
+});

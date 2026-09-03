@@ -93,6 +93,23 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
           "This account cannot start Agent Runs. Contact support if you believe that "
           + "is a mistake.",
       };
+    case "unverified_email":
+      return {
+        action: "Verify your email",
+        href: "/settings",
+        explanation:
+          "Confirm your email address to start Agent Runs. We ask because Run "
+          + "capacity is limited and a verified address keeps it available to "
+          + "real accounts.",
+      };
+    case "at_capacity":
+      return {
+        action: "Request access",
+        href: "/pricing#request-access",
+        explanation:
+          "Free Agent Runs are at capacity for now. Request access and you can "
+          + "still inspect the complete Slice above in the meantime.",
+      };
     case "waitlist":
       return {
         action: "Request access",
