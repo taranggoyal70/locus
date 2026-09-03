@@ -5,13 +5,17 @@ import { AccountEmailPanel } from "@/components/AccountEmailPanel";
 import { AlphaSettingsNotice } from "@/components/AlphaSettingsNotice";
 import { ApiKeysPanel } from "@/components/ApiKeysPanel";
 import { SettingsShell } from "@/components/SettingsShell";
+import { admissionForAccount } from "@/lib/admission-server";
 import { UsageStats } from "@/components/UsageStats";
 
 export default async function SettingsPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  const user = await currentUser();
+  const [user, admission] = await Promise.all([
+    currentUser(),
+    admissionForAccount(userId),
+  ]);
   const primaryEmail = user?.primaryEmailAddress;
 
   return (
@@ -21,7 +25,7 @@ export default async function SettingsPage() {
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">Connections, limits, and credentials for your agent workspace.</p>
       <div className="aperture-rule mt-7" />
       <div className="mt-8 space-y-10">
-        <AlphaSettingsNotice />
+        <AlphaSettingsNotice tier={admission.tier} />
         <AccountEmailPanel
           email={primaryEmail?.emailAddress ?? null}
           verified={primaryEmail?.verification?.status === "verified"}
