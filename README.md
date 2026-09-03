@@ -230,10 +230,14 @@ that directory. The unpublished package source lives in [`cli/`](./cli);
 
 ## Verification
 
-- **100+ automated tests**, including Run lifecycle, real CLI, and MCP stdio process tests
-- GitHub CI runs lint, tests, CLI sync, type-checking, and a production build
+- **600+ automated tests**, including Run lifecycle, Admission resolution, real
+  CLI, and MCP stdio process tests. The MCP tests build the directory layout npm
+  produces rather than running from the source tree, because the source tree is
+  the layout that hides packaging bugs
+- GitHub CI runs lint, tests, CLI sync, type-checking, a production build, a
+  dependency audit, and CodeQL
 - [`/api/health`](https://locus-five-iota.vercel.app/api/health) reports the
-  deployed package version and Git revision
+  deployed package version, Git revision, and which admission door is open
 - The historical benchmark is generated from declared parent snapshots and fails
   its gate if fix-file recall drops below 100%. It runs locally via
   `pnpm benchmark`, **not** in CI, and `benchmarks/results.json` is a committed
