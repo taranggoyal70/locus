@@ -129,7 +129,8 @@ pnpm dev
 
 | Variable | Purpose |
 |----------|---------|
-| `LOCUS_SELF_SERVE` | Set to `open` to admit any signed-in account to the `free` Tier. Absent keeps the deployment invite-only |
+| `LOCUS_SELF_SERVE` | Set to `open` to admit any signed-in account with a verified email to the `free` Tier. Absent keeps the deployment invite-only |
+| `LOCUS_SELF_SERVE_MAX_ACCOUNTS` | Ceiling on self-serve accounts. Absent means no ceiling; `0` admits nobody new without affecting existing accounts |
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
@@ -148,7 +149,7 @@ the account may do and how many Agent Runs it may hold open.
 | Tier | How it is reached | Runs (active / daily) | Public Repos | Private Repos | PR delivery | Billing |
 |------|-------------------|----------------------|--------------|---------------|-------------|---------|
 | `visitor` | Signed out, waitlisted, or suspended | 0 / 0 | read only | no | no | no |
-| `free` | Any signed-in account while `LOCUS_SELF_SERVE=open` | 1 / 3 | yes | no | no | yes |
+| `free` | Any signed-in account with a verified email, while `LOCUS_SELF_SERVE=open` and below the account ceiling | 1 / 3 | yes | no | no | yes |
 | `partner` | Listed in `ALPHA_ALLOWED_USER_IDS` | 2 / 10 | yes | yes | yes | comped |
 | `pro` | Active Stripe subscription | 5 / 50 | yes | yes | yes | yes |
 
@@ -158,6 +159,13 @@ later subscribes gains the paid Tier rather than keeping the comped one.
 An operator row in `account_admissions` can raise an account above what these
 rules give it, or refuse one outright by storing `visitor`. A stored refusal
 beats every other rule, including an active subscription.
+
+Two barriers apply to self-serve only, and only to an account that has no
+Admission record yet: the email address must be verified, and the deployment must
+be below `LOCUS_SELF_SERVE_MAX_ACCOUNTS`. Neither applies to an invited partner,
+a subscriber, or an account already admitted — those are vouched for by something
+that already cost more than an email address, and a barrier to creating accounts
+should never evict someone already through the door.
 
 Capabilities are withheld separately by `CAPABILITY_RELEASE` in
 [`src/lib/admission.ts`](src/lib/admission.ts). The table above is the ladder as

@@ -43,9 +43,20 @@ Free-tier provider capacity serialises at one concurrent lease
 holding a Run open queues behind that single lease.
 
 Three daily Runs per free account against one concurrent lease means admission
-volume, not per-account quota, is the control that matters. Decide the number of
-accounts you are willing to admit before opening, not after, and know that
-closing the variable does not cancel Runs already queued.
+volume, not per-account quota, is the control that matters. Set
+`LOCUS_SELF_SERVE_MAX_ACCOUNTS` before opening. Deciding a number and not
+enforcing it is not a control.
+
+Start small — a ceiling you would be comfortable paying for twice over, since a
+Run's cost varies with the Repo. Raising it later is one variable and a redeploy;
+refunding an unbounded month is not.
+
+Self-serve additionally requires a verified email address. That is not
+configurable and needs no rollout step, but it is the reason a signup that
+completes in Clerk may still not reach the free Tier, and it is worth knowing
+before the first support question about it.
+
+Closing the variable does not cancel Runs already queued behind the lease.
 
 ## Opening
 
@@ -63,6 +74,16 @@ curl -s https://locus-five-iota.vercel.app/api/health | jq .admission
 
 Expect `"self_serve"`. If it still reports `"invite_only"`, the variable did not
 take effect and no account has been admitted.
+
+## Pausing without closing
+
+Set `LOCUS_SELF_SERVE_MAX_ACCOUNTS=0` and redeploy. Nobody new is admitted and
+every already-admitted account keeps working, which is the right first move when
+cost is climbing faster than expected but nothing is actually wrong. Clearing
+`LOCUS_SELF_SERVE` is the heavier option and is still what an incident calls for.
+
+Watch `admission_resolved` for `at_capacity`: a rising count is the signal that
+demand is hitting the ceiling rather than that the product stopped working.
 
 ## Granting an account a higher Tier
 
