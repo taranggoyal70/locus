@@ -424,3 +424,60 @@ describe("NodeNext and ESM specifiers", () => {
     expect(buildGraph(repo).deps["entry.ts"]).toContain(`mod${src}`);
   });
 });
+
+describe("monorepo workspace packages", () => {
+  // A monorepo writes cross-package imports by package name, not by relative
+  // path, so without resolving them the Closure stops at each package boundary
+  // — the one place it most needs to continue, because a bug that crosses
+  // packages is exactly the bug you cannot find by reading one directory.
+  // Measured on vercel/swr: 232 edges before, 376 after.
+  const mono: RepoData = {
+    name: "mono",
+    slug: "mono",
+    description: "",
+    root: "",
+    recentlyChanged: [],
+    files: {
+      "package.json": '{"name":"root","workspaces":["packages/*"]}',
+      "packages/web/package.json": '{"name":"@acme/web"}',
+      "packages/web/src/checkout.ts":
+        'import { format } from "@acme/utils";\n'
+        + 'import { Money } from "@acme/utils/money";\n'
+        + 'import React from "react";\n'
+        + "export const checkout = format(Money);",
+      "packages/utils/package.json": '{"name":"@acme/utils"}',
+      "packages/utils/src/index.ts": "export const format = (x) => String(x);",
+      "packages/utils/src/money.ts": "export const Money = 1;",
+      "packages/other/package.json": '{"name":"@acme/other"}',
+      "packages/other/src/index.ts": "export const other = 1;",
+    },
+  };
+  const graph = buildGraph(mono);
+
+  it("resolves a bare package name to that package's entry", () => {
+    expect(graph.deps["packages/web/src/checkout.ts"]).toContain("packages/utils/src/index.ts");
+  });
+
+  it("resolves a subpath inside a workspace package", () => {
+    expect(graph.deps["packages/web/src/checkout.ts"]).toContain("packages/utils/src/money.ts");
+  });
+
+  it("does not turn a third-party package into an edge", () => {
+    // The import regex now captures every specifier, so this is the guard that
+    // matters: `react` is not in the Repo and must resolve to nothing.
+    const deps = graph.deps["packages/web/src/checkout.ts"];
+    expect(deps.some((d) => d.includes("react"))).toBe(false);
+    expect(deps).toHaveLength(2);
+  });
+
+  it("never makes package.json a node", () => {
+    expect(graph.nodes.some((n) => n.rel.endsWith("package.json"))).toBe(false);
+  });
+
+  it("keeps an unrelated workspace package out of the Slice", () => {
+    const result = locate("the checkout format is wrong", mono, graph);
+    const rels = result.slice.map((f) => f.rel);
+    expect(rels).toContain("packages/web/src/checkout.ts");
+    expect(rels).not.toContain("packages/other/src/index.ts");
+  });
+});

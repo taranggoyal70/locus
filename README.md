@@ -55,7 +55,11 @@ proposal evidence.
 
 ## How it works
 
-1. Parse supported JavaScript/TypeScript `import`, `require()`, dynamic `import()`, and `@/` aliases, plus Python `import` and `from ... import` (absolute dotted and relative), into a deterministic dependency graph.
+1. Parse supported JavaScript/TypeScript `import`, `require()`, dynamic `import()`,
+   `@/` aliases, NodeNext specifiers (`./x.js` resolving to `x.ts`), and monorepo
+   workspace package names, plus Python `import` and `from ... import` (absolute
+   dotted and relative), into a deterministic dependency graph. Third-party
+   packages are never edges in either ecosystem.
 2. Match meaningful task words against file paths and source text.
 3. Add dependency closures, direct consumers, and recent cross-cutting matches.
 4. Widen to all loaded files when the evidence is insufficient, then return

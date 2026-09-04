@@ -78,7 +78,7 @@ saving is then overstated.
 
 | Language | Files | Import edges |
 |---|---|---|
-| TypeScript / JavaScript | `.ts` `.tsx` `.js` `.jsx` `.mjs` `.cjs` | `import`, `require()`, dynamic `import()`, `@/` aliases |
+| TypeScript / JavaScript | `.ts` `.tsx` `.mts` `.cts` `.js` `.jsx` `.mjs` `.cjs` | `import`, `require()`, dynamic `import()`, `@/` aliases, NodeNext (`./x.js` → `x.ts`), monorepo workspace names |
 | Python | `.py` | `import a.b`, `from a.b import c`, relative `from .x` / `from ..y` |
 
 Third-party packages are not edges in either ecosystem — only files that exist in

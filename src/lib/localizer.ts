@@ -7,7 +7,7 @@ import type {
 } from "@/lib/types";
 
 // Static/dynamic imports and require() — captures relative and @/ alias specs.
-const IMPORT_RE = /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
+const IMPORT_RE = /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"]([^'"]+)['"]/g;
 
 // Python imports. Two forms, both of which may name a module inside the Repo:
 //
@@ -82,6 +82,7 @@ function resolve(
   fromPath: string,
   root: string,
   files: Record<string, string>,
+  packages?: Map<string, string>,
 ): string | null {
   if (spec.startsWith("@/")) {
     const rest = spec.slice(2);
@@ -96,7 +97,7 @@ function resolve(
     const dir = fromPath.split("/").slice(0, -1).join("/");
     return tryPath(normalize(`${dir}/${spec}`), files);
   }
-  return null;
+  return packages ? resolveWorkspace(spec, files, packages) : null;
 }
 
 /**
@@ -148,6 +149,64 @@ function resolvePython(
   return null;
 }
 
+/**
+ * Map every workspace package name in the Repo to its directory.
+ *
+ * A monorepo writes cross-package imports by package name — `from "swr"`,
+ * `from "@acme/utils"` — not by relative path, so without this the dependency
+ * Closure stops dead at each package boundary. That is the one place it most
+ * needs to continue: a bug that crosses packages is exactly the bug a developer
+ * cannot find by reading one directory.
+ */
+function workspacePackages(files: Record<string, string>): Map<string, string> {
+  const byName = new Map<string, string>();
+  for (const p of Object.keys(files)) {
+    if (!p.endsWith("package.json")) continue;
+    let manifest: { name?: unknown };
+    try {
+      manifest = JSON.parse(files[p]);
+    } catch {
+      continue;
+    }
+    if (typeof manifest?.name !== "string" || !manifest.name) continue;
+    const dir = p.split("/").slice(0, -1).join("/");
+    const existing = byName.get(manifest.name);
+    if (existing === undefined || dir.length < existing.length) byName.set(manifest.name, dir);
+  }
+  return byName;
+}
+
+/**
+ * Resolve a bare specifier that names a workspace package in this Repo.
+ *
+ * `swr` and `swr/infinite` both resolve: the first to the package's own entry,
+ * the second to the subpath inside it. A specifier naming a package that is not
+ * in the Repo returns null, so a genuine third-party dependency is still not an
+ * edge.
+ */
+function resolveWorkspace(
+  spec: string,
+  files: Record<string, string>,
+  packages: Map<string, string>,
+): string | null {
+  if (!packages.size) return null;
+  const parts = spec.split("/");
+  const nameLength = spec.startsWith("@") ? 2 : 1;
+  const name = parts.slice(0, nameLength).join("/");
+  const dir = packages.get(name);
+  if (dir === undefined) return null;
+
+  const subpath = parts.slice(nameLength).join("/");
+  const bases = subpath
+    ? [`${dir}/${subpath}`, `${dir}/src/${subpath}`]
+    : [`${dir}/src/index`, `${dir}/index`, `${dir}/src`];
+  for (const base of bases) {
+    const hit = tryPath(normalize(base), files);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 function normalize(p: string): string {
   const parts: string[] = [];
   for (const seg of p.split("/")) {
@@ -170,6 +229,7 @@ function tokens(text: string): string[] {
 export function buildGraph(repo: RepoData): Graph {
   const { files, root } = repo;
   const paths = Object.keys(files).filter((p) => SOURCE_EXT_RE.test(p));
+  const packages = workspacePackages(files);
   const nodes: GraphNode[] = [];
   const byPath: Record<string, GraphNode> = {};
   const deps: Record<string, string[]> = {};
@@ -239,7 +299,7 @@ export function buildGraph(repo: RepoData): Graph {
     let m: RegExpExecArray | null;
     IMPORT_RE.lastIndex = 0;
     while ((m = IMPORT_RE.exec(files[p]))) {
-      const tgt = resolve(m[1], p, root, files);
+      const tgt = resolve(m[1], p, root, files, packages);
       // `resolve` returns any key present in `files`, but nodes exist only for
       // JS/TS paths, so a `./x.module.css` or `./config.json` import resolves to
       // a path with no node. Every consumer of the graph assumes an edge endpoint
