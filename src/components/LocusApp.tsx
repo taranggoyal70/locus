@@ -9,6 +9,7 @@ import { AgentRunPanel } from "@/components/AgentRunPanel";
 import { ContextLens } from "@/components/ContextLens";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
+import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { RepoLoadFeedback } from "@/components/RepoLoadFeedback";
 import { TaskEvidence } from "@/components/TaskEvidence";
 import { TokenMeter } from "@/components/TokenMeter";
@@ -166,6 +167,7 @@ export function LocusApp({
       </header>
 
       <div className="min-w-0">
+      {isWorkspace && <OnboardingBanner tier={runAccess.tier} />}
       <main className="mx-auto max-w-[1580px] px-4 pb-16 sm:px-7 lg:px-9">
         <section className="grid gap-7 py-8 lg:grid-cols-[minmax(360px,0.72fr)_minmax(560px,1.28fr)] lg:items-center lg:gap-9 lg:py-10">
           <div className="relative py-2">
