@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AccountEmailPanel } from "@/components/AccountEmailPanel";
 import { AlphaSettingsNotice } from "@/components/AlphaSettingsNotice";
 import { ApiKeysPanel } from "@/components/ApiKeysPanel";
+import { ProjectsList } from "@/components/ProjectsList";
 import { SettingsShell } from "@/components/SettingsShell";
 import { admissionForAccount } from "@/lib/admission-server";
 import { UsageStats } from "@/components/UsageStats";
@@ -35,6 +36,15 @@ export default async function SettingsPage() {
           <p className="mt-1 text-sm text-muted-light">Your Agent Run and API activity over the last 30 days.</p>
           <div className="mt-4">
             <UsageStats />
+          </div>
+        </section>
+        <section>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Saved analyses</h2>
+          <p className="mt-1 text-sm text-muted-light">
+            Slices you saved from the workspace. Opening one restores its Repo and task.
+          </p>
+          <div className="mt-4">
+            <ProjectsList />
           </div>
         </section>
         <section>

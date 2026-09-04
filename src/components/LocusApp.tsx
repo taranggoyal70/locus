@@ -375,7 +375,7 @@ export function LocusApp({
                           disabled={saveStatus === "saving"}
                           className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-paper disabled:opacity-40"
                         >
-                          {saveStatus === "idle" ? "Save" : saveStatus}
+                          {saveStatus === "idle" ? "Save analysis" : saveStatus}
                         </button>
                         <button
                           type="button"
