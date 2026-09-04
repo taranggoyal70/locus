@@ -64,3 +64,37 @@ export function runStartRefusal(reason: AdmissionReason): string {
       return "Agent Runs are limited to invited design partners during early access.";
   }
 }
+
+/** The sign-up page's description. */
+export function signUpDescription(selfServeOpen: boolean): string {
+  return selfServeOpen
+    ? "Create a free account and localize a real TypeScript or Next.js task. Agent Runs are "
+      + `included, ${runQuotaForTier("free").maxDailyRuns} per day.`
+    : "Create a free account and localize a real TypeScript or Next.js task. Agent Runs are "
+      + "available to invited design partners.";
+}
+
+/** The sign-in page's description. */
+export function signInDescription(selfServeOpen: boolean): string {
+  return selfServeOpen
+    ? "Sign in to localize a public Repo, inspect visible context evidence, or resume an Agent Run."
+    : "Sign in to localize a public Repo, inspect visible context evidence, or resume an invited "
+      + "Agent Run.";
+}
+
+/** The support page's availability line. */
+export function supportAvailability(selfServeOpen: boolean): string {
+  return selfServeOpen
+    ? "Locus is in public early access. Agent Runs are included with a free account, "
+      + `${runQuotaForTier("free").maxDailyRuns} per day.`
+    : "Locus is in public early access, with Agent Runs limited to invited design partners.";
+}
+
+/** The demo page's capability summary, for a developer audience. */
+export function demoCapabilitySummary(selfServeOpen: boolean): string {
+  return "Public JavaScript and TypeScript Repo localization, visible Included and Excluded files, "
+    + "evidence-backed Widening, and "
+    + (selfServeOpen
+      ? "isolated Agent Runs on a free account."
+      : "invite-gated isolated Agent Runs.");
+}

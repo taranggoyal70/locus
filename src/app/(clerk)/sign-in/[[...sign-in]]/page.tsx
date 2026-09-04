@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { AUTH_APPEARANCE, AuthLoading, AuthShell } from "@/components/AuthShell";
 import { selfServeOpen } from "@/lib/admission";
+import { signInDescription } from "@/lib/admission-copy";
 
 export const metadata: Metadata = {
   title: "Log in · Locus",
@@ -10,9 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function SignInPage() {
-  const description = selfServeOpen()
-    ? "Sign in to localize a public Repo, inspect visible context evidence, or resume an Agent Run."
-    : "Sign in to localize a public Repo, inspect visible context evidence, or resume an invited Agent Run.";
+  const description = signInDescription(selfServeOpen());
 
   return (
     <AuthShell

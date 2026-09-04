@@ -9,7 +9,7 @@ type AlphaSettingsNoticeProps = {
  * The product boundary, told from the viewer's position.
  *
  * This previously stated one boundary for everyone: "Agent Runs remain limited
- * to invited design partners." That was true while an invitation was the only
+ * to invited partners." That was true while an invitation was the only
  * way in. It is false to a free account the moment self-serve opens, and false
  * to a paying one - and it is the kind of false that check:alpha-claims cannot
  * catch, because the sentence is accurate in the source and wrong only for the
@@ -28,7 +28,7 @@ export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
       + "a time and 3 per day on public repositories, ending at a review-ready "
       + "proposal. External GitHub delivery is off for every plan.",
     partner:
-      "Repo localization is free and unmetered. As an invited design partner you "
+      "Repo localization is free and unmetered. As a design partner you "
       + "have 2 Agent Runs at a time and 10 per day on public repositories. "
       + "External GitHub delivery is off for every plan.",
     pro:
@@ -43,7 +43,7 @@ export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
         Public early access
       </p>
       <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-paper">
-        {tier === "visitor" ? "Agent Runs for invited design partners" : "Your current access"}
+        {tier === "visitor" ? "Agent Runs are not enabled for this account" : "Your current access"}
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">{body}</p>
     </section>

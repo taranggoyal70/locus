@@ -2,7 +2,8 @@ import { SignUp } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
 import { AUTH_APPEARANCE, AuthLoading, AuthShell } from "@/components/AuthShell";
-import { runQuotaForTier, selfServeOpen } from "@/lib/admission";
+import { selfServeOpen } from "@/lib/admission";
+import { signUpDescription } from "@/lib/admission-copy";
 
 export const metadata: Metadata = {
   title: "Create an account · Locus",
@@ -10,13 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function SignUpPage() {
-  // Read at render, not baked in. This sentence is a promise to someone who has
-  // not signed up yet, and it was wrong for every account the moment self-serve
-  // opened.
-  const daily = runQuotaForTier("free").maxDailyRuns;
-  const description = selfServeOpen()
-    ? `Create a free account and localize a real TypeScript or Next.js task. Agent Runs are included, ${daily} per day.`
-    : "Create a free account and localize a real TypeScript or Next.js task. Agent Runs are available to invited design partners.";
+  const description = signUpDescription(selfServeOpen());
 
   return (
     <AuthShell

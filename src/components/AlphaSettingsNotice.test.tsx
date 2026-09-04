@@ -9,7 +9,11 @@ describe("Settings access notice", () => {
     const html = renderToStaticMarkup(<AlphaSettingsNotice tier="visitor" />);
 
     expect(html).toContain("Public early access");
-    expect(html).toContain("invited design partners");
+    // The visitor heading no longer names an invitation. A visitor may be
+    // waitlisted, unverified, at the ceiling, or suspended, and only the first
+    // of those is waiting for an invitation at all.
+    expect(html).toContain("not enabled for this account");
+    expect(html).not.toContain("invited design partners");
     expect(html).not.toContain("subscription");
     expect(html).not.toContain("private repositories");
     expect(html).not.toContain("teams");
@@ -22,7 +26,7 @@ describe("Settings access notice", () => {
     // source and wrong only for the person reading it.
     for (const tier of ["free", "pro"] as const) {
       expect(renderToStaticMarkup(<AlphaSettingsNotice tier={tier} />)).not.toMatch(
-        /invited design partners/,
+        /invited design partners|not enabled for this account/,
       );
     }
   });
