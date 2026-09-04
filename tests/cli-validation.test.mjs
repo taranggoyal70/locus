@@ -96,3 +96,18 @@ describe("locus locate argument validation", () => {
     expect(result.out).toMatch(/Repo:/);
   });
 });
+
+describe("locus locate repository preconditions", () => {
+  it("refuses a directory with no supported source instead of widening over nothing", () => {
+    // The hosted API already refuses this ("No JavaScript or TypeScript source
+    // found"), so the CLI reporting "WIDENED to whole repo" over a Slice of zero
+    // files meant the two surfaces disagreed on identical input — and the CLI was
+    // the one that stayed quiet. Pointing at the wrong directory, at a project in
+    // another language, or at one whose sources are all under an ignored path are
+    // all ordinary ways to arrive here.
+    const result = run(["locate", "fix login", "--path", "supabase/migrations"]);
+    expect(result.code).toBe(1);
+    expect(result.err).toMatch(/No JavaScript or TypeScript source found/);
+    expect(result.out).not.toMatch(/WIDENED/);
+  });
+});

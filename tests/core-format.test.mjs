@@ -346,3 +346,41 @@ describe("sparse-graph warning in rendered output", () => {
     expect(buildPackedContext(widened, { dir: "/repo", files: { "src/dash.ts": "" } }).text).not.toContain("warning:");
   });
 });
+
+describe("packed context budget", () => {
+  const repo = {
+    name: "big",
+    slug: "big",
+    description: "",
+    root: "",
+    dir: "/tmp/big",
+    recentlyChanged: [],
+    files: {
+      "huge.ts": "export const x = 1;\n// pad\n".repeat(20000),
+      "small.ts": "export const a = 1;\n",
+    },
+  };
+
+  it("cuts an oversized first file to the budget instead of ignoring it", () => {
+    // The first file is admitted whatever its size so the pack is never empty.
+    // Admitting it whole made the budget advisory: a 270,000-token file was
+    // emitted for a request that asked for 2,000. The caller is usually an agent
+    // spending its own context window on this.
+    const graph = buildGraph(repo);
+    const result = locate("huge export pad", repo, graph);
+    const packed = buildPackedContext(result, repo, 2000);
+
+    expect(packed.included.length).toBeGreaterThan(0);
+    expect(packed.usedTokens).toBeLessThanOrEqual(2000);
+    expect(packed.text).toMatch(/was truncated to fit the 2000-token budget/);
+  });
+
+  it("does not truncate when the slice already fits", () => {
+    const graph = buildGraph(repo);
+    const result = locate("huge export pad", repo, graph);
+    const packed = buildPackedContext(result, repo, 400000);
+
+    expect(packed.text).not.toMatch(/was truncated/);
+    expect(packed.text).toContain("===== huge.ts =====");
+  });
+});

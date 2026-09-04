@@ -20,8 +20,10 @@ import { execFileSync } from "node:child_process";
 // Static/dynamic imports and require() — captures relative and @/ alias specs.
 const IMPORT_RE = /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
 
+const CHARS_PER_TOKEN = 4;
+
 function estimateTokens(text) {
-  return Math.max(1, Math.round(text.length / 4));
+  return Math.max(1, Math.round(text.length / CHARS_PER_TOKEN));
 }
 
 function topDir(rel) {
@@ -526,6 +528,22 @@ export function loadLocalRepo(dir) {
       // unreadable (permissions, broken symlink, …) — skip
     }
   }
+  // A directory with no supported source is an error, not an empty Repo.
+  //
+  // Without this the CLI and MCP answered "WIDENED to whole repo" over a Slice
+  // of zero files — the conservative fallback reporting that it had returned
+  // everything, having returned nothing. The hosted API already refuses this
+  // case ("No JavaScript or TypeScript source found"), so the two surfaces
+  // disagreed on identical input and the CLI was the one that stayed quiet.
+  //
+  // It is a normal thing to hit: pointing at the wrong directory, at a project
+  // in another language, or at one whose sources all live under an ignored path.
+  if (Object.keys(files).length === 0) {
+    throw new Error(
+      `No JavaScript or TypeScript source found in: ${absDir}`,
+    );
+  }
+
   const loadedPaths = Object.keys(files);
   const recentlyChanged = getRecentlyChanged(absDir, loadedPaths);
   const name = path.basename(absDir) || "repo";
@@ -615,12 +633,31 @@ export function buildPackedContext(result, repo, budget = 40000) {
   const budgetN = Number(budget) > 0 ? Number(budget) : 40000;
   const included = [];
   const dropped = [];
+  const bodies = new Map();
   let used = 0;
+  let truncatedPath = null;
   for (const f of result.slice) {
     if (included.length > 0 && used + f.tokens > budgetN) {
       dropped.push(f.path);
       continue;
     }
+    const source = repo.files[f.path] ?? "";
+
+    // The first file is admitted whatever its size, so the pack is never empty
+    // — but admitting it whole made the budget advisory rather than binding: a
+    // single 270,000-token file was emitted for a request that asked for 2,000.
+    // The caller is usually an agent spending its own context window on this, so
+    // it is cut to fit and told that it was.
+    if (included.length === 0 && f.tokens > budgetN) {
+      const body = source.slice(0, budgetN * CHARS_PER_TOKEN);
+      bodies.set(f.path, body);
+      included.push(f);
+      used += estimateTokens(body);
+      truncatedPath = f.path;
+      continue;
+    }
+
+    bodies.set(f.path, source);
     included.push(f);
     used += f.tokens;
   }
@@ -630,8 +667,11 @@ export function buildPackedContext(result, repo, budget = 40000) {
   if (warning) {
     text += `\n# ${warning}`;
   }
+  if (truncatedPath) {
+    text += `\n# ${truncatedPath} was truncated to fit the ${budgetN}-token budget; raise --budget to see all of it`;
+  }
   for (const f of included) {
-    text += `\n\n===== ${f.path} =====\n${repo.files[f.path] ?? ""}`;
+    text += `\n\n===== ${f.path} =====\n${bodies.get(f.path) ?? ""}`;
   }
   if (dropped.length) {
     text += `\n\n# ${dropped.length} file(s) omitted — exceeded budget of ${budgetN} tokens: ${dropped.join(", ")}`;
