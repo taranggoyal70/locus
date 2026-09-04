@@ -128,8 +128,9 @@ export function TokenMeter({
 
       {sparse && !result?.widened && (
         <p className="mt-2 rounded-md border border-recent/30 bg-recent/5 px-2.5 py-1.5 text-[11px] text-recent">
-          Sparse repo — few internal imports, so the Slice may stay broad. This share reflects
-          repository structure and the files packed for this task.
+          Few internal imports resolved, so this Slice may be missing real dependencies and the
+          reduction above may be overstated. Treat it as repository structure rather than proven
+          localization.
         </p>
       )}
 
