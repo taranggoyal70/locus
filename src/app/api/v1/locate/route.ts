@@ -17,7 +17,7 @@ const FETCH_TIMEOUT_MS = 8_000;
 const DOWNLOAD_CONCURRENCY = 8;
 // Mirrors SOURCE_EXT_RE in the localizer: the hosted API must fetch every
 // extension the Graph can build nodes for, or a Python repository loads as empty.
-const SRC_RE = /\.(tsx?|jsx?|mjs|cjs|py)$/;
+const SRC_RE = /\.(tsx?|jsx?|mts|cts|mjs|cjs|py|vue|svelte|astro)$/;
 const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__tests__|e2e)\//i;
 
 function ghHeaders(token?: string) {

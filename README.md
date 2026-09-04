@@ -73,7 +73,9 @@ Extracted text can become part of a durable task or Run record when submitted.
 
 ### Supported files
 
-- `.ts`, `.tsx`, `.js`, `.jsx`
+- `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs`
+- `.py`
+- `.vue`, `.svelte`, `.astro` (imports inside `<script>` blocks)
 - Next.js App Router surface detection (any extension)
 - `require()` and dynamic `import()` dependency edges
 

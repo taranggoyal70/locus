@@ -569,3 +569,51 @@ describe("tsconfig path aliases", () => {
     expect(buildGraph(based).deps["src/app.ts"]).toContain("src/lib/util.ts");
   });
 });
+
+describe("single-file components", () => {
+  // A Vue or SvelteKit application loaded only its .ts helpers: every component
+  // was invisible, so the component tree — the part a UI task is actually about
+  // — was missing from the Graph entirely.
+  const vue: RepoData = {
+    name: "vue", slug: "vue", description: "", root: "src",
+    recentlyChanged: [],
+    files: {
+      "src/App.vue":
+        '<script setup lang="ts">\n'
+        + 'import CheckoutForm from "./components/CheckoutForm.vue";\n'
+        + 'import { formatMoney } from "./lib/money";\n'
+        + "</script>\n<template><CheckoutForm /></template>",
+      "src/components/CheckoutForm.vue":
+        '<script setup lang="ts">\nimport { validate } from "../lib/validate";\n</script>',
+      "src/lib/money.ts": "export const formatMoney = (n) => String(n);",
+      "src/lib/validate.ts": "export const validate = (x) => !!x;",
+      "src/lib/unrelated.ts": "export const unrelated = 1;",
+    },
+  };
+  const graph = buildGraph(vue);
+
+  it("makes components nodes and follows imports out of their script blocks", () => {
+    expect(graph.deps["src/App.vue"]).toContain("src/components/CheckoutForm.vue");
+    expect(graph.deps["src/App.vue"]).toContain("src/lib/money.ts");
+  });
+
+  it("follows the component tree transitively into the Slice", () => {
+    const result = locate("the checkout form total is wrong", vue, graph);
+    const rels = result.slice.map((f) => f.rel);
+    expect(rels).toContain("components/CheckoutForm.vue");
+    expect(rels).toContain("lib/validate.ts");
+    expect(rels).not.toContain("lib/unrelated.ts");
+  });
+
+  it.each([["svelte"], ["astro"]])("treats .%s components as source too", (ext) => {
+    const repo: RepoData = {
+      name: ext, slug: ext, description: "", root: "",
+      recentlyChanged: [],
+      files: {
+        [`Page.${ext}`]: `<script>\nimport { util } from "./util";\n</script>`,
+        "util.ts": "export const util = 1;",
+      },
+    };
+    expect(buildGraph(repo).deps[`Page.${ext}`]).toContain("util.ts");
+  });
+});

@@ -80,6 +80,7 @@ saving is then overstated.
 |---|---|---|
 | TypeScript / JavaScript | `.ts` `.tsx` `.mts` `.cts` `.js` `.jsx` `.mjs` `.cjs` | `import`, `require()`, dynamic `import()`, tsconfig `paths`/`baseUrl` aliases, NodeNext (`./x.js` → `x.ts`), monorepo workspace names |
 | Python | `.py` | `import a.b`, `from a.b import c`, relative `from .x` / `from ..y` |
+| Components | `.vue` `.svelte` `.astro` | imports inside `<script>` blocks |
 
 Third-party packages are not edges in either ecosystem — only files that exist in
 your repository. Route detection (`app/**/page.tsx`) is Next.js-specific; Python

@@ -37,7 +37,11 @@ const PY_IMPORT_RE = /^[ \t]*import[ \t]+([A-Za-z0-9_.]+(?:[ \t]*,[ \t]*[A-Za-z0
 const PY_EXT_RE = /\.py$/;
 
 /** Every extension the Graph builds nodes for. */
-const SOURCE_EXT_RE = /\.(tsx?|jsx?|mts|cts|mjs|cjs|py)$/;
+// Single-file components (.vue, .svelte, .astro) are source: their <script>
+// blocks hold ordinary imports, so the same pattern finds them and the component
+// tree becomes part of the Graph. Without them a Vue or SvelteKit application
+// loads only its .ts helpers and every component is invisible.
+const SOURCE_EXT_RE = /\.(tsx?|jsx?|mts|cts|mjs|cjs|py|vue|svelte|astro)$/;
 
 const CHARS_PER_TOKEN = 4;
 
@@ -65,6 +69,7 @@ const ESM_OUTPUT_TO_SOURCE = [
 function tryPath(base, files) {
   for (const c of [
     `${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.jsx`,
+    `${base}.vue`, `${base}.svelte`, `${base}.astro`,
     `${base}/index.ts`, `${base}/index.tsx`, `${base}/index.js`, `${base}/index.jsx`,
     base,
   ]) {
