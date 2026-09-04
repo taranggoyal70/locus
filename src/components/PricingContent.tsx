@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { MarketingShell } from "@/components/MarketingShell";
 import { WaitlistForm } from "@/components/WaitlistForm";
-import { admissionHeadline } from "@/lib/admission-copy";
+import { admissionGateNote, admissionHeadline } from "@/lib/admission-copy";
 
 const alphaBoundaries = [
   "Self-serve Repo localization for every signed-in user",
@@ -29,6 +29,7 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
             {admissionHeadline(selfServeOpen)}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
+            {admissionGateNote(selfServeOpen)}{" "}
             Create a free account to inspect a task-sized Slice for any supported public Repo.
             We are inviting a smaller group to test complete Agent Runs before introducing paid plans.
           </p>

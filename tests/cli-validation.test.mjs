@@ -17,6 +17,14 @@ const cli = path.join(repoRoot, "bin", "locus.mjs");
  * - a mistyped --jsonn was swallowed, so an agent expecting JSON got prose
  * - a trailing --path with no value silently analysed the working directory
  */
+// Each case spawns a real `node bin/locus.mjs`, and on this repository one
+// invocation costs about a second — most of it the `git log` that produces the
+// Recent signal. Several per test, run in parallel with the rest of the suite,
+// exceeded vitest's 5s default and failed intermittently. The tests are honest
+// integration tests rather than slow ones by accident, so they get a timeout
+// that reflects what they actually do.
+const CLI_TIMEOUT_MS = 30_000;
+
 function run(args) {
   try {
     const stdout = execFileSync(process.execPath, [cli, ...args], {
@@ -40,13 +48,13 @@ describe("locus locate argument validation", () => {
     expect(result.code).toBe(1);
     expect(result.err).toMatch(/does not exist/);
     expect(result.out).not.toMatch(/WIDENED/);
-  });
+  }, CLI_TIMEOUT_MS);
 
   it("refuses a path that is a file", () => {
     const result = run(["locate", "fix login", "--path", "package.json"]);
     expect(result.code).toBe(1);
     expect(result.err).toMatch(/not a directory/);
-  });
+  }, CLI_TIMEOUT_MS);
 
   it.each([
     ["abc", /whole number/],
@@ -67,7 +75,7 @@ describe("locus locate argument validation", () => {
     expect(result.code).toBe(1);
     expect(result.err).toMatch(/Unknown option: --jsonn/);
     expect(result.out).toBe("");
-  });
+  }, CLI_TIMEOUT_MS);
 
   it.each([["--path"], ["--budget"], ["--evidence"]])("refuses a trailing %s", (flag) => {
     const result = run(["locate", "admission", flag]);
@@ -79,7 +87,7 @@ describe("locus locate argument validation", () => {
     expect(run(["locate", "admission tier"]).code).toBe(0);
     expect(run(["locate", "admission tier", "--json"]).code).toBe(0);
     expect(run(["locate", "admission tier", "--pack", "--budget", "20000"]).code).toBe(0);
-  });
+  }, CLI_TIMEOUT_MS);
 
   it("emits parseable JSON for --json", () => {
     const result = run(["locate", "admission tier", "--json"]);
@@ -87,14 +95,14 @@ describe("locus locate argument validation", () => {
     const parsed = JSON.parse(result.out);
     expect(Array.isArray(parsed.slice)).toBe(true);
     expect(typeof parsed.dir).toBe("string");
-  });
+  }, CLI_TIMEOUT_MS);
 
   it("lets a task begin with a dash after the -- terminator", () => {
     // Rejecting unknown options would otherwise make such a task unaskable.
     const result = run(["locate", "--", "--json output is malformed"]);
     expect(result.code).toBe(0);
     expect(result.out).toMatch(/Repo:/);
-  });
+  }, CLI_TIMEOUT_MS);
 });
 
 describe("locus locate repository preconditions", () => {
@@ -109,5 +117,5 @@ describe("locus locate repository preconditions", () => {
     expect(result.code).toBe(1);
     expect(result.err).toMatch(/No supported source found/);
     expect(result.out).not.toMatch(/WIDENED/);
-  });
+  }, CLI_TIMEOUT_MS);
 });

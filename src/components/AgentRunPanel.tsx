@@ -258,6 +258,14 @@ export function AgentRunPanel({
   }
 
   const accessCopy = runAccessCopy(runAccess);
+  // The allowance can be spent while the capability is still held. Without this
+  // the panel kept asking which capacity to use and to accept a data policy —
+  // inputs for a Run that cannot start. runAccessCopy already knew; the markup
+  // did not, so it invited configuration for an action it was refusing.
+  const allowanceSpent = runAccess.canStart
+    && runAccess.usage !== null
+    && runAccess.usage.dailyRuns >= runAccess.quota.maxDailyRuns;
+  const canConfigureRun = canStartRun && !allowanceSpent;
   const canLaunch = canStartRun
     && Boolean(repository)
     && task.trim().length >= 10
@@ -306,7 +314,7 @@ export function AgentRunPanel({
                 </div>
               ))}
             </div>
-            {canStartRun && (
+            {canConfigureRun && (
               <fieldset className="mt-4 rounded-xl border border-line p-3">
                 <legend className="px-1 font-mono text-[9px] font-semibold uppercase tracking-[0.13em] text-muted">
                   Choose capacity
@@ -358,7 +366,7 @@ export function AgentRunPanel({
                 )}
               </fieldset>
             )}
-            {canStartRun && (
+            {canConfigureRun && (
               <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-line px-3 py-3 text-[11px] leading-5 text-muted-light">
                 <input
                   type="checkbox"
@@ -373,7 +381,11 @@ export function AgentRunPanel({
                 </span>
               </label>
             )}
-            {!canStartRun && accessCopy.href ? (
+            {allowanceSpent ? (
+              <p className="mt-4 flex w-full items-center justify-between rounded-xl border border-line-strong px-4 py-3.5 text-sm font-semibold text-muted">
+                <span>{accessCopy.action}</span>
+              </p>
+            ) : !canStartRun && accessCopy.href ? (
               // A refused account gets a control that actually goes somewhere.
               // Rendering "Request access" on a disabled button was a dead end
               // wearing the costume of a next step.

@@ -28,7 +28,7 @@ export function admissionTag(selfServeOpen: boolean): string {
   // so quoting the per-account number here would read as a guarantee it is not.
   return selfServeOpen
     ? "Public early access · public Repos only · one shared Agent Run daily"
-    : "Public early access · public Repos only · Agent Runs invite-gated · access required";
+    : "Public early access · public Repos only · Agent Runs invite-gated";
 }
 
 /** A full sentence for a footer or a paragraph. */
@@ -40,15 +40,22 @@ export function admissionSentence(selfServeOpen: boolean): string {
       + "enabled beta accounts and remain invite-gated during early access.";
 }
 
+/** The sentence under the heading, where a condition can afford the words. */
+export function admissionGateNote(selfServeOpen: boolean): string {
+  return selfServeOpen
+    ? "Shared capacity resets daily at 00:00 UTC, or connect your own Cloudflare account."
+    : "Agent Runs stay access-gated until the production canary passes.";
+}
+
 /** A heading that states the current boundary. */
 export function admissionHeadline(selfServeOpen: boolean): string {
-  // The closed variant names the gate rather than only the state. PR #69's
-  // production gate is explicit that public admission waits on the canary, and a
-  // reader who knows why it is closed can tell "not yet" from "not for you".
+  // Kept to one line. The canary condition is real and belongs on the page, but
+  // as body copy: rendered as an H1 it ran to seven lines on a 390px viewport
+  // and swallowed the whole first screen. A headline states the boundary; the
+  // paragraph under it explains the gate.
   return selfServeOpen
-    ? "Repo localization is open. Agent Runs use one shared daily slot or capacity you connect."
-    : "Repo localization is open. Agent Runs are invite-gated and stay access-gated until the "
-      + "production canary passes.";
+    ? "Repo localization is open. Agent Runs use one shared daily slot."
+    : "Repo localization is open. Agent Runs are invite-gated.";
 }
 
 /**

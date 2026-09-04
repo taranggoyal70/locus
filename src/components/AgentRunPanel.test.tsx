@@ -131,3 +131,45 @@ describe("controlled-alpha Agent Run start", () => {
     expect(html).toContain("3 Agent Runs per day");
   });
 });
+
+describe("spent daily allowance", () => {
+  function panel(usage: { activeRuns: number; dailyRuns: number } | null) {
+    return renderToStaticMarkup(
+      <AgentRunPanel
+        repository="taranggoyal70/locus"
+        task="Fix the controlled alpha evidence contract"
+        sliceCount={4}
+        excludedCount={8}
+        acceptanceCriteria={["The evidence contract is factual"]}
+        runAccess={{
+          canStart: true, tier: "free", reason: "self_serve",
+          quota: { maxActiveRuns: 1, maxDailyRuns: 3 }, usage,
+        }}
+      />,
+    );
+  }
+
+  it("stops asking for capacity and consent once the allowance is spent", () => {
+    // The capability is still held, so the old markup kept rendering the
+    // capacity chooser and the data-policy checkbox — inputs for a Run that
+    // cannot start. Found by screenshotting the state rather than reading it.
+    const html = panel({ activeRuns: 0, dailyRuns: 3 });
+    expect(html).toContain("Daily Runs used");
+    expect(html).not.toContain("Choose capacity");
+    expect(html).not.toContain("I confirm this public Repo");
+  });
+
+  it("still offers both while the allowance remains", () => {
+    const html = panel({ activeRuns: 0, dailyRuns: 1 });
+    expect(html).toContain("Choose capacity");
+    expect(html).toContain("I confirm this public Repo");
+    expect(html).toContain("2 of 3 Agent Runs left today");
+  });
+
+  it("offers them when usage could not be read at all", () => {
+    // An unreadable count must not look like an exhausted allowance.
+    const html = panel(null);
+    expect(html).toContain("Choose capacity");
+    expect(html).not.toContain("Daily Runs used");
+  });
+});

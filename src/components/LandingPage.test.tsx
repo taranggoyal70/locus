@@ -16,7 +16,8 @@ describe("public early-access landing contract", () => {
     expect(html).toContain('href="/demo"');
     expect(html).toContain("Try Repo localization");
     expect(html).toContain("Request Agent Run access");
-    expect(html).toContain("access required");
+    // The tag dropped a redundant "access required" — it already says invite-gated.
+    expect(html).toContain("invite-gated");
     expect(html).toContain("review-ready, check-passing proposal");
     expect(html).toContain("Illustrative example");
     expect(html).toContain("recall on the cases in our suite");
