@@ -1,7 +1,7 @@
 # Locus — Context
 
-Locus maps a task ("fix the dashboard") to a focused **Slice** of a JavaScript or
-TypeScript Repo, instead of always loading the whole tree. It **Widens** when the available
+Locus maps a task ("fix the dashboard") to a focused **Slice** of a JavaScript,
+TypeScript, or Python Repo, instead of always loading the whole tree. It **Widens** when the available
 evidence is weak. This is a conservative fallback, not a quality guarantee. This
 file is the second-brain: read it once instead of re-crawling the repo.
 
@@ -9,6 +9,15 @@ file is the second-brain: read it once instead of re-crawling the repo.
 
 Use these terms exactly. They name the domain; the architecture vocabulary
 (module, seam, depth, adapter) lives in the review skill's LANGUAGE.md.
+
+**Supported language**:
+A language the **Graph** builds nodes and import edges for: JavaScript and
+TypeScript (`.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`) and Python (`.py`).
+Everything else may sit in `Repo.files` but is never a node and never an edge
+endpoint. **Surface** detection is JavaScript/TypeScript only — Next's
+`app/**/page.tsx` can be read structurally, while Python routing lives in
+decorators and registries that would have to be guessed.
+_Avoid_: supported file, parseable file.
 
 **Repo** (`RepoData`):
 A codebase loaded into Locus as a flat `path → contents` map plus metadata
@@ -263,7 +272,7 @@ _Avoid_: feature flag, toggle, permission.
 
 - **Widen on weak evidence.** `locate` must never return a partial/empty Slice silently; if it cannot anchor, it widens to the whole loaded Repo.
 - **Deterministic source graph.** The dependency **Graph** comes from parsing
-  imports between JavaScript/TypeScript nodes, never from an LLM. Non-source
+  imports between source nodes in a supported language, never from an LLM. Non-source
   files may exist in `Repo.files`, but imports to them are not Graph edges or
   Slice files.
 - **CLI/MCP emitted paths are openable.** Anything the source CLI or MCP server

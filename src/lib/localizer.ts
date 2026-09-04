@@ -9,6 +9,25 @@ import type {
 // Static/dynamic imports and require() — captures relative and @/ alias specs.
 const IMPORT_RE = /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
 
+// Python imports. Two forms, both of which may name a module inside the Repo:
+//
+//   from a.b import c        →  a.b   (and a.b.c, when c is itself a module)
+//   from .sib import c       →  sibling of the importing file
+//   from ..pkg.mod import c  →  one package up
+//   import a.b.c             →  a.b.c
+//
+// Captured as (dots, dotted-path) so the resolver can count leading dots for
+// relative depth. `import x` with no dots is kept because a flat layout makes
+// `x` a real sibling module; it resolves to null when x is a third-party
+// package, which is the same outcome as an unresolvable JS bare specifier.
+const PY_FROM_RE = /^[ \t]*from[ \t]+(\.*)([A-Za-z0-9_.]*)[ \t]+import[ \t]/gm;
+const PY_IMPORT_RE = /^[ \t]*import[ \t]+([A-Za-z0-9_.]+(?:[ \t]*,[ \t]*[A-Za-z0-9_.]+)*)/gm;
+
+const PY_EXT_RE = /\.py$/;
+
+/** Every extension the Graph builds nodes for. */
+const SOURCE_EXT_RE = /\.(tsx?|jsx?|mjs|cjs|py)$/;
+
 function estimateTokens(text: string): number {
   return Math.max(1, Math.round(text.length / 4));
 }
@@ -60,6 +79,55 @@ function resolve(
   return null;
 }
 
+/**
+ * Resolve a Python module reference to a file in the Repo.
+ *
+ * `dots` is the leading-dot count: 0 is absolute (rooted at the Repo, or at its
+ * source root), 1 is the importing file's own package, 2 is one package up.
+ * A dotted path becomes a directory path, then either `mod.py` or the package's
+ * `__init__.py`.
+ *
+ * Returns null for anything not in the Repo, which is how a third-party package
+ * such as `stripe` stops being an edge — the same outcome a bare JS specifier
+ * already had.
+ */
+function resolvePython(
+  dots: number,
+  dotted: string,
+  fromPath: string,
+  root: string,
+  files: Record<string, string>,
+): string | null {
+  const segments = dotted ? dotted.split(".").filter(Boolean) : [];
+  const candidateBases: string[] = [];
+
+  if (dots > 0) {
+    const dir = fromPath.split("/").slice(0, -1);
+    const base = dir.slice(0, dir.length - (dots - 1));
+    candidateBases.push([...base, ...segments].join("/"));
+  } else {
+    if (segments.length === 0) return null;
+    for (const prefix of [...new Set(["", root])]) {
+      candidateBases.push(prefix ? `${prefix}/${segments.join("/")}` : segments.join("/"));
+    }
+    if (segments.length > 1) {
+      const parent = segments.slice(0, -1).join("/");
+      for (const prefix of [...new Set(["", root])]) {
+        candidateBases.push(prefix ? `${prefix}/${parent}` : parent);
+      }
+    }
+  }
+
+  for (const base of candidateBases) {
+    if (!base) continue;
+    const normalized = normalize(base);
+    for (const candidate of [`${normalized}.py`, `${normalized}/__init__.py`]) {
+      if (files[candidate] !== undefined) return candidate;
+    }
+  }
+  return null;
+}
+
 function normalize(p: string): string {
   const parts: string[] = [];
   for (const seg of p.split("/")) {
@@ -81,7 +149,7 @@ function tokens(text: string): string[] {
 /** Build the deterministic dependency graph from the file map. */
 export function buildGraph(repo: RepoData): Graph {
   const { files, root } = repo;
-  const paths = Object.keys(files).filter((p) => /\.(tsx?|jsx?)$/.test(p));
+  const paths = Object.keys(files).filter((p) => SOURCE_EXT_RE.test(p));
   const nodes: GraphNode[] = [];
   const byPath: Record<string, GraphNode> = {};
   const deps: Record<string, string[]> = {};
@@ -96,6 +164,11 @@ export function buildGraph(repo: RepoData): Graph {
 
   for (const p of paths) {
     const rel = p.startsWith(root + "/") ? p.slice(root.length + 1) : p;
+    // Surfaces stay a JavaScript/TypeScript concept. Next's `app/**/page.tsx`
+    // is a structural convention that can be detected; Python web frameworks
+    // route through decorators and registries, which would have to be guessed.
+    // CONTEXT.md requires Surfaces be discovered structurally, so Python files
+    // simply have none and anchor on path and source like any other file.
     const isSurface = /^app\/.+\/page\.(tsx?|jsx?)$/.test(rel) || /^app\/page\.(tsx?|jsx?)$/.test(rel);
     let route: string | undefined;
     if (isSurface) {
@@ -118,6 +191,31 @@ export function buildGraph(repo: RepoData): Graph {
 
   for (const p of paths) {
     const seen = new Set<string>();
+    const addEdge = (tgt: string | null) => {
+      if (tgt && tgt !== p && byPath[tgt] && !seen.has(tgt)) {
+        seen.add(tgt);
+        deps[p].push(tgt);
+        (rdeps[tgt] ??= []).push(p);
+        edges.push({ from: p, to: tgt });
+      }
+    };
+
+    if (PY_EXT_RE.test(p)) {
+      let pm: RegExpExecArray | null;
+      PY_FROM_RE.lastIndex = 0;
+      while ((pm = PY_FROM_RE.exec(files[p]))) {
+        addEdge(resolvePython(pm[1].length, pm[2], p, root, files));
+      }
+      PY_IMPORT_RE.lastIndex = 0;
+      while ((pm = PY_IMPORT_RE.exec(files[p]))) {
+        for (const spec of pm[1].split(",")) {
+          const dotted = spec.trim().split(/\s+as\s+/)[0];
+          addEdge(resolvePython(0, dotted, p, root, files));
+        }
+      }
+      continue;
+    }
+
     let m: RegExpExecArray | null;
     IMPORT_RE.lastIndex = 0;
     while ((m = IMPORT_RE.exec(files[p]))) {

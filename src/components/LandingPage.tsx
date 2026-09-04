@@ -27,7 +27,7 @@ export function LandingPage() {
               <span className="mt-2 block text-accent">Not the repo.</span>
             </h1>
             <p className="mt-8 max-w-2xl text-lg leading-8 text-muted-light sm:text-xl">
-              Anyone can localize a public JavaScript or TypeScript Repo and inspect every
+              Anyone can localize a public JavaScript, TypeScript, or Python Repo and inspect every
               Included, Excluded, and Widened file. Invited design partners can continue into an
               isolated Sandbox and a review-ready, check-passing proposal.
             </p>

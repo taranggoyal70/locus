@@ -13,7 +13,7 @@ describe("public early-access access page", () => {
     expect(html).toContain("Request Agent Run access");
     expect(html).toContain("Self-serve Repo localization");
     expect(html).toContain('id="request-access"');
-    expect(html).toContain("Public JavaScript and TypeScript repositories");
+    expect(html).toContain("Public JavaScript, TypeScript, and Python repositories");
     expect(html).not.toContain("$29");
     expect(html).not.toContain("Enterprise");
     expect(html).not.toContain("Private repositories");

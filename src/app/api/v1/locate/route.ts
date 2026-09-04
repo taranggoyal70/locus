@@ -15,7 +15,9 @@ const MAX_FILE_BYTES = 100_000;
 const MAX_TOTAL_BYTES = 5_000_000;
 const FETCH_TIMEOUT_MS = 8_000;
 const DOWNLOAD_CONCURRENCY = 8;
-const SRC_RE = /\.(tsx?|jsx?)$/;
+// Mirrors SOURCE_EXT_RE in the localizer: the hosted API must fetch every
+// extension the Graph can build nodes for, or a Python repository loads as empty.
+const SRC_RE = /\.(tsx?|jsx?|mjs|cjs|py)$/;
 const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__tests__|e2e)\//i;
 
 function ghHeaders(token?: string) {
@@ -136,7 +138,7 @@ async function fetchRepo(
     files.push(file.path);
     sourceBytes += size;
   }
-  if (files.length === 0) throw new Error("No JavaScript or TypeScript source found.");
+  if (files.length === 0) throw new Error("No supported source found. Locus reads JavaScript, TypeScript, and Python.");
 
   const entries = await mapConcurrent(files, DOWNLOAD_CONCURRENCY, async (path) => {
     try {

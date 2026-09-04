@@ -7,7 +7,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Experimental API Reference — Locus",
-  description: "Use the experimental Locus API to localize public JavaScript and TypeScript repositories.",
+  description: "Use the experimental Locus API to localize public JavaScript, TypeScript, and Python repositories.",
 };
 
 export default function DocsPage() {

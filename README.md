@@ -2,7 +2,7 @@
 
 **Review-ready engineering proposals with visible context evidence.**
 
-Locus maps a natural-language task to a focused JavaScript/TypeScript code Slice:
+Locus maps a natural-language task to a focused JavaScript, TypeScript, or Python code Slice:
 matching files, their dependency closure, nearby integration points, and relevant
 recent changes. When the evidence is weak, it returns the whole repo instead of a
 speculative small slice and explains which terms were not found, possible starting
@@ -55,7 +55,7 @@ proposal evidence.
 
 ## How it works
 
-1. Parse supported JavaScript/TypeScript `import`, `require()`, dynamic `import()`, and `@/` aliases into a deterministic dependency graph.
+1. Parse supported JavaScript/TypeScript `import`, `require()`, dynamic `import()`, and `@/` aliases, plus Python `import` and `from ... import` (absolute dotted and relative), into a deterministic dependency graph.
 2. Match meaningful task words against file paths and source text.
 3. Add dependency closures, direct consumers, and recent cross-cutting matches.
 4. Widen to all loaded files when the evidence is insufficient, then return
@@ -73,9 +73,14 @@ Extracted text can become part of a durable task or Run record when submitted.
 - Next.js App Router surface detection (any extension)
 - `require()` and dynamic `import()` dependency edges
 
-Graph nodes and returned Slices are JavaScript/TypeScript files. Imports that
-resolve to non-JavaScript/TypeScript files, such as CSS modules or JSON, are not
-dependency edges.
+Graph nodes and returned Slices are source files in a supported language.
+Imports that resolve to anything else, such as CSS modules or JSON, are not
+dependency edges, and neither are third-party packages in either ecosystem.
+
+**Surface** detection is JavaScript/TypeScript only. Next's `app/**/page.tsx` is
+a structural convention that can be read from the tree; Python frameworks route
+through decorators and registries, which would have to be guessed, so Python
+files anchor on path and source alone.
 
 The hosted GitHub importer accepts public repositories (up to 200 source files).
 The source CLI can be used locally for larger repositories.

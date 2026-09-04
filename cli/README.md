@@ -1,7 +1,7 @@
 # locus-context
 
 A zero-dependency CLI and MCP server that maps coding tasks to focused
-JavaScript/TypeScript dependency slices. If task evidence is weak, Locus
+JavaScript, TypeScript, and Python dependency slices. If task evidence is weak, Locus
 conservatively returns the whole loaded repo.
 
 Live demo and reproducible benchmark: https://locus-five-iota.vercel.app

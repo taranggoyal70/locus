@@ -82,9 +82,9 @@ export function signUpDescription(selfServeOpen: boolean): string {
   // capacity that does not exist — the Tier is a ceiling on what one account may
   // hold, not an allocation it is guaranteed to get.
   return selfServeOpen
-    ? "Create a free account, localize a real TypeScript or Next.js task, and use the shared "
+    ? "Create a free account, localize a real TypeScript, Next.js, or Python task, and use the shared "
       + "daily Agent Run or connect Cloudflare capacity you control."
-    : "Create a free account and localize a real TypeScript or Next.js task. Agent Runs are "
+    : "Create a free account and localize a real TypeScript, Next.js, or Python task. Agent Runs are "
       + "available to invited design partners.";
 }
 
@@ -106,7 +106,7 @@ export function supportAvailability(selfServeOpen: boolean): string {
 
 /** The demo page's capability summary, for a developer audience. */
 export function demoCapabilitySummary(selfServeOpen: boolean): string {
-  return "Public JavaScript and TypeScript Repo localization, visible Included and Excluded files, "
+  return "Public JavaScript, TypeScript, and Python Repo localization, visible Included and Excluded files, "
     + "evidence-backed Widening, and "
     + (selfServeOpen
       ? "isolated Agent Runs on a free account."

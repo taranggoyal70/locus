@@ -291,3 +291,71 @@ describe("openable paths", () => {
     expect(result.slice.every((f) => f.path.endsWith(f.rel))).toBe(true);
   });
 });
+
+describe("Python repositories", () => {
+  // Python is the largest language in agent tooling and was entirely
+  // unsupported: a Python repository loaded as zero files and Locus refused it.
+  const python: RepoData = {
+    name: "pyshop",
+    slug: "pyshop",
+    description: "",
+    root: "",
+    recentlyChanged: [],
+    files: {
+      "app/api/checkout.py":
+        "from app.services.billing import charge_card\n"
+        + "from app.models.order import Order\n"
+        + "from .schemas import CheckoutRequest\n"
+        + "import stripe\n\n"
+        + "def post_checkout(req):\n    return charge_card(Order.create(req).total)\n",
+      "app/api/schemas.py": "class CheckoutRequest:\n    items: list\n",
+      "app/services/billing.py":
+        "from ..models.order import Order\n\ndef charge_card(total):\n    return total\n",
+      "app/models/order.py": "class Order:\n    pass\n",
+      "app/models/__init__.py": "",
+      "app/services/reporting.py": "from app.models.order import Order\n\ndef monthly():\n    return []\n",
+    },
+  };
+  const graph = buildGraph(python);
+
+  it("builds nodes for .py files", () => {
+    expect(graph.nodes.map((n) => n.rel).sort()).toContain("app/api/checkout.py");
+  });
+
+  it("follows an absolute dotted import to the module it names", () => {
+    expect(graph.deps["app/api/checkout.py"]).toContain("app/services/billing.py");
+    expect(graph.deps["app/api/checkout.py"]).toContain("app/models/order.py");
+  });
+
+  it("follows a single-dot relative import to a sibling", () => {
+    expect(graph.deps["app/api/checkout.py"]).toContain("app/api/schemas.py");
+  });
+
+  it("follows a double-dot relative import one package up", () => {
+    expect(graph.deps["app/services/billing.py"]).toContain("app/models/order.py");
+  });
+
+  it("does not make a third-party package an edge", () => {
+    // `import stripe` resolves to nothing in the Repo, exactly as a bare
+    // JavaScript specifier already did.
+    expect(graph.deps["app/api/checkout.py"]).not.toContain("stripe");
+    expect(graph.deps["app/api/checkout.py"].every((d) => d.endsWith(".py"))).toBe(true);
+  });
+
+  it("localizes a Python task to its closure and excludes the rest", () => {
+    const result = locate("the checkout charges the wrong amount", python, graph);
+    const rels = result.slice.map((f) => f.rel);
+
+    expect(result.widened).toBe(false);
+    expect(rels).toContain("app/api/checkout.py");
+    expect(rels).toContain("app/services/billing.py");
+    // Reporting shares the Order model but has nothing to do with checkout.
+    expect(rels).not.toContain("app/services/reporting.py");
+  });
+
+  it("gives Python files no Surface, because Python routing cannot be detected", () => {
+    // CONTEXT.md requires Surfaces be discovered structurally. Python frameworks
+    // route through decorators and registries, so guessing would break that.
+    expect(graph.nodes.filter((n) => n.rel.endsWith(".py")).every((n) => !n.isSurface)).toBe(true);
+  });
+});

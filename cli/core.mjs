@@ -20,6 +20,25 @@ import { execFileSync } from "node:child_process";
 // Static/dynamic imports and require() — captures relative and @/ alias specs.
 const IMPORT_RE = /(?:from\s+|import\s*\(\s*|require\s*\(\s*)['"](@\/[^'"]+|\.[^'"]+)['"]/g;
 
+// Python imports. Two forms, both of which may name a module inside the Repo:
+//
+//   from a.b import c        →  a.b   (and a.b.c, when c is itself a module)
+//   from .sib import c       →  sibling of the importing file
+//   from ..pkg.mod import c  →  one package up
+//   import a.b.c             →  a.b.c
+//
+// Captured as (dots, dotted-path) so the resolver can count leading dots for
+// relative depth. `import x` with no dots is kept because a flat layout makes
+// `x` a real sibling module; it resolves to null when x is a third-party
+// package, which is the same outcome as an unresolvable JS bare specifier.
+const PY_FROM_RE = /^[ \t]*from[ \t]+(\.*)([A-Za-z0-9_.]*)[ \t]+import[ \t]/gm;
+const PY_IMPORT_RE = /^[ \t]*import[ \t]+([A-Za-z0-9_.]+(?:[ \t]*,[ \t]*[A-Za-z0-9_.]+)*)/gm;
+
+const PY_EXT_RE = /\.py$/;
+
+/** Every extension the Graph builds nodes for. */
+const SOURCE_EXT_RE = /\.(tsx?|jsx?|mjs|cjs|py)$/;
+
 const CHARS_PER_TOKEN = 4;
 
 function estimateTokens(text) {
@@ -63,6 +82,54 @@ function resolve(spec, fromPath, root, files) {
   return null;
 }
 
+/**
+ * Resolve a Python module reference to a file in the Repo.
+ *
+ * `dots` is the leading-dot count: 0 is absolute (rooted at the Repo, or at its
+ * source root), 1 is the importing file's own package, 2 is one package up.
+ * A dotted path becomes a directory path, then either `mod.py` or the package's
+ * `__init__.py`.
+ *
+ * Returns null for anything not in the Repo, which is how a third-party package
+ * such as `stripe` stops being an edge — the same outcome a bare JS specifier
+ * already had.
+ */
+function resolvePython(dots, dotted, fromPath, root, files) {
+  const segments = dotted ? dotted.split(".").filter(Boolean) : [];
+  const candidateBases = [];
+
+  if (dots > 0) {
+    // `.` is the importing file's own directory; each extra dot climbs one.
+    const dir = fromPath.split("/").slice(0, -1);
+    const base = dir.slice(0, dir.length - (dots - 1));
+    candidateBases.push([...base, ...segments].join("/"));
+  } else {
+    if (segments.length === 0) return null;
+    // Absolute: try the Repo root and the inferred source root, the way the
+    // `@/` alias already tries several bases.
+    for (const prefix of [...new Set(["", root])]) {
+      candidateBases.push(prefix ? `${prefix}/${segments.join("/")}` : segments.join("/"));
+    }
+    // `from a.b import c` may name the module `a.b.c` rather than a symbol in
+    // `a.b`, so drop the final segment as a second reading.
+    if (segments.length > 1) {
+      const parent = segments.slice(0, -1).join("/");
+      for (const prefix of [...new Set(["", root])]) {
+        candidateBases.push(prefix ? `${prefix}/${parent}` : parent);
+      }
+    }
+  }
+
+  for (const base of candidateBases) {
+    if (!base) continue;
+    const normalized = normalize(base);
+    for (const candidate of [`${normalized}.py`, `${normalized}/__init__.py`]) {
+      if (files[candidate] !== undefined) return candidate;
+    }
+  }
+  return null;
+}
+
 function normalize(p) {
   const parts = [];
   for (const seg of p.split("/")) {
@@ -84,7 +151,7 @@ function tokens(text) {
 /** Build the deterministic dependency graph from the file map. */
 export function buildGraph(repo) {
   const { files, root } = repo;
-  const paths = Object.keys(files).filter((p) => /\.(tsx?|jsx?)$/.test(p));
+  const paths = Object.keys(files).filter((p) => SOURCE_EXT_RE.test(p));
   const nodes = [];
   const byPath = {};
   const deps = {};
@@ -99,6 +166,11 @@ export function buildGraph(repo) {
 
   for (const p of paths) {
     const rel = p.startsWith(root + "/") ? p.slice(root.length + 1) : p;
+    // Surfaces stay a JavaScript/TypeScript concept. Next's `app/**/page.tsx`
+    // is a structural convention that can be detected; Python web frameworks
+    // route through decorators and registries, which would have to be guessed.
+    // CONTEXT.md requires Surfaces be discovered structurally, so Python files
+    // simply have none and anchor on path and source like any other file.
     const isSurface = /^app\/.+\/page\.(tsx?|jsx?)$/.test(rel) || /^app\/page\.(tsx?|jsx?)$/.test(rel);
     let route;
     if (isSurface) {
@@ -121,6 +193,31 @@ export function buildGraph(repo) {
 
   for (const p of paths) {
     const seen = new Set();
+    const addEdge = (tgt) => {
+      if (tgt && tgt !== p && byPath[tgt] && !seen.has(tgt)) {
+        seen.add(tgt);
+        deps[p].push(tgt);
+        (rdeps[tgt] ??= []).push(p);
+        edges.push({ from: p, to: tgt });
+      }
+    };
+
+    if (PY_EXT_RE.test(p)) {
+      let pm;
+      PY_FROM_RE.lastIndex = 0;
+      while ((pm = PY_FROM_RE.exec(files[p]))) {
+        addEdge(resolvePython(pm[1].length, pm[2], p, root, files));
+      }
+      PY_IMPORT_RE.lastIndex = 0;
+      while ((pm = PY_IMPORT_RE.exec(files[p]))) {
+        for (const spec of pm[1].split(",")) {
+          const dotted = spec.trim().split(/\s+as\s+/)[0];
+          addEdge(resolvePython(0, dotted, p, root, files));
+        }
+      }
+      continue;
+    }
+
     let m;
     IMPORT_RE.lastIndex = 0;
     while ((m = IMPORT_RE.exec(files[p]))) {
@@ -411,7 +508,13 @@ export function locate(task, repo, graph, evidence = "") {
 // plain-text presentation shared by bin/locus.mjs and bin/mcp.mjs.
 // ---------------------------------------------------------------------------
 
-const IGNORE_DIRS = new Set(["node_modules", ".next", "dist", "build", ".git", "tests"]);
+// Vendored and generated directories, in both ecosystems. Dotdirs (.venv,
+// .tox, .git) are skipped separately by the walker, so only the undotted
+// Python conventions need naming here.
+const IGNORE_DIRS = new Set([
+  "node_modules", ".next", "dist", "build", ".git", "tests",
+  "__pycache__", "venv", "site-packages", "eggs",
+]);
 
 function toPosix(p) {
   return p.split(path.sep).join("/");
@@ -430,7 +533,7 @@ function walk(dir, baseDir, out) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       walk(full, baseDir, out);
-    } else if (entry.isFile() && /\.(tsx?|jsx?)$/.test(entry.name)) {
+    } else if (entry.isFile() && SOURCE_EXT_RE.test(entry.name)) {
       out.push(toPosix(path.relative(baseDir, full)));
     }
   }
@@ -540,7 +643,7 @@ export function loadLocalRepo(dir) {
   // in another language, or at one whose sources all live under an ignored path.
   if (Object.keys(files).length === 0) {
     throw new Error(
-      `No JavaScript or TypeScript source found in: ${absDir}`,
+      `No supported source found in: ${absDir} (looked for .ts, .tsx, .js, .jsx, .mjs, .cjs, .py)`,
     );
   }
 

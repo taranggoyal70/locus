@@ -8,7 +8,7 @@ import { admissionHeadline } from "@/lib/admission-copy";
 
 const alphaBoundaries = [
   "Self-serve Repo localization for every signed-in user",
-  "Public JavaScript and TypeScript repositories",
+  "Public JavaScript, TypeScript, and Python repositories",
   "Durable Included, Excluded, and Widened file evidence",
   "Isolated Sandbox execution with allowlisted checks",
   "Review-ready proposal with factual token usage",

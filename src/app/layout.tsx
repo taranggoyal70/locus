@@ -12,7 +12,7 @@ const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: [
 export const metadata: Metadata = {
   title: "Locus — evidence-first code localization",
   description:
-    "Localize a public JavaScript or TypeScript Repo into a task-sized Slice with every Included, Excluded, and Widened file visible.",
+    "Localize a public JavaScript, TypeScript, or Python Repo into a task-sized Slice with every Included, Excluded, and Widened file visible.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://locus-five-iota.vercel.app"),
   openGraph: {
     title: "Locus — evidence-first code localization",

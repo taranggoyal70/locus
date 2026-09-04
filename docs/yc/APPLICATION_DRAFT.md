@@ -7,7 +7,7 @@
 
 ### What does your company make?
 
-Today, Locus compiles a software task and a public JavaScript or TypeScript repository into an evidence-backed context boundary for a coding agent. It identifies the relevant code, keeps excluded files unavailable during a run, and records scope and proposal evidence against an exact commit.
+Today, Locus compiles a software task and a public JavaScript, TypeScript, or Python repository into an evidence-backed context boundary for a coding agent. It identifies the relevant code, keeps excluded files unavailable during a run, and records scope and proposal evidence against an exact commit.
 
 I am now validating the first paid workflow: turning an API change and a customer repository into a verified migration pull request. The intended flow is that an API company supplies a changelog, SDK diff, or schema change; Locus finds affected code, creates the patch, runs the required checks, and gives the maintainer evidence explaining the scope. That migration workflow is not yet validated or fully automated.
 
@@ -61,7 +61,7 @@ YC calls this one of the most important application questions ([YC, How to Apply
 
 ### How far along are you?
 
-I built and publicly launched an early-access version in about seven weeks. It localizes JavaScript and TypeScript tasks in public GitHub repositories, produces evidence for the selected scope, and can run an agent inside that boundary. The production launch checks pass and the repository contains more than 500 automated tests.
+I built and publicly launched an early-access version in about seven weeks. It localizes JavaScript, TypeScript, and Python tasks in public GitHub repositories, produces evidence for the selected scope, and can run an agent inside that boundary. The production launch checks pass and the repository contains more than 780 automated tests.
 
 The current public benchmark has 15 author-owned cases. It retained every expected fix file in those cases and estimated a median 53% context reduction, but it is not independent evidence and I do not present it as proof of customer value. I froze a 40-arm paired agent evaluation, but it currently has 0 completed runs.
 
