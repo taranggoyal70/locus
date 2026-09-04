@@ -359,3 +359,68 @@ describe("Python repositories", () => {
     expect(graph.nodes.filter((n) => n.rel.endsWith(".py")).every((n) => !n.isSurface)).toBe(true);
   });
 });
+
+describe("NodeNext and ESM specifiers", () => {
+  // TypeScript under NodeNext writes the output extension in the specifier, so
+  // `import "./x.js"` refers to `x.ts` on disk. Modern ESM packages do this as a
+  // rule, and without the rewrite their graph is empty: sindresorhus/got
+  // resolved 85 nodes and 0 edges, which collapsed the dependency closure and
+  // reported a 77% saving that was an artifact of having no graph at all.
+  const esm: RepoData = {
+    name: "esm",
+    slug: "esm",
+    description: "",
+    root: "source",
+    recentlyChanged: [],
+    files: {
+      "source/core/index.ts":
+        'import { delay } from "./calculate-retry-delay.js";\n'
+        + 'import { timer } from "./utils/timer.js";\n'
+        + "export const core = delay + timer;",
+      "source/core/calculate-retry-delay.ts": "export const delay = 1;",
+      "source/core/utils/timer.ts": "export const timer = 2;",
+      "source/unrelated.ts": "export const other = 3;",
+    },
+  };
+  const graph = buildGraph(esm);
+
+  it("resolves a .js specifier to its .ts source", () => {
+    expect(graph.deps["source/core/index.ts"]).toContain("source/core/calculate-retry-delay.ts");
+    expect(graph.deps["source/core/index.ts"]).toContain("source/core/utils/timer.ts");
+  });
+
+  it("reports a real edge density instead of zero", () => {
+    // The failure this fixes was density 0.00 on a fully-connected repository.
+    // Four files is below the 0.6 sparse threshold by construction, so what
+    // matters here is that edges exist at all.
+    const result = locate("retry delay", esm, graph);
+    expect(result.edgeDensity).toBeGreaterThan(0);
+    expect(graph.edges.length).toBe(2);
+  });
+
+  it("still prefers a real .js file when one exists", () => {
+    // A JavaScript repo where ./helper.js genuinely is the file on disk must
+    // keep resolving to it, not be rewritten to a .ts that does not exist.
+    const js: RepoData = {
+      name: "js", slug: "js", description: "", root: "",
+      recentlyChanged: [],
+      files: {
+        "app.js": 'import { help } from "./helper.js";\nexport const a = help;',
+        "helper.js": "export const help = 1;",
+      },
+    };
+    expect(buildGraph(js).deps["app.js"]).toContain("helper.js");
+  });
+
+  it.each([[".mjs", ".mts"], [".cjs", ".cts"]])("maps %s specifiers to %s sources", (out, src) => {
+    const repo: RepoData = {
+      name: "m", slug: "m", description: "", root: "",
+      recentlyChanged: [],
+      files: {
+        "entry.ts": `import { x } from "./mod${out}";\nexport const e = x;`,
+        [`mod${src}`]: "export const x = 1;",
+      },
+    };
+    expect(buildGraph(repo).deps["entry.ts"]).toContain(`mod${src}`);
+  });
+});

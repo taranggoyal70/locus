@@ -26,7 +26,7 @@ const PY_IMPORT_RE = /^[ \t]*import[ \t]+([A-Za-z0-9_.]+(?:[ \t]*,[ \t]*[A-Za-z0
 const PY_EXT_RE = /\.py$/;
 
 /** Every extension the Graph builds nodes for. */
-const SOURCE_EXT_RE = /\.(tsx?|jsx?|mjs|cjs|py)$/;
+const SOURCE_EXT_RE = /\.(tsx?|jsx?|mts|cts|mjs|cjs|py)$/;
 
 function estimateTokens(text: string): number {
   return Math.max(1, Math.round(text.length / 4));
@@ -39,6 +39,19 @@ function topDir(rel: string): string {
 }
 
 /** Try a base path against the file map with the usual resolution order. */
+// TypeScript under NodeNext writes the *output* extension in the specifier, so
+// `import "./timed-out.js"` refers to `timed-out.ts` on disk. This is the norm
+// for modern ESM packages rather than an edge case: without the rewrite, a
+// repository like sindresorhus/got resolves 85 nodes and zero edges — the
+// dependency closure, which is the whole product, collapses silently and the
+// only symptom is the sparse-graph warning.
+const ESM_OUTPUT_TO_SOURCE: ReadonlyArray<readonly [RegExp, readonly string[]]> = [
+  [/\.js$/, [".ts", ".tsx"]],
+  [/\.jsx$/, [".tsx"]],
+  [/\.mjs$/, [".mts"]],
+  [/\.cjs$/, [".cts"]],
+];
+
 function tryPath(base: string, files: Record<string, string>): string | null {
   for (const c of [
     `${base}.ts`, `${base}.tsx`, `${base}.js`, `${base}.jsx`,
@@ -46,6 +59,13 @@ function tryPath(base: string, files: Record<string, string>): string | null {
     base,
   ]) {
     if (files[c] !== undefined) return c;
+  }
+  for (const [pattern, extensions] of ESM_OUTPUT_TO_SOURCE) {
+    if (!pattern.test(base)) continue;
+    for (const extension of extensions) {
+      const candidate = base.replace(pattern, extension);
+      if (files[candidate] !== undefined) return candidate;
+    }
   }
   return null;
 }

@@ -118,9 +118,19 @@ describe("sparsity signal", () => {
     name: "sparse", slug: "sparse", description: "", root: "src",
     recentlyChanged: [],
     files: {
-      // NodeNext-style specifiers this parser cannot resolve: 0 edges, so the
-      // slice looks small for the wrong reason.
-      "src/dashboard.ts": 'import { fmt } from "./date.js";\nexport const dash = fmt;',
+      // Genuinely unresolvable specifiers: 0 edges, so the slice looks small for
+      // the wrong reason.
+      //
+      // This fixture used NodeNext-style `./date.js` pointing at `date.ts`, with
+      // a comment calling it unresolvable. That was a resolution gap rather than
+      // a law of nature, and it is now closed — sindresorhus/got went from 85
+      // nodes and 0 edges to 178 edges once it was. The signal must still fire
+      // for a repo whose graph really cannot be built, so the fixture now imports
+      // paths that are not in the Repo at all.
+      "src/dashboard.ts":
+        'import { fmt } from "./missing/date";\n'
+        + 'import { load } from "../outside/loader";\n'
+        + "export const dash = fmt;",
       "src/date.ts": "export const fmt = (d) => String(d);",
       "src/unrelated.ts": "export const other = 1;",
     },
