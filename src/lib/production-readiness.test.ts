@@ -85,11 +85,11 @@ describe("production readiness", () => {
     });
   });
 
-  it("accepts public beta admission without an invite list", async () => {
+  it("accepts self-serve admission without an invite list", async () => {
     await expect(productionReadiness({
       ...complete,
       ALPHA_ALLOWED_USER_IDS: "",
-      LOCUS_PUBLIC_BETA_ENABLED: "true",
+      LOCUS_SELF_SERVE: "open",
     }, databaseReady)).resolves.toMatchObject({
       ready: true,
       missing: [],

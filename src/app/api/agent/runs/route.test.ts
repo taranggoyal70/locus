@@ -29,14 +29,16 @@ vi.mock("workflow/api", () => ({ start: startMock }));
 // order of unrelated table stubs. This keeps the route test about the route
 // while still exercising the real tier, capability, and quota tables.
 vi.mock("@/lib/admission-server", async () => {
-  const { admissionWithCapabilities } = await import("@/lib/admission");
+  const { admissionWithCapabilities, selfServeOpen } = await import("@/lib/admission");
   return {
     admissionForAccount: async (userId: string | null) =>
       admissionWithCapabilities({
         userId,
         partnerUserIds: process.env.ALPHA_ALLOWED_USER_IDS,
         subscriptionActive: false,
-        selfServeOpen: false,
+        // Read from the environment rather than pinned, so a test can open
+        // self-serve the way a deployment does.
+        selfServeOpen: selfServeOpen(),
         emailVerified: true,
         selfServeCapacity: true,
       }),
@@ -145,7 +147,7 @@ describe("controlled-alpha Agent Run starts", () => {
 
     expect(response.status).toBe(403);
     await expect(response.json()).resolves.toEqual({
-      error: "Agent Run starts are not enabled for this account.",
+      error: "Agent Runs are limited to invited design partners during early access.",
     });
   });
 
@@ -159,8 +161,11 @@ describe("controlled-alpha Agent Run starts", () => {
     expect(response.headers.get("retry-after")).toBe("37");
   });
 
-  it("admits any signed-in user only when the public beta flag is enabled", async () => {
-    vi.stubEnv("LOCUS_PUBLIC_BETA_ENABLED", "true");
+  it("admits any signed-in user only when self-serve admission is open", async () => {
+    // The free-beta branch expressed this as LOCUS_PUBLIC_BETA_ENABLED=true.
+    // Admission carries the same intent with per-tier quota, a verified-email
+    // barrier, and an account ceiling, and it accepts only the exact word `open`.
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
     successfulDatabase();
     appendRunStepMock.mockResolvedValue(undefined);
     startMock.mockResolvedValue({ runId: "workflow-id" });

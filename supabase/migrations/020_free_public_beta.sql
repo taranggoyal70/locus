@@ -179,3 +179,24 @@ revoke all on function public.claim_agent_run_slot(
 grant execute on function public.claim_agent_run_slot(
   text, uuid, text, integer, text[], integer, integer, text, text
 ) to service_role;
+
+-- Remove the pre-provider overload of claim_agent_run_slot.
+--
+-- 016 created a 7-argument version. This migration's `create or replace` above
+-- declares a 9-argument one, and Postgres treats a different signature as an
+-- overload rather than a replacement, so both existed. The old one is not merely
+-- redundant: this migration drops the `provider` default, so the 7-argument body
+-- inserts a null provider and fails the not-null constraint on every call.
+--
+-- Verified against a full replay of 001-020: calling the 7-argument form raised
+-- "null value in column provider of relation agent_runs violates not-null
+-- constraint". Leaving a broken function granted to service_role is a trap for
+-- an older deployment mid-rollout and for any hand-written query, so it goes.
+--
+-- This is what makes 020 the first migration in this chain that is NOT
+-- backward compatible with the previous application version. Rolling the
+-- application back requires rolling this migration back with it; the rollout
+-- documents say so.
+drop function if exists public.claim_agent_run_slot(
+  text, uuid, text, integer, text[], integer, integer
+);

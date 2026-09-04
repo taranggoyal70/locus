@@ -26,14 +26,15 @@ describe("public copy follows the admission door", () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
     const html = renderToStaticMarkup(<SupportPage />);
     expect(html).not.toContain("invited design partners");
-    expect(html).toContain("free account");
+    expect(html).toContain("shared daily slot");
   });
 
-  it("quotes the free tier's real daily allowance rather than restating a number", () => {
+  it("does not advertise the per-account allowance as guaranteed capacity", () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
-    // Derived from the quota table, so changing the tier cannot leave this page
-    // advertising the old figure.
+    // Free execution capacity is one shared Run per UTC day across the whole
+    // deployment, so the Tier's per-account daily number is a ceiling rather
+    // than an allocation and must not be printed as a promise here.
     const daily = runQuotaForTier("free").maxDailyRuns;
-    expect(renderToStaticMarkup(<SupportPage />)).toContain(`${daily} per day`);
+    expect(renderToStaticMarkup(<SupportPage />)).not.toContain(`${daily} per day`);
   });
 });

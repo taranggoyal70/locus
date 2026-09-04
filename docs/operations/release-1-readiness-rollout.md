@@ -253,7 +253,7 @@ The cross-origin request must be denied and create no task or Run. Restore exact
 
 ## Rollback boundaries
 
-- Roll application code back first and clear both `ALPHA_ALLOWED_USER_IDS` and `LOCUS_SELF_SERVE`. Migrations `012`–`018` are additive and safe to leave installed for the previous application.
+- Roll application code back first and clear both `ALPHA_ALLOWED_USER_IDS` and `LOCUS_SELF_SERVE`. Migrations `012`–`019` are additive and safe to leave installed for the previous application. **Migration `020` is not.** It drops the `provider` default on `agent_runs` and removes the seven-argument `claim_agent_run_slot` the previous application calls, so rolling the application back past `020` requires rolling `020` back with it. Verified by replaying `001`–`020` and calling the old signature: it fails with a not-null violation on `provider`.
 - Do not drop proposal hashes, reviews, artifacts, or immutability triggers after any Release 1 Run exists. Fix forward.
 - Do not drop provider-lease or quota-claim RPCs while a Release 1 caller is deployed. Old provider leases expire automatically; manual deletion is safe only after admission is disabled and active Runs are zero.
 - Do not call the retention RPC as a rollback. Deleted data is intentionally unrecoverable from the application; provider backups have separate lifetimes.

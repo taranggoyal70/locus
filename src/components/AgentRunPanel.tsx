@@ -104,6 +104,10 @@ export function AgentRunPanel({
   acceptanceCriteria: string[];
   runAccess: RunAccess;
 }) {
+  // Declared before the effects, because the BYOK capacity probe from the
+  // free-beta branch depends on it and only runs for an account that can start
+  // a Run at all.
+  const canStartRun = runAccess.canStart;
   const [runId, setRunId] = useState<string | null>(initialRunId);
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
   const [launching, setLaunching] = useState(false);
@@ -253,7 +257,6 @@ export function AgentRunPanel({
     }
   }
 
-  const canStartRun = runAccess.canStart;
   const accessCopy = runAccessCopy(runAccess);
   const canLaunch = canStartRun
     && Boolean(repository)

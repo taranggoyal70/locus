@@ -44,7 +44,14 @@ commit, chat, Run, or deployment log.
    pnpm dlx supabase@2.111.0 db push --linked --dry-run
    ```
 
-3. Apply migration `018_free_public_beta.sql` with the Supabase migration
+> **Rollback is not free here.** Every other migration in this chain is additive
+> and safe to leave installed for the previous application version. `020` is not:
+> it drops the `provider` default on `agent_runs` and removes the seven-argument
+> `claim_agent_run_slot` that the pre-beta application calls. Rolling the
+> application back past `020` requires rolling `020` back with it, or Run
+> creation fails with a not-null violation on `provider`.
+
+3. Apply migration `020_free_public_beta.sql` with the Supabase migration
    workflow, then run database advisors. Browser roles must have no access to
    `agent_provider_credentials` or `agent_provider_daily_claims`.
 4. Install the four production variables above and deploy the reviewed SHA.

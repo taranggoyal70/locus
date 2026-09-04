@@ -1,4 +1,4 @@
-import { runQuotaForTier, type AdmissionReason } from "@/lib/admission";
+import type { AdmissionReason } from "@/lib/admission";
 
 /**
  * The one sentence every public surface uses to describe who can start an Agent
@@ -23,25 +23,32 @@ import { runQuotaForTier, type AdmissionReason } from "@/lib/admission";
 
 /** A short tag for a hero or a status strip. */
 export function admissionTag(selfServeOpen: boolean): string {
+  // The open variant states the shared pool rather than the Tier allowance.
+  // Free execution capacity is one Run per UTC day across the whole deployment,
+  // so quoting the per-account number here would read as a guarantee it is not.
   return selfServeOpen
-    ? `Public early access · public Repos only · ${runQuotaForTier("free").maxDailyRuns} free Agent Runs a day`
-    : "Public early access · public Repos only · Agent Runs invite-gated";
+    ? "Public early access · public Repos only · one shared Agent Run daily"
+    : "Public early access · public Repos only · Agent Runs invite-gated · access required";
 }
 
 /** A full sentence for a footer or a paragraph. */
 export function admissionSentence(selfServeOpen: boolean): string {
   return selfServeOpen
-    ? "Public-Repo localization with visible context evidence. Agent Runs are included with a free "
-      + `account, ${runQuotaForTier("free").maxDailyRuns} per day.`
-    : "Public-Repo localization with visible context evidence. Agent Runs remain invite-gated "
-      + "during early access.";
+    ? "Public-Repo localization with visible Slice evidence. Use the shared daily Agent Run or "
+      + "connect your own Cloudflare capacity."
+    : "Public-Repo localization with visible Slice evidence. Agent Runs are available only to "
+      + "enabled beta accounts and remain invite-gated during early access.";
 }
 
 /** A heading that states the current boundary. */
 export function admissionHeadline(selfServeOpen: boolean): string {
+  // The closed variant names the gate rather than only the state. PR #69's
+  // production gate is explicit that public admission waits on the canary, and a
+  // reader who knows why it is closed can tell "not yet" from "not for you".
   return selfServeOpen
-    ? "Repo localization and Agent Runs are open."
-    : "Repo localization is open. Agent Runs are invite-gated.";
+    ? "Repo localization is open. Agent Runs use one shared daily slot or capacity you connect."
+    : "Repo localization is open. Agent Runs are invite-gated and stay access-gated until the "
+      + "production canary passes.";
 }
 
 /**
@@ -67,9 +74,16 @@ export function runStartRefusal(reason: AdmissionReason): string {
 
 /** The sign-up page's description. */
 export function signUpDescription(selfServeOpen: boolean): string {
+  // Deliberately does not quote the free Tier's per-account allowance.
+  //
+  // A Tier grants up to `runQuotaForTier("free").maxDailyRuns` Runs a day, but
+  // free execution capacity is one shared Run per UTC day across the entire
+  // deployment. Printing the per-account number on a sign-up page would promise
+  // capacity that does not exist — the Tier is a ceiling on what one account may
+  // hold, not an allocation it is guaranteed to get.
   return selfServeOpen
-    ? "Create a free account and localize a real TypeScript or Next.js task. Agent Runs are "
-      + `included, ${runQuotaForTier("free").maxDailyRuns} per day.`
+    ? "Create a free account, localize a real TypeScript or Next.js task, and use the shared "
+      + "daily Agent Run or connect Cloudflare capacity you control."
     : "Create a free account and localize a real TypeScript or Next.js task. Agent Runs are "
       + "available to invited design partners.";
 }
@@ -85,8 +99,8 @@ export function signInDescription(selfServeOpen: boolean): string {
 /** The support page's availability line. */
 export function supportAvailability(selfServeOpen: boolean): string {
   return selfServeOpen
-    ? "Locus is in public early access. Agent Runs are included with a free account, "
-      + `${runQuotaForTier("free").maxDailyRuns} per day.`
+    ? "Locus is in public early access. Agent Runs use one shared daily slot, or capacity you "
+      + "connect yourself."
     : "Locus is in public early access, with Agent Runs limited to invited design partners.";
 }
 

@@ -9,12 +9,10 @@ import { ProjectsList } from "@/components/ProjectsList";
 import { SettingsShell } from "@/components/SettingsShell";
 import { admissionForAccount } from "@/lib/admission-server";
 import { UsageStats } from "@/components/UsageStats";
-import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
 
 export default async function SettingsPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
-  const runStartEnabled = alphaCapabilitiesForUser(userId).runStart;
 
   const [user, admission] = await Promise.all([
     currentUser(),
