@@ -264,6 +264,23 @@ pnpm build
 pnpm benchmark
 ```
 
+### Schema verification
+
+Most tests substitute the Supabase transport, which proves the application's
+logic and nothing about the schema underneath it. To exercise the Admission
+store against a real Postgres, replay the migration chain locally and run the
+opt-in suite:
+
+```bash
+pnpm dlx supabase@2.111.0 start
+pnpm dlx supabase@2.111.0 db reset      # replays every migration from scratch
+LOCUS_LIVE_DB=1 pnpm test admission-live
+```
+
+It is skipped by default and in CI, which has no database. Run it after changing
+a migration: a wrong column name, a check constraint that rejects a legitimate
+row, or a grant that exposes a table to `anon` all pass the mocked suite.
+
 The frozen paired total-token release gate is intentionally separate from the
 historical localization benchmark. It fails closed until all 40 arm results are
 recorded:
