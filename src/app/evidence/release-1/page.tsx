@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import contract from "../../../../benchmarks/release1/contract.json";
 import report from "../../../../benchmarks/release1/public-report.json";
 import { MarketingShell } from "@/components/MarketingShell";
+import { selfServeOpen } from "@/lib/admission";
 import { REPO_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -38,7 +39,7 @@ export default function Release1EvidencePage() {
     : evidence.progress.validResults / evidence.progress.expectedResults;
 
   return (
-    <MarketingShell>
+    <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { MarketingShell } from "@/components/MarketingShell";
+import { selfServeOpen } from "@/lib/admission";
 import { SITE_URL } from "@/lib/config";
 import Link from "next/link";
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function DocsPage() {
   return (
-    <MarketingShell>
+    <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Experimental localization API</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-5xl">Localize before you spend.</h1>

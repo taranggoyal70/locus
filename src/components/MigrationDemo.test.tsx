@@ -13,7 +13,7 @@ describe("MigrationDemo", () => {
 
   it("plays the deterministic four-stage sequence and remains replayable", () => {
     vi.useFakeTimers();
-    const { container } = render(<MigrationDemo />);
+    const { container } = render(<MigrationDemo selfServeOpen={false} />);
     const demo = container.querySelector(".migration-demo");
 
     fireEvent.click(screen.getByRole("button", { name: "Show me how it works" }));
@@ -28,7 +28,7 @@ describe("MigrationDemo", () => {
   });
 
   it("defaults to a plain-English explanation of the customer outcome", () => {
-    render(<MigrationDemo />);
+    render(<MigrationDemo selfServeOpen={false} />);
 
     expect(screen.getByRole("heading", { name: /Your software changed.*Your customers shouldn’t chase the fix/ })).toBeTruthy();
     expect(screen.getByText("Locus checks the app")).toBeTruthy();
@@ -38,7 +38,7 @@ describe("MigrationDemo", () => {
   });
 
   it("lets developers inspect the exact evidence vocabulary and code diff", () => {
-    const { container } = render(<MigrationDemo />);
+    const { container } = render(<MigrationDemo selfServeOpen={false} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Developer evidence" }));
     fireEvent.click(screen.getByRole("button", { name: /3Patch/ }));

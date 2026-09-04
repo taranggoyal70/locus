@@ -14,7 +14,7 @@ const securityUrl = `${REPO_URL}/security/advisories/new`;
 
 export default function SupportPage() {
   return (
-    <MarketingShell>
+    <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-4xl px-5 py-12">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Operations</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Support and service status</h1>

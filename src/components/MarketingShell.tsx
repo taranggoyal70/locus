@@ -1,9 +1,25 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { admissionSentence } from "@/lib/admission-copy";
 import { REPO_URL } from "@/lib/config";
 
-export function MarketingShell({ children }: { children: React.ReactNode }) {
+/**
+ * `selfServeOpen` is a required prop rather than an environment read.
+ *
+ * This shell is rendered from both server pages and a client one. A component
+ * that reads LOCUS_SELF_SERVE itself works in the first case and silently reads
+ * undefined in the second, rendering "invite-gated" on an open deployment with
+ * no error anywhere. Taking it as a prop makes the caller's environment the
+ * caller's problem, and the compiler enforces that every caller has an answer.
+ */
+export function MarketingShell({
+  children,
+  selfServeOpen: open,
+}: {
+  children: React.ReactNode;
+  selfServeOpen: boolean;
+}) {
   return (
     <div className="site-noise min-h-screen overflow-x-clip">
       <header className="sticky top-0 z-40 border-b border-line-strong bg-ink/85 backdrop-blur-xl">
@@ -31,7 +47,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
               <Image src="/locus-mark.svg" width={24} height={24} alt="" />
               <span className="font-display font-semibold text-paper">Locus</span>
             </div>
-            <p className="mt-3 max-w-md text-xs leading-5 text-muted-light">Public-Repo localization with visible context evidence. Agent Runs remain invite-gated during early access.</p>
+            <p className="mt-3 max-w-md text-xs leading-5 text-muted-light">{admissionSentence(open)}</p>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-light sm:justify-end">
             <Link href="/demo" className="hover:text-paper">Demo</Link>

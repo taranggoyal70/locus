@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { MarketingShell } from "@/components/MarketingShell";
+import { selfServeOpen } from "@/lib/admission";
 import { REPO_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <MarketingShell>
+    <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-3xl px-5 py-12">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Trust</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Privacy Policy</h1>

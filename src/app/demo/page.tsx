@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { MarketingShell } from "@/components/MarketingShell";
+import { selfServeOpen } from "@/lib/admission";
 import { MigrationDemo } from "@/components/MigrationDemo";
 
 export const metadata: Metadata = {
@@ -10,9 +11,9 @@ export const metadata: Metadata = {
 
 export default function DemoPage() {
   return (
-    <MarketingShell>
+    <MarketingShell selfServeOpen={selfServeOpen()}>
       <main>
-        <MigrationDemo />
+        <MigrationDemo selfServeOpen={selfServeOpen()} />
       </main>
     </MarketingShell>
   );

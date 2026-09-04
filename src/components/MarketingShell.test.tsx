@@ -5,7 +5,7 @@ import { MarketingShell } from "@/components/MarketingShell";
 
 describe("public early-access marketing navigation", () => {
   it("routes visitors to the open product and Agent Run access without commercial claims", () => {
-    const html = renderToStaticMarkup(<MarketingShell><main>Content</main></MarketingShell>);
+    const html = renderToStaticMarkup(<MarketingShell selfServeOpen={false}><main>Content</main></MarketingShell>);
 
     expect(html).toContain("Agent access");
     expect(html).toContain("Try Locus");

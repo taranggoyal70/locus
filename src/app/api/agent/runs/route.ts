@@ -20,6 +20,7 @@ import {
 } from "@/lib/agent/run-store";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { admissionForAccount } from "@/lib/admission-server";
+import { runStartRefusal } from "@/lib/admission-copy";
 import { track } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -95,9 +96,7 @@ export async function POST(request: Request) {
   if (!admission.capabilities.runStart) {
     return NextResponse.json(
       {
-        error: admission.reason === "suspended"
-          ? "This account cannot start Agent Runs. Contact support."
-          : "Agent Runs are limited to invited design partners during early access.",
+        error: runStartRefusal(admission.reason),
       },
       { status: 403 },
     );

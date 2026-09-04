@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { selfServeOpen } from "@/lib/admission";
+import { admissionTag } from "@/lib/admission-copy";
 import { MarketingShell } from "@/components/MarketingShell";
 
 const runPhases = [
@@ -10,8 +12,9 @@ const runPhases = [
 ];
 
 export function LandingPage() {
+  const open = selfServeOpen();
   return (
-    <MarketingShell>
+    <MarketingShell selfServeOpen={open}>
       <main>
         <section className="mx-auto grid min-h-[760px] max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(420px,.95fr)] lg:py-24">
           <div className="max-w-3xl">
@@ -33,7 +36,7 @@ export function LandingPage() {
               <Link href="/workspace" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Try Repo localization</Link>
               <Link href="/pricing" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Request Agent Run access</Link>
             </div>
-            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">Public early access · public Repos only · Agent Runs invite-gated</p>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">{admissionTag(open)}</p>
           </div>
 
           <div className="relative">
