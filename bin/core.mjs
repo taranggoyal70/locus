@@ -495,6 +495,25 @@ function getRecentlyChanged(dir, knownPaths) {
 /** Walk a local directory into the RepoData shape localizer.ts expects. */
 export function loadLocalRepo(dir) {
   const absDir = path.resolve(dir);
+
+  // A path that is not a readable directory is an error, not an empty Repo.
+  //
+  // Without this, a mistyped --path produced "Repo: /no/such/dir", "WIDENED to
+  // whole repo", and a Slice of zero files: the conservative fallback reporting
+  // that it had returned everything, having returned nothing. Widen is the
+  // safety guarantee, so a Widen that is silently empty is the worst possible
+  // wrong answer — and the caller is usually an agent, which has no way to tell
+  // "this repository is empty" from "you typed the path wrong".
+  let stats;
+  try {
+    stats = fs.statSync(absDir);
+  } catch {
+    throw new Error(`Repo directory does not exist: ${absDir}`);
+  }
+  if (!stats.isDirectory()) {
+    throw new Error(`Repo path is not a directory: ${absDir}`);
+  }
+
   const relPaths = [];
   walk(absDir, absDir, relPaths);
   relPaths.sort();

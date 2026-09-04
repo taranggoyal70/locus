@@ -16,6 +16,7 @@ locate options:
   --pack             Print a ready-to-paste context block for the slice
   --budget <n>       Token budget for --pack (default: 40000)
   --evidence <text>  Additional context (error message, stack trace) to improve matching
+  --                 End option parsing, for a task that begins with a dash
 
 Examples:
   locus locate "fix the dashboard chart" --pack
@@ -28,6 +29,36 @@ function printHelp() {
   process.stdout.write(HELP);
 }
 
+const MIN_BUDGET = 1000;
+const MAX_BUDGET = 2000000;
+
+/**
+ * Reject what cannot be honoured instead of accepting it silently.
+ *
+ * The caller is usually an agent, and every one of these was previously a wrong
+ * answer with a zero exit status: `--budget abc` became NaN and packed the whole
+ * Slice, `--budget 0` packed it too, an unknown flag such as a mistyped `--jsonn`
+ * was swallowed so the agent got human-readable text where it expected JSON, and
+ * a trailing `--path` with no value silently analysed the working directory.
+ *
+ * A tool an agent drives has to fail loudly, because an agent cannot notice that
+ * the output looks wrong.
+ */
+function fail(message) {
+  console.error(message);
+  process.exit(1);
+}
+
+function parseBudget(raw) {
+  if (raw === undefined) fail("--budget requires a value.");
+  if (!/^\d+$/.test(raw)) fail(`--budget must be a whole number of tokens, got: ${raw}`);
+  const budget = Number(raw);
+  if (budget < MIN_BUDGET || budget > MAX_BUDGET) {
+    fail(`--budget must be between ${MIN_BUDGET} and ${MAX_BUDGET}, got: ${budget}`);
+  }
+  return budget;
+}
+
 function parseLocateArgs(rest) {
   let dir = process.cwd();
   let json = false;
@@ -35,21 +66,39 @@ function parseLocateArgs(rest) {
   let budget = 40000;
   let evidence = "";
   const positionals = [];
+  let optionsEnded = false;
   for (let i = 0; i < rest.length; i++) {
     const a = rest[i];
+    // The conventional terminator, so a task may legitimately begin with a dash:
+    //   locus locate -- "--json output is malformed"
+    // Without it, rejecting unknown options would make such a task unaskable.
+    if (a === "--") {
+      optionsEnded = true;
+      continue;
+    }
+    if (optionsEnded) {
+      positionals.push(a);
+      continue;
+    }
     if (a === "--path") {
-      dir = rest[++i];
+      const value = rest[++i];
+      if (value === undefined) fail("--path requires a directory.");
+      dir = value;
     } else if (a === "--json") {
       json = true;
     } else if (a === "--pack") {
       pack = true;
     } else if (a === "--budget") {
-      budget = Number(rest[++i]);
+      budget = parseBudget(rest[++i]);
     } else if (a === "--evidence") {
-      evidence = rest[++i] || "";
+      const value = rest[++i];
+      if (value === undefined) fail("--evidence requires a value.");
+      evidence = value;
     } else if (a === "-h" || a === "--help") {
       printHelp();
       process.exit(0);
+    } else if (a.startsWith("-")) {
+      fail(`Unknown option: ${a}\n\nRun \`locus --help\` for usage.`);
     } else {
       positionals.push(a);
     }
@@ -64,7 +113,12 @@ function runLocate(rest) {
     process.exit(1);
   }
   const root = path.resolve(dir || ".");
-  const repo = loadLocalRepo(root);
+  let repo;
+  try {
+    repo = loadLocalRepo(root);
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
   const graph = buildGraph(repo);
   const result = locate(task, repo, graph, evidence);
 
