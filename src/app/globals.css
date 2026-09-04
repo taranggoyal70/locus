@@ -12,6 +12,10 @@
   --paper: #14233b;
   --accent: #087864;
   --accent-dim: #075e50;
+  /* The accent on a dark --paper surface. #087864 on #14233b is 2.91:1, below
+     the 4.5:1 WCAG AA needs for body text: both are dark. This lighter teal
+     reaches 6.9:1 on the same ground while staying the same hue. */
+  --accent-on-dark: #3fbf9f;
   --excluded: #cad5cf;
   --recent: #a33f32;
 }
@@ -27,6 +31,7 @@
   --color-paper: var(--paper);
   --color-accent: var(--accent);
   --color-accent-dim: var(--accent-dim);
+  --color-accent-on-dark: var(--accent-on-dark);
   --color-excluded: var(--excluded);
   --color-recent: var(--recent);
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);

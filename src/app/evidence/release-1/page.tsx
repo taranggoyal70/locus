@@ -113,7 +113,7 @@ export default function Release1EvidencePage() {
           </div>
 
           <div className="rounded-[26px] border border-line-strong bg-paper p-6 text-ink sm:p-8">
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">Promotion thresholds</p>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent-on-dark">Promotion thresholds</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-white">All gates must pass together.</h2>
             <dl className="mt-7 divide-y divide-white/10">
               {[
