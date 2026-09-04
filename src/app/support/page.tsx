@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { MarketingShell } from "@/components/MarketingShell";
+import { runQuotaForTier, selfServeOpen } from "@/lib/admission";
 import { REPO_URL, SITE_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
@@ -18,7 +19,9 @@ export default function SupportPage() {
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Operations</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Support and service status</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-light">
-          Locus is in public early access, with Agent Runs limited to invited design partners.
+          {selfServeOpen()
+            ? `Locus is in public early access. Agent Runs are included with a free account, ${runQuotaForTier("free").maxDailyRuns} per day.`
+            : "Locus is in public early access, with Agent Runs limited to invited design partners."}
           These are response targets, not guarantees, and external repository writes remain disabled.
         </p>
 
