@@ -56,8 +56,8 @@ proposal evidence.
 ## How it works
 
 1. Parse supported JavaScript/TypeScript `import`, `require()`, dynamic `import()`,
-   `@/` aliases, NodeNext specifiers (`./x.js` resolving to `x.ts`), and monorepo
-   workspace package names, plus Python `import` and `from ... import` (absolute
+   tsconfig/jsconfig `paths` and `baseUrl` aliases, NodeNext specifiers
+   (`./x.js` resolving to `x.ts`), and monorepo workspace package names, plus Python `import` and `from ... import` (absolute
    dotted and relative), into a deterministic dependency graph. Third-party
    packages are never edges in either ecosystem.
 2. Match meaningful task words against file paths and source text.

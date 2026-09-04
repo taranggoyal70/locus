@@ -481,3 +481,91 @@ describe("monorepo workspace packages", () => {
     expect(rels).not.toContain("packages/other/src/index.ts");
   });
 });
+
+describe("tsconfig path aliases", () => {
+  // `@/` was hardcoded, which covers Next's default and nothing else. A
+  // realistic application declaring ~/*, @components/* or @lib/* resolved zero
+  // imports — the same total graph collapse NodeNext specifiers caused, and
+  // applications rather than libraries are who this is for.
+  const app: RepoData = {
+    name: "app",
+    slug: "app",
+    description: "",
+    root: "",
+    recentlyChanged: [],
+    files: {
+      "tsconfig.json":
+        "{\n"
+        + "  // JSONC: comments and trailing commas are legal here\n"
+        + '  "compilerOptions": {\n'
+        + '    "baseUrl": ".",\n'
+        + '    "paths": {\n'
+        + '      "~/*": ["./src/*"],\n'
+        + '      "@components/*": ["./src/components/*"],\n'
+        + '      "@config": ["./src/lib/config.ts"],\n'
+        + "    },\n"
+        + "  },\n"
+        + "}",
+      "src/app/page.tsx":
+        'import { Button } from "@components/Button";\n'
+        + 'import { config } from "@config";\n'
+        + 'import { money } from "~/lib/money";\n'
+        + 'import { thing } from "react";\n'
+        + "export default function Page() { return Button(money, config, thing); }",
+      "src/components/Button.tsx": "export const Button = (x) => x;",
+      "src/lib/money.ts": "export const money = 1;",
+      "src/lib/config.ts": "export const config = 2;",
+      "src/lib/unrelated.ts": "export const unrelated = 3;",
+    },
+  };
+  const graph = buildGraph(app);
+
+  it("resolves a wildcard alias", () => {
+    expect(graph.deps["src/app/page.tsx"]).toContain("src/components/Button.tsx");
+    expect(graph.deps["src/app/page.tsx"]).toContain("src/lib/money.ts");
+  });
+
+  it("resolves an exact, non-wildcard alias", () => {
+    expect(graph.deps["src/app/page.tsx"]).toContain("src/lib/config.ts");
+  });
+
+  it("reads a tsconfig with comments and trailing commas", () => {
+    // tsconfig is JSONC, not JSON. JSON.parse rejects both, and a config this
+    // cannot read costs the Repo every alias it declares.
+    expect(graph.edges.length).toBe(3);
+  });
+
+  it("still does not turn a third-party package into an edge", () => {
+    expect(graph.deps["src/app/page.tsx"].some((d) => d.includes("react"))).toBe(false);
+  });
+
+  it("never makes tsconfig.json a node", () => {
+    expect(graph.nodes.some((n) => n.rel.endsWith("tsconfig.json"))).toBe(false);
+  });
+
+  it("keeps resolving @/ in a repo that declares no tsconfig", () => {
+    // The original heuristic has to survive for repos with no config at all.
+    const bare: RepoData = {
+      name: "bare", slug: "bare", description: "", root: "src",
+      recentlyChanged: [],
+      files: {
+        "src/app/page.tsx": 'import { x } from "@/lib/util";\nexport const p = x;',
+        "src/lib/util.ts": "export const x = 1;",
+      },
+    };
+    expect(buildGraph(bare).deps["src/app/page.tsx"]).toContain("src/lib/util.ts");
+  });
+
+  it("resolves a non-relative import through baseUrl alone", () => {
+    const based: RepoData = {
+      name: "based", slug: "based", description: "", root: "",
+      recentlyChanged: [],
+      files: {
+        "tsconfig.json": '{"compilerOptions":{"baseUrl":"src"}}',
+        "src/app.ts": 'import { u } from "lib/util";\nexport const a = u;',
+        "src/lib/util.ts": "export const u = 1;",
+      },
+    };
+    expect(buildGraph(based).deps["src/app.ts"]).toContain("src/lib/util.ts");
+  });
+});

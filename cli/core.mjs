@@ -86,7 +86,7 @@ function tryPath(base, files) {
  * `root` can be empty — so try each plausible base and take the first hit.
  * (Mirrors src/lib/localizer.ts resolve — keep in sync.)
  */
-function resolve(spec, fromPath, root, files, packages) {
+function resolve(spec, fromPath, root, files, packages, aliases) {
   if (spec.startsWith("@/")) {
     const rest = spec.slice(2);
     for (const p of [...new Set([root, "src", ""])]) {
@@ -99,6 +99,8 @@ function resolve(spec, fromPath, root, files, packages) {
     const dir = fromPath.split("/").slice(0, -1).join("/");
     return tryPath(normalize(`${dir}/${spec}`), files);
   }
+  const aliased = aliases ? resolveAlias(spec, files, aliases) : null;
+  if (aliased) return aliased;
   return packages ? resolveWorkspace(spec, files, packages) : null;
 }
 
@@ -162,6 +164,100 @@ function resolvePython(dots, dotted, fromPath, root, files) {
  * Built lazily per Graph and cached on the files object, because `resolve` is
  * called once per import across the whole Repo.
  */
+/**
+ * Parse a tsconfig/jsconfig, which is JSONC rather than JSON: it may carry
+ * comments and trailing commas, and `JSON.parse` rejects both.
+ *
+ * Tolerant on purpose — a config this cannot read costs the Repo its aliases,
+ * so it strips what it can and gives up quietly rather than throwing.
+ */
+function parseJsonc(text) {
+  try {
+    const stripped = text
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1")
+      .replace(/,(\s*[}\]])/g, "$1");
+    return JSON.parse(stripped);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Path aliases declared by the Repo's own tsconfig/jsconfig.
+ *
+ * `@/` was hardcoded, which covers Next's default and nothing else. A realistic
+ * application declaring `~/*`, `@components/*` or `@lib/*` resolved zero imports
+ * — the same total graph collapse NodeNext specifiers caused, and applications
+ * are exactly who this is for.
+ *
+ * Returns a list of {prefix, suffix, targets} where a `*` pattern is split
+ * around the wildcard; an exact mapping has an empty suffix and matches whole.
+ * `extends` is deliberately not followed: it usually points outside the Repo,
+ * and a partial alias table beats refusing to read one at all.
+ */
+function tsconfigAliases(files) {
+  const aliases = [];
+  for (const p of Object.keys(files)) {
+    const name = p.split("/").pop();
+    if (name !== "tsconfig.json" && name !== "jsconfig.json") continue;
+    const config = parseJsonc(files[p]);
+    const options = config?.compilerOptions;
+    if (!options) continue;
+
+    const configDir = p.split("/").slice(0, -1).join("/");
+    const baseUrl = typeof options.baseUrl === "string" ? options.baseUrl : ".";
+    const base = normalize(configDir ? `${configDir}/${baseUrl}` : baseUrl);
+
+    const paths = options.paths;
+    if (paths && typeof paths === "object") {
+      for (const [pattern, targets] of Object.entries(paths)) {
+        if (!Array.isArray(targets)) continue;
+        const star = pattern.indexOf("*");
+        const resolved = targets
+          .filter((t) => typeof t === "string")
+          .map((t) => normalize(base ? `${base}/${t.replace("*", "")}` : t.replace("*", "")));
+        if (!resolved.length) continue;
+        aliases.push(
+          star === -1
+            ? { prefix: pattern, suffix: "", exact: true, targets: resolved }
+            : { prefix: pattern.slice(0, star), suffix: pattern.slice(star + 1), exact: false, targets: resolved },
+        );
+      }
+    }
+
+    // baseUrl alone makes a non-relative specifier resolvable: with
+    // `baseUrl: "src"`, `import "lib/util"` means `src/lib/util`.
+    if (typeof options.baseUrl === "string") {
+      aliases.push({ prefix: "", suffix: "", exact: false, baseOnly: true, targets: [base] });
+    }
+  }
+  // Longest prefix first, so `@lib/` wins over a bare baseUrl fallback.
+  return aliases.sort((a, b) => b.prefix.length - a.prefix.length);
+}
+
+/** Resolve a specifier through the Repo's declared aliases. */
+function resolveAlias(spec, files, aliases) {
+  for (const alias of aliases) {
+    let rest;
+    if (alias.exact) {
+      if (spec !== alias.prefix) continue;
+      rest = "";
+    } else if (alias.baseOnly) {
+      rest = spec;
+    } else {
+      if (!spec.startsWith(alias.prefix) || !spec.endsWith(alias.suffix)) continue;
+      rest = spec.slice(alias.prefix.length, spec.length - alias.suffix.length);
+    }
+    for (const target of alias.targets) {
+      const joined = rest ? (target ? `${target}/${rest}` : rest) : target;
+      const hit = tryPath(normalize(joined), files);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+
 function workspacePackages(files) {
   const byName = new Map();
   for (const p of Object.keys(files)) {
@@ -233,6 +329,7 @@ export function buildGraph(repo) {
   const { files, root } = repo;
   const paths = Object.keys(files).filter((p) => SOURCE_EXT_RE.test(p));
   const packages = workspacePackages(files);
+  const aliases = tsconfigAliases(files);
   const nodes = [];
   const byPath = {};
   const deps = {};
@@ -302,7 +399,7 @@ export function buildGraph(repo) {
     let m;
     IMPORT_RE.lastIndex = 0;
     while ((m = IMPORT_RE.exec(files[p]))) {
-      const tgt = resolve(m[1], p, root, files, packages);
+      const tgt = resolve(m[1], p, root, files, packages, aliases);
       // `resolve` returns any key present in `files`, but nodes exist only for
       // JS/TS paths, so a `./x.module.css` or `./config.json` import resolves to
       // a path with no node. Every consumer of the graph assumes an edge endpoint
@@ -592,6 +689,10 @@ export function locate(task, repo, graph, evidence = "") {
 // Vendored and generated directories, in both ecosystems. Dotdirs (.venv,
 // .tox, .git) are skipped separately by the walker, so only the undotted
 // Python conventions need naming here.
+// Read for aliases and workspace names; never Graph nodes, because
+// SOURCE_EXT_RE excludes .json.
+const MANIFEST_FILES = new Set(["package.json", "tsconfig.json", "jsconfig.json"]);
+
 const IGNORE_DIRS = new Set([
   "node_modules", ".next", "dist", "build", ".git", "tests",
   "__pycache__", "venv", "site-packages", "eggs",
@@ -614,7 +715,7 @@ function walk(dir, baseDir, out) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       walk(full, baseDir, out);
-    } else if (entry.isFile() && (SOURCE_EXT_RE.test(entry.name) || entry.name === "package.json")) {
+    } else if (entry.isFile() && (SOURCE_EXT_RE.test(entry.name) || MANIFEST_FILES.has(entry.name))) {
       // package.json is loaded but never becomes a node: SOURCE_EXT_RE excludes
       // it. It is read only to map a workspace package name to its directory,
       // so a monorepo's cross-package imports become real edges.

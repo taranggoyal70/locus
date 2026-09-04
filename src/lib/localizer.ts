@@ -83,6 +83,7 @@ function resolve(
   root: string,
   files: Record<string, string>,
   packages?: Map<string, string>,
+  aliases?: AliasRule[],
 ): string | null {
   if (spec.startsWith("@/")) {
     const rest = spec.slice(2);
@@ -97,6 +98,8 @@ function resolve(
     const dir = fromPath.split("/").slice(0, -1).join("/");
     return tryPath(normalize(`${dir}/${spec}`), files);
   }
+  const aliased = aliases ? resolveAlias(spec, files, aliases) : null;
+  if (aliased) return aliased;
   return packages ? resolveWorkspace(spec, files, packages) : null;
 }
 
@@ -158,6 +161,112 @@ function resolvePython(
  * needs to continue: a bug that crosses packages is exactly the bug a developer
  * cannot find by reading one directory.
  */
+type AliasRule = {
+  prefix: string;
+  suffix: string;
+  exact?: boolean;
+  baseOnly?: boolean;
+  targets: string[];
+};
+
+/**
+ * Parse a tsconfig/jsconfig, which is JSONC rather than JSON: it may carry
+ * comments and trailing commas, and `JSON.parse` rejects both.
+ *
+ * Tolerant on purpose — a config this cannot read costs the Repo its aliases,
+ * so it strips what it can and gives up quietly rather than throwing.
+ */
+function parseJsonc(text: string): { compilerOptions?: Record<string, unknown> } | null {
+  try {
+    const stripped = text
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|[^:])\/\/.*$/gm, "$1")
+      .replace(/,(\s*[}\]])/g, "$1");
+    return JSON.parse(stripped);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Path aliases declared by the Repo's own tsconfig/jsconfig.
+ *
+ * `@/` was hardcoded, which covers Next's default and nothing else. A realistic
+ * application declaring `~/*`, `@components/*` or `@lib/*` resolved zero imports
+ * — the same total graph collapse NodeNext specifiers caused, and applications
+ * are exactly who this is for.
+ *
+ * Returns a list of {prefix, suffix, targets} where a `*` pattern is split
+ * around the wildcard; an exact mapping has an empty suffix and matches whole.
+ * `extends` is deliberately not followed: it usually points outside the Repo,
+ * and a partial alias table beats refusing to read one at all.
+ */
+function tsconfigAliases(files: Record<string, string>): AliasRule[] {
+  const aliases: AliasRule[] = [];
+  for (const p of Object.keys(files)) {
+    const name = p.split("/").pop();
+    if (name !== "tsconfig.json" && name !== "jsconfig.json") continue;
+    const config = parseJsonc(files[p]);
+    const options = config?.compilerOptions as Record<string, unknown> | undefined;
+    if (!options) continue;
+
+    const configDir = p.split("/").slice(0, -1).join("/");
+    const baseUrl = typeof options.baseUrl === "string" ? options.baseUrl : ".";
+    const base = normalize(configDir ? `${configDir}/${baseUrl}` : baseUrl);
+
+    const paths = options.paths as Record<string, unknown> | undefined;
+    if (paths && typeof paths === "object") {
+      for (const [pattern, targets] of Object.entries(paths)) {
+        if (!Array.isArray(targets)) continue;
+        const star = pattern.indexOf("*");
+        const resolved = targets
+          .filter((t): t is string => typeof t === "string")
+          .map((t) => normalize(base ? `${base}/${t.replace("*", "")}` : t.replace("*", "")));
+        if (!resolved.length) continue;
+        aliases.push(
+          star === -1
+            ? { prefix: pattern, suffix: "", exact: true, targets: resolved }
+            : { prefix: pattern.slice(0, star), suffix: pattern.slice(star + 1), exact: false, targets: resolved },
+        );
+      }
+    }
+
+    // baseUrl alone makes a non-relative specifier resolvable: with
+    // `baseUrl: "src"`, `import "lib/util"` means `src/lib/util`.
+    if (typeof options.baseUrl === "string") {
+      aliases.push({ prefix: "", suffix: "", exact: false, baseOnly: true, targets: [base] });
+    }
+  }
+  // Longest prefix first, so `@lib/` wins over a bare baseUrl fallback.
+  return aliases.sort((a, b) => b.prefix.length - a.prefix.length);
+}
+
+/** Resolve a specifier through the Repo's declared aliases. */
+function resolveAlias(
+  spec: string,
+  files: Record<string, string>,
+  aliases: AliasRule[],
+): string | null {
+  for (const alias of aliases) {
+    let rest;
+    if (alias.exact) {
+      if (spec !== alias.prefix) continue;
+      rest = "";
+    } else if (alias.baseOnly) {
+      rest = spec;
+    } else {
+      if (!spec.startsWith(alias.prefix) || !spec.endsWith(alias.suffix)) continue;
+      rest = spec.slice(alias.prefix.length, spec.length - alias.suffix.length);
+    }
+    for (const target of alias.targets) {
+      const joined = rest ? (target ? `${target}/${rest}` : rest) : target;
+      const hit = tryPath(normalize(joined), files);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+
 function workspacePackages(files: Record<string, string>): Map<string, string> {
   const byName = new Map<string, string>();
   for (const p of Object.keys(files)) {
@@ -230,6 +339,7 @@ export function buildGraph(repo: RepoData): Graph {
   const { files, root } = repo;
   const paths = Object.keys(files).filter((p) => SOURCE_EXT_RE.test(p));
   const packages = workspacePackages(files);
+  const aliases = tsconfigAliases(files);
   const nodes: GraphNode[] = [];
   const byPath: Record<string, GraphNode> = {};
   const deps: Record<string, string[]> = {};
@@ -299,7 +409,7 @@ export function buildGraph(repo: RepoData): Graph {
     let m: RegExpExecArray | null;
     IMPORT_RE.lastIndex = 0;
     while ((m = IMPORT_RE.exec(files[p]))) {
-      const tgt = resolve(m[1], p, root, files, packages);
+      const tgt = resolve(m[1], p, root, files, packages, aliases);
       // `resolve` returns any key present in `files`, but nodes exist only for
       // JS/TS paths, so a `./x.module.css` or `./config.json` import resolves to
       // a path with no node. Every consumer of the graph assumes an edge endpoint
