@@ -37,7 +37,33 @@ jobs:
       # Audit every dependency, not only production ones. Build and test
       # tooling executes on CI runners with repository access, so a compromised
       # dev dependency is a CI compromise — `--prod` hid exactly that class.
-      - run: pnpm audit --audit-level high
+      # `pnpm audit` exits 1 both for a real advisory and for a failure to reach
+      # the advisory service, and the second one blocked main on a registry
+      # timeout. Retrying blindly would also retry a genuine finding into a pass,
+      # so the two are told apart before anything is retried: a finding fails
+      # immediately, and only a transport failure is attempted again.
+      #
+      # It still fails closed. An advisory service that stays unreachable is a
+      # check that did not run, which is not the same as a check that passed.
+      - name: Audit dependencies
+        shell: bash
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            if out="$(pnpm audit --audit-level high 2>&1)"; then
+              echo "$out"
+              exit 0
+            fi
+            echo "$out"
+            if grep -qiE "vulnerabilit(y|ies) found" <<<"$out"; then
+              echo "::error::High or critical advisories found. See the output above."
+              exit 1
+            fi
+            echo "Advisory service unreachable (attempt $attempt of 3)."
+            [ "$attempt" -lt 3 ] && sleep 30
+          done
+          echo "::error::Could not reach the npm advisory service after 3 attempts. The audit did not run."
+          exit 1
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm check:alpha-claims
