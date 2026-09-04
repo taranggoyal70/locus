@@ -250,6 +250,23 @@ function repositoryTerms(graph) {
  * Conservative localization: if no file anchors with enough task evidence,
  * fall back to the whole repo instead of returning a speculative small slice.
  */
+/**
+ * The implementation a test file covers: `lib/admission.test.ts` -> `lib/admission.ts`.
+ *
+ * Returns null for anything that is not a test file, or whose counterpart is not
+ * in the Repo.
+ */
+function implementationUnderTest(path, byPath) {
+  const match = /^(.*)\.(test|spec)\.(ts|tsx|js|jsx|mts|mjs)$/.exec(path);
+  if (!match) return null;
+  const [, stem] = match;
+  for (const extension of [".ts", ".tsx", ".js", ".jsx", ".mts", ".mjs"]) {
+    const candidate = `${stem}${extension}`;
+    if (byPath[candidate]) return candidate;
+  }
+  return null;
+}
+
 export function locate(task, repo, graph, evidence = "") {
   const { deps, rdeps, byPath } = graph;
   const recent = new Set(repo.recentlyChanged);
@@ -300,13 +317,37 @@ export function locate(task, repo, graph, evidence = "") {
     };
   }
 
-  const anchors = scored
+  const selected = scored
     .filter((s) =>
       s.score >= Math.max(3, best - 1) ||
       (s.score >= 3 && s.matchedWords >= Math.min(3, words.size)) ||
       (s.recent && s.matchedWords >= 2),
     )
     .slice(0, 6);
+
+  // A test file that anchors drags in the implementation it covers.
+  //
+  // Tests are written in behavioural prose — "returns the wrong capability" —
+  // so they match the language of a task better than the code they cover, which
+  // is written in the language of the solution. Measured on this repository, the
+  // four highest-scoring files for a task about the tier resolver were all test
+  // files, and the resolver itself placed eleventh and fell outside the six-anchor
+  // cap. An agent handed that Slice gets the tests for the bug and not the code.
+  //
+  // Pairing rather than penalising tests: a task can legitimately be about a test,
+  // and the fix for a described behaviour is almost always in both files anyway.
+  const anchorPathSet = new Set(selected.map((s) => s.path));
+  for (const candidate of selected) {
+    const implementation = implementationUnderTest(candidate.path, byPath);
+    if (implementation && !anchorPathSet.has(implementation)) {
+      anchorPathSet.add(implementation);
+    }
+  }
+  const anchors = [...anchorPathSet].map(
+    (path) => scored.find((s) => s.path === path)
+      ?? ranked.find((s) => s.path === path)
+      ?? { path },
+  );
   const dist = {};
   for (const a of anchors) {
     for (const [f, d] of Object.entries(closure(a.path, deps))) {
@@ -321,9 +362,25 @@ export function locate(task, repo, graph, evidence = "") {
   const sliceFiles = Object.keys(dist).map((p) => ({
     path: p, rel: byPath[p].rel, dist: dist[p], tokens: byPath[p].tokens, recent: recent.has(p),
   }));
-  // rank: recently-changed first (cross-cutting), then dependency distance
+  // rank: Anchors first, then recently-changed (cross-cutting), then distance.
+  //
+  // Recency used to be the primary key, which meant any recently-touched file
+  // outranked every Anchor. Measured here: nine unrelated files sorted above four
+  // of the six Anchors, and the Anchor the task was actually about fell outside a
+  // 30,000-token pack while four of its test files stayed in. Ranking decides what
+  // survives a budget, so that is not a display detail — it is the Slice the agent
+  // receives.
+  //
+  // Anchors are the files that matched the task. Nothing that merely changed
+  // recently should displace them. Below the Anchors the documented order is
+  // untouched, so a recently-changed shared util still floats above its
+  // same-distance neighbours, which is the cross-cutting case Recent signal exists
+  // for.
   sliceFiles.sort((a, b) =>
-    Number(b.recent) - Number(a.recent) || a.dist - b.dist || a.rel.localeCompare(b.rel),
+    Number(b.dist === 0) - Number(a.dist === 0)
+    || Number(b.recent) - Number(a.recent)
+    || a.dist - b.dist
+    || a.rel.localeCompare(b.rel),
   );
   const inSlice = new Set(Object.keys(dist));
   const excludedNodes = graph.nodes.filter((n) => !inSlice.has(n.path));

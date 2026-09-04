@@ -26,10 +26,77 @@ describe("locate", () => {
     expect(r.excluded).toContain("app/reports/page.tsx");
   });
 
-  it("surfaces a recently-changed shared file to the top (cross-cutting)", () => {
+  it("surfaces a recently-changed shared file above its peers (cross-cutting)", () => {
+    // The cross-cutting case: date.ts is the shared util that broke the
+    // dashboard, and it lives outside the obvious folder.
+    //
+    // This used to assert `slice[0].recent`, which encoded "recency outranks
+    // everything" — including the Anchors. That is the property that let a task's
+    // own subject fall out of a budgeted pack while unrelated recently-touched
+    // files stayed in. What has to hold is that the culprit is surfaced, not that
+    // it displaces the files the task actually named.
     const r = locate("dashboard shows the wrong dates", repo, graph);
-    expect(r.slice[0].recent).toBe(true); // date.ts / chart floated up
-    expect(r.slice.some((s) => s.rel === "lib/date.ts" && s.recent)).toBe(true);
+    const culprit = r.slice.findIndex((s) => s.rel === "lib/date.ts");
+    expect(culprit).toBeGreaterThanOrEqual(0);
+    expect(r.slice[culprit].recent).toBe(true);
+
+    // Above every non-recent file at the same distance, which is what "surfaced"
+    // means once Anchors are excluded from the competition.
+    const samePeers = r.slice
+      .map((s, index) => ({ ...s, index }))
+      .filter((s) => s.dist === r.slice[culprit].dist && !s.recent);
+    for (const peer of samePeers) {
+      expect(peer.index, `${peer.rel} must not outrank the recent date.ts`)
+        .toBeGreaterThan(culprit);
+    }
+  });
+
+  it("never lets a recently-changed file outrank an Anchor", () => {
+    // The regression this ranking exists to prevent. Measured on this
+    // repository before the fix: nine unrelated recently-touched files sorted
+    // above four of six Anchors, and the Anchor the task was about fell outside
+    // a 30,000-token pack while four of its test files stayed in. Ranking decides
+    // what survives a budget, so it decides what the agent actually receives.
+    const r = locate("dashboard shows the wrong dates", repo, graph);
+    const lastAnchor = r.slice.map((s) => s.dist === 0).lastIndexOf(true);
+    const firstNonAnchor = r.slice.findIndex((s) => s.dist !== 0);
+    expect(lastAnchor).toBeGreaterThanOrEqual(0);
+    expect(firstNonAnchor).toBeGreaterThan(lastAnchor);
+  });
+
+  it("anchors the implementation a matched test file covers", () => {
+    // Tests are written in behavioural prose and therefore match task language
+    // better than the code they cover. Without pairing, a task can anchor on
+    // four test files and leave the implementation outside the Anchor cap.
+    const paired: RepoData = {
+      name: "paired",
+      slug: "paired",
+      description: "",
+      root: "",
+      recentlyChanged: [],
+      files: {
+        "src/lib/pricing.ts":
+          'import { rate } from "./rate";\n'
+          + "export function computeDiscount(plan) { return rate(plan); }\n"
+          + "export function applyDiscount() {}",
+        "src/lib/pricing.test.ts":
+          'import { computeDiscount } from "./pricing";\n'
+          + "// computeDiscount returns the wrong discount for annual plans\n"
+          + 'describe("pricing discount", () => {\n'
+          + '  it("computes the annual discount", () => { computeDiscount(); });\n'
+          + "});",
+        "src/lib/rate.ts": "export function rate() { return 1; }",
+        "src/app/checkout/page.tsx": "export default function Checkout() { return null; }",
+        "src/lib/unrelated.ts": "export const unrelated = 1;",
+      },
+    };
+    const pairedGraph = buildGraph(paired);
+    const result = locate("pricing discount returns the wrong amount", paired, pairedGraph);
+
+    // Verified non-vacuous: with the pairing removed, this same input anchors on
+    // the test file alone and the implementation is left at closure distance.
+    expect(result.anchorPaths).toContain("src/lib/pricing.test.ts");
+    expect(result.anchorPaths).toContain("src/lib/pricing.ts");
   });
 
   it("widens to the whole repo when nothing anchors (never a silent miss)", () => {

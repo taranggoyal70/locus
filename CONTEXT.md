@@ -36,13 +36,17 @@ _Avoid_: route (as the domain concept), endpoint, view.
 **Anchor**:
 A file whose path or source strongly matches the task. Surfaces are useful
 Anchors, but hooks, API handlers, components, and libraries can anchor directly.
-A task with no confident Anchor triggers **Widen**.
+A task with no confident Anchor triggers **Widen**. When a test file anchors, the
+implementation it covers is anchored with it: tests are written in behavioural
+prose and so match task language better than the code they cover, which would
+otherwise leave the code outside the Anchor cap.
 _Avoid_: seed, guessed file.
 
 **Slice**:
 The focused candidate set built from Anchors, dependency **Closures**, direct
-consumers, and relevant **Recent** files. It is ranked by Recent signal and
-distance. It is not claimed to be mathematically minimal or complete.
+consumers, and relevant **Recent** files. It is ranked Anchors first, then by
+**Recent signal**, then by dependency distance. It is not claimed to be
+mathematically minimal or complete.
 _Avoid_: subset, scope (noun), selection, context (overloaded).
 
 **Closure**:
@@ -70,9 +74,11 @@ never narrows the Slice by itself.
 _Avoid_: recommendation engine, auto-fix, confidence score.
 
 **Recent signal**:
-Recently-changed files (from git / the GitHub commits API), surfaced to the top of
-a Slice so a cross-cutting bug (a shared util that broke the dashboard) isn't
-missed even though it lives outside the obvious folder.
+Recently-changed files (from git / the GitHub commits API), surfaced above their
+same-distance neighbours so a cross-cutting bug (a shared util that broke the
+dashboard) isn't missed even though it lives outside the obvious folder. Recent
+signal ranks below **Anchors**: it promotes a file within the Closure, and never
+displaces a file the task actually matched.
 _Avoid_: hotspot, churn.
 
 **RepoSource**:
@@ -245,6 +251,10 @@ _Avoid_: feature flag, toggle, permission.
   the same invariant without a `dir`, because their paths are relative to the
   repository the caller named: the checkout is the reader's own, so the root is
   already known to them.
+- **Ranking decides what an agent receives.** A budgeted `--pack` fills in rank
+  order, so rank is not presentation: a file ranked below the budget is a file
+  the agent never sees. Anchors therefore rank first, and no signal displaces
+  them.
 - **`buildGraph` is pure and reused.** One Graph per Repo, many Localize calls across task changes.
 - **Claims follow evidence.** `benchmarks/` measures historical fix-file recall and estimated context reduction; it does not claim autonomous task completion.
 - **No skipped gates.** A Run cannot complete without passing Check evidence and
