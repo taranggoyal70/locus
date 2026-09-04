@@ -37,7 +37,17 @@ export function UsageStats() {
     );
   }
 
-  if (!data) return null;
+  // Returning null left the Settings page with a "Usage" heading, its
+  // description, and then a hole. Analytics being non-critical is a reason not to
+  // block the page, not a reason to render nothing under a heading that promises
+  // something.
+  if (!data) {
+    return (
+      <p className="rounded-xl border border-line px-4 py-6 text-center text-sm text-muted">
+        Usage could not be loaded. Your Runs and API activity are unaffected.
+      </p>
+    );
+  }
 
   const stats = [
     { label: "API calls (30d)", value: data.byType["api_locate"] ?? 0 },

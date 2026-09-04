@@ -139,7 +139,14 @@ export function ApiKeysPanel() {
         </button>
       </div>
 
-      {keys.length === 0 ? (
+      {keys.length === 0 && error ? (
+        // A failed load is not an empty list. Showing "no keys yet" to someone
+        // whose keys simply did not load invites them to create a duplicate, and
+        // for a credentials panel that is the wrong thing to be wrong about.
+        <p className="py-6 text-center text-sm text-muted">
+          Your existing keys could not be loaded, so none are shown. Reload before creating a new one.
+        </p>
+      ) : keys.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted">No API keys yet. Create one to start using the Locus API.</p>
       ) : (
         <div className="divide-y divide-line overflow-hidden rounded-xl border border-line-strong">
