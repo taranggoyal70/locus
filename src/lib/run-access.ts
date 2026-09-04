@@ -1,4 +1,5 @@
 import type { AccountAdmission, AdmissionReason, AdmissionTier, RunQuota } from "@/lib/admission";
+import type { RunUsage } from "@/lib/agent/run-usage";
 
 /**
  * What the workspace needs to know about the account's Run access.
@@ -18,14 +19,24 @@ export type RunAccess = {
   tier: AdmissionTier;
   reason: AdmissionReason;
   quota: RunQuota;
+  /**
+   * What the account has spent against that quota, or null when it was not
+   * read - for an account that cannot start a Run at all, the counts would be a
+   * database round trip spent on a number nobody sees.
+   */
+  usage: RunUsage | null;
 };
 
-export function runAccessFromAdmission(admission: AccountAdmission): RunAccess {
+export function runAccessFromAdmission(
+  admission: AccountAdmission,
+  usage: RunUsage | null = null,
+): RunAccess {
   return {
     canStart: admission.capabilities.runStart,
     tier: admission.tier,
     reason: admission.reason,
     quota: admission.runQuota,
+    usage,
   };
 }
 
@@ -35,6 +46,7 @@ export const NO_RUN_ACCESS: RunAccess = {
   tier: "visitor",
   reason: "signed_out",
   quota: { maxActiveRuns: 0, maxDailyRuns: 0 },
+  usage: null,
 };
 
 export type RunAccessCopy = {
@@ -67,12 +79,34 @@ export type RunAccessCopy = {
 export function runAccessCopy(access: RunAccess): RunAccessCopy {
   if (access.canStart) {
     const daily = access.quota.maxDailyRuns;
+    const remaining = access.usage
+      ? Math.max(0, daily - access.usage.dailyRuns)
+      : null;
+
+    // Offering an action that is certain to be refused is worse than saying so.
+    // The server stays authoritative - this only declines to present a button
+    // whose only outcome is a 429.
+    if (remaining === 0) {
+      return {
+        action: "Daily Runs used",
+        href: null,
+        explanation:
+          `You have used all ${daily} Agent ${daily === 1 ? "Run" : "Runs"} on this `
+          + "plan in the last 24 hours. The allowance is a rolling window, so the "
+          + "oldest Run frees a slot as it ages out.",
+      };
+    }
+
+    const allowance = remaining === null
+      ? `${daily} Agent ${daily === 1 ? "Run" : "Runs"} per day on this plan.`
+      : `${remaining} of ${daily} Agent ${daily === 1 ? "Run" : "Runs"} left today.`;
+
     return {
       action: "Run task with Locus",
       href: null,
       explanation:
-        `Executes in an isolated Sandbox. ${daily} Agent ${daily === 1 ? "Run" : "Runs"} `
-        + "per day on this plan. GitHub delivery is disabled during early access.",
+        `Executes in an isolated Sandbox. ${allowance} `
+        + "GitHub delivery is disabled during early access.",
     };
   }
 

@@ -47,7 +47,7 @@ describe("controlled-alpha Agent Run start", () => {
         sliceCount={4}
         excludedCount={8}
         acceptanceCriteria={["The evidence contract is factual"]}
-        runAccess={{ canStart: true, tier: "partner", reason: "partner_allowlist", quota: { maxActiveRuns: 2, maxDailyRuns: 10 } }}
+        runAccess={{ canStart: true, tier: "partner", reason: "partner_allowlist", quota: { maxActiveRuns: 2, maxDailyRuns: 10 }, usage: null }}
       />,
     );
 
@@ -65,7 +65,7 @@ describe("controlled-alpha Agent Run start", () => {
         sliceCount={4}
         excludedCount={8}
         acceptanceCriteria={["The evidence contract is factual"]}
-        runAccess={{ canStart: false, tier: "visitor", reason: "waitlist", quota: { maxActiveRuns: 0, maxDailyRuns: 0 } }}
+        runAccess={{ canStart: false, tier: "visitor", reason: "waitlist", quota: { maxActiveRuns: 0, maxDailyRuns: 0 }, usage: null }}
       />,
     );
 
@@ -87,7 +87,7 @@ describe("controlled-alpha Agent Run start", () => {
         sliceCount={4}
         excludedCount={8}
         acceptanceCriteria={["The evidence contract is factual"]}
-        runAccess={{ canStart: false, tier: "visitor", reason: "suspended", quota: { maxActiveRuns: 0, maxDailyRuns: 0 } }}
+        runAccess={{ canStart: false, tier: "visitor", reason: "suspended", quota: { maxActiveRuns: 0, maxDailyRuns: 0 }, usage: null }}
       />,
     );
 
@@ -104,7 +104,7 @@ describe("controlled-alpha Agent Run start", () => {
         sliceCount={4}
         excludedCount={8}
         acceptanceCriteria={["The evidence contract is factual"]}
-        runAccess={{ canStart: false, tier: "visitor", reason: "waitlist", quota: { maxActiveRuns: 0, maxDailyRuns: 0 } }}
+        runAccess={{ canStart: false, tier: "visitor", reason: "waitlist", quota: { maxActiveRuns: 0, maxDailyRuns: 0 }, usage: null }}
       />,
     );
 
@@ -122,7 +122,7 @@ describe("controlled-alpha Agent Run start", () => {
         sliceCount={4}
         excludedCount={8}
         acceptanceCriteria={["The evidence contract is factual"]}
-        runAccess={{ canStart: true, tier: "free", reason: "self_serve", quota: { maxActiveRuns: 1, maxDailyRuns: 3 } }}
+        runAccess={{ canStart: true, tier: "free", reason: "self_serve", quota: { maxActiveRuns: 1, maxDailyRuns: 3 }, usage: null }}
       />,
     );
 

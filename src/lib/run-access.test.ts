@@ -22,6 +22,7 @@ describe("runAccessFromAdmission", () => {
       tier: "partner",
       reason: "partner_allowlist",
       quota: { maxActiveRuns: 2, maxDailyRuns: 10 },
+      usage: null,
     });
   });
 
@@ -120,5 +121,57 @@ describe("signup barrier refusals", () => {
     ] as const;
     const explanations = reasons.map((reason) => runAccessCopy(access({ reason })).explanation);
     expect(new Set(explanations).size).toBe(reasons.length);
+  });
+});
+
+describe("remaining allowance", () => {
+  const running = {
+    canStart: true,
+    tier: "free" as const,
+    reason: "self_serve" as const,
+    quota: { maxActiveRuns: 1, maxDailyRuns: 3 },
+  };
+
+  it("states what is left rather than only what the plan includes", () => {
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 1 } });
+    expect(copy.explanation).toContain("2 of 3 Agent Runs left today");
+  });
+
+  it("falls back to the plan allowance when usage could not be read", () => {
+    // The counts decide what the panel says, not whether a Run is permitted, so
+    // an unreadable count must not turn into a refusal.
+    const copy = runAccessCopy({ ...running, usage: null });
+    expect(copy.action).toBe("Run task with Locus");
+    expect(copy.explanation).toContain("3 Agent Runs per day");
+  });
+
+  it("does not offer an action that is certain to be refused", () => {
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 3 } });
+    expect(copy.action).toBe("Daily Runs used");
+    expect(copy.explanation).toMatch(/rolling window/);
+  });
+
+  it("explains the window rather than promising a reset time it cannot keep", () => {
+    // The limit is a rolling 24 hours in claim_agent_run_slot, not a calendar
+    // day, so "try again tomorrow" would be wrong for anyone whose Runs were
+    // this afternoon.
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 3 } });
+    expect(copy.explanation).not.toMatch(/tomorrow|midnight/i);
+  });
+
+  it("never reports a negative remainder when usage overshoots the quota", () => {
+    // A tier downgrade can leave an account above its new allowance.
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 9 } });
+    expect(copy.action).toBe("Daily Runs used");
+    expect(copy.explanation).not.toContain("-");
+  });
+
+  it("says Run, not Runs, for a one-Run allowance", () => {
+    const copy = runAccessCopy({
+      ...running,
+      quota: { maxActiveRuns: 1, maxDailyRuns: 1 },
+      usage: { activeRuns: 0, dailyRuns: 1 },
+    });
+    expect(copy.explanation).toContain("all 1 Agent Run on this plan");
   });
 });

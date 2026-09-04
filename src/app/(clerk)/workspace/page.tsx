@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LocusApp } from "@/components/LocusApp";
 import { admitOnFirstUse } from "@/lib/admission-server";
+import { readRunUsage } from "@/lib/agent/run-usage";
 import { runAccessFromAdmission } from "@/lib/run-access";
 
 type WorkspacePageProps = {
@@ -28,13 +29,28 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
   ]);
   const accountName = user?.firstName ?? user?.primaryEmailAddress?.emailAddress?.split("@")[0];
 
+  // Read only for an account that can actually start a Run. For everyone else
+  // these are two count queries spent on a number no surface displays.
+  //
+  // A failure degrades to null rather than to an error page: the counts decide
+  // what the panel says about the allowance, not whether a Run is permitted, and
+  // `claim_agent_run_slot` remains the authority either way.
+  let usage = null;
+  if (admission.capabilities.runStart) {
+    try {
+      usage = await readRunUsage(userId);
+    } catch {
+      usage = null;
+    }
+  }
+
   return (
     <ErrorBoundary>
       <LocusApp
         accountName={accountName}
         isWorkspace
         initialRunId={initialRunId}
-        runAccess={runAccessFromAdmission(admission)}
+        runAccess={runAccessFromAdmission(admission, usage)}
       />
     </ErrorBoundary>
   );
