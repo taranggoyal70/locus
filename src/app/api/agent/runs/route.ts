@@ -11,6 +11,7 @@ import {
   quotaRetryAfterSeconds,
 } from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
+import { readRunUsage } from "@/lib/agent/run-usage";
 import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
 import {
   appendRunStep,
@@ -149,25 +150,15 @@ export async function POST(request: Request) {
     );
   }
   const db = tenantClient(userId);
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1_000).toISOString();
-  const [activeResult, dailyResult] = await Promise.all([
-    db
-      .from("agent_runs")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .in("status", [...ACTIVE_RUN_STATUSES]),
-    db
-      .from("agent_runs")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .gte("created_at", oneDayAgo),
-  ]);
-  if (activeResult.error || dailyResult.error) {
+  let usage;
+  try {
+    usage = await readRunUsage(userId);
+  } catch {
     return NextResponse.json({ error: "Could not verify agent run quota." }, { status: 503 });
   }
   const quota = agentRunQuotaDecision({
-    activeRuns: activeResult.count ?? 0,
-    dailyRuns: dailyResult.count ?? 0,
+    activeRuns: usage.activeRuns,
+    dailyRuns: usage.dailyRuns,
     quota: admission.runQuota,
   });
   if (!quota.allowed) {
