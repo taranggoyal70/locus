@@ -69,11 +69,23 @@ vercel deploy --prod
 leave the deployment invite-only, so verify rather than assume:
 
 ```bash
-curl -s https://locus-five-iota.vercel.app/api/health | jq .admission
+curl -s https://locus-five-iota.vercel.app/api/health | jq '.status, .readiness.admission, .readiness.missing'
 ```
 
 Expect `"self_serve"`. If it still reports `"invite_only"`, the variable did not
 take effect and no account has been admitted.
+
+A rejected value announces itself twice, which was confirmed against a running
+server rather than reasoned about. With `LOCUS_SELF_SERVE=true` and an empty
+allowlist, `admission` stays `"invite_only"` **and** `run_admission` reappears in
+`readiness.missing`, so `status` drops to `"degraded"`. A deployment that
+believes it is public but admits nobody is therefore not a silent failure: it
+fails the same health check the external monitor already polls.
+
+The corollary is worth knowing before it surprises someone. On a deployment with
+an empty allowlist, `run_admission` in `missing` is the normal reading *until*
+self-serve is accepted, so a degraded status immediately before this step is
+expected and is not a reason to stop.
 
 ## Pausing without closing
 
