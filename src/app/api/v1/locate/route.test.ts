@@ -102,6 +102,16 @@ describe("locate API analytics", () => {
     expect(trackMock.mock.calls[0][0].properties).not.toHaveProperty("repo");
   });
 
+  it("reports full coverage when the whole repository was analyzed", async () => {
+    const body = await (await POST(request())).json();
+    expect(body.coverage).toEqual({
+      matchedFiles: 1,
+      analyzedFiles: 1,
+      truncated: false,
+      limit: 200,
+    });
+  });
+
   it("includes the first source file when the sparse warning precedes a tiny budget", async () => {
     const response = await POST(request({ budget: 1 }));
     const body = await response.json();
@@ -246,5 +256,60 @@ describe("locate API repository visibility", () => {
     const response = await POST(request());
 
     expect(response.status).toBe(200);
+  });
+});
+
+
+// A repository larger than the API's file cap is loaded in part, and every
+// figure in the response then describes only that part: `excluded` omits what
+// was never fetched, and the token saving is computed against the truncated
+// total. Without a signal the caller cannot tell a genuinely small repository
+// from a large one that was cut off.
+describe("locate API repository coverage", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  beforeEach(() => {
+    authenticateApiKeyMock.mockResolvedValue({ userId: "user_123", keyId: "key_123" });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 29, retryAfterSeconds: 0 });
+    trackMock.mockReset();
+
+    const tree = Array.from({ length: 260 }, (_, index) => ({
+      path: `src/file${index}.ts`,
+      type: "blob",
+      size: 60,
+    }));
+
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "https://api.github.com/repos/owner/repo") {
+        return Response.json({ default_branch: "main" });
+      }
+      if (url === "https://api.github.com/repos/owner/repo/git/trees/main?recursive=1") {
+        return Response.json({ sha: "commit-sha", tree });
+      }
+      if (url.startsWith("https://raw.githubusercontent.com/owner/repo/commit-sha/src/file")) {
+        return new Response("export function checkoutTotal() { return 42; }\n");
+      }
+      return new Response("not found", { status: 404 });
+    }));
+  });
+
+  it("tells the caller the repository was truncated", async () => {
+    const body = await (await POST(request())).json();
+
+    expect(body.coverage.truncated).toBe(true);
+    expect(body.coverage.matchedFiles).toBe(260);
+    expect(body.coverage.analyzedFiles).toBe(200);
+    expect(body.coverage.limit).toBe(200);
+  });
+
+  it("keeps the token total consistent with what it says it analyzed", async () => {
+    // The saving is computed against `tokens.total`. If that denominator covers
+    // 200 files while the repository has 260, the number is wrong rather than
+    // merely uncertain — which is why `coverage` has to travel beside it.
+    const body = await (await POST(request())).json();
+
+    expect(body.coverage.analyzedFiles).toBe(200);
+    expect(body.slice.length + body.excluded.length).toBe(body.coverage.analyzedFiles);
   });
 });

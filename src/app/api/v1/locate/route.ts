@@ -78,7 +78,26 @@ function rawPath(path: string): string {
  */
 export class RepositoryNotPublicError extends Error {}
 
-async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoData> {
+/**
+ * How much of the repository was actually read.
+ *
+ * `analyzed < matched` means the Slice, the excluded list, and the token saving
+ * all describe a portion of the repository rather than the whole of it. That has
+ * to reach the caller for the same reason `graph.sparse` does, and with more
+ * force: a truncated load makes the reported saving arithmetically wrong, not
+ * merely uncertain, because its denominator is the part that was read.
+ */
+export type RepoCoverage = {
+  matchedFiles: number;
+  analyzedFiles: number;
+  truncated: boolean;
+  limit: number;
+};
+
+async function fetchRepo(
+  repoUrl: string,
+  githubToken?: string,
+): Promise<{ repo: RepoData; coverage: RepoCoverage }> {
   const parsed = parseRepo(repoUrl);
   if (!parsed) throw new Error("Invalid repository. Use owner/repo or a GitHub URL.");
   const { owner, repo, ref } = parsed;
@@ -134,12 +153,20 @@ async function fetchRepo(repoUrl: string, githubToken?: string): Promise<RepoDat
   if (Object.keys(fileMap).length === 0) throw new Error("Source files could not be downloaded.");
 
   return {
-    name: `${owner}/${repo}`,
-    slug: `${owner}-${repo}`,
-    description: meta.description || `${owner}/${repo}`,
-    root: commonRoot(Object.keys(fileMap)),
-    recentlyChanged: [],
-    files: fileMap,
+    repo: {
+      name: `${owner}/${repo}`,
+      slug: `${owner}-${repo}`,
+      description: meta.description || `${owner}/${repo}`,
+      root: commonRoot(Object.keys(fileMap)),
+      recentlyChanged: [],
+      files: fileMap,
+    },
+    coverage: {
+      matchedFiles: candidates.length,
+      analyzedFiles: Object.keys(fileMap).length,
+      truncated: files.length < candidates.length,
+      limit: MAX_FILES,
+    },
   };
 }
 
@@ -266,7 +293,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const repo = await fetchRepo(body.repo);
+    const { repo, coverage } = await fetchRepo(body.repo);
     const graph = buildGraph(repo);
     const result = locate(body.task, repo, graph, body.evidence ?? "");
 
@@ -323,6 +350,12 @@ export async function POST(request: Request) {
       // localization, and in that case the reported saving is overstated. The web
       // UI has surfaced this since launch; the API had no equivalent.
       graph: { edgeDensity: Number(result.edgeDensity.toFixed(3)), sparse: result.sparse },
+      // The repository is capped at MAX_FILES, and a truncated load makes every
+      // figure below describe only the part that was read: `excluded` omits what
+      // was never fetched, and `tokens.total` is the truncated denominator the
+      // saving is computed against. A caller has no other way to tell a genuinely
+      // small repository from a large one that was cut off.
+      coverage,
       slice: result.slice.map((f) => ({
         path: f.path,
         tokens: f.tokens,

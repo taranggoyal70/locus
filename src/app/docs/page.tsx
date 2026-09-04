@@ -75,7 +75,7 @@ export default function DocsPage() {
                   <td className="px-4 py-2 font-mono text-xs text-paper">budget</td>
                   <td className="px-4 py-2">number</td>
                   <td className="px-4 py-2">No</td>
-                  <td className="px-4 py-2">Max tokens for the packed context (default: 40,000)</td>
+                  <td className="px-4 py-2">Max tokens for the packed context (default: 40,000, capped at 200,000)</td>
                 </tr>
               </tbody>
             </table>
@@ -109,6 +109,12 @@ export default function DocsPage() {
     "edgeDensity": 1.25,
     "sparse": false
   },
+  "coverage": {
+    "matchedFiles": 62,
+    "analyzedFiles": 62,
+    "truncated": false,
+    "limit": 200
+  },
   "tokens": {
     "included": 770,
     "total": 45000
@@ -135,6 +141,16 @@ export default function DocsPage() {
             few internal imports resolved. The response still includes the best Slice, but the packed
             <code className="text-accent"> context</code> starts with a warning because the token
             reduction may be an unresolved-import artifact.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-muted-light">
+            When <code className="text-accent">coverage.truncated</code> is true, the repository had
+            more supported source files than the API analyzes in one request, so
+            <code className="text-accent"> analyzedFiles</code> is below
+            <code className="text-accent"> matchedFiles</code>. Everything else in the response then
+            describes the analyzed portion only: <code className="text-accent">excluded</code> omits
+            files that were never fetched, and <code className="text-accent">tokens.total</code> is the
+            analyzed total the reduction is measured against. Analyze a large repository with the
+            source CLI, which has no file cap.
           </p>
           <p className="mt-3 rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm leading-6 text-muted-light">
             Token counts report only the context included by this localization response and the
