@@ -15,9 +15,9 @@ Locus is in **public early access**.
 
 ## Audience and actions
 
-Primary audience: developers who use Codex, Claude Code, Cursor, or another coding agent on JavaScript, TypeScript, or Python Repos. Vue, Svelte, and Astro script imports are supported; Python files anchor on path and source rather than framework-specific Surface detection.
+Primary audience: developers who use Codex, Claude Code, Cursor, or another coding agent on JavaScript, TypeScript, or Python Repos. The public workspace importer is JavaScript/TypeScript today; the REST API and source runtimes use the full localizer, including Python and Vue/Svelte/Astro script imports. Python files anchor on path and source rather than framework-specific Surface detection.
 
-Primary action: **Try Repo localization** at `/workspace`.
+Primary action: **Find the right files** at `/workspace`.
 
 Secondary action: **Request Agent Run access** at `/pricing`.
 

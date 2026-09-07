@@ -15,7 +15,7 @@ risk that was quietly downgraded.
 | R5 | P1 High | `74c2e68` | Server-side MCP root allowlist; bounded JSON-RPC framing |
 | R6 | P1 High | `528d323` | Widen justification enforced and bound into `proposal_hash`; widened-file ceiling; six sensitive-path classes that fail closed |
 | R7 | P1 High | `e024154` | Unscoped tenant queries fail closed; no API route holds a raw service client |
-| R8 | P1 High | `72bf003`, `2eb0e18` | Actions SHA-pinned, all-dependency audit, CodeQL, five advisories resolved |
+| R8 | P1 High | `72bf003`, `2eb0e18`, `82787f9` | Actions SHA-pinned, all-dependency audit, CodeQL, and vulnerable-range overrides tracked in `pnpm-workspace.yaml` |
 | R11 | P1 High | `032df7f` | Runs refuse to start against a truncated repository |
 | R9 | P1 High | `9bda750` | DOCX archive validated structurally from the End of Central Directory record (ZIP half only, see below) |
 | R10 | P1 High | `5834cc8` | Delivery approval bound to the reviewed proposal hash; workflow pinned to the deployment that started it |

@@ -825,7 +825,7 @@ export function loadLocalRepo(dir) {
   //
   // Without this the CLI and MCP answered "WIDENED to whole repo" over a Slice
   // of zero files — the conservative fallback reporting that it had returned
-  // everything, having returned nothing. The hosted API already refuses this
+  // everything, having returned nothing. The hosted workspace importer already refuses this
   // case ("No JavaScript or TypeScript source found"), so the two surfaces
   // disagreed on identical input and the CLI was the one that stayed quiet.
   //

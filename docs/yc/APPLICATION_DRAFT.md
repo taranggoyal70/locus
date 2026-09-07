@@ -61,7 +61,7 @@ YC calls this one of the most important application questions ([YC, How to Apply
 
 ### How far along are you?
 
-I built and publicly launched an early-access version in about seven weeks. It localizes JavaScript, TypeScript, and Python tasks in public GitHub repositories, produces evidence for the selected scope, and can run an agent inside that boundary. The production launch checks pass and the repository contains more than 780 automated tests.
+I built an early-access localization version in about seven weeks. The source localizer supports JavaScript, TypeScript, and Python; the public workspace importer is JavaScript/TypeScript today, while the REST API and source runtimes use the full localizer. It produces evidence for the selected scope and can run an agent inside that boundary, but unrestricted Agent Run admission remains closed pending the retained launch gate in `docs/operations/launch-readiness-2026-09-07.md`.
 
 The current public benchmark has 15 author-owned cases. It retained every expected fix file in those cases and estimated a median 53% context reduction, but it is not independent evidence and I do not present it as proof of customer value. I froze a 40-arm paired agent evaluation, but it currently has 0 completed runs.
 
