@@ -260,8 +260,8 @@ that directory. The unpublished package source lives in [`cli/`](./cli);
   CLI, and MCP stdio process tests. The MCP tests build the directory layout npm
   produces rather than running from the source tree, because the source tree is
   the layout that hides packaging bugs
-- GitHub CI runs lint, tests, CLI sync, type-checking, a production build, a
-  dependency audit, and CodeQL
+- GitHub CI runs lint, tests, merge-marker scanning, CLI sync, type-checking, a
+  production build, a dependency audit, and CodeQL
 - [`/api/health`](https://locus-five-iota.vercel.app/api/health) reports the
   deployed package version, Git revision, and which admission door is open
 - The historical benchmark is generated from declared parent snapshots and fails
@@ -274,6 +274,7 @@ Run the same checks locally:
 
 ```bash
 pnpm lint
+pnpm check:merge-markers
 pnpm test
 pnpm typecheck
 pnpm check-sync
