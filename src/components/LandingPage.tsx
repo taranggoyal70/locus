@@ -30,12 +30,14 @@ export function LandingPage() {
               <span className="mt-2 block text-accent">Not the repo.</span>
             </h1>
             <p className="mt-8 max-w-2xl text-lg leading-8 text-muted-light sm:text-xl">
-              Anyone can localize a public JavaScript, TypeScript, or Python Repo and inspect every
-              Included, Excluded, and Widened file. Invited design partners can continue into an
-              isolated Sandbox and a review-ready, check-passing proposal.
+              Paste a public GitHub project. Locus finds the files an AI coding tool needs and shows why.
+            </p>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-light">
+              JavaScript, TypeScript, and Python are supported. Invited design partners can continue
+              from that explained file set into an isolated Sandbox and a review-ready, check-passing proposal.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/workspace" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Try a public Repo — free</Link>
+              <Link href="/workspace" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Find the right files — free</Link>
               <Link href="/demo" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Watch migration demo</Link>
               <Link href="/pricing" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Request Agent Run access</Link>
             </div>
