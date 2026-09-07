@@ -17,6 +17,7 @@ git diff --cached --quiet
 pnpm lint
 pnpm test
 pnpm typecheck
+pnpm check:merge-markers
 pnpm check:alpha-claims
 pnpm evidence:release1
 pnpm check-sync
@@ -26,15 +27,14 @@ pnpm audit --audit-level high
 
 The Release 1 evaluation is allowed to remain in `collecting` state for this public localization launch. It blocks unrestricted Agent Runs and Savings claims, not self-serve localization.
 
-Verify production database history and advisors:
-
-```bash
-pnpm dlx supabase@2.111.0 migration list --linked
-pnpm dlx supabase@2.111.0 db push --linked --dry-run
-pnpm dlx supabase@2.111.0 db advisors --linked
-```
-
-The chain must be exactly `001`–`018`, the dry run must be empty, and advisors must return no findings.
+Verify the production database from the Supabase web dashboard. Open the
+project's **Database > Migrations** page and confirm the applied chain is exactly
+`001`–`020`. Compare each pending migration with the reviewed file in
+`supabase/migrations` before applying it from the dashboard; do not paste an
+unreviewed directory or run migrations in a shell loop. Then open
+**Database > Advisors**, run both Security and Performance checks, and retain a
+dated screenshot or dashboard link. There must be no pending migration and no
+unresolved Security finding before admission opens.
 
 ## Monitoring contract
 
@@ -61,12 +61,8 @@ Verify `/`, `/docs`, `/pricing`, `/privacy`, `/support`, `/terms`, `/sign-in`, a
 
 ## Rollback
 
-<<<<<<< HEAD
 1. Clear both `ALPHA_ALLOWED_USER_IDS` and `LOCUS_SELF_SERVE`, then redeploy, if Agent Run behavior or provider capacity is in question. Verify `/api/health` reports `readiness.admission: "invite_only"`; clearing only the allowlist stops the invited partners and leaves every self-serve account running.
-=======
-1. Set `LOCUS_PUBLIC_BETA_ENABLED=false`, clear `ALPHA_ALLOWED_USER_IDS`, and redeploy if Agent Run behavior or provider capacity is in question.
->>>>>>> 8982add (feat(ui): explain limited shared runs and Cloudflare setup)
-2. Promote the previous known-good Vercel production deployment or revert the launch PR through a new reviewed PR.
-3. Leave migrations `001`–`018` installed; they are additive and already serve the prior application.
+2. Promote a known-good Vercel deployment that already understands migration `020`, or revert the launch PR through a new reviewed PR. Do not promote a pre-`020` application against the current schema.
+3. Leave migrations `001`–`020` installed. Migrations `018`–`019` are additive; migration `020` changes the provider claim contract and must remain paired with a compatible application revision.
 4. Verify `/api/health`, the production monitor, sign-in, public localization, and logs before declaring recovery.
 5. Follow `docs/operations/incident-response.md` for security, data-integrity, or evidence concerns.

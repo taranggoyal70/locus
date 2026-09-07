@@ -264,7 +264,7 @@ _Avoid_: feature flag, toggle, permission.
   Artifacts, and Approvals.
 - `supabase/migrations/012_release1_run_evidence.sql` — immutable proposal
   hashes, Reviews, and atomic review-ready publication.
-- `supabase/migrations/018_free_public_beta.sql` — frozen provider and **Agent
+- `supabase/migrations/020_free_public_beta.sql` — frozen provider and **Agent
   execution mode**, encrypted **Provider connections**, and atomic **Provider
   daily claims**.
 
