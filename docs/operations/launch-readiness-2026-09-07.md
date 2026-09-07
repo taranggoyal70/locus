@@ -26,21 +26,32 @@ go for the existing public localization surface and a no-go for opening
 - Repository conflict residue was removed and `pnpm check:merge-markers` was
   added to CI and to the release preflight.
 
-## Remaining launch gate
+## Public Agent Run gate
 
-1. Sign in to the launch Cloudflare account and create a narrowly scoped Workers
-   AI token with only Workers AI Read and Workers AI Edit.
-2. Install `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in Vercel
-   production without printing or retaining their values in source control.
-3. Deploy the reviewed release SHA and require `/api/health` to return HTTP 200,
-   `status: "ok"`, no missing readiness fields, and the reviewed revision.
-4. Run the frozen BYOK and shared-pool canary from
-   `free-public-beta-rollout.md`. Retain Run IDs and check evidence, not source or
-   credentials.
-5. Keep one-partner admission for 24–48 hours with no Critical incident,
-   evidence mutation, unexplained quota failure, or external write.
-6. Only then set a conservative `LOCUS_SELF_SERVE_MAX_ACCOUNTS`, set
-   `LOCUS_SELF_SERVE=open`, and redeploy the same reviewed SHA.
+Every row is fail-closed. A row changes to **PASS** only when its dated evidence
+link, run ID, revision, or retained artifact is added here. `LOCUS_SELF_SERVE`
+must remain empty until every row is **PASS**.
+
+| Gate | Status | Retained evidence or required proof |
+|---|---|---|
+| Repository integrity, tests, typecheck, build, and dependency audit | **PASS** | Branch checks on 2026-09-07: 811 tests passed, production build passed, zero known dependency vulnerabilities, and no merge markers |
+| Production database history and security | **PASS** | Supabase web migration history `001`–`020`; Security Advisor zero errors/warnings; Performance Advisor zero findings on 2026-09-07 |
+| Shared Workers AI provider configured | **FAIL** | Add the Cloudflare account confirmation and Vercel deployment revision; never retain token values |
+| Production health for the reviewed revision | **FAIL** | Require HTTP 200, `status: "ok"`, the reviewed revision, and `readiness.missing: []` |
+| Desktop and mobile critical paths | **FAIL** | Retain production checks for `/`, `/demo`, `/workspace`, sign-in, settings, pricing, docs, privacy, terms, support, and Run history |
+| Keyboard and accessibility verification | **FAIL** | Retain production keyboard navigation, focus, labels, contrast, and automated accessibility results |
+| Performance verification | **FAIL** | Retain production Core Web Vitals or Lighthouse evidence at the agreed launch thresholds |
+| Alert delivery | **FAIL** | Retain the intentional `test_alert=true` failure notification and the following healthy production-health run |
+| Frozen BYOK and shared-pool canary | **FAIL** | Retain Run IDs, execution modes, proposal hashes, Checks, review evidence, quota denial, and proof of no external write |
+| 24–48 hour one-partner canary | **FAIL** | Retain start/end timestamps and zero Critical incidents, evidence mutations, unexplained quota failures, or external writes |
+| Incident and rollback rehearsal | **FAIL** | Retain the operator, timestamps, containment result, compatible deployment revision, health recovery, and lessons |
+| Branch and deployment protection | **FAIL** | Require reviewed CI on `main`, prevent force-push/delete, and restrict production deployment to the approved branch/revision |
+| Billing-disabled behavior | **FAIL** | Retain signed-in production checks proving no purchase path or paid entitlement is exposed in this launch |
+| Final public capability audit | **FAIL** | Record the released `runStart` capability and prove private reads, teams, delivery, billing, autonomous merge, and autonomous deploy remain disabled |
+
+After all rows pass, set a conservative `LOCUS_SELF_SERVE_MAX_ACCOUNTS`, set
+`LOCUS_SELF_SERVE=open`, and redeploy the same reviewed SHA. Re-run production
+health and the critical path once more before announcing availability.
 
 Private Repo reads, external GitHub delivery, teams, billing, autonomous merge,
 and autonomous deployment remain outside this launch. They require separate

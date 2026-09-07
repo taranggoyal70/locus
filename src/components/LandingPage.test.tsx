@@ -13,7 +13,8 @@ describe("public early-access landing contract", () => {
 
     expect(html).toContain("Free public localization");
     expect(html).toContain("The evidence and control layer for coding agents");
-    expect(html).toContain("Try a public Repo — free");
+    expect(html).toContain("Paste a public GitHub project. Locus finds the files an AI coding tool needs and shows why.");
+    expect(html).toContain("Find the right files — free");
     expect(html).toContain("No card. No repository write access.");
     expect(html).toContain("Watch migration demo");
     expect(html).toContain('href="/demo"');
