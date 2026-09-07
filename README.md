@@ -88,8 +88,9 @@ a structural convention that can be read from the tree; Python frameworks route
 through decorators and registries, which would have to be guessed, so Python
 files anchor on path and source alone.
 
-The hosted GitHub importer accepts public repositories (up to 200 source files).
-The source CLI can be used locally for larger repositories.
+The hosted workspace GitHub importer accepts public JavaScript and TypeScript
+repositories (up to 200 source files). The REST API and source CLI use the full
+localizer and can include Python and single-file component source.
 
 ## REST API
 

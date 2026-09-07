@@ -7,7 +7,7 @@
 
 YC says it receives more than 10,000 applications every three months and typically accepts about 1% ([YC investor resources](https://www.ycombinator.com/investors)). Based on the evidence currently visible in this repository, Locus's estimated chance if it applied today is **0.5–2%**.
 
-That estimate is not a judgment that the product is weak. Locus demonstrates that the founder can build and ship: the public product is live, the repository has hundreds of commits, the launch checks pass, and its claims are unusually careful. The problem is that the current evidence proves engineering execution, not urgent customer demand.
+That estimate is not a judgment that the product is weak. Locus demonstrates that the founder can build and ship: the public localization product is live, the repository has hundreds of commits, and its claims are unusually careful. The problem is that the current evidence proves engineering execution, not urgent customer demand.
 
 The current gaps are:
 
