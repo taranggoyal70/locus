@@ -34,8 +34,8 @@ must remain empty until every row is **PASS**.
 
 | Gate | Status | Retained evidence or required proof |
 |---|---|---|
-| Repository integrity, tests, typecheck, build, and dependency audit | **PASS** | Branch checks on 2026-09-07: 811 tests passed, production build passed, zero known dependency vulnerabilities, and no merge markers |
-| Production database history and security | **PASS** | Supabase web migration history `001`–`020`; Security Advisor zero errors/warnings; Performance Advisor zero findings on 2026-09-07 |
+| Repository integrity, tests, typecheck, build, and dependency audit | **PASS** | Revision `86e8994`; branch checks on 2026-09-07: 811 tests passed, production build passed, zero known dependency vulnerabilities, and no merge markers |
+| Production database history and security | **PASS** | [Supabase migrations](https://supabase.com/dashboard/project/gwyrfkubdvgemrkkffpr/database/migrations) `001`–`020`; [Security Advisor](https://supabase.com/dashboard/project/gwyrfkubdvgemrkkffpr/advisors/security) zero errors/warnings; [Performance Advisor](https://supabase.com/dashboard/project/gwyrfkubdvgemrkkffpr/advisors/performance) zero findings on 2026-09-07 |
 | Shared Workers AI provider configured | **FAIL** | Add the Cloudflare account confirmation and Vercel deployment revision; never retain token values |
 | Production health for the reviewed revision | **FAIL** | Require HTTP 200, `status: "ok"`, the reviewed revision, and `readiness.missing: []` |
 | Desktop and mobile critical paths | **FAIL** | Retain production checks for `/`, `/demo`, `/workspace`, sign-in, settings, pricing, docs, privacy, terms, support, and Run history |
