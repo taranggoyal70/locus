@@ -34,6 +34,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm check:merge-markers
       # Audit every dependency, not only production ones. Build and test
       # tooling executes on CI runners with repository access, so a compromised
       # dev dependency is a CI compromise — `--prod` hid exactly that class.

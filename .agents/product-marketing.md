@@ -2,7 +2,7 @@
 
 ## Positioning
 
-Locus gives coding agents a task-sized Slice of a JavaScript or TypeScript Repo and shows the developer why every file was Included, Excluded, or added by Widen. The product is evidence-first: it reports historical localization results and factual Run usage without claiming autonomous task success or verified token savings.
+Locus is the evidence and control layer for coding agents. It gives an agent a task-sized Slice of a JavaScript, TypeScript, or Python Repo and shows the developer why every file was Included, Excluded, or added by Widen. It freezes the candidate boundary for separate review and reports factual Run usage without claiming autonomous task success or verified token savings.
 
 ## Public stage
 
@@ -15,7 +15,7 @@ Locus is in **public early access**.
 
 ## Audience and actions
 
-Primary audience: developers who use Codex, Claude Code, Cursor, or another coding agent on JavaScript or TypeScript Repos.
+Primary audience: developers who use Codex, Claude Code, Cursor, or another coding agent on JavaScript, TypeScript, or Python Repos. Vue, Svelte, and Astro script imports are supported; Python files anchor on path and source rather than framework-specific Surface detection.
 
 Primary action: **Try Repo localization** at `/workspace`.
 

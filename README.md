@@ -128,12 +128,6 @@ pnpm dev
 |----------|---------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk authentication |
 | `CLERK_SECRET_KEY` | Clerk server-side auth |
-<<<<<<< HEAD
-| `ALPHA_ALLOWED_USER_IDS` | Comma-separated Clerk user IDs admitted to the `partner` Tier |
-=======
-| `LOCUS_PUBLIC_BETA_ENABLED` | Set to `true` only after the public-beta launch gate passes |
-| `ALPHA_ALLOWED_USER_IDS` | Optional Clerk user IDs allowed while public beta is closed |
->>>>>>> 8982add (feat(ui): explain limited shared runs and Cloudflare setup)
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client configuration |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side only) |
@@ -148,6 +142,7 @@ pnpm dev
 
 | Variable | Purpose |
 |----------|---------|
+| `ALPHA_ALLOWED_USER_IDS` | Clerk user IDs admitted to the comped `partner` Tier; also the fail-closed fallback when self-serve admission cannot be read |
 | `LOCUS_SELF_SERVE` | Set to `open` to admit any signed-in account with a verified email to the `free` Tier. Absent keeps the deployment invite-only |
 | `LOCUS_SELF_SERVE_MAX_ACCOUNTS` | Ceiling on self-serve accounts. Absent means no ceiling; `0` admits nobody new without affecting existing accounts |
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
