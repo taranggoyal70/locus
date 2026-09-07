@@ -22,7 +22,10 @@ export function LandingPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-accent" />
               Free public localization
             </div>
-            <h1 className="mt-7 font-display text-[clamp(3.6rem,8vw,7.8rem)] font-semibold leading-[.82] tracking-[-0.075em] text-paper">
+            <p className="mt-7 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-muted-light">
+              The evidence and control layer for coding agents
+            </p>
+            <h1 className="mt-4 font-display text-[clamp(3.6rem,8vw,7.8rem)] font-semibold leading-[.82] tracking-[-0.075em] text-paper">
               Ship the task.
               <span className="mt-2 block text-accent">Not the repo.</span>
             </h1>
@@ -32,10 +35,11 @@ export function LandingPage() {
               isolated Sandbox and a review-ready, check-passing proposal.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/demo" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Watch migration demo</Link>
-              <Link href="/workspace" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Try Repo localization</Link>
+              <Link href="/workspace" className="rounded-xl bg-paper px-5 py-3.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-paper/90">Try a public Repo — free</Link>
+              <Link href="/demo" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Watch migration demo</Link>
               <Link href="/pricing" className="rounded-xl border border-line-strong bg-surface/60 px-5 py-3.5 text-sm font-semibold text-paper transition hover:border-accent/50 hover:bg-surface">Request Agent Run access</Link>
             </div>
+            <p className="mt-4 text-xs text-muted-light">No card. No repository write access.</p>
             <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">{admissionTag(open)}</p>
           </div>
 

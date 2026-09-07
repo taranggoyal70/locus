@@ -12,9 +12,11 @@ describe("public early-access landing contract", () => {
     if (evidencePath) writeFileSync(evidencePath, `${html}\n`);
 
     expect(html).toContain("Free public localization");
+    expect(html).toContain("The evidence and control layer for coding agents");
+    expect(html).toContain("Try a public Repo — free");
+    expect(html).toContain("No card. No repository write access.");
     expect(html).toContain("Watch migration demo");
     expect(html).toContain('href="/demo"');
-    expect(html).toContain("Try Repo localization");
     expect(html).toContain("Request Agent Run access");
     // The tag dropped a redundant "access required" — it already says invite-gated.
     expect(html).toContain("invite-gated");
