@@ -55,12 +55,24 @@ function copyRegular(source, destination, before) {
         null,
       );
       if (count === 0) break;
-      fs.writeSync(destinationDescriptor, chunk, 0, count);
+      let written = 0;
+      while (written < count) {
+        const writeCount = fs.writeSync(
+          destinationDescriptor,
+          chunk,
+          written,
+          count - written,
+        );
+        if (writeCount === 0) fail(`short write while copying: ${source}`);
+        written += writeCount;
+      }
       copied += count;
     }
     const after = fs.fstatSync(sourceDescriptor);
+    const destinationStat = fs.fstatSync(destinationDescriptor);
     if (copied !== opened.size || opened.size !== after.size || opened.mtimeMs !== after.mtimeMs
-      || opened.dev !== after.dev || opened.ino !== after.ino) {
+      || opened.dev !== after.dev || opened.ino !== after.ino
+      || destinationStat.size !== opened.size) {
       fail(`regular file changed during copy: ${source}`);
     }
   } finally {
