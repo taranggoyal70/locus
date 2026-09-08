@@ -61,12 +61,13 @@ network, or protect credentials the chosen provider CLI itself requires.
 
 - Inspect the exact uncommitted candidate, including untracked files, using a
   deterministic content record per changed Repo-relative path.
-- Run every declared Check in the original Repo only after the candidate passes
-  path enforcement. Record command, exit status, duration, output byte lengths,
-  output digests, and bounded relevant output.
-- Protect Git control data, Guard artifacts, and the signing key from Checks.
-  Reinspect the exact working tree after all Checks; any failed or mutating
-  Check restores the frozen base instead of leaving an unsigned candidate.
+- Run every declared Check in a disposable detached worktree at the frozen base,
+  after applying the path-clean candidate there. Record command, exit status,
+  duration, output byte lengths, output digests, and bounded relevant output.
+- Protect Git control data, the original Repo, and the dedicated signing-key
+  directory from Check writes. Reinspect the exact candidate after all Checks;
+  ignored Check artifacts are discarded with the worktree, while any candidate
+  mutation fails the Run. Only then may Guard apply the candidate to the Repo.
 - Parse provider-reported token and cost fields when present. Mark unavailable
   values as unavailable; never estimate or invent cost.
 - A Run passes only when containment succeeded, the agent exited zero, at least
@@ -79,13 +80,16 @@ network, or protect credentials the chosen provider CLI itself requires.
 - Sign canonical JSON, include the public-key fingerprint as `keyId`, and write
   the envelope using symlink-safe Guard artifact handling.
 - Remove the signing-key path from child environments and deny the agent and
-  Checks access to the canonical private-key path. If signing or receipt writing
-  fails after application, restore the frozen base.
+  Checks access to the canonical private-key directory. If signing or receipt
+  writing fails after application, restore the frozen base.
 - Offline verification requires the independently supplied public key and may
   additionally require an expected key ID.
 - A human Review is `accepted` or `rejected`, records actor, time, criteria, and
   notes, and binds `proposalHash` to the signed pending-review receipt. Updating
-  a reviewed receipt is not allowed; a new Run is required.
+  a reviewed receipt is not allowed; a new Run is required. The local command
+  locks and atomically replaces one receipt artifact. Preventing decisions from
+  copied pending artifacts requires a shared append-only service and is not a
+  local-file guarantee.
 
 ## Explicit non-goals
 

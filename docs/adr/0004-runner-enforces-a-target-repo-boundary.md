@@ -23,10 +23,11 @@ isolate the network. Provider credentials are copied only into the ephemeral
 runtime when their CLI needs them and are removed with that runtime.
 
 Only a path-clean candidate is copied back, after the manifest, repository
-identity, original Repo, and HEAD are revalidated. Checks run afterward in the
-original Repo with Git metadata, Guard artifacts, and the signing-key path
-protected. Locus reinspects the exact candidate after Checks and rolls it back
-when a Check fails, mutates it, or receipt signing cannot complete.
+identity, original Repo, and HEAD are revalidated. Checks run first in a
+disposable detached worktree with Git metadata, the original Repo, and the
+dedicated signing-key directory write-protected. Locus reinspects the exact
+candidate after Checks, discards all Check artifacts, and only then copies the
+candidate into the original Repo. A signing failure still rolls that copy back.
 
 ## Consequences
 

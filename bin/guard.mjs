@@ -702,10 +702,10 @@ export function writeFileSafely(filePath, contents, {
   return outputPath;
 }
 
-export function writeJsonFile(filePath, value, { allowedRoot = null } = {}) {
+export function writeJsonFile(filePath, value, { allowedRoot = null, exclusive = false } = {}) {
   return writeFileSafely(
     filePath,
     `${JSON.stringify(canonicalValue(value), null, 2)}\n`,
-    { allowedRoot },
+    { allowedRoot, exclusive },
   );
 }

@@ -70,10 +70,12 @@ target Repo and denies host writes outside the ephemeral runtime, but permits
 the host network and does not claim to hide every other readable host file.
 
 The command applies nothing if the agent exits non-zero, creates an unapproved
-path, produces a symlink/special file, or returns an empty candidate. After a
-clean candidate is copied back, each declared Check runs in the original Repo.
-The signed receipt records exact content hashes, command exits and bounded
-output, and provider-reported usage/cost when the provider emits it.
+path, produces a symlink/special file, or returns an empty candidate. Each
+declared Check runs against the exact candidate in a disposable detached
+worktree. Ignored build artifacts disappear with that worktree, and the clean
+candidate reaches the original Repo only after all Checks pass. The signed
+receipt records exact content hashes, command exits and bounded output, and
+provider-reported usage/cost when the provider emits it.
 
 ## 4. Bind a human Review
 
@@ -174,8 +176,11 @@ Checks, provider-reported usage, and human Review to the pre-commit candidate.
 
 - The v0.4 local runner contains access to the target Repo; it does not provide
   whole-host confidentiality, network isolation, or disposable-VM isolation.
-- Check commands are trusted user input and run in the original Repo after the
-  candidate passes path enforcement.
+- Check commands are trusted user input and run in a disposable candidate
+  worktree after path enforcement. They can read the checked-out source and
+  host-readable data; use disposable-machine isolation for hostile Checks.
+- The local Review lock serializes one receipt file. Preventing decisions from
+  copied pending receipts requires a shared append-only control plane.
 - Its localization supports the same languages and graph limitations as the
   source CLI.
 - A trusted hash store and manifest delivery path are operator responsibilities

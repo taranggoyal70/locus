@@ -21,6 +21,25 @@ export function verifyRunReceiptHash(receipt) {
   if (receipt.schemaVersion !== GUARD_RUN_RECEIPT_SCHEMA) {
     throw new Error(`Unsupported Guard Run receipt schema: ${receipt.schemaVersion ?? "missing"}`);
   }
+  if (!receipt.enforcement || receipt.enforcement.mode !== "contained-agent-run"
+    || !["pass", "fail"].includes(receipt.enforcement.result)) {
+    throw new Error("Guard Run receipt has invalid enforcement evidence.");
+  }
+  if (!receipt.candidate || !/^[a-f0-9]{64}$/.test(receipt.candidate.hash ?? "")
+    || !Array.isArray(receipt.candidate.changedPaths)
+    || !Array.isArray(receipt.candidate.records)) {
+    throw new Error("Guard Run receipt has invalid candidate evidence.");
+  }
+  if (!Array.isArray(receipt.checks) || !Array.isArray(receipt.violations)) {
+    throw new Error("Guard Run receipt has invalid Check or violation evidence.");
+  }
+  if (!receipt.review || !["pending", "accepted", "rejected"].includes(receipt.review.status)) {
+    throw new Error("Guard Run receipt has invalid human Review state.");
+  }
+  if (receipt.enforcement.result === "pass"
+    && (receipt.checks.length === 0 || receipt.checks.some((check) => check?.result !== "pass"))) {
+    throw new Error("A passing Guard Run receipt requires at least one passing Check.");
+  }
   const expected = sha256(canonicalJson(receiptBody(receipt)));
   if (receipt.receiptHash !== expected) {
     throw new Error("Guard Run receipt hash does not match its contents.");

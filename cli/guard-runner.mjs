@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   GUARD_VERSION,
   assertCleanGitCheckout,
@@ -17,7 +18,10 @@ import {
 
 export const GUARD_RUN_RECEIPT_SCHEMA = "locus.guard.run-receipt.v1";
 const MAX_EVIDENCE_OUTPUT_BYTES = 8_000;
+const MAX_CAPTURE_OUTPUT_BYTES = 16 * 1024 * 1024;
 const MAX_CANDIDATE_FILE_BYTES = 16 * 1024 * 1024;
+const AGENT_TIMEOUT_MS = 15 * 60 * 1000;
+const CHECK_TIMEOUT_MS = 10 * 60 * 1000;
 const CONTROL_ARTIFACT_PATHS = new Set([".locus/scope.json", ".locus/run-receipt.json"]);
 
 function isInside(root, target) {
@@ -89,10 +93,95 @@ function originalPath(repoRoot, repoPath) {
   return target;
 }
 
+function canonicalRepoFile(repoRoot, filePath, label) {
+  const canonical = fs.realpathSync(filePath);
+  if (!isInside(repoRoot, canonical) || canonical !== path.resolve(filePath)) {
+    throw new Error(`${label} contains a symlink or resolves outside the Repo: ${filePath}`);
+  }
+  return canonical;
+}
+
+function hashRegularFileNoFollow(filePath, label) {
+  const descriptor = fs.openSync(filePath, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+  try {
+    const before = fs.fstatSync(descriptor);
+    if (!before.isFile()) throw new Error(`${label} must be a regular file: ${filePath}`);
+    const digest = createHash("sha256");
+    const chunk = Buffer.allocUnsafe(64 * 1024);
+    let byteLength = 0;
+    while (byteLength < before.size) {
+      const count = fs.readSync(
+        descriptor,
+        chunk,
+        0,
+        Math.min(chunk.byteLength, before.size - byteLength),
+        null,
+      );
+      if (count === 0) break;
+      digest.update(chunk.subarray(0, count));
+      byteLength += count;
+    }
+    const after = fs.fstatSync(descriptor);
+    if (before.dev !== after.dev || before.ino !== after.ino || before.size !== after.size
+      || before.mtimeMs !== after.mtimeMs || byteLength !== before.size) {
+      throw new Error(`${label} changed while Guard was hashing it: ${filePath}`);
+    }
+    return { byteLength, contentHash: digest.digest("hex") };
+  } finally {
+    fs.closeSync(descriptor);
+  }
+}
+
+function fileType(stat) {
+  if (stat.isSymbolicLink()) return "symbolic-link";
+  if (stat.isDirectory()) return "directory";
+  if (stat.isFIFO()) return "fifo";
+  if (stat.isSocket()) return "socket";
+  if (stat.isCharacterDevice()) return "character-device";
+  if (stat.isBlockDevice()) return "block-device";
+  return "unknown";
+}
+
+function unsafeCandidateRecord(entry, state) {
+  if (entry.stat.isSymbolicLink()) {
+    const target = Buffer.from(fs.readlinkSync(entry.absolute));
+    return {
+      path: entry.repoPath,
+      state,
+      fileType: "symbolic-link",
+      byteLength: target.byteLength,
+      contentHash: sha256(target),
+    };
+  }
+  if (entry.stat.isFile()) {
+    return {
+      path: entry.repoPath,
+      state,
+      fileType: "regular",
+      ...hashRegularFileNoFollow(entry.absolute, "Oversized candidate path"),
+      executable: Boolean(entry.stat.mode & 0o111),
+    };
+  }
+  const metadata = {
+    fileType: fileType(entry.stat),
+    mode: entry.stat.mode,
+    size: entry.stat.size,
+    rdev: entry.stat.rdev,
+  };
+  return {
+    path: entry.repoPath,
+    state,
+    ...metadata,
+    byteLength: 0,
+    contentHash: sha256(canonicalJson(metadata)),
+  };
+}
+
 function materializeSlice({ repoRoot, workspace, admittedPaths }) {
   const baseline = new Map();
   for (const repoPath of admittedPaths) {
     const source = originalPath(repoRoot, repoPath);
+    canonicalRepoFile(repoRoot, source, "Admitted Slice path");
     inspectRegularFile(source, "Admitted Slice path");
     const { stat, contents } = readRegularFileNoFollow(source, "Admitted Slice path");
     const target = path.join(workspace, repoPath);
@@ -126,6 +215,7 @@ function inspectWorkspaceCandidate({ workspace, baseline, admittedPaths }) {
   const violations = [];
   const current = new Map();
   const outsideRecords = [];
+  const unsafeAdmittedRecords = new Map();
   for (const entry of walkWorkspace(workspace)) {
     if (!admitted.has(entry.repoPath)) {
       violations.push({
@@ -144,12 +234,7 @@ function inspectWorkspaceCandidate({ workspace, baseline, admittedPaths }) {
           executable: Boolean(entry.stat.mode & 0o111),
         });
       } else {
-        outsideRecords.push({
-          path: entry.repoPath,
-          state: "unsafe-outside-scope",
-          byteLength: entry.stat.size,
-          contentHash: null,
-        });
+        outsideRecords.push(unsafeCandidateRecord(entry, "unsafe-outside-scope"));
       }
       continue;
     }
@@ -159,6 +244,10 @@ function inspectWorkspaceCandidate({ workspace, baseline, admittedPaths }) {
         path: entry.repoPath,
         message: `${entry.repoPath} is not a regular file.`,
       });
+      unsafeAdmittedRecords.set(
+        entry.repoPath,
+        unsafeCandidateRecord(entry, "unsafe-admitted-path"),
+      );
       continue;
     }
     if (entry.stat.size > MAX_CANDIDATE_FILE_BYTES) {
@@ -167,6 +256,10 @@ function inspectWorkspaceCandidate({ workspace, baseline, admittedPaths }) {
         path: entry.repoPath,
         message: `${entry.repoPath} exceeds ${MAX_CANDIDATE_FILE_BYTES} bytes.`,
       });
+      unsafeAdmittedRecords.set(
+        entry.repoPath,
+        unsafeCandidateRecord(entry, "oversized-admitted-path"),
+      );
       continue;
     }
     const inspected = readRegularFileNoFollow(entry.absolute, "Candidate path");
@@ -180,6 +273,10 @@ function inspectWorkspaceCandidate({ workspace, baseline, admittedPaths }) {
   for (const repoPath of [...admitted].sort()) {
     const before = baseline.get(repoPath);
     const after = current.get(repoPath);
+    if (unsafeAdmittedRecords.has(repoPath)) {
+      records.push(unsafeAdmittedRecords.get(repoPath));
+      continue;
+    }
     if (!after) {
       records.push({ path: repoPath, state: "deleted", byteLength: 0, contentHash: null });
       continue;
@@ -279,7 +376,7 @@ function agentInvocation({ agent, prompt, model, commandArgv, workspaceView }) {
   throw new Error(`Unsupported Guard agent adapter: ${agent}`);
 }
 
-function seatbeltProfile({ repoRoot, ephemeralRoot, protectedPaths }) {
+function seatbeltProfile({ repoRoot, ephemeralRoot, protectedRoots }) {
   const repo = JSON.stringify(path.resolve(repoRoot));
   const runtime = JSON.stringify(path.resolve(ephemeralRoot));
   return [
@@ -293,8 +390,8 @@ function seatbeltProfile({ repoRoot, ephemeralRoot, protectedPaths }) {
     "(allow ipc-posix*)",
     "(allow file-read*)",
     `(deny file-read* (subpath ${repo}))`,
-    ...protectedPaths.map((protectedPath) =>
-      `(deny file-read* file-write* (literal ${JSON.stringify(protectedPath)}))`),
+    ...protectedRoots.map((protectedRoot) =>
+      `(deny file-read* file-write* (subpath ${JSON.stringify(protectedRoot)}))`),
     `(allow file-write* (subpath ${runtime}))`,
     '(allow file-write* (literal "/dev/null") (literal "/dev/tty"))',
   ].join("\n");
@@ -306,7 +403,7 @@ function sandboxInvocation({
   workspace,
   runtimeHome,
   invocation,
-  protectedPaths,
+  protectedRoots,
 }) {
   if (process.platform === "darwin") {
     const sandboxExecutable = findExecutable("sandbox-exec");
@@ -318,7 +415,7 @@ function sandboxInvocation({
       executable: sandboxExecutable,
       args: [
         "-p",
-        seatbeltProfile({ repoRoot, ephemeralRoot, protectedPaths }),
+        seatbeltProfile({ repoRoot, ephemeralRoot, protectedRoots }),
         invocation.executable,
         ...invocation.args,
       ],
@@ -337,9 +434,9 @@ function sandboxInvocation({
       executable: bubblewrap,
       args: [
         "--die-with-parent", "--new-session", "--unshare-pid", "--unshare-uts",
-        "--unshare-ipc", "--share-net", "--ro-bind", "/", "/",
+        "--unshare-ipc", "--share-net", "--ro-bind", "/", "/", "--proc", "/proc",
         "--tmpfs", repoRoot,
-        ...protectedPaths.flatMap((protectedPath) => ["--ro-bind", "/dev/null", protectedPath]),
+        ...protectedRoots.flatMap((protectedRoot) => ["--tmpfs", protectedRoot]),
         "--dir", "/locus", "--bind", workspace, "/locus/workspace",
         "--bind", path.dirname(runtimeHome), "/locus/runtime",
         "--chdir", "/locus/workspace",
@@ -381,7 +478,7 @@ async function terminateProcessGroup(pid) {
   }
 }
 
-function captureProcess(executable, args, { cwd, env }) {
+function captureProcess(executable, args, { cwd, env, timeoutMs }) {
   return new Promise((resolve, reject) => {
     const started = Date.now();
     const child = spawn(executable, args, {
@@ -392,16 +489,41 @@ function captureProcess(executable, args, { cwd, env }) {
     });
     const stdout = [];
     const stderr = [];
-    child.stdout.on("data", (chunk) => stdout.push(Buffer.from(chunk)));
-    child.stderr.on("data", (chunk) => stderr.push(Buffer.from(chunk)));
+    let capturedBytes = 0;
+    let timedOut = false;
+    let outputLimitExceeded = false;
+    function terminate(reason) {
+      if (reason === "timeout") timedOut = true;
+      if (reason === "output-limit") outputLimitExceeded = true;
+      try {
+        if (process.platform === "win32") child.kill("SIGKILL");
+        else process.kill(-child.pid, "SIGKILL");
+      } catch (cause) {
+        if (cause?.code !== "ESRCH") reject(cause);
+      }
+    }
+    function capture(target, chunk) {
+      const remaining = Math.max(0, MAX_CAPTURE_OUTPUT_BYTES - capturedBytes);
+      if (remaining > 0) target.push(Buffer.from(chunk).subarray(0, remaining));
+      capturedBytes += chunk.byteLength;
+      if (capturedBytes > MAX_CAPTURE_OUTPUT_BYTES && !outputLimitExceeded) {
+        terminate("output-limit");
+      }
+    }
+    child.stdout.on("data", (chunk) => capture(stdout, chunk));
+    child.stderr.on("data", (chunk) => capture(stderr, chunk));
     child.on("error", reject);
+    const timer = setTimeout(() => terminate("timeout"), timeoutMs);
     child.on("close", async (exitCode, signal) => {
+      clearTimeout(timer);
       try {
         await terminateProcessGroup(child.pid);
         resolve({
           exitCode: exitCode ?? 1,
           signal,
           durationMs: Date.now() - started,
+          timedOut,
+          outputLimitExceeded,
           stdout: Buffer.concat(stdout),
           stderr: Buffer.concat(stderr),
         });
@@ -437,6 +559,8 @@ function processEvidence(result, { redactions = [] } = {}) {
     exitCode: result.exitCode,
     signal: result.signal,
     durationMs: result.durationMs,
+    timedOut: result.timedOut,
+    outputLimitExceeded: result.outputLimitExceeded,
     stdout: {
       byteLength: result.stdout.byteLength,
       digest: sha256(result.stdout),
@@ -525,6 +649,19 @@ function git(repoRoot, args, { encoding = "utf8" } = {}) {
     stdio: ["ignore", "pipe", "pipe"],
     maxBuffer: 64 * 1024 * 1024,
   });
+}
+
+function createCheckWorktree({ repoRoot, checkWorkspace, baseSha }) {
+  git(repoRoot, ["worktree", "add", "--quiet", "--detach", checkWorkspace, baseSha]);
+  const dependencies = path.join(repoRoot, "node_modules");
+  const checkDependencies = path.join(checkWorkspace, "node_modules");
+  if (fs.existsSync(dependencies) && !fs.existsSync(checkDependencies)) {
+    fs.symlinkSync(dependencies, checkDependencies, "dir");
+  }
+}
+
+function removeCheckWorktree(repoRoot, checkWorkspace) {
+  git(repoRoot, ["worktree", "remove", "--force", checkWorkspace]);
 }
 
 function dirtyEntries(repoRoot) {
@@ -620,38 +757,47 @@ export function rollbackGuardCandidate(repoRoot) {
   }
 }
 
-function checkSandboxInvocation({ repoRoot, command, protectedPaths }) {
+function resolveGitControlRoots(repoRoot) {
+  return ["--git-dir", "--git-common-dir"].map((flag) => {
+    const value = git(repoRoot, ["rev-parse", flag]).trim();
+    return fs.realpathSync(path.resolve(repoRoot, value));
+  });
+}
+
+function checkSandboxInvocation({ repoRoot, originalRepoRoot, command, protectedRoots }) {
   const shell = process.platform === "win32" ? "cmd.exe" : "/bin/sh";
   const shellArgs = process.platform === "win32" ? ["/d", "/s", "/c", command] : ["-c", command];
   if (process.platform === "darwin") {
     const sandboxExecutable = findExecutable("sandbox-exec");
     if (!sandboxExecutable) throw new Error("Guard refused Checks because macOS Seatbelt is unavailable.");
-    const gitDirectory = path.join(repoRoot, ".git");
-    const controlDirectory = path.join(repoRoot, ".locus");
+    const writeProtectedRoots = [
+      originalRepoRoot,
+      ...resolveGitControlRoots(repoRoot),
+      ...protectedRoots,
+    ];
     const profile = [
       "(version 1)",
       "(allow default)",
-      `(deny file-write* (subpath ${JSON.stringify(gitDirectory)}))`,
-      `(deny file-write* (subpath ${JSON.stringify(controlDirectory)}))`,
-      ...protectedPaths.map((protectedPath) =>
-        `(deny file-read* file-write* (literal ${JSON.stringify(protectedPath)}))`),
+      ...writeProtectedRoots.map((protectedRoot) =>
+        `(deny file-write* (subpath ${JSON.stringify(protectedRoot)}))`),
+      ...protectedRoots.map((protectedRoot) =>
+        `(deny file-read* (subpath ${JSON.stringify(protectedRoot)}))`),
     ].join("\n");
     return { executable: sandboxExecutable, args: ["-p", profile, shell, ...shellArgs] };
   }
   if (process.platform === "linux") {
     const bubblewrap = findExecutable("bwrap");
     if (!bubblewrap) throw new Error("Guard refused Checks because Linux Bubblewrap is unavailable.");
+    const gitControlRoots = resolveGitControlRoots(repoRoot);
     return {
       executable: bubblewrap,
       args: [
         "--die-with-parent", "--new-session", "--unshare-pid", "--unshare-uts", "--unshare-ipc",
-        "--share-net", "--ro-bind", "/", "/", "--bind", repoRoot, repoRoot,
-        "--ro-bind", path.join(repoRoot, ".git"), path.join(repoRoot, ".git"),
-        ...(fs.existsSync(path.join(repoRoot, ".locus"))
-          ? ["--ro-bind", path.join(repoRoot, ".locus"), path.join(repoRoot, ".locus")]
-          : []),
-        ...protectedPaths.flatMap((protectedPath) => ["--ro-bind", "/dev/null", protectedPath]),
-        "--tmpfs", "/tmp", "--chdir", repoRoot, shell, ...shellArgs,
+        "--share-net", "--ro-bind", "/", "/", "--proc", "/proc",
+        "--bind", repoRoot, repoRoot,
+        ...gitControlRoots.flatMap((gitRoot) => ["--ro-bind", gitRoot, gitRoot]),
+        ...protectedRoots.flatMap((protectedRoot) => ["--tmpfs", protectedRoot]),
+        "--dir", "/locus-tmp", "--chdir", repoRoot, shell, ...shellArgs,
       ],
     };
   }
@@ -663,22 +809,30 @@ function cleanCheckEnvironment(repoRoot) {
   for (const key of Object.keys(environment)) {
     if (key.startsWith("LOCUS_GUARD_SIGN") || key.includes("PRIVATE_KEY")) delete environment[key];
   }
-  environment.TMPDIR = process.platform === "linux" ? "/tmp" : (process.env.TMPDIR ?? os.tmpdir());
+  environment.TMPDIR = process.platform === "linux" ? "/locus-tmp" : (process.env.TMPDIR ?? os.tmpdir());
   environment.PWD = repoRoot;
   return environment;
 }
 
-async function executeChecks(repoRoot, commands, { protectedPaths }) {
+async function executeChecks(repoRoot, commands, { originalRepoRoot, protectedRoots }) {
   const results = [];
   for (const command of commands) {
-    const sandbox = checkSandboxInvocation({ repoRoot, command, protectedPaths });
+    const sandbox = checkSandboxInvocation({
+      repoRoot,
+      originalRepoRoot,
+      command,
+      protectedRoots,
+    });
     const result = await captureProcess(sandbox.executable, sandbox.args, {
       cwd: repoRoot,
       env: cleanCheckEnvironment(repoRoot),
+      timeoutMs: CHECK_TIMEOUT_MS,
     });
     results.push({
       command,
-      result: result.exitCode === 0 ? "pass" : "fail",
+      result: result.exitCode === 0 && !result.timedOut && !result.outputLimitExceeded
+        ? "pass"
+        : "fail",
       ...processEvidence(result),
     });
   }
@@ -716,7 +870,7 @@ export async function runGuardedAgent({
   manifestPath,
   repoDir,
   expectedManifestHash,
-  protectedPaths = [],
+  protectedRoots = [],
   agent,
   prompt = "",
   model = null,
@@ -738,8 +892,8 @@ export async function runGuardedAgent({
     );
   }
   const repoRoot = fs.realpathSync(path.resolve(repoDir));
-  const protectedCanonicalPaths = protectedPaths.map((protectedPath) =>
-    fs.realpathSync(path.resolve(protectedPath)));
+  const protectedCanonicalRoots = protectedRoots.map((protectedRoot) =>
+    fs.realpathSync(path.resolve(protectedRoot)));
   if (readGitIdentity(repoRoot) !== manifest.repository.identity) {
     throw new Error("Guard Run repository identity does not match the scope manifest.");
   }
@@ -752,11 +906,13 @@ export async function runGuardedAgent({
     fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-run-")),
   );
   const workspace = path.join(ephemeralRoot, "workspace");
+  const checkWorkspace = path.join(ephemeralRoot, "check-worktree");
   const runtimeHome = path.join(ephemeralRoot, "runtime", "home");
   fs.mkdirSync(workspace, { recursive: true });
   fs.mkdirSync(path.join(ephemeralRoot, "runtime", "tmp"), { recursive: true });
   fs.mkdirSync(runtimeHome, { recursive: true });
   let candidateApplied = false;
+  let checkWorktreeAdded = false;
   try {
     const baseline = materializeSlice({
       repoRoot,
@@ -770,7 +926,7 @@ export async function runGuardedAgent({
       workspace,
       runtimeHome,
       invocation: { executable: "/usr/bin/true", args: [] },
-      protectedPaths: protectedCanonicalPaths,
+      protectedRoots: protectedCanonicalRoots,
     });
     const invocation = agentInvocation({
       agent,
@@ -785,7 +941,7 @@ export async function runGuardedAgent({
       workspace,
       runtimeHome,
       invocation,
-      protectedPaths: protectedCanonicalPaths,
+      protectedRoots: protectedCanonicalRoots,
     });
     const agentResult = await captureProcess(sandbox.executable, sandbox.args, {
       cwd: sandbox.cwd,
@@ -793,6 +949,7 @@ export async function runGuardedAgent({
         runtimeHomeView: sandbox.runtimeHomeView,
         agent,
       }),
+      timeoutMs: AGENT_TIMEOUT_MS,
     });
     const candidate = inspectWorkspaceCandidate({
       workspace,
@@ -807,8 +964,49 @@ export async function runGuardedAgent({
         message: `The contained agent exited with status ${agentResult.exitCode}.`,
       });
     }
+    if (agentResult.timedOut) {
+      violations.push({
+        code: "AGENT_TIMEOUT",
+        path: null,
+        message: `The contained agent exceeded ${AGENT_TIMEOUT_MS} ms.`,
+      });
+    }
+    if (agentResult.outputLimitExceeded) {
+      violations.push({
+        code: "AGENT_OUTPUT_LIMIT",
+        path: null,
+        message: `The contained agent exceeded ${MAX_CAPTURE_OUTPUT_BYTES} output bytes.`,
+      });
+    }
 
     let checkResults = [];
+    if (violations.length === 0) {
+      createCheckWorktree({
+        repoRoot,
+        checkWorkspace,
+        baseSha: manifest.repository.baseSha,
+      });
+      checkWorktreeAdded = true;
+      applyCandidate({ repoRoot: checkWorkspace, candidate });
+      violations.push(...inspectAppliedCandidate({ repoRoot: checkWorkspace, candidate }));
+      if (violations.length === 0) {
+        checkResults = await executeChecks(checkWorkspace, checks, {
+          originalRepoRoot: repoRoot,
+          protectedRoots: protectedCanonicalRoots,
+        });
+        violations.push(...inspectAppliedCandidate({ repoRoot: checkWorkspace, candidate }));
+      }
+      for (const check of checkResults.filter((item) => item.result === "fail")) {
+        violations.push({
+          code: "CHECK_FAILED",
+          path: null,
+          message: `Check failed with status ${check.exitCode}: ${check.command}`,
+        });
+      }
+      removeCheckWorktree(repoRoot, checkWorkspace);
+      checkWorktreeAdded = false;
+    }
+
     if (violations.length === 0) {
       const currentManifest = readJsonFile(path.resolve(manifestPath), "Guard scope manifest");
       verifyScopeManifest(currentManifest);
@@ -826,19 +1024,6 @@ export async function runGuardedAgent({
       candidateApplied = true;
       applyCandidate({ repoRoot, candidate });
       violations.push(...inspectAppliedCandidate({ repoRoot, candidate }));
-      if (violations.length === 0) {
-        checkResults = await executeChecks(repoRoot, checks, {
-          protectedPaths: protectedCanonicalPaths,
-        });
-        violations.push(...inspectAppliedCandidate({ repoRoot, candidate }));
-      }
-      for (const check of checkResults.filter((item) => item.result === "fail")) {
-        violations.push({
-          code: "CHECK_FAILED",
-          path: null,
-          message: `Check failed with status ${check.exitCode}: ${check.command}`,
-        });
-      }
       if (violations.length > 0) {
         rollbackGuardCandidate(repoRoot);
         candidateApplied = false;
@@ -915,6 +1100,13 @@ export async function runGuardedAgent({
     if (candidateApplied) rollbackGuardCandidate(repoRoot);
     throw cause;
   } finally {
+    if (checkWorktreeAdded) {
+      try {
+        removeCheckWorktree(repoRoot, checkWorkspace);
+      } catch {
+        git(repoRoot, ["worktree", "prune"]);
+      }
+    }
     fs.rmSync(ephemeralRoot, { recursive: true, force: true });
   }
 }

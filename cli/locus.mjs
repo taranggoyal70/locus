@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 // Locus CLI — localize a task to the minimal code slice on a local repo.
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext, buildJsonResult } from "./core.mjs";
 import {
   DEFAULT_SENSITIVE_PATTERNS,
   assertCleanGitCheckout,
+  canonicalJson,
   createScopeManifest,
   readGitHead,
   readGitIdentity,
@@ -21,7 +23,7 @@ import {
   verifySignedEnvelope,
 } from "./guard-signing.mjs";
 import { rollbackGuardCandidate, runGuardedAgent } from "./guard-runner.mjs";
-import { addHumanReview } from "./guard-review.mjs";
+import { addHumanReview, verifyRunReceiptHash } from "./guard-review.mjs";
 
 const HELP = `Locus — show your AI coding agent only the code it needs.
 
@@ -434,6 +436,20 @@ function signingKeyIsInsideRepo(repoRoot, signingKeyPath) {
   return pathIsInside(fs.realpathSync(repoRoot), canonicalDestination(signingKeyPath));
 }
 
+function signingKeyProtectionRoot(signingKeyPath) {
+  const keyPath = canonicalDestination(signingKeyPath);
+  const signerRoot = canonicalDestination(path.dirname(keyPath));
+  const broadRoots = new Set([
+    path.parse(signerRoot).root,
+    fs.realpathSync(os.homedir()),
+    fs.realpathSync(os.tmpdir()),
+  ]);
+  if (broadRoots.has(signerRoot)) {
+    fail("Guard signing keys require a dedicated directory, not a filesystem, home, or temp root.");
+  }
+  return signerRoot;
+}
+
 function requireControlArtifactPath(repoRoot, artifactPath) {
   const relative = path.relative(repoRoot, artifactPath).split(path.sep).join("/");
   if (relative && relative !== ".." && !relative.startsWith("../") && !relative.startsWith(".locus/")) {
@@ -475,6 +491,7 @@ function runGuardKeygen(rest) {
   if (signingKeyIsInsideRepo(repoRoot, privateKeyPath)) {
     fail("Guard signing private keys must be stored outside the target Repo.");
   }
+  signingKeyProtectionRoot(privateKeyPath);
   let result;
   try {
     result = generateSigningKeyPair({ privateKeyPath, publicKeyPath });
@@ -553,6 +570,7 @@ async function runGuardAgent(rest) {
   if (signingKeyIsInsideRepo(repoRoot, signingKeyPath)) {
     fail("Guard signing private keys must be stored outside the target Repo.");
   }
+  const signerRoot = signingKeyProtectionRoot(signingKeyPath);
   let receipt;
   let envelope;
   let appliedCandidate = false;
@@ -563,7 +581,7 @@ async function runGuardAgent(rest) {
       manifestPath,
       repoDir: repoRoot,
       expectedManifestHash: options.expectedManifestHash,
-      protectedPaths: [signingKeyPath],
+      protectedRoots: [signerRoot],
       agent: options.agent,
       prompt: options.prompt || manifest.task.description,
       model: options.model,
@@ -623,11 +641,11 @@ function runGuardReceiptVerify(rest) {
   let payload;
   try {
     const envelope = readJsonFile(path.resolve(options.receipt), "Guard signed receipt");
-    payload = verifySignedEnvelope({
+    payload = verifyRunReceiptHash(verifySignedEnvelope({
       envelope,
       publicKeyPath: path.resolve(options.publicKey),
       expectedKeyId: options.expectedKeyId,
-    });
+    }));
   } catch (cause) {
     fail(cause instanceof Error ? cause.message : String(cause));
   }
@@ -688,9 +706,19 @@ function runGuardReview(rest) {
   if (signingKeyIsInsideRepo(repoRoot, signingKeyPath)) {
     fail("Guard signing private keys must be stored outside the target Repo.");
   }
+  signingKeyProtectionRoot(signingKeyPath);
   let reviewed;
   let nextEnvelope;
+  let reviewError = null;
+  const lockPath = `${receiptPath}.review.lock`;
+  const temporaryOutputPath = `${receiptPath}.${process.pid}.tmp`;
+  let lockCreated = false;
   try {
+    writeJsonFile(lockPath, { pid: process.pid, receipt: options.receipt }, {
+      allowedRoot: outputRelative && !outputRelative.startsWith("../") ? repoRoot : null,
+      exclusive: true,
+    });
+    lockCreated = true;
     const envelope = readJsonFile(receiptPath, "Guard signed receipt");
     const receipt = verifySignedEnvelope({
       envelope,
@@ -707,12 +735,32 @@ function runGuardReview(rest) {
     if (nextEnvelope.signature.keyId !== envelope.signature.keyId) {
       throw new Error("Guard Review must be signed by the same trusted key as the proposal.");
     }
-    writeJsonFile(outputPath, nextEnvelope, {
+    const currentEnvelope = readJsonFile(receiptPath, "Guard signed receipt");
+    if (canonicalJson(currentEnvelope) !== canonicalJson(envelope)) {
+      throw new Error("Guard Review proposal changed before the decision could be recorded.");
+    }
+    writeJsonFile(temporaryOutputPath, nextEnvelope, {
       allowedRoot: outputRelative && !outputRelative.startsWith("../") ? repoRoot : null,
+      exclusive: true,
     });
+    fs.renameSync(temporaryOutputPath, outputPath);
   } catch (cause) {
-    fail(cause instanceof Error ? cause.message : String(cause));
+    reviewError = cause instanceof Error ? cause.message : String(cause);
+  } finally {
+    try {
+      fs.unlinkSync(temporaryOutputPath);
+    } catch (cause) {
+      if (cause?.code !== "ENOENT" && !reviewError) reviewError = cause.message;
+    }
+    if (lockCreated) {
+      try {
+        fs.unlinkSync(lockPath);
+      } catch (cause) {
+        if (!reviewError) reviewError = cause.message;
+      }
+    }
   }
+  if (reviewError) fail(reviewError);
   if (options.json) console.log(JSON.stringify(nextEnvelope, null, 2));
   else {
     console.log(`Human Review ${reviewed.review.status}: ${reviewed.receiptHash}.`);

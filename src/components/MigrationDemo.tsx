@@ -259,7 +259,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#8ef0c0] font-bold text-[#14233b]">✓</span>
                         <div>
                           <p className="text-sm font-semibold text-white">{plainLanguage ? "Candidate stayed inside the approved boundary" : "Signed Guard Run receipt assembled"}</p>
-                          <p className="mt-1 text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "A person still reviews whether the fix is correct. Their one-time decision is bound to this exact signed proposal." : "Ed25519 signs integrity and signer possession. An immutable human Review separately accepts or rejects the proposal hash."}</p>
+                          <p className="mt-1 text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "A person still reviews whether the fix is correct. Their signed decision is bound to this exact proposal file." : "Ed25519 signs integrity and signer possession. A human Review separately accepts or rejects the proposal hash in the same locked artifact."}</p>
                         </div>
                       </div>
                     </div>
