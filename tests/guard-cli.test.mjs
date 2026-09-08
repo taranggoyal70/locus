@@ -159,6 +159,33 @@ describe("locus guard CLI", () => {
     expect(fs.existsSync(path.join(repo, ".locus/private.pem"))).toBe(false);
   });
 
+  it("refuses an external signing-key symlink that resolves inside the target Repo", () => {
+    const repo = makeRepo();
+    expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+    const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+    const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+    temporaryRepos.push(keyDirectory);
+    const generatedPrivate = path.join(keyDirectory, "generated-private.pem");
+    const publicKey = path.join(keyDirectory, "public.pem");
+    expect(run(repo, [
+      "guard", "keygen", "--private-key", generatedPrivate, "--public-key", publicKey,
+    ]).code).toBe(0);
+    const leakedPrivate = path.join(repo, ".locus/leaked-private.pem");
+    fs.copyFileSync(generatedPrivate, leakedPrivate);
+    const alias = path.join(keyDirectory, "outside-alias.pem");
+    fs.symlinkSync(leakedPrivate, alias);
+
+    const executed = run(repo, [
+      "guard", "run", "--agent", "command",
+      "--expected-manifest-hash", manifest.manifestHash,
+      "--signing-key", alias,
+      "--", "/usr/bin/true",
+    ]);
+
+    expect(executed.code).toBe(1);
+    expect(executed.err).toMatch(/private keys must be stored outside/);
+  });
+
   it("binds an immutable human Review to the exact signed proposal", () => {
     const repo = makeRepo();
     const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
@@ -172,6 +199,7 @@ describe("locus guard CLI", () => {
       schemaVersion: "locus.guard.run-receipt.v1",
       enforcement: { result: "pass" },
       candidate: { hash: "candidate-123" },
+      checks: [{ command: "pnpm test", result: "pass", exitCode: 0 }],
       review: { status: "pending" },
     };
     const payload = { ...body, receiptHash: sha256(canonicalJson(body)) };
@@ -219,6 +247,39 @@ describe("locus guard CLI", () => {
     ]);
     expect(repeated.code).toBe(1);
     expect(repeated.err).toMatch(/already has a human Review/);
+
+    const forked = run(repo, [
+      "guard", "review", "--receipt", ".locus/run-receipt.json",
+      "--out", ".locus/conflicting-review.json",
+      "--public-key", publicKey, "--signing-key", privateKey,
+      "--decision", "rejected", "--actor", "reviewer@example.com",
+      "--criterion", "Try again",
+    ]);
+    expect(forked.code).toBe(1);
+    expect(forked.err).toMatch(/Unknown guard review option: --out/);
+  });
+
+  it("refuses to run without a declared Check", () => {
+    const repo = makeRepo();
+    expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+    const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+    const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+    temporaryRepos.push(keyDirectory);
+    const privateKey = path.join(keyDirectory, "private.pem");
+    const publicKey = path.join(keyDirectory, "public.pem");
+    expect(run(repo, [
+      "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+    ]).code).toBe(0);
+
+    const executed = run(repo, [
+      "guard", "run", "--agent", "command",
+      "--expected-manifest-hash", manifest.manifestHash,
+      "--signing-key", privateKey,
+      "--", "/usr/bin/true",
+    ]);
+
+    expect(executed.code).toBe(1);
+    expect(executed.err).toMatch(/requires at least one Check/);
   });
 
   it.runIf(process.platform === "darwin")(
@@ -238,28 +299,41 @@ describe("locus guard CLI", () => {
       expect(generated.code).toBe(0);
       const key = JSON.parse(generated.out);
       const agentScript = path.join(agentDirectory, "agent.mjs");
+      const checkScript = path.join(agentDirectory, "check.mjs");
       fs.writeFileSync(agentScript, [
         'import fs from "node:fs";',
         'const original = process.argv[2];',
-        'try { fs.readFileSync(original); process.exit(41); } catch (cause) {',
-        '  if (!["EPERM", "EACCES"].includes(cause.code)) throw cause;',
+        'const signingKey = process.argv[3];',
+        'if (process.env.LOCUS_GUARD_SIGNING_KEY) process.exit(40);',
+        'for (const protectedPath of [original, signingKey]) {',
+        '  try { fs.readFileSync(protectedPath); process.exit(41); } catch (cause) {',
+        '    if (!["EPERM", "EACCES"].includes(cause.code)) throw cause;',
+        '  }',
         '}',
         'fs.writeFileSync("src/invoice.js", "export function retryInvoice() { return \'once\'; }\\n");',
+        'console.log("fix invoice retry");',
         'console.log(JSON.stringify({ usage: { input_tokens: 120, output_tokens: 35, cached_input_tokens: 20 }, total_cost_usd: 0.014 }));',
+      ].join("\n"));
+      fs.writeFileSync(checkScript, [
+        'import fs from "node:fs";',
+        'try { fs.readFileSync(process.argv[2]); process.exit(61); } catch (cause) {',
+        '  if (!["EPERM", "EACCES"].includes(cause.code)) throw cause;',
+        '}',
+        'if (!fs.readFileSync("src/invoice.js", "utf8").includes("return \'once\'")) process.exit(62);',
       ].join("\n"));
 
       const executed = run(repo, [
         "guard", "run",
         "--agent", "command",
         "--expected-manifest-hash", manifest.manifestHash,
-        "--signing-key", privateKey,
-        "--check", `${process.execPath} --check src/invoice.js`,
+        "--check", `${process.execPath} ${checkScript} ${privateKey}`,
         "--json",
         "--",
         process.execPath,
         agentScript,
         path.join(repo, "src/unrelated.js"),
-      ]);
+        privateKey,
+      ], { env: { LOCUS_GUARD_SIGNING_KEY: privateKey } });
 
       expect(executed.code, `${executed.err}\n${executed.out}`).toBe(0);
       const envelope = JSON.parse(executed.out);
@@ -281,6 +355,13 @@ describe("locus guard CLI", () => {
         costUsd: 0.014,
       }));
       expect(envelope.payload.review.status).toBe("pending");
+      expect(envelope.payload.task.description).toEqual(expect.objectContaining({
+        digest: expect.stringMatching(/^[a-f0-9]{64}$/),
+        byteLength: 17,
+      }));
+      expect(envelope.payload.task.description).not.toHaveProperty("text");
+      expect(envelope.payload.execution.evidence.stdout.relevantOutput).toContain("[REDACTED_PROMPT]");
+      expect(envelope.payload.execution.evidence.stdout.relevantOutput).not.toContain("fix invoice retry");
       expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toContain("return 'once'");
 
       const verified = run(repo, [
@@ -292,6 +373,87 @@ describe("locus guard CLI", () => {
       ]);
       expect(verified.code).toBe(0);
       expect(JSON.parse(verified.out).candidate.hash).toBe(envelope.payload.candidate.hash);
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "executes the Codex and Claude adapters with their non-interactive protocols",
+    () => {
+      for (const adapter of ["codex", "claude"]) {
+        const repo = makeRepo();
+        expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+        const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+        const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+        const agentDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-adapter-"));
+        temporaryRepos.push(keyDirectory, agentDirectory);
+        const privateKey = path.join(keyDirectory, "private.pem");
+        const publicKey = path.join(keyDirectory, "public.pem");
+        expect(run(repo, [
+          "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+        ]).code).toBe(0);
+        const executable = path.join(agentDirectory, adapter);
+        fs.writeFileSync(executable, [
+          "#!/usr/bin/env node",
+          'import fs from "node:fs";',
+          `const adapter = ${JSON.stringify(adapter)};`,
+          'const args = process.argv.slice(2);',
+          'if (adapter === "codex" && !args.includes("exec")) process.exit(51);',
+          'if (adapter === "codex" && !args.includes("--json")) process.exit(52);',
+          'if (adapter === "claude" && !args.includes("--no-session-persistence")) process.exit(53);',
+          'if (adapter === "claude" && !args.includes("--safe-mode")) process.exit(54);',
+          'if (args.at(-1) !== "fix invoice retry") process.exit(55);',
+          'fs.writeFileSync("src/invoice.js", `export const adapter = "${adapter}";\\n`);',
+          'console.log(JSON.stringify({ usage: { input_tokens: 9, output_tokens: 4 } }));',
+        ].join("\n"), { mode: 0o755 });
+
+        const executed = run(repo, [
+          "guard", "run", "--agent", adapter,
+          "--expected-manifest-hash", manifest.manifestHash,
+          "--signing-key", privateKey,
+          "--check", `${process.execPath} --check src/invoice.js`,
+          "--json",
+        ], { env: { PATH: `${agentDirectory}${path.delimiter}${process.env.PATH}` } });
+
+        expect(executed.code, `${adapter}: ${executed.err}\n${executed.out}`).toBe(0);
+        const envelope = JSON.parse(executed.out);
+        expect(envelope.payload.execution.agent).toBe(adapter);
+        expect(envelope.payload.usage).toEqual(expect.objectContaining({
+          provider: adapter === "codex" ? "openai" : "anthropic",
+          inputTokens: 9,
+          outputTokens: 4,
+        }));
+      }
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "restores the Repo when receipt signing fails after a passing candidate",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const agentDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, agentDirectory);
+      const invalidPrivateKey = path.join(keyDirectory, "invalid-private.pem");
+      fs.writeFileSync(invalidPrivateKey, "not a private key\n", { mode: 0o600 });
+      const before = fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8");
+      const agentScript = path.join(agentDirectory, "agent.mjs");
+      fs.writeFileSync(agentScript, 'import fs from "node:fs"; fs.writeFileSync("src/invoice.js", "candidate\\n");\n');
+
+      const executed = run(repo, [
+        "guard", "run", "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", invalidPrivateKey,
+        "--check", "/usr/bin/true",
+        "--", process.execPath, agentScript,
+      ]);
+
+      expect(executed.code).toBe(1);
+      expect(executed.err).toMatch(/private key|decoder|unsupported/i);
+      expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toBe(before);
     },
     30_000,
   );
@@ -323,6 +485,7 @@ describe("locus guard CLI", () => {
         "--agent", "command",
         "--expected-manifest-hash", manifest.manifestHash,
         "--signing-key", privateKey,
+        "--check", "/usr/bin/true",
         "--",
         process.execPath,
         agentScript,
@@ -331,6 +494,97 @@ describe("locus guard CLI", () => {
       expect(executed.code).toBe(1);
       expect(executed.err).toMatch(/outside the admitted Slice/);
       expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toBe(before);
+      const receipt = JSON.parse(
+        fs.readFileSync(path.join(repo, ".locus/run-receipt.json"), "utf8"),
+      );
+      expect(receipt.payload.candidate.changedPaths).toEqual([
+        "src/invoice.js",
+        "src/not-admitted.js",
+      ]);
+      expect(receipt.payload.candidate.records).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          path: "src/not-admitted.js",
+          state: "created-outside-scope",
+          contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
+      ]));
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "rolls the candidate back when a Check fails",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const agentDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, agentDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      expect(run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+      ]).code).toBe(0);
+      const before = fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8");
+      const agentScript = path.join(agentDirectory, "agent.mjs");
+      fs.writeFileSync(agentScript, [
+        'import fs from "node:fs";',
+        'fs.writeFileSync("src/invoice.js", "changed by agent\\n");',
+      ].join("\n"));
+
+      const executed = run(repo, [
+        "guard", "run", "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey,
+        "--check", "/usr/bin/false",
+        "--", process.execPath, agentScript,
+      ]);
+
+      expect(executed.code).toBe(1);
+      expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toBe(before);
+      const receipt = JSON.parse(fs.readFileSync(path.join(repo, ".locus/run-receipt.json"), "utf8"));
+      expect(receipt.payload.violations).toEqual(expect.arrayContaining([
+        expect.objectContaining({ code: "CHECK_FAILED" }),
+      ]));
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "detects Check mutations and restores the clean base",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const scriptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-check-"));
+      temporaryRepos.push(keyDirectory, scriptDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      expect(run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+      ]).code).toBe(0);
+      const before = fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8");
+      const agentScript = path.join(scriptDirectory, "agent.mjs");
+      const checkScript = path.join(scriptDirectory, "check.mjs");
+      fs.writeFileSync(agentScript, 'import fs from "node:fs"; fs.writeFileSync("src/invoice.js", "candidate\\n");\n');
+      fs.writeFileSync(checkScript, 'import fs from "node:fs"; fs.writeFileSync("src/invoice.js", "tampered\\n");\n');
+
+      const executed = run(repo, [
+        "guard", "run", "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey,
+        "--check", `${process.execPath} ${checkScript}`,
+        "--", process.execPath, agentScript,
+      ]);
+
+      expect(executed.code).toBe(1);
+      expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toBe(before);
+      const receipt = JSON.parse(fs.readFileSync(path.join(repo, ".locus/run-receipt.json"), "utf8"));
+      expect(receipt.payload.violations).toEqual(expect.arrayContaining([
+        expect.objectContaining({ code: "CHECK_MUTATED_CANDIDATE" }),
+      ]));
     },
     30_000,
   );

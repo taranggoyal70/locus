@@ -207,7 +207,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 </span>
               </div>
               <h2 id="proposal-title" className="mt-7 font-display text-3xl font-semibold tracking-[-0.04em] text-white">{plainLanguage ? "Proof receipt" : "Guard receipt"}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "The exact fix, approved files, automated checks, and measured AI usage stay connected." : "Manifest hash, working-tree content hash, Check output digests, provider-reported usage, and Review state—not task correctness."}</p>
+              <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "The exact fix, approved files, automated checks, and AI-provider usage reports stay connected." : "Manifest hash, working-tree content hash, Check output digests, provider-reported usage, and Review state—not task correctness."}</p>
 
               <div aria-hidden={stage < 3} className={`migration-diff mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[#081322] transition ${stage >= 3 ? "migration-diff--visible" : ""}`}>
                 <div className="migration-reveal__inner">

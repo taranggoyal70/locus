@@ -45,6 +45,11 @@ export function addHumanReview(receipt, {
   if (decision === "accepted" && receipt.enforcement?.result !== "pass") {
     throw new Error("A failing Guard Run cannot receive an accepted Review.");
   }
+  if (decision === "accepted"
+    && (!Array.isArray(receipt.checks) || receipt.checks.length === 0
+      || receipt.checks.some((check) => check?.result !== "pass"))) {
+    throw new Error("An accepted Review requires at least one passing Check and no failed Checks.");
+  }
   if (!Array.isArray(criteria) || criteria.length === 0) {
     throw new Error("Human Review requires at least one criterion.");
   }

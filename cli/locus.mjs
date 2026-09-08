@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Locus CLI — localize a task to the minimal code slice on a local repo.
+import fs from "node:fs";
 import path from "node:path";
 import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext, buildJsonResult } from "./core.mjs";
 import {
@@ -19,7 +20,7 @@ import {
   generateSigningKeyPair,
   verifySignedEnvelope,
 } from "./guard-signing.mjs";
-import { runGuardedAgent } from "./guard-runner.mjs";
+import { rollbackGuardCandidate, runGuardedAgent } from "./guard-runner.mjs";
 import { addHumanReview } from "./guard-review.mjs";
 
 const HELP = `Locus — show your AI coding agent only the code it needs.
@@ -412,6 +413,27 @@ function pathIsInside(root, target) {
   return relative === "" || (relative !== ".." && !relative.startsWith(`..${path.sep}`));
 }
 
+function canonicalDestination(filePath) {
+  const absolute = path.resolve(filePath);
+  try {
+    return fs.realpathSync(absolute);
+  } catch {
+    const missing = [path.basename(absolute)];
+    let ancestor = path.dirname(absolute);
+    while (!fs.existsSync(ancestor)) {
+      missing.unshift(path.basename(ancestor));
+      const parent = path.dirname(ancestor);
+      if (parent === ancestor) break;
+      ancestor = parent;
+    }
+    return path.join(fs.realpathSync(ancestor), ...missing);
+  }
+}
+
+function signingKeyIsInsideRepo(repoRoot, signingKeyPath) {
+  return pathIsInside(fs.realpathSync(repoRoot), canonicalDestination(signingKeyPath));
+}
+
 function requireControlArtifactPath(repoRoot, artifactPath) {
   const relative = path.relative(repoRoot, artifactPath).split(path.sep).join("/");
   if (relative && relative !== ".." && !relative.startsWith("../") && !relative.startsWith(".locus/")) {
@@ -450,7 +472,7 @@ function runGuardKeygen(rest) {
   const repoRoot = path.resolve(options.repoDir);
   const privateKeyPath = path.resolve(options.privateKey);
   const publicKeyPath = path.resolve(options.publicKey);
-  if (pathIsInside(repoRoot, privateKeyPath)) {
+  if (signingKeyIsInsideRepo(repoRoot, privateKeyPath)) {
     fail("Guard signing private keys must be stored outside the target Repo.");
   }
   let result;
@@ -528,28 +550,39 @@ async function runGuardAgent(rest) {
   const signingKeyPath = path.resolve(options.signingKey);
   requireControlArtifactPath(repoRoot, manifestPath);
   const receiptRelative = requireControlArtifactPath(repoRoot, receiptPath);
-  if (pathIsInside(repoRoot, signingKeyPath)) {
+  if (signingKeyIsInsideRepo(repoRoot, signingKeyPath)) {
     fail("Guard signing private keys must be stored outside the target Repo.");
   }
   let receipt;
   let envelope;
+  let appliedCandidate = false;
   try {
     const manifest = readJsonFile(manifestPath, "Guard scope manifest");
     receipt = await runGuardedAgent({
       manifest,
+      manifestPath,
       repoDir: repoRoot,
       expectedManifestHash: options.expectedManifestHash,
+      protectedPaths: [signingKeyPath],
       agent: options.agent,
       prompt: options.prompt || manifest.task.description,
       model: options.model,
       commandArgv: options.commandArgv,
       checks: options.checks,
     });
+    appliedCandidate = receipt.enforcement.result === "pass";
     envelope = createSignedEnvelope({ payload: receipt, privateKeyPath: signingKeyPath });
     writeJsonFile(receiptPath, envelope, {
       allowedRoot: receiptRelative && !receiptRelative.startsWith("../") ? repoRoot : null,
     });
   } catch (cause) {
+    if (appliedCandidate) {
+      try {
+        rollbackGuardCandidate(repoRoot);
+      } catch (rollbackCause) {
+        fail(`Guard could not sign the receipt and rollback also failed: ${rollbackCause.message}`);
+      }
+    }
     fail(cause instanceof Error ? cause.message : String(cause));
   }
   if (options.json) console.log(JSON.stringify(envelope, null, 2));
@@ -605,7 +638,6 @@ function runGuardReceiptVerify(rest) {
 function parseGuardReviewArgs(rest) {
   let repoDir = ".";
   let receipt = ".locus/run-receipt.json";
-  let out = null;
   let publicKey = null;
   let signingKey = process.env.LOCUS_GUARD_SIGNING_KEY ?? null;
   let decision = null;
@@ -616,14 +648,13 @@ function parseGuardReviewArgs(rest) {
   for (let index = 0; index < rest.length; index++) {
     const arg = rest[index];
     if ([
-      "--path", "--receipt", "--out", "--public-key", "--signing-key",
+      "--path", "--receipt", "--public-key", "--signing-key",
       "--decision", "--actor", "--criterion", "--note",
     ].includes(arg)) {
       const value = rest[++index];
       if (value === undefined) fail(`${arg} requires a value.`);
       if (arg === "--path") repoDir = value;
       if (arg === "--receipt") receipt = value;
-      if (arg === "--out") out = value;
       if (arg === "--public-key") publicKey = value;
       if (arg === "--signing-key") signingKey = value;
       if (arg === "--decision") decision = value;
@@ -637,7 +668,7 @@ function parseGuardReviewArgs(rest) {
     }
   }
   return {
-    repoDir, receipt, out, publicKey, signingKey, decision, actor, criteria, note, json,
+    repoDir, receipt, publicKey, signingKey, decision, actor, criteria, note, json,
   };
 }
 
@@ -650,11 +681,11 @@ function runGuardReview(rest) {
   }
   const repoRoot = path.resolve(options.repoDir);
   const receiptPath = path.resolve(repoRoot, options.receipt);
-  const outputPath = path.resolve(repoRoot, options.out ?? options.receipt);
+  const outputPath = receiptPath;
   const signingKeyPath = path.resolve(options.signingKey);
   requireControlArtifactPath(repoRoot, receiptPath);
   const outputRelative = requireControlArtifactPath(repoRoot, outputPath);
-  if (pathIsInside(repoRoot, signingKeyPath)) {
+  if (signingKeyIsInsideRepo(repoRoot, signingKeyPath)) {
     fail("Guard signing private keys must be stored outside the target Repo.");
   }
   let reviewed;

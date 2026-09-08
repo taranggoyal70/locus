@@ -39,6 +39,8 @@ The public test seams are:
   Slice as violations. Apply no candidate change when a violation exists.
 - Recheck manifest integrity, repository identity, frozen base, clean checkout,
   and unchanged HEAD immediately before applying the candidate.
+- Terminate the agent process group before inspecting the workspace, and read
+  candidate files without following symlinks.
 
 The v1 boundary constrains access to the target Repo and host writes. It does
 not claim to hide unrelated readable host files from the agent, isolate the
@@ -62,6 +64,9 @@ network, or protect credentials the chosen provider CLI itself requires.
 - Run every declared Check in the original Repo only after the candidate passes
   path enforcement. Record command, exit status, duration, output byte lengths,
   output digests, and bounded relevant output.
+- Protect Git control data, Guard artifacts, and the signing key from Checks.
+  Reinspect the exact working tree after all Checks; any failed or mutating
+  Check restores the frozen base instead of leaving an unsigned candidate.
 - Parse provider-reported token and cost fields when present. Mark unavailable
   values as unavailable; never estimate or invent cost.
 - A Run passes only when containment succeeded, the agent exited zero, at least
@@ -73,6 +78,9 @@ network, or protect credentials the chosen provider CLI itself requires.
   key inside the target Repo.
 - Sign canonical JSON, include the public-key fingerprint as `keyId`, and write
   the envelope using symlink-safe Guard artifact handling.
+- Remove the signing-key path from child environments and deny the agent and
+  Checks access to the canonical private-key path. If signing or receipt writing
+  fails after application, restore the frozen base.
 - Offline verification requires the independently supplied public key and may
   additionally require an expected key ID.
 - A human Review is `accepted` or `rejected`, records actor, time, criteria, and

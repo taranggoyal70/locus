@@ -22,9 +22,11 @@ target Repo, but v1 does not claim to conceal all other host-readable data or to
 isolate the network. Provider credentials are copied only into the ephemeral
 runtime when their CLI needs them and are removed with that runtime.
 
-Only a path-clean candidate is copied back, after the original Repo and HEAD are
-revalidated. Checks run afterward as trusted user commands in the original
-Repo, and their factual results are signed with the candidate receipt.
+Only a path-clean candidate is copied back, after the manifest, repository
+identity, original Repo, and HEAD are revalidated. Checks run afterward in the
+original Repo with Git metadata, Guard artifacts, and the signing-key path
+protected. Locus reinspects the exact candidate after Checks and rolls it back
+when a Check fails, mutates it, or receipt signing cannot complete.
 
 ## Consequences
 
