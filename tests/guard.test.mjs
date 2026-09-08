@@ -100,6 +100,7 @@ describe("Guard scope manifest", () => {
     const repo = makeRepo();
     const manifest = manifestFor(repo);
     expect(matchesSensitivePath("config/prod.key")).toBe(true);
+    expect(matchesSensitivePath("prod.key")).toBe(true);
     expect(() => widenScopeManifest(manifest, {
       repoPath: "config/prod.key",
       reason: "inspect signing configuration",

@@ -80,7 +80,10 @@ function globToRegExp(pattern) {
   let source = "";
   for (let index = 0; index < normalized.length; index++) {
     const char = normalized[index];
-    if (char === "*" && normalized[index + 1] === "*") {
+    if (char === "*" && normalized[index + 1] === "*" && normalized[index + 2] === "/") {
+      source += "(?:.*/)?";
+      index += 2;
+    } else if (char === "*" && normalized[index + 1] === "*") {
       source += ".*";
       index += 1;
     } else if (char === "*") {
@@ -248,12 +251,16 @@ export function verifyScopeManifest(manifest) {
   if (canonicalJson(actualScope) !== canonicalJson(expectedScope)) {
     throw new Error("Current Guard scope does not match the initial scope and Widen chain.");
   }
-  const sensitiveAdmission = actualScope.admittedPaths.find((repoPath) =>
+  const sensitiveAdmissions = actualScope.admittedPaths.filter((repoPath) =>
     matchesSensitivePath(repoPath, sensitivePatterns));
-  const sensitiveApproval = sensitiveAdmission && widens.some((event) =>
-    event.path === sensitiveAdmission && event.decision === "approved" && event.sensitiveOverride === true);
-  if (sensitiveAdmission && !sensitiveApproval) {
-    throw new Error(`Sensitive path lacks an explicit override: ${sensitiveAdmission}`);
+  for (const sensitiveAdmission of sensitiveAdmissions) {
+    const sensitiveApproval = widens.some((event) =>
+      event.path === sensitiveAdmission
+      && event.decision === "approved"
+      && event.sensitiveOverride === true);
+    if (!sensitiveApproval) {
+      throw new Error(`Sensitive path lacks an explicit override: ${sensitiveAdmission}`);
+    }
   }
   const expectedManifestHash = sha256(canonicalJson(manifestBody(manifest)));
   if (manifest.manifestHash !== expectedManifestHash) {
