@@ -659,32 +659,53 @@ function rejectSymlinkComponents(absolutePath) {
   }
 }
 
-export function writeJsonFile(filePath, value, { allowedRoot = null } = {}) {
+export function writeFileSafely(filePath, contents, {
+  allowedRoot = null,
+  mode = 0o600,
+  exclusive = false,
+} = {}) {
   const absolutePath = path.resolve(filePath);
   const absoluteRoot = allowedRoot ? path.resolve(allowedRoot) : null;
   if (absoluteRoot && !pathIsInside(absoluteRoot, absolutePath)) {
     throw new Error(`Guard control artifact escapes the Repo: ${absolutePath}`);
   }
-  rejectSymlinkComponents(absolutePath);
+  if (absoluteRoot) rejectSymlinkComponents(absolutePath);
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
-  rejectSymlinkComponents(absolutePath);
+  if (absoluteRoot) rejectSymlinkComponents(absolutePath);
+  const realParent = fs.realpathSync(path.dirname(absolutePath));
+  const outputPath = path.join(realParent, path.basename(absolutePath));
+  try {
+    if (fs.lstatSync(outputPath).isSymbolicLink()) {
+      throw new Error(`Guard control artifact path contains a symlink: ${outputPath}`);
+    }
+  } catch (cause) {
+    if (cause instanceof Error && cause.message.startsWith("Guard control artifact")) throw cause;
+    if (cause?.code !== "ENOENT") throw cause;
+  }
   if (absoluteRoot) {
     const realRoot = fs.realpathSync(absoluteRoot);
-    const realParent = fs.realpathSync(path.dirname(absolutePath));
     if (!pathIsInside(realRoot, realParent)) {
       throw new Error(`Guard control artifact parent escapes the Repo: ${realParent}`);
     }
   }
   const flags = fs.constants.O_WRONLY
     | fs.constants.O_CREAT
-    | fs.constants.O_TRUNC
+    | (exclusive ? fs.constants.O_EXCL : fs.constants.O_TRUNC)
     | (fs.constants.O_NOFOLLOW ?? 0);
-  const descriptor = fs.openSync(absolutePath, flags, 0o600);
+  const descriptor = fs.openSync(outputPath, flags, mode);
   try {
-    fs.writeFileSync(descriptor, `${JSON.stringify(canonicalValue(value), null, 2)}\n`, "utf8");
+    fs.writeFileSync(descriptor, contents);
     fs.fsyncSync(descriptor);
   } finally {
     fs.closeSync(descriptor);
   }
-  return absolutePath;
+  return outputPath;
+}
+
+export function writeJsonFile(filePath, value, { allowedRoot = null } = {}) {
+  return writeFileSafely(
+    filePath,
+    `${JSON.stringify(canonicalValue(value), null, 2)}\n`,
+    { allowedRoot },
+  );
 }
