@@ -2,11 +2,24 @@
 // Locus CLI — localize a task to the minimal code slice on a local repo.
 import path from "node:path";
 import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext, buildJsonResult } from "./core.mjs";
+import {
+  DEFAULT_SENSITIVE_PATTERNS,
+  createScopeManifest,
+  readGitHead,
+  readGitIdentity,
+  readJsonFile,
+  verifyGitCandidate,
+  widenScopeManifest,
+  writeJsonFile,
+} from "./guard.mjs";
 
 const HELP = `Locus — show your AI coding agent only the code it needs.
 
 Usage:
   locus locate "<task>" [--path .] [--json] [--pack] [--budget <tokens>] [--evidence <text>]
+  locus guard init "<task>" [--path .] [--out .locus/scope.json]
+  locus guard widen <repo-path> --reason "<why>" --actor "<who>" [--manifest .locus/scope.json]
+  locus guard verify --expected-manifest-hash <sha256> [--path .] [--manifest .locus/scope.json]
   locus mcp
   locus --help
 
@@ -22,6 +35,8 @@ Examples:
   locus locate "fix the dashboard chart" --pack
   locus locate "the graph visualization" --json
   locus locate "login error" --evidence "TypeError: Cannot read property 'email' of null"
+  locus guard init "fix duplicate invoice retries" --task-id BILL-142
+  locus guard verify --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH"
   locus mcp   # start the MCP stdio server for Codex/Claude Code/Cursor
 `;
 
@@ -134,6 +149,195 @@ function runLocate(rest) {
   console.log(formatResult(result, repo));
 }
 
+function parseGuardInitArgs(rest) {
+  let dir = ".";
+  let out = ".locus/scope.json";
+  let taskId = null;
+  let actor = "local-user";
+  let evidence = "";
+  let allowWholeRepo = false;
+  const sensitivePatterns = [...DEFAULT_SENSITIVE_PATTERNS];
+  const positionals = [];
+  let optionsEnded = false;
+  for (let index = 0; index < rest.length; index++) {
+    const arg = rest[index];
+    if (arg === "--") {
+      optionsEnded = true;
+      continue;
+    }
+    if (optionsEnded) {
+      positionals.push(arg);
+    } else if (["--path", "--out", "--task-id", "--actor", "--evidence", "--sensitive"].includes(arg)) {
+      const value = rest[++index];
+      if (value === undefined) fail(`${arg} requires a value.`);
+      if (arg === "--path") dir = value;
+      if (arg === "--out") out = value;
+      if (arg === "--task-id") taskId = value;
+      if (arg === "--actor") actor = value;
+      if (arg === "--evidence") evidence = value;
+      if (arg === "--sensitive") sensitivePatterns.push(value);
+    } else if (arg === "--allow-whole-repo") {
+      allowWholeRepo = true;
+    } else if (arg.startsWith("-")) {
+      fail(`Unknown guard init option: ${arg}`);
+    } else {
+      positionals.push(arg);
+    }
+  }
+  return {
+    task: positionals.join(" "), dir, out, taskId, actor, evidence, allowWholeRepo, sensitivePatterns,
+  };
+}
+
+function runGuardInit(rest) {
+  const options = parseGuardInitArgs(rest);
+  if (!options.task.trim()) fail('Usage: locus guard init "<task>" [--path .] [--out .locus/scope.json]');
+  const root = path.resolve(options.dir);
+  let repo;
+  try {
+    repo = loadLocalRepo(root);
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
+  const result = locate(options.task, repo, buildGraph(repo), options.evidence);
+  if (result.widened && !options.allowWholeRepo) {
+    const detail = result.refinement?.unmatchedTerms?.length
+      ? ` Unmatched terms: ${result.refinement.unmatchedTerms.join(", ")}.`
+      : "";
+    fail(
+      `Locus could not derive a focused Slice, so Guard refused a whole-Repo manifest.${detail} Refine the task or pass --allow-whole-repo explicitly.`,
+    );
+  }
+  let manifest;
+  try {
+    manifest = createScopeManifest({
+      task: options.task,
+      taskId: options.taskId,
+      repository: readGitIdentity(root),
+      baseSha: readGitHead(root),
+      admittedPaths: result.slice.map((file) => file.path),
+      excludedPaths: result.excludedPaths,
+      sensitivePatterns: options.sensitivePatterns,
+      actor: options.actor,
+    });
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
+  const output = writeJsonFile(path.resolve(root, options.out), manifest);
+  console.log(`Guard manifest ${manifest.manifestHash} wrote ${output}`);
+  console.log(`Admitted ${manifest.scope.admittedPaths.length}; excluded ${manifest.scope.excludedPaths.length}; base ${manifest.repository.baseSha}.`);
+}
+
+function parseGuardWidenArgs(rest) {
+  const positionals = [];
+  let manifest = ".locus/scope.json";
+  let out = null;
+  let reason = "";
+  let actor = "";
+  let decision = "approved";
+  let allowSensitive = false;
+  for (let index = 0; index < rest.length; index++) {
+    const arg = rest[index];
+    if (["--manifest", "--out", "--reason", "--actor"].includes(arg)) {
+      const value = rest[++index];
+      if (value === undefined) fail(`${arg} requires a value.`);
+      if (arg === "--manifest") manifest = value;
+      if (arg === "--out") out = value;
+      if (arg === "--reason") reason = value;
+      if (arg === "--actor") actor = value;
+    } else if (arg === "--deny") {
+      decision = "denied";
+    } else if (arg === "--allow-sensitive") {
+      allowSensitive = true;
+    } else if (arg.startsWith("-")) {
+      fail(`Unknown guard widen option: ${arg}`);
+    } else {
+      positionals.push(arg);
+    }
+  }
+  return { repoPath: positionals.join(" "), manifest, out, reason, actor, decision, allowSensitive };
+}
+
+function runGuardWiden(rest) {
+  const options = parseGuardWidenArgs(rest);
+  if (!options.repoPath || !options.reason || !options.actor) {
+    fail('Usage: locus guard widen <repo-path> --reason "<why>" --actor "<who>" [--manifest .locus/scope.json]');
+  }
+  const manifestPath = path.resolve(options.manifest);
+  try {
+    const current = readJsonFile(manifestPath, "Guard manifest");
+    const next = widenScopeManifest(current, options);
+    const output = writeJsonFile(options.out ? path.resolve(options.out) : manifestPath, next);
+    const event = next.widens.at(-1);
+    console.log(`Widen ${event.decision}: ${event.path}`);
+    console.log(`Event ${event.eventHash}; manifest ${next.manifestHash}; wrote ${output}`);
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
+}
+
+function parseGuardVerifyArgs(rest) {
+  let dir = ".";
+  let manifest = ".locus/scope.json";
+  let receipt = ".locus/receipt.json";
+  let json = false;
+  let expectedManifestHash = process.env.LOCUS_GUARD_MANIFEST_HASH ?? null;
+  let advisory = false;
+  for (let index = 0; index < rest.length; index++) {
+    const arg = rest[index];
+    if (["--path", "--manifest", "--receipt", "--expected-manifest-hash"].includes(arg)) {
+      const value = rest[++index];
+      if (value === undefined) fail(`${arg} requires a value.`);
+      if (arg === "--path") dir = value;
+      if (arg === "--manifest") manifest = value;
+      if (arg === "--receipt") receipt = value;
+      if (arg === "--expected-manifest-hash") expectedManifestHash = value;
+    } else if (arg === "--json") {
+      json = true;
+    } else if (arg === "--advisory") {
+      advisory = true;
+    } else {
+      fail(`Unknown guard verify option: ${arg}`);
+    }
+  }
+  return { dir, manifest, receipt, json, expectedManifestHash, advisory };
+}
+
+function runGuardVerify(rest) {
+  const options = parseGuardVerifyArgs(rest);
+  const root = path.resolve(options.dir);
+  let receipt;
+  try {
+    const manifest = readJsonFile(path.resolve(root, options.manifest), "Guard manifest");
+    receipt = verifyGitCandidate({
+      manifest,
+      repoDir: root,
+      expectedManifestHash: options.expectedManifestHash,
+      advisory: options.advisory,
+    });
+    writeJsonFile(path.resolve(root, options.receipt), receipt);
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
+  if (options.json) {
+    console.log(JSON.stringify(receipt, null, 2));
+  } else {
+    console.log(`Locus Guard ${receipt.enforcement.result.toUpperCase()}: ${receipt.candidate.hash}`);
+    console.log(`Changed ${receipt.candidate.changedPaths.length} path(s); ${receipt.violations.length} violation(s).`);
+    console.log(`Receipt ${receipt.receiptHash} wrote ${path.resolve(root, options.receipt)}`);
+    for (const violation of receipt.violations) console.error(`- ${violation.message}`);
+  }
+  if (receipt.enforcement.result !== "pass") process.exitCode = 1;
+}
+
+function runGuard(rest) {
+  const subcommand = rest[0];
+  if (subcommand === "init") return runGuardInit(rest.slice(1));
+  if (subcommand === "widen") return runGuardWiden(rest.slice(1));
+  if (subcommand === "verify") return runGuardVerify(rest.slice(1));
+  fail("Usage: locus guard <init|widen|verify> ...");
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const cmd = args[0];
@@ -150,6 +354,10 @@ async function main() {
   }
   if (cmd === "locate") {
     runLocate(args.slice(1));
+    return;
+  }
+  if (cmd === "guard") {
+    runGuard(args.slice(1));
     return;
   }
   console.error(`Unknown command: ${cmd}\n`);
