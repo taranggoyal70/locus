@@ -512,7 +512,13 @@ function sandboxInvocation({
   throw new Error(`Guard has no fail-closed containment backend for ${process.platform}.`);
 }
 
-function snapshotInvocation({ repoRoot, workspace, snapshotWorkspace, protectedRoots }) {
+function snapshotInvocation({
+  repoRoot,
+  workspace,
+  snapshotWorkspace,
+  snapshotHelper,
+  protectedRoots,
+}) {
   const limitArgs = [
     String(MAX_WORKSPACE_ENTRIES),
     String(MAX_WORKSPACE_DEPTH),
@@ -541,7 +547,7 @@ function snapshotInvocation({ repoRoot, workspace, snapshotWorkspace, protectedR
     return {
       executable: sandboxExecutable,
       args: [
-        "-p", profile, process.execPath, SNAPSHOT_HELPER,
+        "-p", profile, process.execPath, snapshotHelper,
         workspace, snapshotWorkspace, ...limitArgs,
       ],
     };
@@ -559,7 +565,7 @@ function snapshotInvocation({ repoRoot, workspace, snapshotWorkspace, protectedR
         ...protectedRoots.flatMap((protectedRoot) => ["--tmpfs", protectedRoot]),
         "--ro-bind", workspace, "/locus-source",
         "--bind", snapshotWorkspace, "/locus-snapshot",
-        process.execPath, SNAPSHOT_HELPER,
+        process.execPath, snapshotHelper,
         "/locus-source", "/locus-snapshot", ...limitArgs,
       ],
     };
@@ -571,12 +577,14 @@ async function captureCandidateSnapshot({
   repoRoot,
   workspace,
   snapshotWorkspace,
+  snapshotHelper,
   protectedRoots,
 }) {
   const invocation = snapshotInvocation({
     repoRoot,
     workspace,
     snapshotWorkspace,
+    snapshotHelper,
     protectedRoots,
   });
   const result = await captureProcess(invocation.executable, invocation.args, {
@@ -660,15 +668,26 @@ function captureProcess(executable, args, { cwd, env, timeoutMs }) {
       clearTimeout(timer);
       try {
         await terminateProcessGroup(child.pid);
-        await new Promise((resolveDrain) => setTimeout(resolveDrain, 25));
-        child.stdout.destroy();
-        child.stderr.destroy();
+        const outputCaptureComplete = await Promise.race([
+          Promise.all([child.stdout, child.stderr].map((stream) => new Promise((resolveStream) => {
+            if (stream.readableEnded || stream.destroyed) return resolveStream(true);
+            stream.once("end", () => resolveStream(true));
+            stream.once("close", () => resolveStream(true));
+            stream.once("error", () => resolveStream(false));
+          }))).then((values) => values.every(Boolean)),
+          new Promise((resolveDrain) => setTimeout(() => resolveDrain(false), 1_000)),
+        ]);
+        if (!outputCaptureComplete) {
+          child.stdout.destroy();
+          child.stderr.destroy();
+        }
         resolve({
           exitCode: exitCode ?? 1,
           signal,
           durationMs: Date.now() - started,
           timedOut,
           outputLimitExceeded,
+          outputCaptureComplete,
           stdout: Buffer.concat(stdout),
           stderr: Buffer.concat(stderr),
           stdoutByteLength: outputEvidence.stdout.byteLength,
@@ -710,6 +729,7 @@ function processEvidence(result, { redactions = [] } = {}) {
     durationMs: result.durationMs,
     timedOut: result.timedOut,
     outputLimitExceeded: result.outputLimitExceeded,
+    captureComplete: result.outputCaptureComplete,
     stdout: {
       byteLength: result.stdoutByteLength,
       digest: result.stdoutDigest,
@@ -981,6 +1001,7 @@ async function executeChecks(repoRoot, commands, { originalRepoRoot, protectedRo
     results.push({
       command,
       result: result.exitCode === 0 && !result.timedOut && !result.outputLimitExceeded
+        && result.outputCaptureComplete
         ? "pass"
         : "fail",
       ...processEvidence(result),
@@ -1056,10 +1077,12 @@ export async function runGuardedAgent({
   const snapshotRoot = guardTemporaryDirectory("locus-guard-snapshot-");
   const workspace = path.join(ephemeralRoot, "workspace");
   const snapshotWorkspace = path.join(snapshotRoot, "workspace");
+  const snapshotHelper = path.join(snapshotRoot, "guard-snapshot.mjs");
   const checkWorkspace = path.join(ephemeralRoot, "check-worktree");
   const runtimeHome = path.join(ephemeralRoot, "runtime", "home");
   fs.mkdirSync(workspace, { recursive: true });
   fs.mkdirSync(snapshotWorkspace, { recursive: true });
+  fs.copyFileSync(SNAPSHOT_HELPER, snapshotHelper);
   fs.mkdirSync(path.join(ephemeralRoot, "runtime", "tmp"), { recursive: true });
   fs.mkdirSync(runtimeHome, { recursive: true });
   let candidateApplied = false;
@@ -1107,6 +1130,7 @@ export async function runGuardedAgent({
       repoRoot,
       workspace,
       snapshotWorkspace,
+      snapshotHelper,
       protectedRoots: protectedCanonicalRoots,
     });
     candidate = inspectWorkspaceCandidate({
@@ -1134,6 +1158,13 @@ export async function runGuardedAgent({
         code: "AGENT_OUTPUT_LIMIT",
         path: null,
         message: `The contained agent exceeded ${MAX_CAPTURE_OUTPUT_BYTES} output bytes.`,
+      });
+    }
+    if (!agentResult.outputCaptureComplete) {
+      violations.push({
+        code: "AGENT_OUTPUT_INCOMPLETE",
+        path: null,
+        message: "The contained agent did not close its output streams after exit.",
       });
     }
 

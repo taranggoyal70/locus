@@ -37,7 +37,7 @@ function makeRepo() {
 }
 
 function run(repo, args, options = {}) {
-  const result = spawnSync(process.execPath, [cli, ...args], {
+  const result = spawnSync(process.execPath, [options.cli ?? cli, ...args], {
     cwd: repo,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
@@ -735,6 +735,42 @@ describe("locus guard CLI", () => {
       const applied = fs.readFileSync(path.join(repo, "src/invoice.js"));
       expect(sha256(applied)).toBe(envelope.payload.candidate.records[0].contentHash);
       expect(applied.toString("utf8")).toBe("snapshot\n");
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "runs when the invoked Locus CLI is installed inside the target Repo",
+    () => {
+      const repo = makeRepo();
+      write(repo, ".gitignore", "tools/\n");
+      git(repo, ["add", ".gitignore"]);
+      git(repo, ["commit", "--quiet", "-m", "ignore local tools"]);
+      const localTools = path.join(repo, "tools");
+      fs.cpSync(path.resolve("bin"), localTools, { recursive: true });
+      const localCli = path.join(localTools, "locus.mjs");
+      expect(run(repo, ["guard", "init", "fix invoice retry"], { cli: localCli }).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const scriptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, scriptDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      expect(run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+      ], { cli: localCli }).code).toBe(0);
+      const agentScript = path.join(scriptDirectory, "agent.mjs");
+      fs.writeFileSync(agentScript, 'import fs from "node:fs"; fs.writeFileSync("src/invoice.js", "local cli\\n");\n');
+
+      const executed = run(repo, [
+        "guard", "run", "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey, "--check", "/usr/bin/true", "--json",
+        "--", process.execPath, agentScript,
+      ], { cli: localCli });
+
+      expect(executed.code, executed.err).toBe(0);
+      expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toBe("local cli\n");
     },
     30_000,
   );

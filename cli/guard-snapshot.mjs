@@ -25,8 +25,6 @@ function destinationPath(relativePath) {
 }
 
 function copyRegular(source, destination, before) {
-  state.bytes += before.size;
-  if (state.bytes > limits.bytes) fail(`apparent bytes exceed ${limits.bytes}`);
   const sourceDescriptor = fs.openSync(
     source,
     fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0),
@@ -34,9 +32,12 @@ function copyRegular(source, destination, before) {
   let destinationDescriptor;
   try {
     const opened = fs.fstatSync(sourceDescriptor);
-    if (!opened.isFile() || opened.dev !== before.dev || opened.ino !== before.ino) {
+    if (!opened.isFile() || opened.dev !== before.dev || opened.ino !== before.ino
+      || opened.size !== before.size) {
       fail(`regular file changed before copy: ${source}`);
     }
+    state.bytes += opened.size;
+    if (state.bytes > limits.bytes) fail(`apparent bytes exceed ${limits.bytes}`);
     destinationDescriptor = fs.openSync(
       destination,
       fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL
