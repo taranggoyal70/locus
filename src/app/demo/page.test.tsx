@@ -12,7 +12,8 @@ describe("Locus Guard vision demo", () => {
     expect(html).toContain("Your AI changed the code");
     expect(html).toContain("Locus proves what it touched");
     expect(html).toContain("This is an illustrative pilot—not a customer result");
-    expect(html).toContain("reject an exact Git candidate");
+    expect(html).toContain("cannot read excluded Repo files");
+    expect(html).toContain("Ed25519-signed Run receipt");
     expect(html).toContain("Available today");
     expect(html).toContain("What we’re proving next");
     expect(html).toContain("Try it on a public project");

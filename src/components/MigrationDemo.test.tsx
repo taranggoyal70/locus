@@ -33,6 +33,7 @@ describe("MigrationDemo", () => {
     expect(screen.getByRole("heading", { name: /Your AI changed the code.*Locus proves what it touched/ })).toBeTruthy();
     expect(screen.getByText("Locus sets the safe area")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Proof receipt" })).toBeTruthy();
+    expect(screen.getByText("Signed receipt", { exact: true })).toBeTruthy();
     expect(screen.queryByText("Guard scope")).toBeNull();
     expect(screen.queryByText("pnpm typecheck")).toBeNull();
   });
@@ -41,12 +42,12 @@ describe("MigrationDemo", () => {
     const { container } = render(<MigrationDemo selfServeOpen={false} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Developer evidence" }));
-    fireEvent.click(screen.getByRole("button", { name: /3Widen/ }));
+    fireEvent.click(screen.getByRole("button", { name: /3Checks run/ }));
 
     expect(container.querySelector(".migration-demo")?.getAttribute("data-audience")).toBe("developer");
     expect(container.querySelector(".migration-demo")?.getAttribute("data-stage")).toBe("3");
     expect(screen.getByText("Guard scope")).toBeTruthy();
-    expect(screen.getByText("Candidate SHA")).toBeTruthy();
+    expect(screen.getByText("Ed25519 signature")).toBeTruthy();
     expect(screen.getByText("src/lib/idempotency.ts").closest(".migration-diff")?.getAttribute("aria-hidden")).toBe("false");
   });
 });

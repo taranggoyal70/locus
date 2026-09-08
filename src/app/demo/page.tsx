@@ -6,7 +6,7 @@ import { MigrationDemo } from "@/components/MigrationDemo";
 
 export const metadata: Metadata = {
   title: "Locus Guard interactive demo",
-  description: "See how Locus turns an AI coding task into an approved file boundary and candidate-bound Guard receipt.",
+  description: "See how Locus contains an AI coding task to approved Repo files and signs candidate, Check, usage, and Review evidence.",
 };
 
 export default function DemoPage() {

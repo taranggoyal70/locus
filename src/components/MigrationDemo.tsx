@@ -6,16 +6,16 @@ import { useEffect, useRef, useState } from "react";
 
 const developerStages = [
   { label: "Task", note: "Issue and base commit are frozen" },
-  { label: "Scope", note: "Locus admits seven evidence-backed files" },
-  { label: "Widen", note: "One additional path is approved with a reason" },
-  { label: "Verify", note: "The exact candidate receives a Guard receipt" },
+  { label: "Contain", note: "Only seven admitted files enter the sandbox" },
+  { label: "Checks run", note: "Candidate-bound commands record factual evidence" },
+  { label: "Sign", note: "Ed25519 binds the exact review-ready proposal" },
 ] as const;
 
 const plainStages = [
   { label: "Task received", note: "The requested fix is recorded" },
   { label: "Safe area set", note: "Seven relevant files are approved" },
-  { label: "Extra change stopped", note: "An unrelated change cannot pass the merge gate" },
-  { label: "Proof ready", note: "The exact fix receives a reviewable receipt" },
+  { label: "Extra access blocked", note: "The agent cannot open excluded Repo files" },
+  { label: "Signed proof ready", note: "The exact fix and Checks are signed together" },
 ] as const;
 
 const graphNodes = [
@@ -67,8 +67,8 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
   const stages = plainLanguage ? plainStages : developerStages;
   const activeStage = stages[Math.max(stage - 1, 0)];
   const checks = plainLanguage
-    ? [["Automated tests", "142 passed"], ["Approved files only", "confirmed"], ["Proof receipt", "ready"]]
-    : [["pnpm test", "142 passed"], ["Candidate SHA", "8f91… matched"], ["Locus Guard", "scope passed"]];
+    ? [["Automated tests", "142 passed"], ["Approved files only", "enforced"], ["Signed receipt", "verified"]]
+    : [["pnpm test", "exit 0 · output hashed"], ["Working-tree candidate", "sha256 · matched"], ["Ed25519 signature", "key ID trusted"]];
 
   return (
     <div className="migration-demo" data-audience={audience} data-stage={stage} data-playing={playing || undefined}>
@@ -108,8 +108,8 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
           <div className="border-l border-white/20 pl-5">
             <p className="text-sm leading-6 text-[#bfccd8]">
               {plainLanguage
-                ? "Locus approves the files an AI task needs, rejects unrelated candidate changes, and gives the reviewer a receipt for the exact fix. This is an illustrative pilot—not a customer result."
-                : "This simulated sequence shows the v0.3 Git merge gate plus the broader Guard workflow being validated. It does not claim filesystem read containment."}
+                ? "Locus gives the coding agent only the approved Repo files, blocks excluded Repo access, runs your Checks, and signs one receipt for the exact fix. This is an illustrative pilot—not a customer result."
+                : "This simulated sequence shows the v0.4 contained runner, working-tree candidate hash, factual Check evidence, provider-reported usage, Ed25519 signature, and immutable human Review."}
             </p>
             <button
               type="button"
@@ -169,7 +169,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
               <div className="migration-demo__grid absolute inset-0" aria-hidden="true" />
               <div className="absolute left-5 top-5 z-10 sm:left-7 sm:top-7">
                 <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91a4b6]">{plainLanguage ? "Locus sets the safe area" : "Guard scope"}</p>
-                <p className="mt-2 max-w-xs text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "Seven files are approved for this task. A candidate that changes anything else cannot pass Guard." : "Every admitted path carries an inclusion reason. The Git candidate is checked against the trusted manifest hash."}</p>
+                <p className="mt-2 max-w-xs text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "Seven files are approved for this task. The contained agent cannot read excluded Repo files, and no unapproved change is copied back." : "Only admitted paths are materialized. Seatbelt or Bubblewrap hides the original Repo and permits host writes only inside the ephemeral runtime."}</p>
               </div>
 
               <div className="migration-aperture relative mt-14 aspect-square w-full max-w-[440px]" aria-hidden="true">
@@ -203,11 +203,11 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
               <div className="flex items-center justify-between gap-3">
                 <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91a4b6]">{plainLanguage ? "Merge decision" : "Exact candidate"}</p>
                 <span className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${stage >= 4 ? "border-[#8ef0c0]/30 bg-[#8ef0c0]/10 text-[#8ef0c0]" : "border-white/15 text-[#91a4b6]"}`}>
-                  {stage >= 4 ? plainLanguage ? "Ready for customer" : "Ready for human review" : "Waiting"}
+                  {stage >= 4 ? plainLanguage ? "Ready for review" : "Signature verified" : "Waiting"}
                 </span>
               </div>
               <h2 id="proposal-title" className="mt-7 font-display text-3xl font-semibold tracking-[-0.04em] text-white">{plainLanguage ? "Proof receipt" : "Guard receipt"}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "The exact fix, approved files, and automated checks stay connected." : "Manifest hash, Widen chain, candidate SHA, binary-diff hash, and scope decision—not task correctness."}</p>
+              <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "The exact fix, approved files, automated checks, and measured AI usage stay connected." : "Manifest hash, working-tree content hash, Check output digests, provider-reported usage, and Review state—not task correctness."}</p>
 
               <div aria-hidden={stage < 3} className={`migration-diff mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[#081322] transition ${stage >= 3 ? "migration-diff--visible" : ""}`}>
                 <div className="migration-reveal__inner">
@@ -258,8 +258,8 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                       <div className="flex items-start gap-3">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#8ef0c0] font-bold text-[#14233b]">✓</span>
                         <div>
-                          <p className="text-sm font-semibold text-white">{plainLanguage ? "Candidate stayed inside the approved boundary" : "Deterministic Guard receipt assembled"}</p>
-                          <p className="mt-1 text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "A person still reviews whether the fix is correct. Locus proves which candidate was checked and what it touched." : "A maintainer still decides correctness. External attestation signs provenance and integrity, not task success."}</p>
+                          <p className="text-sm font-semibold text-white">{plainLanguage ? "Candidate stayed inside the approved boundary" : "Signed Guard Run receipt assembled"}</p>
+                          <p className="mt-1 text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "A person still reviews whether the fix is correct. Their one-time decision is bound to this exact signed proposal." : "Ed25519 signs integrity and signer possession. An immutable human Review separately accepts or rejects the proposal hash."}</p>
                         </div>
                       </div>
                     </div>
@@ -294,11 +294,11 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
         <section className="mt-8 grid gap-4 md:grid-cols-2" aria-label="Demo capability boundaries">
           <div className="rounded-2xl border border-white/15 bg-white/[.035] p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8ef0c0]">{plainLanguage ? "Available today" : "Real in early access today"}</p>
-            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "The source CLI can create a Guard scope manifest and reject an exact Git candidate that changes files outside it." : `${demoCapabilitySummary(selfServeOpen)} The v0.3 source CLI also emits a candidate-bound Guard receipt and non-zero merge decision.`}</p>
+            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "The source CLI runs Codex, Claude, or another command inside a fail-closed target-Repo boundary: it cannot read excluded Repo files, cannot write elsewhere on the host, and emits an Ed25519-signed Run receipt." : `${demoCapabilitySummary(selfServeOpen)} The v0.4 source CLI binds target-Repo containment, the working-tree candidate, Check output, provider-reported usage, and immutable human Review in a signed receipt.`}</p>
           </div>
           <div className="rounded-2xl border border-[#e7b853]/20 bg-[#e7b853]/[.04] p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f2c76d]">{plainLanguage ? "What we’re proving next" : "Being validated next"}</p>
-            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "Filesystem-level agent boundaries, signed receipts, and whether engineering teams will pay to use Guard on real work." : "Fail-closed Codex/Claude adapters, candidate-bound Checks and Review, external attestation, and paid design-partner evidence."}</p>
+            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "Real design-partner use, stronger disposable-machine isolation, and whether engineering teams will pay to make this their required AI merge gate." : "Linux field validation, disposable VM isolation, managed signer identity, GitHub delivery, and paid design-partner evidence."}</p>
           </div>
         </section>
       </div>
