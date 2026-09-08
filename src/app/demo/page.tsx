@@ -5,8 +5,8 @@ import { selfServeOpen } from "@/lib/admission";
 import { MigrationDemo } from "@/components/MigrationDemo";
 
 export const metadata: Metadata = {
-  title: "API migration vision demo — Locus",
-  description: "See Locus's proposed provider-sponsored API migration workflow in a clearly labeled interactive simulation.",
+  title: "Locus Guard interactive demo",
+  description: "See how Locus turns an AI coding task into an approved file boundary and candidate-bound Guard receipt.",
 };
 
 export default function DemoPage() {

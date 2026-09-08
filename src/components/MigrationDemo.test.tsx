@@ -18,7 +18,7 @@ describe("MigrationDemo", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Show me how it works" }));
     expect(demo?.getAttribute("data-stage")).toBe("1");
-    expect((screen.getByRole("button", { name: "Update running" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Guard checking" }) as HTMLButtonElement).disabled).toBe(true);
 
     act(() => vi.advanceTimersByTime(4800));
     expect(demo?.getAttribute("data-stage")).toBe("4");
@@ -30,10 +30,10 @@ describe("MigrationDemo", () => {
   it("defaults to a plain-English explanation of the customer outcome", () => {
     render(<MigrationDemo selfServeOpen={false} />);
 
-    expect(screen.getByRole("heading", { name: /Your software changed.*Your customers shouldn’t chase the fix/ })).toBeTruthy();
-    expect(screen.getByText("Locus checks the app")).toBeTruthy();
-    expect(screen.getByText("Approval packet")).toBeTruthy();
-    expect(screen.queryByText("Repository aperture")).toBeNull();
+    expect(screen.getByRole("heading", { name: /Your AI changed the code.*Locus proves what it touched/ })).toBeTruthy();
+    expect(screen.getByText("Locus sets the safe area")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Proof receipt" })).toBeTruthy();
+    expect(screen.queryByText("Guard scope")).toBeNull();
     expect(screen.queryByText("pnpm typecheck")).toBeNull();
   });
 
@@ -41,12 +41,12 @@ describe("MigrationDemo", () => {
     const { container } = render(<MigrationDemo selfServeOpen={false} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Developer evidence" }));
-    fireEvent.click(screen.getByRole("button", { name: /3Patch/ }));
+    fireEvent.click(screen.getByRole("button", { name: /3Widen/ }));
 
     expect(container.querySelector(".migration-demo")?.getAttribute("data-audience")).toBe("developer");
     expect(container.querySelector(".migration-demo")?.getAttribute("data-stage")).toBe("3");
-    expect(screen.getByText("Repository aperture")).toBeTruthy();
-    expect(screen.getByText("pnpm typecheck")).toBeTruthy();
-    expect(screen.getByText("src/server/payments.ts").closest(".migration-diff")?.getAttribute("aria-hidden")).toBe("false");
+    expect(screen.getByText("Guard scope")).toBeTruthy();
+    expect(screen.getByText("Candidate SHA")).toBeTruthy();
+    expect(screen.getByText("src/lib/idempotency.ts").closest(".migration-diff")?.getAttribute("aria-hidden")).toBe("false");
   });
 });

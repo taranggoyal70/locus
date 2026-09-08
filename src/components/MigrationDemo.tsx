@@ -5,17 +5,17 @@ import { demoCapabilitySummary } from "@/lib/admission-copy";
 import { useEffect, useRef, useState } from "react";
 
 const developerStages = [
-  { label: "Change", note: "Provider publishes an SDK migration contract" },
-  { label: "Localize", note: "Locus admits seven evidence-backed files" },
-  { label: "Patch", note: "The agent works inside the admitted Slice" },
-  { label: "Review", note: "Maintainer receives checks and scope evidence" },
+  { label: "Task", note: "Issue and base commit are frozen" },
+  { label: "Scope", note: "Locus admits seven evidence-backed files" },
+  { label: "Widen", note: "One additional path is approved with a reason" },
+  { label: "Verify", note: "The exact candidate receives a Guard receipt" },
 ] as const;
 
 const plainStages = [
-  { label: "Change detected", note: "A software company announces an update" },
-  { label: "App checked", note: "Locus finds the seven files that need attention" },
-  { label: "Fix prepared", note: "The update is prepared and tested" },
-  { label: "Customer approves", note: "The customer reviews the fix and stays in control" },
+  { label: "Task received", note: "The requested fix is recorded" },
+  { label: "Safe area set", note: "Seven relevant files are approved" },
+  { label: "Extra change stopped", note: "An unrelated change cannot pass the merge gate" },
+  { label: "Proof ready", note: "The exact fix receives a reviewable receipt" },
 ] as const;
 
 const graphNodes = [
@@ -26,12 +26,11 @@ const graphNodes = [
 ] as const;
 
 const diffLines = [
-  { kind: "context", text: "async function createPayment(input: CheckoutInput) {" },
-  { kind: "remove", text: "−  return atlas.payments.create({ source: input.token })" },
-  { kind: "add", text: "+  return atlas.paymentIntents.create({" },
-  { kind: "add", text: "+    paymentMethod: input.token," },
-  { kind: "add", text: "+    confirm: true" },
-  { kind: "add", text: "+  })" },
+  { kind: "context", text: "async function retryInvoice(invoice: Invoice) {" },
+  { kind: "remove", text: "−  return charge(invoice)" },
+  { kind: "add", text: "+  return once(invoice.id, () =>" },
+  { kind: "add", text: "+    charge(invoice)" },
+  { kind: "add", text: "+  )" },
   { kind: "context", text: "}" },
 ] as const;
 
@@ -68,8 +67,8 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
   const stages = plainLanguage ? plainStages : developerStages;
   const activeStage = stages[Math.max(stage - 1, 0)];
   const checks = plainLanguage
-    ? [["Automated tests", "142 passed"], ["Safety checks", "passed"], ["Unrelated changes", "none found"]]
-    : [["pnpm test", "142 passed"], ["pnpm typecheck", "exit 0"], ["Scope deviations", "none detected"]];
+    ? [["Automated tests", "142 passed"], ["Approved files only", "confirmed"], ["Proof receipt", "ready"]]
+    : [["pnpm test", "142 passed"], ["Candidate SHA", "8f91… matched"], ["Locus Guard", "scope passed"]];
 
   return (
     <div className="migration-demo" data-audience={audience} data-stage={stage} data-playing={playing || undefined}>
@@ -100,17 +99,17 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
 
         <header className="grid gap-7 py-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end lg:py-14">
           <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#8ef0c0]">{plainLanguage ? "One update. Every customer." : "A proposed first workflow"}</p>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#8ef0c0]">{plainLanguage ? "One task. 1,842 files." : "Locus Guard pilot"}</p>
             <h1 className="mt-4 max-w-5xl font-display text-[clamp(3.2rem,7vw,7.2rem)] font-semibold leading-[.84] tracking-[-0.07em] text-white">
-              {plainLanguage ? "Your software changed." : "Don’t announce the breaking change."}
-              <span className="mt-2 block text-[#8ef0c0]">{plainLanguage ? "Your customers shouldn’t chase the fix." : "Ship the migration."}</span>
+              {plainLanguage ? "Your AI changed the code." : "Let agents code."}
+              <span className="mt-2 block text-[#8ef0c0]">{plainLanguage ? "Locus proves what it touched." : "Gate what can merge."}</span>
             </h1>
           </div>
           <div className="border-l border-white/20 pl-5">
             <p className="text-sm leading-6 text-[#bfccd8]">
               {plainLanguage
-                ? "Locus finds customer apps using the old version, prepares the update, checks that it works, and hands it over for approval. This is a vision we are testing—not a customer result."
-                : "This scenario shows the API-migration workflow Locus is validating—not a shipped or measured customer outcome."}
+                ? "Locus approves the files an AI task needs, rejects unrelated candidate changes, and gives the reviewer a receipt for the exact fix. This is an illustrative pilot—not a customer result."
+                : "This simulated sequence shows the v0.3 Git merge gate plus the broader Guard workflow being validated. It does not claim filesystem read containment."}
             </p>
             <button
               type="button"
@@ -120,33 +119,33 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
             >
               <span className="text-lg leading-none" aria-hidden="true">{playing ? "◌" : stage === 4 ? "↻" : "▶"}</span>
               {plainLanguage
-                ? playing ? "Update running" : stage === 4 ? "Replay the story" : "Show me how it works"
-                : playing ? "Migration running" : stage === 4 ? "Replay the sequence" : "Run the sequence"}
+                ? playing ? "Guard checking" : stage === 4 ? "Replay the story" : "Show me how it works"
+                : playing ? "Guard running" : stage === 4 ? "Replay the sequence" : "Run the sequence"}
             </button>
           </div>
         </header>
 
         <div className="migration-console overflow-hidden rounded-[26px] border border-white/15 bg-[#0d1a2d]/90 shadow-[0_36px_120px_rgba(0,0,0,.35)]">
           <div className="grid min-h-[620px] lg:grid-cols-[minmax(260px,.72fr)_minmax(440px,1.2fr)_minmax(320px,1fr)]">
-            <section className="border-b border-white/15 p-5 sm:p-7 lg:border-b-0 lg:border-r" aria-labelledby="provider-change-title">
+            <section className="border-b border-white/15 p-5 sm:p-7 lg:border-b-0 lg:border-r" aria-labelledby="agent-task-title">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91a4b6]">{plainLanguage ? "A company ships an update" : "Provider signal"}</p>
-                <span className="rounded-full border border-[#e7b853]/30 bg-[#e7b853]/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#f2c76d]">{plainLanguage ? "Action needed" : "Breaking"}</span>
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91a4b6]">{plainLanguage ? "An AI receives a coding task" : "Agent Task"}</p>
+                <span className="rounded-full border border-[#e7b853]/30 bg-[#e7b853]/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#f2c76d]">{plainLanguage ? "Needs boundaries" : "Scope required"}</span>
               </div>
-              <h2 id="provider-change-title" className="mt-7 font-display text-3xl font-semibold tracking-[-0.04em] text-white">{plainLanguage ? "Atlas payments changed" : "Atlas SDK v3"}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "Example update to a fictional payment service" : "Fictional payment SDK migration contract"}</p>
+              <h2 id="agent-task-title" className="mt-7 font-display text-3xl font-semibold tracking-[-0.04em] text-white">Duplicate invoice retries</h2>
+              <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "Illustrative bug in a fictional billing system" : "BILL-142 · base 3a42… · synthetic task"}</p>
 
               <div className="mt-7 rounded-2xl border border-white/10 bg-white/[.035] p-4">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#e7b853]/15 font-mono text-xs font-bold text-[#f2c76d]">v3</span>
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#e7b853]/15 font-mono text-xs font-bold text-[#f2c76d]">#142</span>
                   <div>
-                    <p className="text-sm font-semibold text-white">{plainLanguage ? "The old payment method is retiring" : "Remove token sources"}</p>
-                    <p className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[#91a4b6]">{plainLanguage ? "Announced today" : "Published 09:42 UTC"}</p>
+                    <p className="text-sm font-semibold text-white">{plainLanguage ? "Charge each invoice only once" : "Make retries idempotent"}</p>
+                    <p className="mt-0.5 font-mono text-[11px] uppercase tracking-[0.1em] text-[#91a4b6]">{plainLanguage ? "Requested today" : "Agent task frozen"}</p>
                   </div>
                 </div>
                 <div className={`mt-5 space-y-3 text-xs leading-5 ${plainLanguage ? "" : "font-mono"}`}>
-                  <p className="rounded-lg bg-[#f38d7c]/10 px-3 py-2 text-[#ffb7aa] line-through decoration-[#f38d7c]/60">{plainLanguage ? "Old checkout connection" : <>payments.create({`{ source }`})</>}</p>
-                  <p className="rounded-lg bg-[#8ef0c0]/10 px-3 py-2 text-[#a9f5d0]">{plainLanguage ? "New checkout connection" : <>paymentIntents.create({`{ paymentMethod }`})</>}</p>
+                  <p className="rounded-lg bg-[#f38d7c]/10 px-3 py-2 text-[#ffb7aa] line-through decoration-[#f38d7c]/60">{plainLanguage ? "Unrelated deploy change rejected" : ".github/workflows/deploy.yml — outside scope"}</p>
+                  <p className="rounded-lg bg-[#8ef0c0]/10 px-3 py-2 text-[#a9f5d0]">{plainLanguage ? "One relevant file approved with a reason" : "src/lib/idempotency.ts — Widen approved"}</p>
                 </div>
               </div>
 
@@ -159,18 +158,18 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                     <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#91a4b6]">{plainLanguage ? "Files checked" : "Repo files"}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 p-3">
-                    <p className="font-display text-2xl font-semibold text-white">6</p>
-                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#91a4b6]">{plainLanguage ? "Places to update" : "Known usages"}</p>
+                    <p className="font-display text-2xl font-semibold text-white">1</p>
+                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#91a4b6]">{plainLanguage ? "Requested fix" : "Agent Task"}</p>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="relative flex min-h-[560px] flex-col items-center justify-center overflow-hidden border-b border-white/15 p-5 sm:p-7 lg:border-b-0 lg:border-r" aria-label={plainLanguage ? "How Locus finds the files that need changing" : "Repository aperture visualization"}>
+            <section className="relative flex min-h-[560px] flex-col items-center justify-center overflow-hidden border-b border-white/15 p-5 sm:p-7 lg:border-b-0 lg:border-r" aria-label={plainLanguage ? "How Locus sets the approved file boundary" : "Guard scope visualization"}>
               <div className="migration-demo__grid absolute inset-0" aria-hidden="true" />
               <div className="absolute left-5 top-5 z-10 sm:left-7 sm:top-7">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91a4b6]">{plainLanguage ? "Locus checks the app" : "Repository aperture"}</p>
-                <p className="mt-2 max-w-xs text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "Locus finds the seven files needed for this update and leaves the other 1,835 untouched." : "Every admitted file needs evidence. Everything else stays outside the Run."}</p>
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91a4b6]">{plainLanguage ? "Locus sets the safe area" : "Guard scope"}</p>
+                <p className="mt-2 max-w-xs text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "Seven files are approved for this task. A candidate that changes anything else cannot pass Guard." : "Every admitted path carries an inclusion reason. The Git candidate is checked against the trusted manifest hash."}</p>
               </div>
 
               <div className="migration-aperture relative mt-14 aspect-square w-full max-w-[440px]" aria-hidden="true">
@@ -196,37 +195,37 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
               <div className="relative z-10 mt-4 grid w-full max-w-md grid-cols-3 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 text-center">
                 <div className="bg-[#0d1a2d] p-3"><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#91a4b6]">{plainLanguage ? "Needed" : "Admitted"}</p><p className="mt-1 text-sm font-semibold text-[#8ef0c0]">{stage >= 2 ? "7" : "—"}</p></div>
                 <div className="bg-[#0d1a2d] p-3"><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#91a4b6]">{plainLanguage ? "Untouched" : "Excluded"}</p><p className="mt-1 text-sm font-semibold text-white">{stage >= 2 ? "1,835" : "—"}</p></div>
-                <div className="bg-[#0d1a2d] p-3"><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#91a4b6]">{plainLanguage ? "Extra opened" : "Widened"}</p><p className="mt-1 text-sm font-semibold text-white">{stage >= 2 ? "0" : "—"}</p></div>
+                <div className="bg-[#0d1a2d] p-3"><p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#91a4b6]">{plainLanguage ? "Extra approved" : "Widens"}</p><p className="mt-1 text-sm font-semibold text-white">{stage >= 3 ? "1" : stage >= 2 ? "0" : "—"}</p></div>
               </div>
             </section>
 
             <section className="relative flex flex-col p-5 sm:p-7" aria-labelledby="proposal-title">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91a4b6]">{plainLanguage ? "Prepared update" : "Proposed change"}</p>
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-[#91a4b6]">{plainLanguage ? "Merge decision" : "Exact candidate"}</p>
                 <span className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${stage >= 4 ? "border-[#8ef0c0]/30 bg-[#8ef0c0]/10 text-[#8ef0c0]" : "border-white/15 text-[#91a4b6]"}`}>
                   {stage >= 4 ? plainLanguage ? "Ready for customer" : "Ready for human review" : "Waiting"}
                 </span>
               </div>
-              <h2 id="proposal-title" className="mt-7 font-display text-3xl font-semibold tracking-[-0.04em] text-white">{plainLanguage ? "Approval packet" : "Migration packet"}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "The fix, automated checks, and a clear summary of what changed." : "A proposed patch plus factual evidence—not an automatic approval."}</p>
+              <h2 id="proposal-title" className="mt-7 font-display text-3xl font-semibold tracking-[-0.04em] text-white">{plainLanguage ? "Proof receipt" : "Guard receipt"}</h2>
+              <p className="mt-2 text-sm leading-6 text-[#aebdcc]">{plainLanguage ? "The exact fix, approved files, and automated checks stay connected." : "Manifest hash, Widen chain, candidate SHA, binary-diff hash, and scope decision—not task correctness."}</p>
 
               <div aria-hidden={stage < 3} className={`migration-diff mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[#081322] transition ${stage >= 3 ? "migration-diff--visible" : ""}`}>
                 <div className="migration-reveal__inner">
                   {plainLanguage ? (
                     <div className="p-4">
                       <div className="migration-diff__line migration-diff__line--add rounded-xl border border-[#8ef0c0]/15 p-4" style={{ transitionDelay: "55ms" }}>
-                        <p className="text-sm font-semibold text-white">One payment file updated</p>
-                        <p className="mt-2 text-xs leading-5 text-[#aebdcc]">The old checkout connection was replaced with the new version.</p>
+                        <p className="text-sm font-semibold text-white">One retry file updated</p>
+                        <p className="mt-2 text-xs leading-5 text-[#aebdcc]">The fix prevents the same invoice from being charged twice.</p>
                       </div>
                       <div className="migration-diff__line migration-diff__line--context mt-3 flex items-center justify-between rounded-xl border border-white/10 px-4 py-3" style={{ transitionDelay: "165ms" }}>
-                        <span className="text-xs text-[#bdcad8]">Other customer features</span>
-                        <span className="text-xs font-semibold text-[#8ef0c0]">Left untouched</span>
+                        <span className="text-xs text-[#bdcad8]">Unapproved candidate changes</span>
+                        <span className="text-xs font-semibold text-[#8ef0c0]">Rejected before merge</span>
                       </div>
                     </div>
                   ) : (
                     <>
                       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-                        <p className="font-mono text-[11px] text-[#d7e2ec]">src/server/payments.ts</p>
+                        <p className="font-mono text-[11px] text-[#d7e2ec]">src/lib/idempotency.ts</p>
                         <p className="font-mono text-[10px] text-[#91a4b6]">+4 −1</p>
                       </div>
                       <div className="overflow-x-auto py-3 font-mono text-xs leading-6">
@@ -259,8 +258,8 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                       <div className="flex items-start gap-3">
                         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#8ef0c0] font-bold text-[#14233b]">✓</span>
                         <div>
-                          <p className="text-sm font-semibold text-white">{plainLanguage ? "Fix ready for approval" : "Evidence packet assembled"}</p>
-                          <p className="mt-1 text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "The customer reviews the update and decides whether to accept it. Locus never makes that decision for them." : "A maintainer still decides whether the change is correct and whether a pull request may be opened."}</p>
+                          <p className="text-sm font-semibold text-white">{plainLanguage ? "Candidate stayed inside the approved boundary" : "Deterministic Guard receipt assembled"}</p>
+                          <p className="mt-1 text-xs leading-5 text-[#aebdcc]">{plainLanguage ? "A person still reviews whether the fix is correct. Locus proves which candidate was checked and what it touched." : "A maintainer still decides correctness. External attestation signs provenance and integrity, not task success."}</p>
                         </div>
                       </div>
                     </div>
@@ -295,11 +294,11 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
         <section className="mt-8 grid gap-4 md:grid-cols-2" aria-label="Demo capability boundaries">
           <div className="rounded-2xl border border-white/15 bg-white/[.035] p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8ef0c0]">{plainLanguage ? "Available today" : "Real in early access today"}</p>
-            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "Try Locus on a public JavaScript, TypeScript, or Python project. It shows which files appear relevant to a task and which files it leaves out." : demoCapabilitySummary(selfServeOpen)}</p>
+            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "The source CLI can create a Guard scope manifest and reject an exact Git candidate that changes files outside it." : `${demoCapabilitySummary(selfServeOpen)} The v0.3 source CLI also emits a candidate-bound Guard receipt and non-zero merge decision.`}</p>
           </div>
           <div className="rounded-2xl border border-[#e7b853]/20 bg-[#e7b853]/[.04] p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f2c76d]">{plainLanguage ? "What we’re proving next" : "Being validated next"}</p>
-            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "Whether software companies will use Locus to prepare updates across customer apps—and whether customers trust and approve those updates." : "Provider change intake, affected-repository campaigns, verified migration patches, maintainer authorization, and delivery into customer pull requests."}</p>
+            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "Filesystem-level agent boundaries, signed receipts, and whether engineering teams will pay to use Guard on real work." : "Fail-closed Codex/Claude adapters, candidate-bound Checks and Review, external attestation, and paid design-partner evidence."}</p>
           </div>
         </section>
       </div>
