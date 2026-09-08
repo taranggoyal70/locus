@@ -823,8 +823,8 @@ export async function runGuardedAgent({
       if (readGitHead(repoRoot) !== currentManifest.repository.baseSha) {
         throw new Error("Repo HEAD changed while the contained agent was running.");
       }
-      applyCandidate({ repoRoot, candidate });
       candidateApplied = true;
+      applyCandidate({ repoRoot, candidate });
       violations.push(...inspectAppliedCandidate({ repoRoot, candidate }));
       if (violations.length === 0) {
         checkResults = await executeChecks(repoRoot, checks, {
