@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import {
   GUARD_VERSION,
   assertCleanGitCheckout,
@@ -30,6 +31,7 @@ const CONTROL_ARTIFACT_PATHS = new Set([
   ".locus/run-receipt.json",
   ".locus/run.lock",
 ]);
+const SNAPSHOT_HELPER = path.join(path.dirname(fileURLToPath(import.meta.url)), "guard-snapshot.mjs");
 
 function guardTemporaryDirectory(prefix) {
   const base = process.platform === "darwin" ? "/private/tmp" : os.tmpdir();
@@ -510,7 +512,12 @@ function sandboxInvocation({
   throw new Error(`Guard has no fail-closed containment backend for ${process.platform}.`);
 }
 
-function snapshotInvocation({ repoRoot, workspace, snapshotWorkspace }) {
+function snapshotInvocation({ repoRoot, workspace, snapshotWorkspace, protectedRoots }) {
+  const limitArgs = [
+    String(MAX_WORKSPACE_ENTRIES),
+    String(MAX_WORKSPACE_DEPTH),
+    String(MAX_WORKSPACE_APPARENT_BYTES),
+  ];
   if (process.platform === "darwin") {
     const sandboxExecutable = findExecutable("sandbox-exec");
     if (!sandboxExecutable) {
@@ -526,12 +533,17 @@ function snapshotInvocation({ repoRoot, workspace, snapshotWorkspace }) {
       "(allow ipc-posix*)",
       "(allow file-read*)",
       `(deny file-read* (subpath ${JSON.stringify(repoRoot)}))`,
+      ...protectedRoots.map((protectedRoot) =>
+        `(deny file-read* (subpath ${JSON.stringify(protectedRoot)}))`),
       `(allow file-write* (subpath ${JSON.stringify(snapshotWorkspace)}))`,
       '(allow file-write* (literal "/dev/null"))',
     ].join("\n");
     return {
       executable: sandboxExecutable,
-      args: ["-p", profile, "/bin/cp", "-R", "-P", `${workspace}/.`, snapshotWorkspace],
+      args: [
+        "-p", profile, process.execPath, SNAPSHOT_HELPER,
+        workspace, snapshotWorkspace, ...limitArgs,
+      ],
     };
   }
   if (process.platform === "linux") {
@@ -544,17 +556,29 @@ function snapshotInvocation({ repoRoot, workspace, snapshotWorkspace }) {
       args: [
         "--die-with-parent", "--new-session", "--unshare-pid", "--unshare-uts", "--unshare-ipc",
         "--ro-bind", "/", "/", "--proc", "/proc", "--tmpfs", repoRoot,
+        ...protectedRoots.flatMap((protectedRoot) => ["--tmpfs", protectedRoot]),
         "--ro-bind", workspace, "/locus-source",
         "--bind", snapshotWorkspace, "/locus-snapshot",
-        "/bin/cp", "-a", "/locus-source/.", "/locus-snapshot",
+        process.execPath, SNAPSHOT_HELPER,
+        "/locus-source", "/locus-snapshot", ...limitArgs,
       ],
     };
   }
   throw new Error(`Guard has no fail-closed snapshot backend for ${process.platform}.`);
 }
 
-async function captureCandidateSnapshot({ repoRoot, workspace, snapshotWorkspace }) {
-  const invocation = snapshotInvocation({ repoRoot, workspace, snapshotWorkspace });
+async function captureCandidateSnapshot({
+  repoRoot,
+  workspace,
+  snapshotWorkspace,
+  protectedRoots,
+}) {
+  const invocation = snapshotInvocation({
+    repoRoot,
+    workspace,
+    snapshotWorkspace,
+    protectedRoots,
+  });
   const result = await captureProcess(invocation.executable, invocation.args, {
     cwd: workspace,
     env: cleanCheckEnvironment(workspace),
@@ -632,10 +656,13 @@ function captureProcess(executable, args, { cwd, env, timeoutMs }) {
     child.stderr.on("data", (chunk) => capture("stderr", stderr, chunk));
     child.on("error", reject);
     const timer = setTimeout(() => terminate("timeout"), timeoutMs);
-    child.on("close", async (exitCode, signal) => {
+    child.on("exit", async (exitCode, signal) => {
       clearTimeout(timer);
       try {
         await terminateProcessGroup(child.pid);
+        await new Promise((resolveDrain) => setTimeout(resolveDrain, 25));
+        child.stdout.destroy();
+        child.stderr.destroy();
         resolve({
           exitCode: exitCode ?? 1,
           signal,
@@ -1076,7 +1103,12 @@ export async function runGuardedAgent({
       }),
       timeoutMs: AGENT_TIMEOUT_MS,
     });
-    await captureCandidateSnapshot({ repoRoot, workspace, snapshotWorkspace });
+    await captureCandidateSnapshot({
+      repoRoot,
+      workspace,
+      snapshotWorkspace,
+      protectedRoots: protectedCanonicalRoots,
+    });
     candidate = inspectWorkspaceCandidate({
       workspace: snapshotWorkspace,
       baseline,

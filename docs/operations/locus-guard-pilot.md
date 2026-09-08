@@ -179,6 +179,9 @@ Checks, provider-reported usage, and human Review to the pre-commit candidate.
 
 - The v0.4 local runner contains access to the target Repo; it does not provide
   whole-host confidentiality, network isolation, or disposable-VM isolation.
+- macOS preserves the target-Repo boundary with inherited Seatbelt rules and an
+  immutable second-sandbox snapshot, but cannot prove teardown of a deliberately
+  daemonized child. Use Linux Bubblewrap or a disposable VM for hostile agents.
 - Check commands are trusted user input and run in a disposable candidate
   worktree after path enforcement. They can read the checked-out source and
   host-readable data; use disposable-machine isolation for hostile Checks.

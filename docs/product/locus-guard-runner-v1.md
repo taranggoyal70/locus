@@ -42,9 +42,10 @@ The public test seams are:
 - Terminate the agent process group, then copy the workspace through a second
   target-Repo-denying sandbox into a location the agent cannot write. Inspect
   that immutable snapshot and read candidate files without following symlinks.
-- Bound agent/Check runtime, captured output memory, workspace entries, depth,
-  and aggregate apparent bytes. Hash/count the complete captured process stream
-  while retaining only bounded relevant output.
+- Bound the supervised agent/Check process-group runtime and captured output
+  memory, and bound snapshot traversal by entries, depth, and aggregate apparent
+  bytes before copying file contents. Hash/count the complete captured process
+  stream while retaining only bounded relevant output.
 
 The v1 boundary constrains access to the target Repo and host writes. It does
 not claim to hide unrelated readable host files from the agent, isolate the
@@ -106,3 +107,9 @@ network, or protect credentials the chosen provider CLI itself requires.
   unless the verifier trusts the expected public key out of band.
 - The local Repo lock is cooperative. Other tools that ignore it can still race
   delivery; production automation should run Guard in a dedicated checkout.
+- On macOS, Seatbelt restrictions are inherited, so escaped descendants remain
+  unable to access the target Repo or immutable snapshot. macOS does not expose
+  a native unprivileged PID namespace, however, so a deliberately daemonized
+  descendant may outlive the supervised process group with provider credentials
+  already in memory and network access. Use Linux Bubblewrap or a disposable VM
+  when the agent process itself is hostile.

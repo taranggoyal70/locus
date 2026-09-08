@@ -41,5 +41,11 @@ Candidate delivery is serialized by a cooperative local Repo lock.
 - A malicious agent may still read unrelated host data that the OS profile
   permits and may use the network. Strong whole-host isolation belongs in a
   disposable VM/container service, not in this local v1 claim.
+- Linux PID namespaces terminate the contained job as a unit. Native macOS
+  Seatbelt has no equivalent unprivileged PID namespace; inherited filesystem
+  restrictions and an immutable second-sandbox snapshot preserve the target
+  Repo boundary, but a deliberately daemonized child may retain in-memory
+  provider credentials and network access. Hostile-agent execution therefore
+  requires Linux or a disposable VM.
 - Signing needs a separately protected Ed25519 private key; self-generated keys
   establish integrity only when the verifier trusts the public key out of band.

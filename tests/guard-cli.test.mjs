@@ -661,6 +661,85 @@ describe("locus guard CLI", () => {
   );
 
   it.runIf(process.platform === "darwin")(
+    "rejects an oversized sparse workspace before snapshot content is copied",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const scriptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, scriptDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      expect(run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+      ]).code).toBe(0);
+      const before = fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8");
+      const agentScript = path.join(scriptDirectory, "agent.mjs");
+      fs.writeFileSync(agentScript, [
+        'import fs from "node:fs";',
+        'fs.truncateSync("src/invoice.js", 1024 * 1024 * 1024);',
+      ].join("\n"));
+
+      const executed = run(repo, [
+        "guard", "run", "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey, "--check", "/usr/bin/true",
+        "--", process.execPath, agentScript,
+      ]);
+
+      expect(executed.code).toBe(1);
+      expect(executed.err).toMatch(/immutable candidate snapshot/);
+      expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toBe(before);
+      expect(fs.existsSync(path.join(repo, ".locus/run-receipt.json"))).toBe(false);
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "returns after a detached child and applies only immutable snapshot bytes",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const scriptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, scriptDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      expect(run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+      ]).code).toBe(0);
+      const childScript = path.join(scriptDirectory, "child.mjs");
+      const agentScript = path.join(scriptDirectory, "agent.mjs");
+      fs.writeFileSync(childScript, [
+        'import fs from "node:fs";',
+        'setTimeout(() => { try { fs.writeFileSync("src/invoice.js", "late\\n"); } catch {} }, 500);',
+      ].join("\n"));
+      fs.writeFileSync(agentScript, [
+        'import fs from "node:fs";',
+        'import { spawn } from "node:child_process";',
+        'fs.writeFileSync("src/invoice.js", "snapshot\\n");',
+        'spawn(process.execPath, [process.argv[2]], { detached: true, stdio: "ignore" }).unref();',
+      ].join("\n"));
+
+      const executed = run(repo, [
+        "guard", "run", "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey, "--check", "/usr/bin/true", "--json",
+        "--", process.execPath, agentScript, childScript,
+      ]);
+
+      expect(executed.code, executed.err).toBe(0);
+      const envelope = JSON.parse(executed.out);
+      const applied = fs.readFileSync(path.join(repo, "src/invoice.js"));
+      expect(sha256(applied)).toBe(envelope.payload.candidate.records[0].contentHash);
+      expect(applied.toString("utf8")).toBe("snapshot\n");
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
     "discards ignored Check artifacts with the disposable worktree",
     () => {
       const repo = makeRepo();
