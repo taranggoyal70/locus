@@ -34,11 +34,13 @@ function makeRepo() {
   return repo;
 }
 
-function run(repo, args) {
+function run(repo, args, options = {}) {
   const result = spawnSync(process.execPath, [cli, ...args], {
     cwd: repo,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
+    env: { ...process.env, ...options.env },
+    timeout: options.timeout ?? 30_000,
   });
   return { code: result.status, out: result.stdout, err: result.stderr };
 }
@@ -141,4 +143,131 @@ describe("locus guard CLI", () => {
     expect(verified.err).toMatch(/control artifact path contains a symlink/);
     expect(fs.readFileSync(victim, "utf8")).toBe("do not overwrite\n");
   });
+
+  it("refuses to place a signing private key inside the target Repo", () => {
+    const repo = makeRepo();
+    const generated = run(repo, [
+      "guard", "keygen",
+      "--private-key", ".locus/private.pem",
+      "--public-key", ".locus/public.pem",
+    ]);
+
+    expect(generated.code).toBe(1);
+    expect(generated.err).toMatch(/private keys must be stored outside/);
+    expect(fs.existsSync(path.join(repo, ".locus/private.pem"))).toBe(false);
+  });
+
+  it.runIf(process.platform === "darwin")(
+    "runs a command agent inside the admitted Slice and emits a verifiable signed receipt",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const agentDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, agentDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      const generated = run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey, "--json",
+      ]);
+      expect(generated.code).toBe(0);
+      const key = JSON.parse(generated.out);
+      const agentScript = path.join(agentDirectory, "agent.mjs");
+      fs.writeFileSync(agentScript, [
+        'import fs from "node:fs";',
+        'const original = process.argv[2];',
+        'try { fs.readFileSync(original); process.exit(41); } catch (cause) {',
+        '  if (!["EPERM", "EACCES"].includes(cause.code)) throw cause;',
+        '}',
+        'fs.writeFileSync("src/invoice.js", "export function retryInvoice() { return \'once\'; }\\n");',
+        'console.log(JSON.stringify({ usage: { input_tokens: 120, output_tokens: 35, cached_input_tokens: 20 }, total_cost_usd: 0.014 }));',
+      ].join("\n"));
+
+      const executed = run(repo, [
+        "guard", "run",
+        "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey,
+        "--check", `${process.execPath} --check src/invoice.js`,
+        "--json",
+        "--",
+        process.execPath,
+        agentScript,
+        path.join(repo, "src/unrelated.js"),
+      ]);
+
+      expect(executed.code, `${executed.err}\n${executed.out}`).toBe(0);
+      const envelope = JSON.parse(executed.out);
+      expect(envelope.payload.enforcement.result).toBe("pass");
+      expect(envelope.payload.containment).toEqual(expect.objectContaining({
+        backend: "macos-seatbelt",
+        targetRepo: "inaccessible",
+        hostWrites: "ephemeral-only",
+      }));
+      expect(envelope.payload.candidate.changedPaths).toEqual(["src/invoice.js"]);
+      expect(envelope.payload.checks).toEqual([
+        expect.objectContaining({ result: "pass", exitCode: 0 }),
+      ]);
+      expect(envelope.payload.usage).toEqual(expect.objectContaining({
+        status: "provider-reported",
+        inputTokens: 120,
+        outputTokens: 35,
+        cachedInputTokens: 20,
+        costUsd: 0.014,
+      }));
+      expect(envelope.payload.review.status).toBe("pending");
+      expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toContain("return 'once'");
+
+      const verified = run(repo, [
+        "guard", "receipt", "verify",
+        "--receipt", ".locus/run-receipt.json",
+        "--public-key", publicKey,
+        "--expected-key-id", key.keyId,
+        "--json",
+      ]);
+      expect(verified.code).toBe(0);
+      expect(JSON.parse(verified.out).candidate.hash).toBe(envelope.payload.candidate.hash);
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "applies no changes when the contained agent creates a path outside the admitted Slice",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const agentDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, agentDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      expect(run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+      ]).code).toBe(0);
+      const before = fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8");
+      const agentScript = path.join(agentDirectory, "agent.mjs");
+      fs.writeFileSync(agentScript, [
+        'import fs from "node:fs";',
+        'fs.writeFileSync("src/invoice.js", "changed\\n");',
+        'fs.writeFileSync("src/not-admitted.js", "escape\\n");',
+      ].join("\n"));
+
+      const executed = run(repo, [
+        "guard", "run",
+        "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey,
+        "--",
+        process.execPath,
+        agentScript,
+      ]);
+
+      expect(executed.code).toBe(1);
+      expect(executed.err).toMatch(/outside the admitted Slice/);
+      expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toBe(before);
+    },
+    30_000,
+  );
 });

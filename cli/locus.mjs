@@ -14,6 +14,12 @@ import {
   widenScopeManifest,
   writeJsonFile,
 } from "./guard.mjs";
+import {
+  createSignedEnvelope,
+  generateSigningKeyPair,
+  verifySignedEnvelope,
+} from "./guard-signing.mjs";
+import { runGuardedAgent } from "./guard-runner.mjs";
 
 const HELP = `Locus — show your AI coding agent only the code it needs.
 
@@ -22,6 +28,9 @@ Usage:
   locus guard init "<task>" [--path .] [--out .locus/scope.json]
   locus guard widen <repo-path> --reason "<why>" --actor "<who>" [--manifest .locus/scope.json]
   locus guard verify --expected-manifest-hash <sha256> --expected-candidate-sha <git-oid> [--path .]
+  locus guard keygen --private-key <path> --public-key <path>
+  locus guard run --agent <codex|claude|command> --expected-manifest-hash <sha256> --signing-key <path> [--prompt "<task>"] [--check "<command>"]
+  locus guard receipt verify --receipt .locus/run-receipt.json --public-key <path> [--expected-key-id <sha256>]
   locus mcp
   locus --help
 
@@ -38,6 +47,7 @@ Examples:
   locus locate "the graph visualization" --json
   locus locate "login error" --evidence "TypeError: Cannot read property 'email' of null"
   locus guard init "fix duplicate invoice retries" --task-id BILL-142
+  locus guard run --agent codex --prompt "fix duplicate invoice retries" --check "pnpm test"
   locus guard verify --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH" --expected-candidate-sha "$GITHUB_HEAD_SHA"
   locus mcp   # start the MCP stdio server for Codex/Claude Code/Cursor
 `;
@@ -395,12 +405,210 @@ function runGuardVerify(rest) {
   if (receipt.enforcement.result !== "pass") process.exitCode = 1;
 }
 
-function runGuard(rest) {
+function pathIsInside(root, target) {
+  const relative = path.relative(root, target);
+  return relative === "" || (relative !== ".." && !relative.startsWith(`..${path.sep}`));
+}
+
+function requireControlArtifactPath(repoRoot, artifactPath) {
+  const relative = path.relative(repoRoot, artifactPath).split(path.sep).join("/");
+  if (relative && relative !== ".." && !relative.startsWith("../") && !relative.startsWith(".locus/")) {
+    fail("Guard control artifacts inside the Repo must be stored under .locus/.");
+  }
+  return relative;
+}
+
+function parseGuardKeygenArgs(rest) {
+  let repoDir = ".";
+  let privateKey = null;
+  let publicKey = null;
+  let json = false;
+  for (let index = 0; index < rest.length; index++) {
+    const arg = rest[index];
+    if (["--path", "--private-key", "--public-key"].includes(arg)) {
+      const value = rest[++index];
+      if (value === undefined) fail(`${arg} requires a value.`);
+      if (arg === "--path") repoDir = value;
+      if (arg === "--private-key") privateKey = value;
+      if (arg === "--public-key") publicKey = value;
+    } else if (arg === "--json") {
+      json = true;
+    } else {
+      fail(`Unknown guard keygen option: ${arg}`);
+    }
+  }
+  return { repoDir, privateKey, publicKey, json };
+}
+
+function runGuardKeygen(rest) {
+  const options = parseGuardKeygenArgs(rest);
+  if (!options.privateKey || !options.publicKey) {
+    fail("Usage: locus guard keygen --private-key <path> --public-key <path>");
+  }
+  const repoRoot = path.resolve(options.repoDir);
+  const privateKeyPath = path.resolve(options.privateKey);
+  const publicKeyPath = path.resolve(options.publicKey);
+  if (pathIsInside(repoRoot, privateKeyPath)) {
+    fail("Guard signing private keys must be stored outside the target Repo.");
+  }
+  let result;
+  try {
+    result = generateSigningKeyPair({ privateKeyPath, publicKeyPath });
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
+  if (options.json) console.log(JSON.stringify(result, null, 2));
+  else {
+    console.log(`Generated Guard Ed25519 key ${result.keyId}.`);
+    console.log(`Private ${result.privateKeyPath}; public ${result.publicKeyPath}.`);
+  }
+}
+
+function parseGuardRunArgs(rest) {
+  let repoDir = ".";
+  let manifest = ".locus/scope.json";
+  let receipt = ".locus/run-receipt.json";
+  let expectedManifestHash = process.env.LOCUS_GUARD_MANIFEST_HASH ?? null;
+  let signingKey = process.env.LOCUS_GUARD_SIGNING_KEY ?? null;
+  let agent = null;
+  let prompt = "";
+  let model = null;
+  let json = false;
+  const checks = [];
+  const commandArgv = [];
+  let optionsEnded = false;
+  for (let index = 0; index < rest.length; index++) {
+    const arg = rest[index];
+    if (arg === "--") {
+      optionsEnded = true;
+      continue;
+    }
+    if (optionsEnded) {
+      commandArgv.push(arg);
+      continue;
+    }
+    if ([
+      "--path", "--manifest", "--receipt", "--expected-manifest-hash",
+      "--signing-key", "--agent", "--prompt", "--model", "--check",
+    ].includes(arg)) {
+      const value = rest[++index];
+      if (value === undefined) fail(`${arg} requires a value.`);
+      if (arg === "--path") repoDir = value;
+      if (arg === "--manifest") manifest = value;
+      if (arg === "--receipt") receipt = value;
+      if (arg === "--expected-manifest-hash") expectedManifestHash = value;
+      if (arg === "--signing-key") signingKey = value;
+      if (arg === "--agent") agent = value;
+      if (arg === "--prompt") prompt = value;
+      if (arg === "--model") model = value;
+      if (arg === "--check") checks.push(value);
+    } else if (arg === "--json") {
+      json = true;
+    } else {
+      fail(`Unknown guard run option: ${arg}`);
+    }
+  }
+  return {
+    repoDir, manifest, receipt, expectedManifestHash, signingKey,
+    agent, prompt, model, checks, commandArgv, json,
+  };
+}
+
+async function runGuardAgent(rest) {
+  const options = parseGuardRunArgs(rest);
+  if (!options.agent || !["codex", "claude", "command"].includes(options.agent)) {
+    fail("Guard Run requires --agent codex, --agent claude, or --agent command.");
+  }
+  if (!options.signingKey) fail("Guard Run requires --signing-key or LOCUS_GUARD_SIGNING_KEY.");
+  const repoRoot = path.resolve(options.repoDir);
+  const manifestPath = path.resolve(repoRoot, options.manifest);
+  const receiptPath = path.resolve(repoRoot, options.receipt);
+  const signingKeyPath = path.resolve(options.signingKey);
+  requireControlArtifactPath(repoRoot, manifestPath);
+  const receiptRelative = requireControlArtifactPath(repoRoot, receiptPath);
+  if (pathIsInside(repoRoot, signingKeyPath)) {
+    fail("Guard signing private keys must be stored outside the target Repo.");
+  }
+  let receipt;
+  let envelope;
+  try {
+    const manifest = readJsonFile(manifestPath, "Guard scope manifest");
+    receipt = await runGuardedAgent({
+      manifest,
+      repoDir: repoRoot,
+      expectedManifestHash: options.expectedManifestHash,
+      agent: options.agent,
+      prompt: options.prompt || manifest.task.description,
+      model: options.model,
+      commandArgv: options.commandArgv,
+      checks: options.checks,
+    });
+    envelope = createSignedEnvelope({ payload: receipt, privateKeyPath: signingKeyPath });
+    writeJsonFile(receiptPath, envelope, {
+      allowedRoot: receiptRelative && !receiptRelative.startsWith("../") ? repoRoot : null,
+    });
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
+  if (options.json) console.log(JSON.stringify(envelope, null, 2));
+  else {
+    console.log(`Locus Guard Run ${receipt.enforcement.result.toUpperCase()}: ${receipt.candidate.hash}`);
+    console.log(`Receipt ${receipt.receiptHash} signed by ${envelope.signature.keyId}.`);
+  }
+  for (const violation of receipt.violations) console.error(`- ${violation.message}`);
+  if (receipt.enforcement.result !== "pass") process.exitCode = 1;
+}
+
+function parseGuardReceiptVerifyArgs(rest) {
+  let receipt = ".locus/run-receipt.json";
+  let publicKey = null;
+  let expectedKeyId = process.env.LOCUS_GUARD_SIGNER_KEY_ID ?? null;
+  let json = false;
+  for (let index = 0; index < rest.length; index++) {
+    const arg = rest[index];
+    if (["--receipt", "--public-key", "--expected-key-id"].includes(arg)) {
+      const value = rest[++index];
+      if (value === undefined) fail(`${arg} requires a value.`);
+      if (arg === "--receipt") receipt = value;
+      if (arg === "--public-key") publicKey = value;
+      if (arg === "--expected-key-id") expectedKeyId = value;
+    } else if (arg === "--json") {
+      json = true;
+    } else {
+      fail(`Unknown guard receipt verify option: ${arg}`);
+    }
+  }
+  return { receipt, publicKey, expectedKeyId, json };
+}
+
+function runGuardReceiptVerify(rest) {
+  if (rest[0] !== "verify") fail("Usage: locus guard receipt verify --public-key <path>");
+  const options = parseGuardReceiptVerifyArgs(rest.slice(1));
+  if (!options.publicKey) fail("Guard receipt verification requires --public-key.");
+  let payload;
+  try {
+    const envelope = readJsonFile(path.resolve(options.receipt), "Guard signed receipt");
+    payload = verifySignedEnvelope({
+      envelope,
+      publicKeyPath: path.resolve(options.publicKey),
+      expectedKeyId: options.expectedKeyId,
+    });
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
+  if (options.json) console.log(JSON.stringify(payload, null, 2));
+  else console.log(`Verified signed Guard receipt ${payload.receiptHash}.`);
+}
+
+async function runGuard(rest) {
   const subcommand = rest[0];
   if (subcommand === "init") return runGuardInit(rest.slice(1));
   if (subcommand === "widen") return runGuardWiden(rest.slice(1));
   if (subcommand === "verify") return runGuardVerify(rest.slice(1));
-  fail("Usage: locus guard <init|widen|verify> ...");
+  if (subcommand === "keygen") return runGuardKeygen(rest.slice(1));
+  if (subcommand === "run") return runGuardAgent(rest.slice(1));
+  if (subcommand === "receipt") return runGuardReceiptVerify(rest.slice(1));
+  fail("Usage: locus guard <init|widen|verify|keygen|run|receipt> ...");
 }
 
 async function main() {
@@ -422,7 +630,7 @@ async function main() {
     return;
   }
   if (cmd === "guard") {
-    runGuard(args.slice(1));
+    await runGuard(args.slice(1));
     return;
   }
   console.error(`Unknown command: ${cmd}\n`);
