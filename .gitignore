@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/.locus/
 
 # next.js
 /.next/

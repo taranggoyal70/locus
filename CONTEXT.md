@@ -177,6 +177,29 @@ admitted-context reduction and factual Run usage are not Savings claims. Savings
 claims are unavailable during the controlled alpha.
 _Avoid_: estimated savings, projected savings, savings on failed Runs.
 
+**Guard scope manifest**:
+A canonical, hashed contract that binds an Agent Task, repository identity,
+frozen base SHA, policy version, initial admitted/excluded paths, sensitive path
+patterns, and the append-only **Guard Widen event** chain. Its self-hash detects
+corruption; an authoritative decision additionally compares it with an expected
+hash held outside the candidate branch.
+_Avoid_: treating a PR-controlled allowlist as policy, sandbox policy.
+
+**Guard Widen event**:
+An approved or denied request to add one Repo-relative path to a Guard scope. It
+records path, reason, decision, actor, timestamp, sensitive override, prior event
+hash, and its own hash. Approved events derive a successor admitted Slice;
+denials remain evidence without changing it.
+_Avoid_: silently editing the allowlist, mutable exception.
+
+**Guard receipt**:
+The deterministic result of comparing the exact Git candidate against a trusted
+Guard scope manifest. It binds the base, candidate SHA, binary-diff hash,
+changed paths, manifest and Widen hashes, violations, and verifier version. It
+is unsigned until an external attestation signs the artifact; neither a receipt
+nor its signature proves task correctness.
+_Avoid_: verification proof, security certificate, completed task.
+
 **Sparse graph signal**:
 The `LocateResult` warning that dependency imports resolved at fewer than 0.6
 edges per Graph node. On a non-widened Slice this means the reduction may be an
@@ -234,6 +257,12 @@ _Avoid_: feature flag, toggle, permission.
   output surfaces (`formatResult`, `buildPackedContext`, `buildJsonResult`).
   Copied verbatim into `cli/` by `pnpm sync-cli`; `pnpm check-sync` fails the
   build if the two drift.
+- `bin/guard.mjs` — the zero-dependency Guard contract: canonical hashing,
+  manifest validation, Guard Widen event chaining, exact Git candidate hashing,
+  scope decision, and Guard receipt. Copied into `cli/` with the other runtime
+  files.
+- `.github/actions/locus-guard/action.yml` — portable merge-gate adapter. It
+  requires a trusted expected manifest hash and produces the receipt artifact.
 - `src/lib/localizer.ts` — **Localize**: `buildGraph(repo)` then `locate(task, repo, graph)`.
   `buildGraph` is separate on purpose — build once, **Localize** many as the task changes.
 - `src/components/ErrorBoundary.tsx` — React error boundary for graceful crash recovery.
@@ -298,6 +327,11 @@ _Avoid_: feature flag, toggle, permission.
   evidence is inserted once and never rewritten to simulate progress.
 - **No outcome, no claim.** Failed, cancelled, and active Runs expose measured
   usage but never display a Savings claim.
+- **A Guard self-hash is not authority.** An authoritative Guard decision
+  requires the expected manifest hash from outside the candidate branch.
+- **Guard gates writes, not reads.** The portable Git gate rejects out-of-scope
+  candidate changes. Only a separately documented fail-closed adapter may claim
+  to prevent an agent from reading outside its Slice.
 - **Checks are evidence, not outcomes.** A zero exit status is Check evidence;
   acceptance-criteria satisfaction remains a separate review decision.
 - **Measure the whole loop.** The USP is total tokens per verified task—not the

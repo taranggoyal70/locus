@@ -20,6 +20,7 @@ cancelled, and reviewed from the Runs ledger.
 | Surface | Use case |
 |---------|----------|
 | **Agent beta rollout** | Self-serve localization is open; Agent access remains gated until the frozen production canary passes |
+| **Locus Guard pilot** | Task-scoped Git candidate gate with hashed Widen history and receipt output; filesystem read containment is not yet claimed |
 | **Experimental REST API** | Programmatic localization for public Repos |
 | **Source runtimes** | CLI and MCP implementations used from a source checkout; no npm package is published |
 
@@ -235,6 +236,29 @@ The `locus-context` package is not published to npm. From this repository checko
 node bin/locus.mjs locate "fix the dashboard billing" --pack
 node bin/locus.mjs locate "login error" --evidence "TypeError: Cannot read property 'email'"
 ```
+
+### Locus Guard pilot
+
+Create a task-bound manifest before handing the checkout to an agent:
+
+```bash
+node bin/locus.mjs guard init "fix duplicate invoice retries" \
+  --task-id BILL-142 \
+  --actor platform@example.com
+```
+
+The command prints a SHA-256 manifest hash. Keep that value outside the agent's
+branch. After the candidate is committed, run the authoritative gate:
+
+```bash
+node bin/locus.mjs guard verify \
+  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH"
+```
+
+The command exits non-zero if the exact Git candidate changes a path outside the
+admitted Slice and writes a receipt that can be externally attested. See the
+[Locus Guard pilot guide](docs/operations/locus-guard-pilot.md) for Widen
+decisions, GitHub integration, trust requirements, and current limitations.
 
 Options:
 - `--pack` — emit the slice as a token-bounded paste block

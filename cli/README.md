@@ -74,6 +74,44 @@ It also warns when few internal imports resolved, because a small Slice from a
 sparse graph is an artifact rather than good localization — and the reported
 saving is then overstated.
 
+## Gate an agent's Git candidate
+
+`locus guard` turns a Slice into a hashed task contract and fails a candidate
+that changes anything outside it.
+
+Create the manifest from the exact base commit before the agent starts:
+
+```bash
+locus guard init "fix duplicate invoice retries" \
+  --task-id BILL-142 \
+  --actor platform@example.com
+```
+
+Keep the printed manifest hash somewhere the candidate branch cannot change.
+If a reviewer approves more context, record why and who decided:
+
+```bash
+locus guard widen src/lib/idempotency.ts \
+  --reason "the failing stack crosses this retry adapter" \
+  --actor reviewer@example.com
+```
+
+After the candidate is committed, verify it in a clean checkout:
+
+```bash
+locus guard verify \
+  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH"
+```
+
+Guard hashes the binary diff from the frozen base, checks every changed or
+renamed path against the admitted Slice, writes `.locus/receipt.json`, and exits
+non-zero on policy failure. `--advisory` is available for local feedback but is
+explicitly self-asserted and must not be a required merge check.
+
+This release gates what may be merged. It does not claim to prevent an agent
+from reading outside the Slice; that requires a separately supported
+fail-closed filesystem adapter.
+
 ## Supported languages
 
 | Language | Files | Import edges |
@@ -100,6 +138,9 @@ decorators that would have to be guessed.
 
 ```
 locus locate "<task>" [--path .] [--json] [--pack] [--budget <n>] [--evidence <text>]
+locus guard init "<task>" [--path .] [--out .locus/scope.json]
+locus guard widen <repo-path> --reason "<why>" --actor "<who>" [--deny]
+locus guard verify --expected-manifest-hash <sha256> [--path .] [--json]
 locus mcp
 locus --help
 
