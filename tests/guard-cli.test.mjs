@@ -3,6 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it } from "vitest";
+import { canonicalJson, sha256 } from "../bin/guard.mjs";
+import { createSignedEnvelope } from "../bin/guard-signing.mjs";
 
 const cli = path.resolve("bin/locus.mjs");
 const temporaryRepos = [];
@@ -155,6 +157,68 @@ describe("locus guard CLI", () => {
     expect(generated.code).toBe(1);
     expect(generated.err).toMatch(/private keys must be stored outside/);
     expect(fs.existsSync(path.join(repo, ".locus/private.pem"))).toBe(false);
+  });
+
+  it("binds an immutable human Review to the exact signed proposal", () => {
+    const repo = makeRepo();
+    const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+    temporaryRepos.push(keyDirectory);
+    const privateKey = path.join(keyDirectory, "private.pem");
+    const publicKey = path.join(keyDirectory, "public.pem");
+    expect(run(repo, [
+      "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+    ]).code).toBe(0);
+    const body = {
+      schemaVersion: "locus.guard.run-receipt.v1",
+      enforcement: { result: "pass" },
+      candidate: { hash: "candidate-123" },
+      review: { status: "pending" },
+    };
+    const payload = { ...body, receiptHash: sha256(canonicalJson(body)) };
+    const envelope = createSignedEnvelope({ payload, privateKeyPath: privateKey });
+    fs.mkdirSync(path.join(repo, ".locus"), { recursive: true });
+    fs.writeFileSync(
+      path.join(repo, ".locus/run-receipt.json"),
+      `${JSON.stringify(envelope, null, 2)}\n`,
+    );
+
+    const reviewed = run(repo, [
+      "guard", "review",
+      "--receipt", ".locus/run-receipt.json",
+      "--public-key", publicKey,
+      "--signing-key", privateKey,
+      "--decision", "accepted",
+      "--actor", "reviewer@example.com",
+      "--criterion", "Retry is limited to one attempt",
+      "--note", "Diff and Check evidence reviewed",
+      "--json",
+    ]);
+
+    expect(reviewed.code, reviewed.err).toBe(0);
+    const reviewedEnvelope = JSON.parse(reviewed.out);
+    expect(reviewedEnvelope.payload.review).toEqual(expect.objectContaining({
+      status: "accepted",
+      proposalHash: payload.receiptHash,
+      decidedBy: "reviewer@example.com",
+      criteria: ["Retry is limited to one attempt"],
+    }));
+    expect(reviewedEnvelope.payload.receiptHash).not.toBe(payload.receiptHash);
+
+    const verified = run(repo, [
+      "guard", "receipt", "verify", "--receipt", ".locus/run-receipt.json",
+      "--public-key", publicKey, "--json",
+    ]);
+    expect(verified.code).toBe(0);
+    expect(JSON.parse(verified.out).review.status).toBe("accepted");
+
+    const repeated = run(repo, [
+      "guard", "review", "--receipt", ".locus/run-receipt.json",
+      "--public-key", publicKey, "--signing-key", privateKey,
+      "--decision", "rejected", "--actor", "reviewer@example.com",
+      "--criterion", "Try again",
+    ]);
+    expect(repeated.code).toBe(1);
+    expect(repeated.err).toMatch(/already has a human Review/);
   });
 
   it.runIf(process.platform === "darwin")(

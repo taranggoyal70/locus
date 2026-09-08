@@ -20,6 +20,7 @@ import {
   verifySignedEnvelope,
 } from "./guard-signing.mjs";
 import { runGuardedAgent } from "./guard-runner.mjs";
+import { addHumanReview } from "./guard-review.mjs";
 
 const HELP = `Locus — show your AI coding agent only the code it needs.
 
@@ -30,6 +31,7 @@ Usage:
   locus guard verify --expected-manifest-hash <sha256> --expected-candidate-sha <git-oid> [--path .]
   locus guard keygen --private-key <path> --public-key <path>
   locus guard run --agent <codex|claude|command> --expected-manifest-hash <sha256> --signing-key <path> [--prompt "<task>"] [--check "<command>"]
+  locus guard review --decision <accepted|rejected> --actor <who> --criterion <result> --signing-key <path> --public-key <path>
   locus guard receipt verify --receipt .locus/run-receipt.json --public-key <path> [--expected-key-id <sha256>]
   locus mcp
   locus --help
@@ -600,6 +602,93 @@ function runGuardReceiptVerify(rest) {
   else console.log(`Verified signed Guard receipt ${payload.receiptHash}.`);
 }
 
+function parseGuardReviewArgs(rest) {
+  let repoDir = ".";
+  let receipt = ".locus/run-receipt.json";
+  let out = null;
+  let publicKey = null;
+  let signingKey = process.env.LOCUS_GUARD_SIGNING_KEY ?? null;
+  let decision = null;
+  let actor = null;
+  let note = null;
+  let json = false;
+  const criteria = [];
+  for (let index = 0; index < rest.length; index++) {
+    const arg = rest[index];
+    if ([
+      "--path", "--receipt", "--out", "--public-key", "--signing-key",
+      "--decision", "--actor", "--criterion", "--note",
+    ].includes(arg)) {
+      const value = rest[++index];
+      if (value === undefined) fail(`${arg} requires a value.`);
+      if (arg === "--path") repoDir = value;
+      if (arg === "--receipt") receipt = value;
+      if (arg === "--out") out = value;
+      if (arg === "--public-key") publicKey = value;
+      if (arg === "--signing-key") signingKey = value;
+      if (arg === "--decision") decision = value;
+      if (arg === "--actor") actor = value;
+      if (arg === "--criterion") criteria.push(value);
+      if (arg === "--note") note = value;
+    } else if (arg === "--json") {
+      json = true;
+    } else {
+      fail(`Unknown guard review option: ${arg}`);
+    }
+  }
+  return {
+    repoDir, receipt, out, publicKey, signingKey, decision, actor, criteria, note, json,
+  };
+}
+
+function runGuardReview(rest) {
+  const options = parseGuardReviewArgs(rest);
+  if (!options.publicKey || !options.signingKey || !options.decision || !options.actor) {
+    fail(
+      "Guard Review requires --public-key, --signing-key, --decision, --actor, and --criterion.",
+    );
+  }
+  const repoRoot = path.resolve(options.repoDir);
+  const receiptPath = path.resolve(repoRoot, options.receipt);
+  const outputPath = path.resolve(repoRoot, options.out ?? options.receipt);
+  const signingKeyPath = path.resolve(options.signingKey);
+  requireControlArtifactPath(repoRoot, receiptPath);
+  const outputRelative = requireControlArtifactPath(repoRoot, outputPath);
+  if (pathIsInside(repoRoot, signingKeyPath)) {
+    fail("Guard signing private keys must be stored outside the target Repo.");
+  }
+  let reviewed;
+  let nextEnvelope;
+  try {
+    const envelope = readJsonFile(receiptPath, "Guard signed receipt");
+    const receipt = verifySignedEnvelope({
+      envelope,
+      publicKeyPath: path.resolve(options.publicKey),
+      expectedKeyId: envelope.signature?.keyId,
+    });
+    reviewed = addHumanReview(receipt, {
+      decision: options.decision,
+      actor: options.actor,
+      criteria: options.criteria,
+      note: options.note,
+    });
+    nextEnvelope = createSignedEnvelope({ payload: reviewed, privateKeyPath: signingKeyPath });
+    if (nextEnvelope.signature.keyId !== envelope.signature.keyId) {
+      throw new Error("Guard Review must be signed by the same trusted key as the proposal.");
+    }
+    writeJsonFile(outputPath, nextEnvelope, {
+      allowedRoot: outputRelative && !outputRelative.startsWith("../") ? repoRoot : null,
+    });
+  } catch (cause) {
+    fail(cause instanceof Error ? cause.message : String(cause));
+  }
+  if (options.json) console.log(JSON.stringify(nextEnvelope, null, 2));
+  else {
+    console.log(`Human Review ${reviewed.review.status}: ${reviewed.receiptHash}.`);
+    console.log(`Proposal ${reviewed.review.proposalHash}; signer ${nextEnvelope.signature.keyId}.`);
+  }
+}
+
 async function runGuard(rest) {
   const subcommand = rest[0];
   if (subcommand === "init") return runGuardInit(rest.slice(1));
@@ -607,8 +696,9 @@ async function runGuard(rest) {
   if (subcommand === "verify") return runGuardVerify(rest.slice(1));
   if (subcommand === "keygen") return runGuardKeygen(rest.slice(1));
   if (subcommand === "run") return runGuardAgent(rest.slice(1));
+  if (subcommand === "review") return runGuardReview(rest.slice(1));
   if (subcommand === "receipt") return runGuardReceiptVerify(rest.slice(1));
-  fail("Usage: locus guard <init|widen|verify|keygen|run|receipt> ...");
+  fail("Usage: locus guard <init|widen|verify|keygen|run|review|receipt> ...");
 }
 
 async function main() {

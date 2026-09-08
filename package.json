@@ -21,7 +21,7 @@
     "evidence:release1": "node scripts/release1-public-report.mjs",
     "evidence:release1:write": "node scripts/release1-public-report.mjs --write",
     "sync-cli": "cp bin/*.mjs cli/",
-    "check-sync": "diff bin/core.mjs cli/core.mjs && diff bin/guard.mjs cli/guard.mjs && diff bin/guard-signing.mjs cli/guard-signing.mjs && diff bin/guard-runner.mjs cli/guard-runner.mjs && diff bin/locus.mjs cli/locus.mjs && diff bin/mcp.mjs cli/mcp.mjs"
+    "check-sync": "diff bin/core.mjs cli/core.mjs && diff bin/guard.mjs cli/guard.mjs && diff bin/guard-signing.mjs cli/guard-signing.mjs && diff bin/guard-runner.mjs cli/guard-runner.mjs && diff bin/guard-review.mjs cli/guard-review.mjs && diff bin/locus.mjs cli/locus.mjs && diff bin/mcp.mjs cli/mcp.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "3.0.41",
