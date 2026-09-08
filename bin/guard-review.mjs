@@ -36,6 +36,12 @@ export function verifyRunReceiptHash(receipt) {
   if (!receipt.review || !["pending", "accepted", "rejected"].includes(receipt.review.status)) {
     throw new Error("Guard Run receipt has invalid human Review state.");
   }
+  if (receipt.review.status !== "pending") {
+    const pendingBody = { ...receiptBody(receipt), review: { status: "pending" } };
+    if (receipt.review.proposalHash !== sha256(canonicalJson(pendingBody))) {
+      throw new Error("Guard human Review is not bound to the pending proposal hash.");
+    }
+  }
   if (receipt.enforcement.result === "pass"
     && (receipt.checks.length === 0 || receipt.checks.some((check) => check?.result !== "pass"))) {
     throw new Error("A passing Guard Run receipt requires at least one passing Check.");

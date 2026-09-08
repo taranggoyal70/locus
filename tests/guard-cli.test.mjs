@@ -219,7 +219,7 @@ describe("locus guard CLI", () => {
       "--criterion", "Retry is limited to one attempt",
     ]);
     expect(concurrent.code).toBe(1);
-    expect(concurrent.err).toMatch(/EEXIST|already exists/);
+    expect(concurrent.err).toMatch(/already locked/);
     fs.unlinkSync(path.join(repo, ".locus/run-receipt.json.review.lock"));
 
     const reviewed = run(repo, [

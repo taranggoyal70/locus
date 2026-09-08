@@ -745,7 +745,9 @@ function runGuardReview(rest) {
     });
     fs.renameSync(temporaryOutputPath, outputPath);
   } catch (cause) {
-    reviewError = cause instanceof Error ? cause.message : String(cause);
+    reviewError = cause?.code === "EEXIST"
+      ? "Guard Review is already locked by another reviewer."
+      : cause instanceof Error ? cause.message : String(cause);
   } finally {
     try {
       fs.unlinkSync(temporaryOutputPath);
