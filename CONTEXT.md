@@ -201,6 +201,16 @@ is unsigned until an external attestation signs the artifact; neither a receipt
 nor its signature proves task correctness.
 _Avoid_: verification proof, security certificate, completed task.
 
+**Guard Run receipt**:
+The signed evidence record produced by a contained local `guard run`. It binds
+the trusted manifest hash, target-Repo containment backend, prompt and argv
+digests, exact working-tree content records, factual Check results,
+provider-reported usage when available, and pending or immutable human Review.
+Its Ed25519 signature proves integrity and key possession only when the verifier
+trusts that public key out of band; it does not prove Agent Task correctness.
+_Avoid_: calling provider-reported usage measured by Locus, treating a pending
+Review as acceptance, signature certificate.
+
 **Sparse graph signal**:
 The `LocateResult` warning that dependency imports resolved at fewer than 0.6
 edges per Graph node. On a non-widened Slice this means the reduction may be an

@@ -5,7 +5,7 @@ import { execFileSync } from "node:child_process";
 
 export const GUARD_SCOPE_SCHEMA = "locus.guard.scope.v1";
 export const GUARD_RECEIPT_SCHEMA = "locus.guard.receipt.v1";
-export const GUARD_VERSION = "0.3.0";
+export const GUARD_VERSION = "0.4.0";
 
 export const DEFAULT_SENSITIVE_PATTERNS = Object.freeze([
   ".env",

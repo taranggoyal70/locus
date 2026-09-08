@@ -1,9 +1,10 @@
 # Locus Guard pilot
 
-Locus Guard is a task-derived Agent PR Firewall. The v0.3 pilot makes one
-promise: **a required check can reject an exact Git candidate that changes a
-path outside a separately trusted Slice.** It does not yet claim to prevent
-reads outside that Slice.
+Locus Guard is a task-derived Agent PR Firewall. The v0.4 pilot makes two narrow
+promises: **the supported local runner prevents its agent process from reading
+or writing excluded paths in the target Repo, and the required merge check can
+reject an exact Git candidate that changes a path outside a separately trusted
+Slice.** Neither promise proves the task is correct.
 
 ## 1. Create the Guard scope manifest before the agent branch
 
@@ -43,7 +44,55 @@ Use `--deny` to retain a rejected request in the Widen chain. Sensitive patterns
 trusted manifest hash with the newly printed hash through the same trusted
 control plane.
 
-## 3. Verify the exact candidate
+## 3. Run the agent inside the target-Repo boundary
+
+Generate a signing key outside the Repo, then run the agent with one or more
+trusted Check commands:
+
+```bash
+node bin/locus.mjs guard keygen \
+  --private-key /secure/locus/guard-private.pem \
+  --public-key .locus/guard-public.pem
+
+node bin/locus.mjs guard run \
+  --agent codex \
+  --prompt "fix duplicate invoice retries" \
+  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH" \
+  --signing-key /secure/locus/guard-private.pem \
+  --check "pnpm test" \
+  --check "pnpm typecheck"
+```
+
+Use `--agent claude` for Claude Code. For another harness, use
+`--agent command -- <executable> <args...>`. macOS uses Seatbelt; Linux requires
+Bubblewrap. Missing containment fails closed. The boundary hides the original
+target Repo and denies host writes outside the ephemeral runtime, but permits
+the host network and does not claim to hide every other readable host file.
+
+The command applies nothing if the agent exits non-zero, creates an unapproved
+path, produces a symlink/special file, or returns an empty candidate. After a
+clean candidate is copied back, each declared Check runs in the original Repo.
+The signed receipt records exact content hashes, command exits and bounded
+output, and provider-reported usage/cost when the provider emits it.
+
+## 4. Bind a human Review
+
+After inspecting the candidate, record one immutable Review:
+
+```bash
+node bin/locus.mjs guard review \
+  --decision accepted \
+  --actor reviewer@example.com \
+  --criterion "Invoice retry is idempotent" \
+  --public-key .locus/guard-public.pem \
+  --signing-key /secure/locus/guard-private.pem
+```
+
+An accepted Review cannot be attached to a failing Run. A second decision is
+refused; start a new Run instead. Verify the envelope offline with
+`guard receipt verify --public-key .locus/guard-public.pem`.
+
+## 5. Verify the exact Git candidate
 
 Fetch full Git history and run:
 
@@ -71,7 +120,7 @@ For local exploration only, `--advisory` removes the external-hash requirement.
 Its receipt is labeled `mode: advisory` and `trust: self-asserted`; do not make
 that result a required merge check.
 
-## 4. Install the GitHub merge gate
+## 6. Install the GitHub merge gate
 
 Use the composite action from an immutable Locus commit SHA, not a moving
 branch. The manifest must already have been downloaded into the checkout, and
@@ -107,7 +156,7 @@ Make `locus-guard` a required branch check. The expected manifest hash must not
 come from a PR-controlled file, workflow output, or environment value the agent
 can edit.
 
-## 5. Attest and retain the receipt
+## 7. Attest and retain the merge receipt
 
 Upload `.locus/receipt.json` even when the check fails. On a passing candidate,
 use GitHub artifact attestations or Sigstore to attest that exact receipt file.
@@ -118,15 +167,18 @@ The receipt binds the task, base SHA, candidate SHA, candidate diff hash,
 manifest hash, task-evidence digests, per-path inclusion reasons, admitted
 paths, Widen hashes, violations, verifier version, and decision. The JSON and
 receipt hash are deterministic for identical inputs; signing infrastructure may
-add issuance time separately. It does not yet bind separate test commands or a
-human Review; those are the next pilot milestone.
+add issuance time separately. The local Guard Run receipt separately binds
+Checks, provider-reported usage, and human Review to the pre-commit candidate.
 
 ## Pilot limitations
 
-- The v0.3 gate governs changed Git paths, not agent read access or shell tools.
+- The v0.4 local runner contains access to the target Repo; it does not provide
+  whole-host confidentiality, network isolation, or disposable-VM isolation.
+- Check commands are trusted user input and run in the original Repo after the
+  candidate passes path enforcement.
 - Its localization supports the same languages and graph limitations as the
   source CLI.
 - A trusted hash store and manifest delivery path are operator responsibilities
   in this release.
-- Tests/builds and human Review remain separate evidence. A green Guard receipt
-  means “candidate stayed inside approved scope,” not “task succeeded.”
+- A green Guard Run plus an accepted Review means the recorded signer accepted
+  that exact proposal; it still does not independently prove task success.

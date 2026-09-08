@@ -112,7 +112,7 @@ describe("published runtime surfaces", () => {
       .map((line) => JSON.parse(line));
 
     expect(responses).toHaveLength(3);
-    expect(responses[0].result.serverInfo).toEqual({ name: "locus", version: "0.3.0" });
+    expect(responses[0].result.serverInfo).toEqual({ name: "locus", version: "0.4.0" });
     expect(responses[1].result.tools.map((tool: { name: string }) => tool.name)).toContain("locate");
     expect(responses[2].result.content[0].text).toContain("lib/date.ts");
     expect(responses[2].result.isError).not.toBe(true);

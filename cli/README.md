@@ -96,7 +96,53 @@ locus guard widen src/lib/idempotency.ts \
   --actor reviewer@example.com
 ```
 
-After the candidate is committed, verify it in a clean checkout:
+Run Codex, Claude, or an explicit command inside the admitted Slice. Generate an
+Ed25519 key pair once; keep the private key outside the Repo:
+
+```bash
+locus guard keygen \
+  --private-key /secure/locus/guard-private.pem \
+  --public-key .locus/guard-public.pem
+
+locus guard run \
+  --agent codex \
+  --prompt "fix duplicate invoice retries" \
+  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH" \
+  --signing-key /secure/locus/guard-private.pem \
+  --check "pnpm test" \
+  --check "pnpm typecheck"
+```
+
+On macOS this uses Seatbelt. On Linux it requires Bubblewrap. Guard refuses to
+run when its OS containment backend is unavailable. Only admitted files are
+materialized; the agent cannot read or write the original Repo, and writes
+elsewhere on the host are denied. The target-Repo boundary does not claim to
+hide every other host-readable file or isolate the network.
+
+The Run writes `.locus/run-receipt.json`. It binds the working-tree content,
+real Check exit/output evidence, provider-reported usage and cost when present,
+and a pending human Review. Verify it with the independently held public key:
+
+```bash
+locus guard receipt verify \
+  --receipt .locus/run-receipt.json \
+  --public-key .locus/guard-public.pem
+```
+
+After inspecting the candidate, bind one immutable Review to that exact
+proposal:
+
+```bash
+locus guard review \
+  --decision accepted \
+  --actor reviewer@example.com \
+  --criterion "Invoice retry is idempotent" \
+  --public-key .locus/guard-public.pem \
+  --signing-key /secure/locus/guard-private.pem
+```
+
+After the candidate is committed, verify the merge candidate in a clean
+checkout:
 
 ```bash
 locus guard verify \
@@ -109,9 +155,9 @@ renamed path against the admitted Slice, writes `.locus/receipt.json`, and exits
 non-zero on policy failure. `--advisory` is available for local feedback but is
 explicitly self-asserted and must not be a required merge check.
 
-This release gates what may be merged. It does not claim to prevent an agent
-from reading outside the Slice; that requires a separately supported
-fail-closed filesystem adapter.
+The contained Run and the committed-candidate merge gate are separate checks:
+the first governs target-Repo access and records execution evidence; the second
+binds the exact Git commit presented for merge.
 
 ## Supported languages
 
@@ -141,6 +187,10 @@ decorators that would have to be guessed.
 locus locate "<task>" [--path .] [--json] [--pack] [--budget <n>] [--evidence <text>]
 locus guard init "<task>" [--path .] [--out .locus/scope.json]
 locus guard widen <repo-path> --reason "<why>" --actor "<who>" [--deny]
+locus guard keygen --private-key <path> --public-key <path>
+locus guard run --agent <codex|claude|command> --expected-manifest-hash <sha256> --signing-key <path> [--prompt <task>] [--check <command>]
+locus guard receipt verify --receipt <path> --public-key <path> [--expected-key-id <sha256>]
+locus guard review --decision <accepted|rejected> --actor <who> --criterion <result> --public-key <path> --signing-key <path>
 locus guard verify --expected-manifest-hash <sha256> --expected-candidate-sha <git-oid> [--path .] [--json]
 locus mcp
 locus --help

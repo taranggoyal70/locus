@@ -20,7 +20,7 @@ cancelled, and reviewed from the Runs ledger.
 | Surface | Use case |
 |---------|----------|
 | **Agent beta rollout** | Self-serve localization is open; Agent access remains gated until the frozen production canary passes |
-| **Locus Guard pilot** | Task-scoped Git candidate gate with hashed Widen history and receipt output; filesystem read containment is not yet claimed |
+| **Locus Guard v0.4** | Runs Codex, Claude, or an explicit command against only the admitted Slice; binds the candidate, Checks, usage, and immutable human Review in an Ed25519-signed receipt |
 | **Experimental REST API** | Programmatic localization for public Repos |
 | **Source runtimes** | CLI and MCP implementations used from a source checkout; no npm package is published |
 
