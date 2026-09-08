@@ -39,12 +39,8 @@ export function sha256(value) {
   return crypto.createHash("sha256").update(bytes).digest("hex");
 }
 
-function hashObject(value, omittedKeys = []) {
-  const omitted = new Set(omittedKeys);
-  const body = Object.fromEntries(
-    Object.entries(value).filter(([key]) => !omitted.has(key)),
-  );
-  return sha256(canonicalJson(body));
+function hashObject(value) {
+  return sha256(canonicalJson(value));
 }
 
 export function normalizeRepoPath(input) {
@@ -68,11 +64,66 @@ function uniqueSortedPaths(paths, label) {
   return [...new Set(paths.map(normalizeRepoPath))].sort();
 }
 
+function normalizeInclusionReasons(admittedPaths, inclusionReasons = null) {
+  const entries = inclusionReasons ?? admittedPaths.map((repoPath) => ({
+    path: repoPath,
+    reasons: ["explicit admission"],
+  }));
+  if (!Array.isArray(entries)) throw new Error("inclusionReasons must be an array.");
+  const normalized = entries.map((entry, index) => {
+    if (!isPlainObject(entry)) throw new Error(`inclusionReasons[${index}] must be an object.`);
+    const repoPath = normalizeRepoPath(entry.path);
+    if (!Array.isArray(entry.reasons) || entry.reasons.length === 0) {
+      throw new Error(`inclusionReasons[${index}].reasons must be a non-empty array.`);
+    }
+    return {
+      path: repoPath,
+      reasons: [...new Set(entry.reasons.map((reason) =>
+        requireString(reason, `inclusionReasons[${index}].reasons`)))].sort(),
+    };
+  }).sort((left, right) => left.path.localeCompare(right.path));
+  const reasonPaths = normalized.map((entry) => entry.path);
+  if (new Set(reasonPaths).size !== reasonPaths.length) {
+    throw new Error("Each admitted path must have exactly one inclusionReasons entry.");
+  }
+  if (canonicalJson(reasonPaths) !== canonicalJson([...admittedPaths].sort())) {
+    throw new Error("inclusionReasons must describe every admitted path and no other path.");
+  }
+  return normalized;
+}
+
+function normalizeEvidence(evidence, label) {
+  if (!Array.isArray(evidence)) throw new Error(`${label} must be an array.`);
+  return evidence.map((item, index) => {
+    if (!isPlainObject(item)) throw new Error(`${label}[${index}] must be an object.`);
+    const digest = requireString(item.digest, `${label}[${index}].digest`).toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(digest)) {
+      throw new Error(`${label}[${index}].digest must be a SHA-256 hex digest.`);
+    }
+    if (!Number.isSafeInteger(item.byteLength) || item.byteLength < 0) {
+      throw new Error(`${label}[${index}].byteLength must be a non-negative integer.`);
+    }
+    return {
+      kind: requireString(item.kind, `${label}[${index}].kind`),
+      digest,
+      byteLength: item.byteLength,
+    };
+  });
+}
+
 function requireString(value, label) {
   if (typeof value !== "string" || !value.trim()) {
     throw new Error(`${label} must be a non-empty string.`);
   }
   return value.trim();
+}
+
+function requireCommitOid(value, label) {
+  const oid = requireString(value, label).toLowerCase();
+  if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(oid)) {
+    throw new Error(`${label} must be a full 40- or 64-character Git commit OID.`);
+  }
+  return oid;
 }
 
 function globToRegExp(pattern) {
@@ -130,14 +181,23 @@ function widenEventBody(event) {
 function currentScope(initialScope, widens) {
   const admitted = new Set(initialScope.admittedPaths);
   const excluded = new Set(initialScope.excludedPaths);
+  const inclusionReasons = new Map(
+    initialScope.inclusionReasons.map((entry) => [entry.path, entry]),
+  );
   for (const event of widens) {
     if (event.decision !== "approved") continue;
     admitted.add(event.path);
     excluded.delete(event.path);
+    inclusionReasons.set(event.path, {
+      path: event.path,
+      reasons: [`approved Widen ${event.eventHash}`],
+    });
   }
   return {
     admittedPaths: [...admitted].sort(),
     excludedPaths: [...excluded].sort(),
+    inclusionReasons: [...inclusionReasons.values()].sort((left, right) =>
+      left.path.localeCompare(right.path)),
   };
 }
 
@@ -149,6 +209,8 @@ export function createScopeManifest({
   admittedPaths,
   excludedPaths = [],
   sensitivePatterns = DEFAULT_SENSITIVE_PATTERNS,
+  taskEvidence = [],
+  inclusionReasons = null,
   policyVersion = "1",
   actor = "local-user",
   createdAt = new Date().toISOString(),
@@ -156,9 +218,10 @@ export function createScopeManifest({
   const initialScope = {
     admittedPaths: uniqueSortedPaths(admittedPaths, "admittedPaths"),
     excludedPaths: uniqueSortedPaths(excludedPaths, "excludedPaths"),
+    inclusionReasons: [],
   };
   if (initialScope.admittedPaths.length === 0) {
-    throw new Error("A Guard manifest must admit at least one path.");
+    throw new Error("A Guard scope manifest must admit at least one path.");
   }
   const overlap = initialScope.admittedPaths.filter((repoPath) =>
     initialScope.excludedPaths.includes(repoPath));
@@ -171,16 +234,21 @@ export function createScopeManifest({
   if (sensitiveAdmission) {
     throw new Error(`Sensitive path cannot be admitted initially: ${sensitiveAdmission}`);
   }
+  initialScope.inclusionReasons = normalizeInclusionReasons(
+    initialScope.admittedPaths,
+    inclusionReasons,
+  );
   const normalizedTaskId = taskId === null ? null : requireString(taskId, "taskId");
   const manifest = {
     schemaVersion: GUARD_SCOPE_SCHEMA,
     task: {
       id: normalizedTaskId,
       description: requireString(task, "task"),
+      evidence: normalizeEvidence(taskEvidence, "taskEvidence"),
     },
     repository: {
       identity: normalizeRepositoryIdentity(repository),
-      baseSha: requireString(baseSha, "baseSha"),
+      baseSha: requireCommitOid(baseSha, "baseSha"),
     },
     policy: {
       version: requireString(policyVersion, "policyVersion"),
@@ -192,6 +260,10 @@ export function createScopeManifest({
     scope: {
       admittedPaths: [...initialScope.admittedPaths],
       excludedPaths: [...initialScope.excludedPaths],
+      inclusionReasons: initialScope.inclusionReasons.map((entry) => ({
+        path: entry.path,
+        reasons: [...entry.reasons],
+      })),
     },
     createdAt: requireString(createdAt, "createdAt"),
     createdBy: requireString(actor, "actor"),
@@ -200,16 +272,16 @@ export function createScopeManifest({
 }
 
 export function verifyScopeManifest(manifest) {
-  if (!isPlainObject(manifest)) throw new Error("Guard manifest must be a JSON object.");
+  if (!isPlainObject(manifest)) throw new Error("Guard scope manifest must be a JSON object.");
   if (manifest.schemaVersion !== GUARD_SCOPE_SCHEMA) {
-    throw new Error(`Unsupported Guard manifest schema: ${manifest.schemaVersion ?? "missing"}`);
+    throw new Error(`Unsupported Guard scope manifest schema: ${manifest.schemaVersion ?? "missing"}`);
   }
   requireString(manifest.task?.description, "task.description");
   requireString(manifest.repository?.identity, "repository.identity");
-  requireString(manifest.repository?.baseSha, "repository.baseSha");
+  requireCommitOid(manifest.repository?.baseSha, "repository.baseSha");
   requireString(manifest.policy?.version, "policy.version");
   if (manifest.policy?.enforcement !== "authoritative-merge-gate") {
-    throw new Error("Guard manifest enforcement must be authoritative-merge-gate.");
+    throw new Error("Guard scope manifest enforcement must be authoritative-merge-gate.");
   }
   const sensitivePatterns = uniqueSortedPaths(
     manifest.policy?.sensitivePatterns,
@@ -218,10 +290,21 @@ export function verifyScopeManifest(manifest) {
   const initialScope = {
     admittedPaths: uniqueSortedPaths(manifest.initialScope?.admittedPaths, "initialScope.admittedPaths"),
     excludedPaths: uniqueSortedPaths(manifest.initialScope?.excludedPaths, "initialScope.excludedPaths"),
+    inclusionReasons: [],
   };
   if (initialScope.admittedPaths.length === 0) {
-    throw new Error("A Guard manifest must admit at least one path.");
+    throw new Error("A Guard scope manifest must admit at least one path.");
   }
+  const initialOverlap = initialScope.admittedPaths.filter((repoPath) =>
+    initialScope.excludedPaths.includes(repoPath));
+  if (initialOverlap.length > 0) {
+    throw new Error(`Paths cannot be both admitted and excluded: ${initialOverlap.join(", ")}`);
+  }
+  initialScope.inclusionReasons = normalizeInclusionReasons(
+    initialScope.admittedPaths,
+    manifest.initialScope?.inclusionReasons,
+  );
+  normalizeEvidence(manifest.task?.evidence, "task.evidence");
   const widens = Array.isArray(manifest.widens) ? manifest.widens : null;
   if (!widens) throw new Error("widens must be an array.");
   let previousEventHash = null;
@@ -247,6 +330,10 @@ export function verifyScopeManifest(manifest) {
   const actualScope = {
     admittedPaths: uniqueSortedPaths(manifest.scope?.admittedPaths, "scope.admittedPaths"),
     excludedPaths: uniqueSortedPaths(manifest.scope?.excludedPaths, "scope.excludedPaths"),
+    inclusionReasons: normalizeInclusionReasons(
+      uniqueSortedPaths(manifest.scope?.admittedPaths, "scope.admittedPaths"),
+      manifest.scope?.inclusionReasons,
+    ),
   };
   if (canonicalJson(actualScope) !== canonicalJson(expectedScope)) {
     throw new Error("Current Guard scope does not match the initial scope and Widen chain.");
@@ -264,7 +351,7 @@ export function verifyScopeManifest(manifest) {
   }
   const expectedManifestHash = sha256(canonicalJson(manifestBody(manifest)));
   if (manifest.manifestHash !== expectedManifestHash) {
-    throw new Error("Guard manifest hash does not match its contents.");
+    throw new Error("Guard scope manifest hash does not match its contents.");
   }
   return manifest;
 }
@@ -276,6 +363,7 @@ export function widenScopeManifest(manifest, {
   decision = "approved",
   decidedAt = new Date().toISOString(),
   allowSensitive = false,
+  evidence = [],
 }) {
   verifyScopeManifest(manifest);
   const normalizedPath = normalizeRepoPath(repoPath);
@@ -299,6 +387,7 @@ export function widenScopeManifest(manifest, {
     decidedAt: requireString(decidedAt, "decidedAt"),
     decision,
     sensitiveOverride: sensitive && decision === "approved" ? true : false,
+    evidence: normalizeEvidence(evidence, "evidence"),
     previousEventHash,
   };
   const event = {
@@ -341,6 +430,37 @@ export function readGitHead(repoDir) {
   }
 }
 
+function dirtyEntries(repoDir) {
+  const output = git(repoDir, ["status", "--porcelain=v1", "-z", "--untracked-files=all"], {
+    encoding: "buffer",
+  });
+  const records = output.toString("utf8").split("\0").filter(Boolean);
+  const entries = [];
+  for (let index = 0; index < records.length; index++) {
+    const record = records[index];
+    const status = record.slice(0, 2);
+    const repoPath = normalizeRepoPath(record.slice(3));
+    entries.push({ status, path: repoPath });
+    if (status.includes("R") || status.includes("C")) {
+      entries.push({ status, path: normalizeRepoPath(records[++index]) });
+    }
+  }
+  return entries;
+}
+
+export function assertCleanGitCheckout(repoDir, allowedUntrackedPaths = []) {
+  const allowed = new Set(allowedUntrackedPaths.map(normalizeRepoPath));
+  const disallowed = dirtyEntries(repoDir).filter(
+    (entry) => entry.status !== "??" || !allowed.has(entry.path),
+  );
+  if (disallowed.length > 0) {
+    const detail = disallowed.map((entry) => `${entry.status} ${entry.path}`).join(", ");
+    throw new Error(
+      `Guard requires a clean Git checkout so the frozen base and candidate are exact: ${detail}`,
+    );
+  }
+}
+
 function changedPathsFromNameStatus(buffer) {
   const fields = buffer.toString("utf8").split("\0").filter(Boolean);
   const paths = [];
@@ -357,7 +477,7 @@ function changedPathsFromNameStatus(buffer) {
   return [...new Set(paths)].sort();
 }
 
-export function inspectGitCandidate(repoDir, baseSha) {
+export function inspectGitCandidate(repoDir, baseSha, allowedUntrackedPaths = []) {
   const absoluteRepo = path.resolve(repoDir);
   const candidateSha = readGitHead(absoluteRepo);
   try {
@@ -365,21 +485,7 @@ export function inspectGitCandidate(repoDir, baseSha) {
   } catch {
     throw new Error(`Manifest base ${baseSha} is not an ancestor of candidate ${candidateSha}.`);
   }
-  // `.locus/` holds the local control artifacts this command itself reads and
-  // writes. An untracked manifest or receipt must not make the code candidate
-  // inexact. If either file is committed or staged, the diff below still sees
-  // it and the positive scope gate rejects it unless it was explicitly admitted.
-  const dirty = git(absoluteRepo, [
-    "status",
-    "--porcelain=v1",
-    "--untracked-files=all",
-    "--",
-    ".",
-    ":(exclude).locus/**",
-  ]).trim();
-  if (dirty) {
-    throw new Error("Guard verification requires a clean working tree so the candidate hash is exact.");
-  }
+  assertCleanGitCheckout(absoluteRepo, allowedUntrackedPaths);
   const changedPaths = changedPathsFromNameStatus(
     git(absoluteRepo, [
       "diff",
@@ -409,14 +515,16 @@ export function inspectGitCandidate(repoDir, baseSha) {
   };
 }
 
-export function buildGuardReceipt({
+function buildGuardReceipt({
   manifest,
   candidate,
-  verifiedAt = new Date().toISOString(),
-  enforcementMode = "authoritative-merge-gate",
-  manifestTrust = "expected-hash",
+  enforcementMode,
+  manifestTrust,
 }) {
   verifyScopeManifest(manifest);
+  if (candidate.baseSha !== manifest.repository.baseSha) {
+    throw new Error("Candidate base does not match the Guard scope manifest base.");
+  }
   const admitted = new Set(manifest.scope.admittedPaths);
   const violations = candidate.changedPaths
     .filter((repoPath) => !admitted.has(repoPath))
@@ -434,7 +542,6 @@ export function buildGuardReceipt({
   }
   const body = {
     schemaVersion: GUARD_RECEIPT_SCHEMA,
-    verifiedAt: requireString(verifiedAt, "verifiedAt"),
     verifier: { name: "locus-guard", version: GUARD_VERSION },
     enforcement: {
       mode: enforcementMode,
@@ -451,6 +558,7 @@ export function buildGuardReceipt({
       trust: manifestTrust,
       policyVersion: manifest.policy.version,
       admittedPaths: manifest.scope.admittedPaths,
+      inclusionReasons: manifest.scope.inclusionReasons,
       widenEventHashes: manifest.widens.map((event) => event.eventHash),
     },
     candidate: {
@@ -471,7 +579,9 @@ export function verifyGitCandidate({
   manifest,
   repoDir,
   expectedManifestHash = null,
+  expectedCandidateSha = null,
   advisory = false,
+  allowedUntrackedPaths = [],
 }) {
   verifyScopeManifest(manifest);
   if (!expectedManifestHash && !advisory) {
@@ -481,7 +591,12 @@ export function verifyGitCandidate({
   }
   if (expectedManifestHash && expectedManifestHash !== manifest.manifestHash) {
     throw new Error(
-      `Guard manifest does not match the trusted hash: expected ${expectedManifestHash}, got ${manifest.manifestHash}.`,
+      `Guard scope manifest does not match the trusted hash: expected ${expectedManifestHash}, got ${manifest.manifestHash}.`,
+    );
+  }
+  if (!expectedCandidateSha && !advisory) {
+    throw new Error(
+      "Authoritative Guard verification requires the trusted expected candidate SHA.",
     );
   }
   const identity = readGitIdentity(repoDir);
@@ -490,7 +605,16 @@ export function verifyGitCandidate({
       `Manifest repository identity does not match this checkout: expected ${manifest.repository.identity}, got ${identity}`,
     );
   }
-  const candidate = inspectGitCandidate(repoDir, manifest.repository.baseSha);
+  const candidate = inspectGitCandidate(
+    repoDir,
+    manifest.repository.baseSha,
+    allowedUntrackedPaths,
+  );
+  if (expectedCandidateSha && candidate.candidateSha !== expectedCandidateSha) {
+    throw new Error(
+      `Guard candidate does not match the trusted SHA: expected ${expectedCandidateSha}, got ${candidate.candidateSha}.`,
+    );
+  }
   return buildGuardReceipt({
     manifest,
     candidate,
@@ -513,12 +637,54 @@ export function readJsonFile(filePath, label) {
   }
 }
 
-export function writeJsonFile(filePath, value) {
+function pathIsInside(root, target) {
+  const relative = path.relative(root, target);
+  return relative === "" || (relative !== ".." && !relative.startsWith(`..${path.sep}`));
+}
+
+function rejectSymlinkComponents(absolutePath) {
+  const parsed = path.parse(absolutePath);
+  let current = parsed.root;
+  for (const component of absolutePath.slice(parsed.root.length).split(path.sep).filter(Boolean)) {
+    current = path.join(current, component);
+    try {
+      if (fs.lstatSync(current).isSymbolicLink()) {
+        throw new Error(`Guard control artifact path contains a symlink: ${current}`);
+      }
+    } catch (cause) {
+      if (cause instanceof Error && cause.message.startsWith("Guard control artifact")) throw cause;
+      if (cause?.code === "ENOENT") return;
+      throw cause;
+    }
+  }
+}
+
+export function writeJsonFile(filePath, value, { allowedRoot = null } = {}) {
   const absolutePath = path.resolve(filePath);
+  const absoluteRoot = allowedRoot ? path.resolve(allowedRoot) : null;
+  if (absoluteRoot && !pathIsInside(absoluteRoot, absolutePath)) {
+    throw new Error(`Guard control artifact escapes the Repo: ${absolutePath}`);
+  }
+  rejectSymlinkComponents(absolutePath);
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
-  fs.writeFileSync(absolutePath, `${JSON.stringify(canonicalValue(value), null, 2)}\n`, {
-    encoding: "utf8",
-    mode: 0o600,
-  });
+  rejectSymlinkComponents(absolutePath);
+  if (absoluteRoot) {
+    const realRoot = fs.realpathSync(absoluteRoot);
+    const realParent = fs.realpathSync(path.dirname(absolutePath));
+    if (!pathIsInside(realRoot, realParent)) {
+      throw new Error(`Guard control artifact parent escapes the Repo: ${realParent}`);
+    }
+  }
+  const flags = fs.constants.O_WRONLY
+    | fs.constants.O_CREAT
+    | fs.constants.O_TRUNC
+    | (fs.constants.O_NOFOLLOW ?? 0);
+  const descriptor = fs.openSync(absolutePath, flags, 0o600);
+  try {
+    fs.writeFileSync(descriptor, `${JSON.stringify(canonicalValue(value), null, 2)}\n`, "utf8");
+    fs.fsyncSync(descriptor);
+  } finally {
+    fs.closeSync(descriptor);
+  }
   return absolutePath;
 }

@@ -239,7 +239,7 @@ node bin/locus.mjs locate "login error" --evidence "TypeError: Cannot read prope
 
 ### Locus Guard pilot
 
-Create a task-bound manifest before handing the checkout to an agent:
+Create a Guard scope manifest before handing the checkout to an agent:
 
 ```bash
 node bin/locus.mjs guard init "fix duplicate invoice retries" \
@@ -252,7 +252,8 @@ branch. After the candidate is committed, run the authoritative gate:
 
 ```bash
 node bin/locus.mjs guard verify \
-  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH"
+  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH" \
+  --expected-candidate-sha "$GITHUB_HEAD_SHA"
 ```
 
 The command exits non-zero if the exact Git candidate changes a path outside the

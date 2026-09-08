@@ -54,12 +54,19 @@ describe("locus guard CLI", () => {
     const repo = makeRepo();
     const initialized = run(repo, [
       "guard", "init", "fix invoice retry", "--task-id", "BILL-142", "--actor", "owner@example.com",
+      "--evidence", "TypeError: duplicate invoice retry",
     ]);
     expect(initialized.code).toBe(0);
     expect(initialized.out).toMatch(/Admitted 1; excluded 1/);
 
     const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
     expect(manifest.scope.admittedPaths).toEqual(["src/invoice.js"]);
+    expect(manifest.task.evidence).toEqual([
+      expect.objectContaining({ kind: "text", byteLength: 34 }),
+    ]);
+    expect(manifest.initialScope.inclusionReasons).toEqual([
+      expect.objectContaining({ path: "src/invoice.js", reasons: expect.arrayContaining(["task Anchor"]) }),
+    ]);
 
     write(repo, "src/invoice.js", "export function retryInvoice() { return 'retry once'; }\n");
     git(repo, ["add", "src/invoice.js"]);
@@ -67,6 +74,7 @@ describe("locus guard CLI", () => {
 
     const verified = run(repo, [
       "guard", "verify", "--json", "--expected-manifest-hash", manifest.manifestHash,
+      "--expected-candidate-sha", git(repo, ["rev-parse", "HEAD"]),
     ]);
     expect(verified.code).toBe(0);
     const receipt = JSON.parse(verified.out);
@@ -85,6 +93,7 @@ describe("locus guard CLI", () => {
 
     const verified = run(repo, [
       "guard", "verify", "--json", "--expected-manifest-hash", manifest.manifestHash,
+      "--expected-candidate-sha", git(repo, ["rev-parse", "HEAD"]),
     ]);
     expect(verified.code).toBe(1);
     const receipt = JSON.parse(verified.out);
@@ -100,5 +109,36 @@ describe("locus guard CLI", () => {
     expect(initialized.code).toBe(1);
     expect(initialized.err).toMatch(/refused a whole-Repo manifest/);
     expect(fs.existsSync(path.join(repo, ".locus/scope.json"))).toBe(false);
+  });
+
+  it("refuses to derive a frozen Guard scope manifest from dirty source", () => {
+    const repo = makeRepo();
+    write(repo, "src/invoice.js", "export function retryInvoice() { return 'dirty'; }\n");
+    const initialized = run(repo, ["guard", "init", "fix invoice retry"]);
+    expect(initialized.code).toBe(1);
+    expect(initialized.err).toMatch(/clean Git checkout/);
+  });
+
+  it("does not follow a candidate-controlled receipt symlink", () => {
+    const repo = makeRepo();
+    expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+    const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-victim-"));
+    temporaryRepos.push(outside);
+    const victim = path.join(outside, "victim.txt");
+    fs.writeFileSync(victim, "do not overwrite\n");
+    fs.symlinkSync(victim, path.join(repo, ".locus/receipt.json"));
+    git(repo, ["add", "-f", ".locus/receipt.json"]);
+    git(repo, ["commit", "--quiet", "-m", "malicious receipt link"]);
+
+    const verified = run(repo, [
+      "guard", "verify",
+      "--expected-manifest-hash", manifest.manifestHash,
+      "--expected-candidate-sha", git(repo, ["rev-parse", "HEAD"]),
+    ]);
+
+    expect(verified.code).toBe(1);
+    expect(verified.err).toMatch(/control artifact path contains a symlink/);
+    expect(fs.readFileSync(victim, "utf8")).toBe("do not overwrite\n");
   });
 });

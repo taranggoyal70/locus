@@ -76,7 +76,7 @@ saving is then overstated.
 
 ## Gate an agent's Git candidate
 
-`locus guard` turns a Slice into a hashed task contract and fails a candidate
+`locus guard` turns a Slice into a Guard scope manifest and fails a candidate
 that changes anything outside it.
 
 Create the manifest from the exact base commit before the agent starts:
@@ -100,7 +100,8 @@ After the candidate is committed, verify it in a clean checkout:
 
 ```bash
 locus guard verify \
-  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH"
+  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH" \
+  --expected-candidate-sha "$GITHUB_HEAD_SHA"
 ```
 
 Guard hashes the binary diff from the frozen base, checks every changed or
@@ -140,7 +141,7 @@ decorators that would have to be guessed.
 locus locate "<task>" [--path .] [--json] [--pack] [--budget <n>] [--evidence <text>]
 locus guard init "<task>" [--path .] [--out .locus/scope.json]
 locus guard widen <repo-path> --reason "<why>" --actor "<who>" [--deny]
-locus guard verify --expected-manifest-hash <sha256> [--path .] [--json]
+locus guard verify --expected-manifest-hash <sha256> --expected-candidate-sha <git-oid> [--path .] [--json]
 locus mcp
 locus --help
 

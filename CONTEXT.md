@@ -178,9 +178,10 @@ claims are unavailable during the controlled alpha.
 _Avoid_: estimated savings, projected savings, savings on failed Runs.
 
 **Guard scope manifest**:
-A canonical, hashed contract that binds an Agent Task, repository identity,
-frozen base SHA, policy version, initial admitted/excluded paths, sensitive path
-patterns, and the append-only **Guard Widen event** chain. Its self-hash detects
+A canonical, hashed contract that binds an Agent Task, task-evidence digests,
+repository identity, frozen base SHA, policy version, initial admitted/excluded
+paths, per-path inclusion reasons, sensitive path patterns, and the append-only
+**Guard Widen event** chain. Its self-hash detects
 corruption; an authoritative decision additionally compares it with an expected
 hash held outside the candidate branch.
 _Avoid_: treating a PR-controlled allowlist as policy, sandbox policy.
@@ -259,7 +260,7 @@ _Avoid_: feature flag, toggle, permission.
   build if the two drift.
 - `bin/guard.mjs` — the zero-dependency Guard contract: canonical hashing,
   manifest validation, Guard Widen event chaining, exact Git candidate hashing,
-  scope decision, and Guard receipt. Copied into `cli/` with the other runtime
+  merge-gate decision, and Guard receipt. Copied into `cli/` with the other runtime
   files.
 - `.github/actions/locus-guard/action.yml` — portable merge-gate adapter. It
   requires a trusted expected manifest hash and produces the receipt artifact.

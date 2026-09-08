@@ -4,12 +4,12 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  buildGuardReceipt,
   canonicalJson,
   createScopeManifest,
   matchesSensitivePath,
   readGitHead,
   readGitIdentity,
+  sha256,
   verifyGitCandidate,
   verifyScopeManifest,
   widenScopeManifest,
@@ -75,7 +75,7 @@ describe("Guard scope manifest", () => {
     const manifest = manifestFor(repo);
     const tampered = structuredClone(manifest);
     tampered.scope.admittedPaths.push("src/auth.js");
-    expect(() => verifyScopeManifest(tampered)).toThrow(/initial scope and Widen chain/);
+    expect(() => verifyScopeManifest(tampered)).toThrow(/inclusionReasons|initial scope and Widen chain/);
   });
 
   it("records an approved Widen as an append-only hash chain", () => {
@@ -121,6 +121,7 @@ describe("Guard candidate verification", () => {
       manifest,
       repoDir: repo,
       expectedManifestHash: manifest.manifestHash,
+      expectedCandidateSha: readGitHead(repo),
     });
 
     expect(receipt.enforcement.result).toBe("pass");
@@ -144,6 +145,7 @@ describe("Guard candidate verification", () => {
       manifest,
       repoDir: repo,
       expectedManifestHash: manifest.manifestHash,
+      expectedCandidateSha: readGitHead(repo),
     });
 
     expect(receipt.enforcement.result).toBe("fail");
@@ -161,7 +163,8 @@ describe("Guard candidate verification", () => {
       manifest,
       repoDir: repo,
       expectedManifestHash: manifest.manifestHash,
-    })).toThrow(/clean working tree/);
+      expectedCandidateSha: readGitHead(repo),
+    })).toThrow(/clean Git checkout/);
   });
 
   it("refuses authoritative verification without an out-of-band manifest hash", () => {
@@ -170,22 +173,78 @@ describe("Guard candidate verification", () => {
     expect(() => verifyGitCandidate({ manifest, repoDir: repo })).toThrow(/trusted expected manifest hash/);
   });
 
+  it("refuses authoritative verification without the trusted candidate SHA", () => {
+    const repo = makeRepo();
+    const manifest = manifestFor(repo);
+    expect(() => verifyGitCandidate({
+      manifest,
+      repoDir: repo,
+      expectedManifestHash: manifest.manifestHash,
+    })).toThrow(/trusted expected candidate SHA/);
+  });
+
+  it("refuses symbolic refs where the contract requires a frozen commit OID", () => {
+    const repo = makeRepo();
+    expect(() => createScopeManifest({
+      task: "fix retries",
+      repository: readGitIdentity(repo),
+      baseSha: "HEAD",
+      admittedPaths: ["src/invoice.js"],
+    })).toThrow(/full 40- or 64-character Git commit OID/);
+  });
+
+  it("rechecks that admitted and excluded paths cannot overlap", () => {
+    const repo = makeRepo();
+    const tampered = structuredClone(manifestFor(repo));
+    tampered.initialScope.excludedPaths.push("src/invoice.js");
+    tampered.scope.excludedPaths.push("src/invoice.js");
+    const body = structuredClone(tampered);
+    delete body.manifestHash;
+    tampered.manifestHash = sha256(canonicalJson(body));
+    expect(() => verifyScopeManifest(tampered)).toThrow(/both admitted and excluded/);
+  });
+
+  it("does not exempt staged Guard control artifacts from the clean-checkout rule", () => {
+    const repo = makeRepo();
+    const manifest = manifestFor(repo);
+    write(repo, ".locus/scope.json", JSON.stringify(manifest));
+    git(repo, ["add", ".locus/scope.json"]);
+    expect(() => verifyGitCandidate({
+      manifest,
+      repoDir: repo,
+      expectedManifestHash: manifest.manifestHash,
+      expectedCandidateSha: readGitHead(repo),
+      allowedUntrackedPaths: [".locus/scope.json"],
+    })).toThrow(/clean Git checkout/);
+  });
+
   it("fails an empty candidate instead of producing a meaningless green receipt", () => {
     const repo = makeRepo();
     const manifest = manifestFor(repo);
-    const receipt = buildGuardReceipt({
+    const receipt = verifyGitCandidate({
       manifest,
-      candidate: {
-        baseSha: manifest.repository.baseSha,
-        candidateSha: manifest.repository.baseSha,
-        candidateHash: "0".repeat(64),
-        changedPaths: [],
-      },
-      verifiedAt: "2026-09-07T02:00:00.000Z",
+      repoDir: repo,
+      expectedManifestHash: manifest.manifestHash,
+      expectedCandidateSha: readGitHead(repo),
     });
     expect(receipt.enforcement.result).toBe("fail");
     expect(receipt.violations).toEqual([
       expect.objectContaining({ code: "EMPTY_CANDIDATE" }),
     ]);
+  });
+
+  it("emits deterministic receipts for identical trusted inputs", () => {
+    const repo = makeRepo();
+    const manifest = manifestFor(repo);
+    write(repo, "src/invoice.js", "export const attempts = 2;\n");
+    git(repo, ["add", "."]);
+    git(repo, ["commit", "--quiet", "-m", "fix retries"]);
+    const input = {
+      manifest,
+      repoDir: repo,
+      expectedManifestHash: manifest.manifestHash,
+      expectedCandidateSha: readGitHead(repo),
+    };
+    expect(verifyGitCandidate(input)).toEqual(verifyGitCandidate(input));
   });
 });

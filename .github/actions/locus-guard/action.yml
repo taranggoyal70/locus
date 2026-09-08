@@ -1,12 +1,15 @@
 name: Locus Guard
-description: Fail a pull request when its exact Git candidate changes paths outside a trusted Locus scope manifest.
+description: Fail a pull request when its exact Git candidate changes paths outside a trusted Guard scope manifest.
 
 inputs:
   manifest-hash:
     description: Trusted SHA-256 printed by `locus guard init`; store outside the agent branch.
     required: true
+  candidate-sha:
+    description: Trusted pull-request head SHA; the checkout must be this exact commit.
+    required: true
   manifest:
-    description: Repo-relative path to the downloaded or generated scope manifest.
+    description: Repo-relative path to the downloaded or generated Guard scope manifest.
     required: false
     default: .locus/scope.json
   repo-path:
@@ -30,6 +33,7 @@ runs:
       shell: bash
       env:
         LOCUS_GUARD_EXPECTED_HASH: ${{ inputs.manifest-hash }}
+        LOCUS_GUARD_EXPECTED_CANDIDATE: ${{ inputs.candidate-sha }}
         LOCUS_GUARD_MANIFEST: ${{ inputs.manifest }}
         LOCUS_GUARD_REPO_PATH: ${{ inputs.repo-path }}
         LOCUS_GUARD_RECEIPT: ${{ inputs.receipt }}
@@ -38,7 +42,8 @@ runs:
           --path "$LOCUS_GUARD_REPO_PATH" \
           --manifest "$LOCUS_GUARD_MANIFEST" \
           --receipt "$LOCUS_GUARD_RECEIPT" \
-          --expected-manifest-hash "$LOCUS_GUARD_EXPECTED_HASH"
+          --expected-manifest-hash "$LOCUS_GUARD_EXPECTED_HASH" \
+          --expected-candidate-sha "$LOCUS_GUARD_EXPECTED_CANDIDATE"
 
 branding:
   icon: shield

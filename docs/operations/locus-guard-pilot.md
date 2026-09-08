@@ -5,7 +5,7 @@ promise: **a required check can reject an exact Git candidate that changes a
 path outside a separately trusted Slice.** It does not yet claim to prevent
 reads outside that Slice.
 
-## 1. Create the task contract before the agent branch
+## 1. Create the Guard scope manifest before the agent branch
 
 Start from the exact base commit the agent will receive:
 
@@ -17,8 +17,6 @@ node bin/locus.mjs guard init "fix duplicate invoice retries" \
 
 If Locus cannot find a confident Anchor, it refuses to turn a whole-Repo Widen
 into an allowlist. Refine the task with a filename, symbol, error, or evidence.
-`--allow-whole-repo` exists for an explicit diagnostic decision, but provides no
-scope reduction.
 
 The command writes `.locus/scope.json` and prints a manifest hash. Retain that
 hash somewhere the coding agent cannot change, such as a protected environment
@@ -29,7 +27,7 @@ branch as trusted input.
 The generated manifest is a local control artifact. Keep `.locus/` untracked or
 download the manifest into it during CI.
 
-## 2. Record a scope decision
+## 2. Record a Guard Widen event
 
 When the agent needs another path, a reviewer records the decision:
 
@@ -51,7 +49,8 @@ Fetch full Git history and run:
 
 ```bash
 node bin/locus.mjs guard verify \
-  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH"
+  --expected-manifest-hash "$LOCUS_GUARD_MANIFEST_HASH" \
+  --expected-candidate-sha "$GITHUB_HEAD_SHA"
 ```
 
 Guard verifies that:
@@ -60,6 +59,7 @@ Guard verifies that:
 - the expected hash from the trusted channel matches the manifest;
 - the manifest repository matches the checkout;
 - the frozen base is an ancestor of the candidate;
+- the checked-out candidate is the trusted pull-request head SHA;
 - the working tree is clean;
 - the binary diff hashes to the receipt's candidate hash; and
 - every changed or renamed path is admitted.
@@ -91,6 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@<PINNED_SHA>
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -99,6 +100,7 @@ jobs:
       - uses: taranggoyal70/locus/.github/actions/locus-guard@<LOCUS_COMMIT_SHA>
         with:
           manifest-hash: ${{ vars.LOCUS_GUARD_MANIFEST_HASH }}
+          candidate-sha: ${{ github.event.pull_request.head.sha }}
 ```
 
 Make `locus-guard` a required branch check. The expected manifest hash must not
@@ -113,9 +115,11 @@ The receipt deliberately says `unsigned` until that external signing step has
 completed.
 
 The receipt binds the task, base SHA, candidate SHA, candidate diff hash,
-manifest hash, admitted paths, Widen hashes, violations, verifier version, and
-decision. It does not yet bind separate test commands or a human Review; those
-are the next pilot milestone.
+manifest hash, task-evidence digests, per-path inclusion reasons, admitted
+paths, Widen hashes, violations, verifier version, and decision. The JSON and
+receipt hash are deterministic for identical inputs; signing infrastructure may
+add issuance time separately. It does not yet bind separate test commands or a
+human Review; those are the next pilot milestone.
 
 ## Pilot limitations
 

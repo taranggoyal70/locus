@@ -5,7 +5,7 @@ Status: accepted
 
 ## Context
 
-A scope manifest stored only in an agent's checkout is self-asserted. An agent
+A Guard scope manifest stored only in an agent's checkout is self-asserted. An agent
 with normal filesystem access can change the allowlist and recompute its hash.
 Checking that self-hash would detect accidental corruption but would not make a
 merge decision authoritative.
@@ -18,11 +18,11 @@ hook physically prevents reads outside a Slice.
 
 Locus Guard separates guidance, enforcement, and integrity:
 
-- `guard init` creates a canonical task-scope manifest from a deterministic
+- `guard init` creates a canonical Guard scope manifest from a deterministic
   Slice and prints its SHA-256.
 - An authoritative `guard verify` requires the expected manifest hash from a
-  trusted channel outside the candidate branch. A missing or different hash
-  fails closed.
+  trusted channel outside the candidate branch and the expected candidate SHA
+  from the pull-request event. A missing or different value fails closed.
 - `--advisory` may use a self-asserted manifest for local feedback, but its
   receipt says `advisory` and `self-asserted`.
 - Each Widen records the path, reason, decision, actor, timestamp, prior event
@@ -31,6 +31,9 @@ Locus Guard separates guidance, enforcement, and integrity:
 - Verification requires a clean Git checkout, binds the binary diff from the
   frozen base to the exact candidate SHA, and exits non-zero for any changed
   path outside the admitted Slice.
+- The Guard receipt omits wall-clock generation time so identical trusted
+  inputs produce identical JSON and a stable receipt hash. Signing systems may
+  add an issuance time outside the deterministic receipt.
 - The receipt is unsigned by default. It is suitable as the subject of a
   Sigstore or GitHub artifact attestation, but a signature proves provenance
   and integrity rather than correctness or task completion.
