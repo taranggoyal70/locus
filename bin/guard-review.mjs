@@ -30,6 +30,12 @@ export function verifyRunReceiptHash(receipt) {
     || !Array.isArray(receipt.candidate.records)) {
     throw new Error("Guard Run receipt has invalid candidate evidence.");
   }
+  const candidatePaths = receipt.candidate.records.map((record) => record?.path);
+  if (receipt.candidate.hash !== sha256(canonicalJson(receipt.candidate.records))
+    || canonicalJson(receipt.candidate.changedPaths) !== canonicalJson(candidatePaths)
+    || new Set(candidatePaths).size !== candidatePaths.length) {
+    throw new Error("Guard Run receipt candidate hash or changed paths do not match its records.");
+  }
   if (!Array.isArray(receipt.checks) || !Array.isArray(receipt.violations)) {
     throw new Error("Guard Run receipt has invalid Check or violation evidence.");
   }
@@ -41,10 +47,25 @@ export function verifyRunReceiptHash(receipt) {
     if (receipt.review.proposalHash !== sha256(canonicalJson(pendingBody))) {
       throw new Error("Guard human Review is not bound to the pending proposal hash.");
     }
+    if (!Array.isArray(receipt.review.criteria) || receipt.review.criteria.length === 0
+      || receipt.review.criteria.some((criterion) =>
+        !criterion || typeof criterion.criterion !== "string"
+        || !["pass", "fail"].includes(criterion.result))) {
+      throw new Error("Guard human Review requires criterion-by-criterion decisions.");
+    }
   }
   if (receipt.enforcement.result === "pass"
     && (receipt.checks.length === 0 || receipt.checks.some((check) => check?.result !== "pass"))) {
     throw new Error("A passing Guard Run receipt requires at least one passing Check.");
+  }
+  if (receipt.enforcement.result === "pass" && receipt.candidate.records.length === 0) {
+    throw new Error("A passing Guard Run receipt requires a non-empty candidate.");
+  }
+  if (receipt.enforcement.result === "pass" && receipt.violations.length > 0) {
+    throw new Error("A passing Guard Run receipt cannot contain violations.");
+  }
+  if (receipt.review.status === "accepted" && receipt.enforcement.result !== "pass") {
+    throw new Error("An accepted Review requires a passing Guard Run.");
   }
   const expected = sha256(canonicalJson(receiptBody(receipt)));
   if (receipt.receiptHash !== expected) {
@@ -83,7 +104,10 @@ export function addHumanReview(receipt, {
     proposalHash: receipt.receiptHash,
     decidedBy: requireText(actor, "Review actor"),
     decidedAt: requireText(decidedAt, "Review time"),
-    criteria: criteria.map((criterion) => requireText(criterion, "Review criterion")),
+    criteria: criteria.map((criterion) => ({
+      criterion: requireText(criterion, "Review criterion"),
+      result: decision === "accepted" ? "pass" : "fail",
+    })),
     note: note === null ? null : requireText(note, "Review note"),
   };
   const body = { ...receiptBody(receipt), review };

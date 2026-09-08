@@ -195,10 +195,21 @@ describe("locus guard CLI", () => {
     expect(run(repo, [
       "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
     ]).code).toBe(0);
+    const candidateRecords = [{
+      path: "src/invoice.js",
+      state: "modified",
+      byteLength: 1,
+      contentHash: "b".repeat(64),
+      executable: false,
+    }];
     const body = {
       schemaVersion: "locus.guard.run-receipt.v1",
       enforcement: { mode: "contained-agent-run", result: "pass" },
-      candidate: { hash: "a".repeat(64), changedPaths: ["src/invoice.js"], records: [] },
+      candidate: {
+        hash: sha256(canonicalJson(candidateRecords)),
+        changedPaths: ["src/invoice.js"],
+        records: candidateRecords,
+      },
       checks: [{ command: "pnpm test", result: "pass", exitCode: 0 }],
       review: { status: "pending" },
       violations: [],
@@ -240,7 +251,7 @@ describe("locus guard CLI", () => {
       status: "accepted",
       proposalHash: payload.receiptHash,
       decidedBy: "reviewer@example.com",
-      criteria: ["Retry is limited to one attempt"],
+      criteria: [{ criterion: "Retry is limited to one attempt", result: "pass" }],
     }));
     expect(reviewedEnvelope.payload.receiptHash).not.toBe(payload.receiptHash);
 
@@ -518,6 +529,7 @@ describe("locus guard CLI", () => {
         'fs.writeFileSync("src/invoice.js", "changed\\n");',
         'fs.writeFileSync("src/not-admitted.js", "escape\\n");',
         'fs.symlinkSync("src/invoice.js", "src/not-admitted-link.js");',
+        'fs.mkdirSync("src/not-admitted-empty");',
       ].join("\n"));
 
       const executed = run(repo, [
@@ -539,9 +551,10 @@ describe("locus guard CLI", () => {
       );
       expect(receipt.payload.candidate.changedPaths).toEqual([
         "src/invoice.js",
+        "src/not-admitted-empty",
         "src/not-admitted-link.js",
         "src/not-admitted.js",
-      ]);
+      ].sort((left, right) => left.localeCompare(right)));
       expect(receipt.payload.candidate.records).toEqual(expect.arrayContaining([
         expect.objectContaining({
           path: "src/not-admitted.js",
@@ -554,9 +567,97 @@ describe("locus guard CLI", () => {
           fileType: "symbolic-link",
           contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
         }),
+        expect.objectContaining({
+          path: "src/not-admitted-empty",
+          state: "unsafe-outside-scope",
+          fileType: "directory",
+          contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
       ]));
     },
     30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "records an admitted file replaced by an empty directory as unsafe",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const scriptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, scriptDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      expect(run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+      ]).code).toBe(0);
+      const before = fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8");
+      const agentScript = path.join(scriptDirectory, "agent.mjs");
+      fs.writeFileSync(agentScript, [
+        'import fs from "node:fs";',
+        'fs.unlinkSync("src/invoice.js");',
+        'fs.mkdirSync("src/invoice.js");',
+      ].join("\n"));
+
+      const executed = run(repo, [
+        "guard", "run", "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey, "--check", "/usr/bin/true",
+        "--", process.execPath, agentScript,
+      ]);
+
+      expect(executed.code).toBe(1);
+      expect(fs.readFileSync(path.join(repo, "src/invoice.js"), "utf8")).toBe(before);
+      const receipt = JSON.parse(fs.readFileSync(path.join(repo, ".locus/run-receipt.json"), "utf8"));
+      expect(receipt.payload.candidate.records).toEqual([
+        expect.objectContaining({
+          path: "src/invoice.js",
+          state: "unsafe-admitted-path",
+          fileType: "directory",
+        }),
+      ]);
+    },
+    30_000,
+  );
+
+  it.runIf(process.platform === "darwin")(
+    "caps retained output while hashing and counting the complete captured stream",
+    () => {
+      const repo = makeRepo();
+      expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+      const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+      const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+      const scriptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-agent-"));
+      temporaryRepos.push(keyDirectory, scriptDirectory);
+      const privateKey = path.join(keyDirectory, "private.pem");
+      const publicKey = path.join(keyDirectory, "public.pem");
+      expect(run(repo, [
+        "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+      ]).code).toBe(0);
+      const agentScript = path.join(scriptDirectory, "agent.mjs");
+      fs.writeFileSync(agentScript, [
+        'import fs from "node:fs";',
+        'fs.writeFileSync("src/invoice.js", "candidate\\n");',
+        'const chunk = "x".repeat(1024 * 1024);',
+        'for (let index = 0; index < 20; index++) process.stdout.write(chunk);',
+      ].join("\n"));
+
+      const executed = run(repo, [
+        "guard", "run", "--agent", "command",
+        "--expected-manifest-hash", manifest.manifestHash,
+        "--signing-key", privateKey, "--check", "/usr/bin/true",
+        "--", process.execPath, agentScript,
+      ], { timeout: 60_000 });
+
+      expect(executed.code).toBe(1);
+      const receipt = JSON.parse(fs.readFileSync(path.join(repo, ".locus/run-receipt.json"), "utf8"));
+      expect(receipt.payload.execution.evidence.outputLimitExceeded).toBe(true);
+      expect(receipt.payload.execution.evidence.stdout.byteLength).toBeGreaterThan(16 * 1024 * 1024);
+      expect(receipt.payload.execution.evidence.stdout.digest).toMatch(/^[a-f0-9]{64}$/);
+      expect(receipt.payload.execution.evidence.stdout.relevantOutput.length).toBeLessThanOrEqual(8_000);
+    },
+    60_000,
   );
 
   it.runIf(process.platform === "darwin")(

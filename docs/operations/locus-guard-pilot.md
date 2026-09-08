@@ -63,6 +63,9 @@ node bin/locus.mjs guard run \
   --check "pnpm typecheck"
 ```
 
+Keep the private key in its own dedicated directory. Guard protects that
+directory from the agent and Checks; do not place other runtime files there.
+
 Use `--agent claude` for Claude Code. For another harness, use
 `--agent command -- <executable> <args...>`. macOS uses Seatbelt; Linux requires
 Bubblewrap. Missing containment fails closed. The boundary hides the original
@@ -185,5 +188,7 @@ Checks, provider-reported usage, and human Review to the pre-commit candidate.
   source CLI.
 - A trusted hash store and manifest delivery path are operator responsibilities
   in this release.
+- The local Repo lock is cooperative; run automation in a dedicated checkout so
+  unrelated tools cannot race final candidate delivery.
 - A green Guard Run plus an accepted Review means the recorded signer accepted
   that exact proposal; it still does not independently prove task success.

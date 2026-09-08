@@ -20,9 +20,21 @@ export const GUARD_RUN_RECEIPT_SCHEMA = "locus.guard.run-receipt.v1";
 const MAX_EVIDENCE_OUTPUT_BYTES = 8_000;
 const MAX_CAPTURE_OUTPUT_BYTES = 16 * 1024 * 1024;
 const MAX_CANDIDATE_FILE_BYTES = 16 * 1024 * 1024;
+const MAX_WORKSPACE_ENTRIES = 10_000;
+const MAX_WORKSPACE_DEPTH = 64;
+const MAX_WORKSPACE_APPARENT_BYTES = 256 * 1024 * 1024;
 const AGENT_TIMEOUT_MS = 15 * 60 * 1000;
 const CHECK_TIMEOUT_MS = 10 * 60 * 1000;
-const CONTROL_ARTIFACT_PATHS = new Set([".locus/scope.json", ".locus/run-receipt.json"]);
+const CONTROL_ARTIFACT_PATHS = new Set([
+  ".locus/scope.json",
+  ".locus/run-receipt.json",
+  ".locus/run.lock",
+]);
+
+function guardTemporaryDirectory(prefix) {
+  const base = process.platform === "darwin" ? "/private/tmp" : os.tmpdir();
+  return fs.realpathSync(fs.mkdtempSync(path.join(base, prefix)));
+}
 
 function isInside(root, target) {
   const relative = path.relative(root, target);
@@ -105,7 +117,9 @@ function hashRegularFileNoFollow(filePath, label) {
   const descriptor = fs.openSync(filePath, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
   try {
     const before = fs.fstatSync(descriptor);
-    if (!before.isFile()) throw new Error(`${label} must be a regular file: ${filePath}`);
+    if (!before.isFile() || before.size > MAX_WORKSPACE_APPARENT_BYTES) {
+      throw new Error(`${label} is not a bounded regular file: ${filePath}`);
+    }
     const digest = createHash("sha256");
     const chunk = Buffer.allocUnsafe(64 * 1024);
     let byteLength = 0;
@@ -195,16 +209,47 @@ function materializeSlice({ repoRoot, workspace, admittedPaths }) {
   return baseline;
 }
 
-function walkWorkspace(directory, prefix = "") {
+function assertRepoMatchesBaseline({ repoRoot, baseline }) {
+  for (const [repoPath, expected] of baseline) {
+    const source = originalPath(repoRoot, repoPath);
+    canonicalRepoFile(repoRoot, source, "Frozen base path");
+    const { stat, contents } = readRegularFileNoFollow(source, "Frozen base path");
+    if (!contents.equals(expected.contents)
+      || Boolean(stat.mode & 0o111) !== expected.executable) {
+      throw new Error(`Repo path changed since the frozen base was read: ${repoPath}`);
+    }
+  }
+}
+
+function walkWorkspace(
+  directory,
+  prefix = "",
+  state = { entries: 0, bytes: 0 },
+  depth = 0,
+) {
+  if (depth > MAX_WORKSPACE_DEPTH) {
+    throw new Error(`Candidate workspace exceeds ${MAX_WORKSPACE_DEPTH} directory levels.`);
+  }
   const entries = [];
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
     const repoPath = prefix ? `${prefix}/${entry.name}` : entry.name;
     const absolute = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      entries.push(...walkWorkspace(absolute, repoPath));
-    } else {
-      const stat = fs.lstatSync(absolute);
-      entries.push({ repoPath: normalizeRepoPath(repoPath), absolute, stat });
+    const stat = fs.lstatSync(absolute);
+    state.entries += 1;
+    if (state.entries > MAX_WORKSPACE_ENTRIES) {
+      throw new Error(`Candidate workspace exceeds ${MAX_WORKSPACE_ENTRIES} entries.`);
+    }
+    if (stat.isFile()) {
+      state.bytes += stat.size;
+      if (state.bytes > MAX_WORKSPACE_APPARENT_BYTES) {
+        throw new Error(
+          `Candidate workspace exceeds ${MAX_WORKSPACE_APPARENT_BYTES} apparent bytes.`,
+        );
+      }
+    }
+    entries.push({ repoPath: normalizeRepoPath(repoPath), absolute, stat });
+    if (stat.isDirectory()) {
+      entries.push(...walkWorkspace(absolute, repoPath, state, depth + 1));
     }
   }
   return entries;
@@ -216,7 +261,16 @@ function inspectWorkspaceCandidate({ workspace, baseline, admittedPaths }) {
   const current = new Map();
   const outsideRecords = [];
   const unsafeAdmittedRecords = new Map();
+  const admittedParentDirectories = new Set();
+  for (const repoPath of admittedPaths) {
+    let parent = path.posix.dirname(repoPath);
+    while (parent !== ".") {
+      admittedParentDirectories.add(parent);
+      parent = path.posix.dirname(parent);
+    }
+  }
   for (const entry of walkWorkspace(workspace)) {
+    if (entry.stat.isDirectory() && admittedParentDirectories.has(entry.repoPath)) continue;
     if (!admitted.has(entry.repoPath)) {
       violations.push({
         code: "PATH_OUTSIDE_SCOPE",
@@ -391,7 +445,10 @@ function seatbeltProfile({ repoRoot, ephemeralRoot, protectedRoots }) {
     "(allow file-read*)",
     `(deny file-read* (subpath ${repo}))`,
     ...protectedRoots.map((protectedRoot) =>
-      `(deny file-read* file-write* (subpath ${JSON.stringify(protectedRoot)}))`),
+      `(deny file-read* (subpath ${JSON.stringify(protectedRoot)}))`),
+    ...protectedRoots.flatMap((protectedRoot) =>
+      [protectedRoot, path.dirname(protectedRoot)].map((writeProtectedRoot) =>
+        `(deny file-write* (subpath ${JSON.stringify(writeProtectedRoot)}))`)),
     `(allow file-write* (subpath ${runtime}))`,
     '(allow file-write* (literal "/dev/null") (literal "/dev/tty"))',
   ].join("\n");
@@ -453,6 +510,61 @@ function sandboxInvocation({
   throw new Error(`Guard has no fail-closed containment backend for ${process.platform}.`);
 }
 
+function snapshotInvocation({ repoRoot, workspace, snapshotWorkspace }) {
+  if (process.platform === "darwin") {
+    const sandboxExecutable = findExecutable("sandbox-exec");
+    if (!sandboxExecutable) {
+      throw new Error("Guard refused to snapshot because macOS Seatbelt is unavailable.");
+    }
+    const profile = [
+      "(version 1)",
+      "(deny default)",
+      "(allow process*)",
+      "(allow sysctl-read)",
+      "(allow mach-lookup)",
+      "(allow signal)",
+      "(allow ipc-posix*)",
+      "(allow file-read*)",
+      `(deny file-read* (subpath ${JSON.stringify(repoRoot)}))`,
+      `(allow file-write* (subpath ${JSON.stringify(snapshotWorkspace)}))`,
+      '(allow file-write* (literal "/dev/null"))',
+    ].join("\n");
+    return {
+      executable: sandboxExecutable,
+      args: ["-p", profile, "/bin/cp", "-R", "-P", `${workspace}/.`, snapshotWorkspace],
+    };
+  }
+  if (process.platform === "linux") {
+    const bubblewrap = findExecutable("bwrap");
+    if (!bubblewrap) {
+      throw new Error("Guard refused to snapshot because Linux Bubblewrap is unavailable.");
+    }
+    return {
+      executable: bubblewrap,
+      args: [
+        "--die-with-parent", "--new-session", "--unshare-pid", "--unshare-uts", "--unshare-ipc",
+        "--ro-bind", "/", "/", "--proc", "/proc", "--tmpfs", repoRoot,
+        "--ro-bind", workspace, "/locus-source",
+        "--bind", snapshotWorkspace, "/locus-snapshot",
+        "/bin/cp", "-a", "/locus-source/.", "/locus-snapshot",
+      ],
+    };
+  }
+  throw new Error(`Guard has no fail-closed snapshot backend for ${process.platform}.`);
+}
+
+async function captureCandidateSnapshot({ repoRoot, workspace, snapshotWorkspace }) {
+  const invocation = snapshotInvocation({ repoRoot, workspace, snapshotWorkspace });
+  const result = await captureProcess(invocation.executable, invocation.args, {
+    cwd: workspace,
+    env: cleanCheckEnvironment(workspace),
+    timeoutMs: CHECK_TIMEOUT_MS,
+  });
+  if (result.exitCode !== 0 || result.timedOut || result.outputLimitExceeded) {
+    throw new Error("Guard could not create an immutable candidate snapshot.");
+  }
+}
+
 function processGroupExists(pid) {
   try {
     process.kill(-pid, 0);
@@ -489,6 +601,10 @@ function captureProcess(executable, args, { cwd, env, timeoutMs }) {
     });
     const stdout = [];
     const stderr = [];
+    const outputEvidence = {
+      stdout: { byteLength: 0, digest: createHash("sha256") },
+      stderr: { byteLength: 0, digest: createHash("sha256") },
+    };
     let capturedBytes = 0;
     let timedOut = false;
     let outputLimitExceeded = false;
@@ -502,7 +618,9 @@ function captureProcess(executable, args, { cwd, env, timeoutMs }) {
         if (cause?.code !== "ESRCH") reject(cause);
       }
     }
-    function capture(target, chunk) {
+    function capture(stream, target, chunk) {
+      outputEvidence[stream].byteLength += chunk.byteLength;
+      outputEvidence[stream].digest.update(chunk);
       const remaining = Math.max(0, MAX_CAPTURE_OUTPUT_BYTES - capturedBytes);
       if (remaining > 0) target.push(Buffer.from(chunk).subarray(0, remaining));
       capturedBytes += chunk.byteLength;
@@ -510,8 +628,8 @@ function captureProcess(executable, args, { cwd, env, timeoutMs }) {
         terminate("output-limit");
       }
     }
-    child.stdout.on("data", (chunk) => capture(stdout, chunk));
-    child.stderr.on("data", (chunk) => capture(stderr, chunk));
+    child.stdout.on("data", (chunk) => capture("stdout", stdout, chunk));
+    child.stderr.on("data", (chunk) => capture("stderr", stderr, chunk));
     child.on("error", reject);
     const timer = setTimeout(() => terminate("timeout"), timeoutMs);
     child.on("close", async (exitCode, signal) => {
@@ -526,6 +644,10 @@ function captureProcess(executable, args, { cwd, env, timeoutMs }) {
           outputLimitExceeded,
           stdout: Buffer.concat(stdout),
           stderr: Buffer.concat(stderr),
+          stdoutByteLength: outputEvidence.stdout.byteLength,
+          stderrByteLength: outputEvidence.stderr.byteLength,
+          stdoutDigest: outputEvidence.stdout.digest.digest("hex"),
+          stderrDigest: outputEvidence.stderr.digest.digest("hex"),
         });
       } catch (cause) {
         reject(cause);
@@ -562,14 +684,14 @@ function processEvidence(result, { redactions = [] } = {}) {
     timedOut: result.timedOut,
     outputLimitExceeded: result.outputLimitExceeded,
     stdout: {
-      byteLength: result.stdout.byteLength,
-      digest: sha256(result.stdout),
+      byteLength: result.stdoutByteLength,
+      digest: result.stdoutDigest,
       relevantOutput: stdout.text,
       truncated: stdout.truncated,
     },
     stderr: {
-      byteLength: result.stderr.byteLength,
-      digest: sha256(result.stderr),
+      byteLength: result.stderrByteLength,
+      digest: result.stderrDigest,
       relevantOutput: stderr.text,
       truncated: stderr.truncated,
     },
@@ -741,8 +863,9 @@ function inspectAppliedCandidate({ repoRoot, candidate }) {
   return violations;
 }
 
-export function rollbackGuardCandidate(repoRoot) {
-  const entries = candidateDirtyEntries(repoRoot);
+export function rollbackGuardCandidate(repoRoot, candidatePaths) {
+  const allowed = new Set(candidatePaths.map(normalizeRepoPath));
+  const entries = candidateDirtyEntries(repoRoot).filter((entry) => allowed.has(entry.path));
   const tracked = [...new Set(
     entries.filter((entry) => entry.status !== "??").map((entry) => entry.path),
   )];
@@ -773,7 +896,7 @@ function checkSandboxInvocation({ repoRoot, originalRepoRoot, command, protected
     const writeProtectedRoots = [
       originalRepoRoot,
       ...resolveGitControlRoots(repoRoot),
-      ...protectedRoots,
+      ...protectedRoots.flatMap((protectedRoot) => [protectedRoot, path.dirname(protectedRoot)]),
     ];
     const profile = [
       "(version 1)",
@@ -809,7 +932,7 @@ function cleanCheckEnvironment(repoRoot) {
   for (const key of Object.keys(environment)) {
     if (key.startsWith("LOCUS_GUARD_SIGN") || key.includes("PRIVATE_KEY")) delete environment[key];
   }
-  environment.TMPDIR = process.platform === "linux" ? "/locus-tmp" : (process.env.TMPDIR ?? os.tmpdir());
+  environment.TMPDIR = process.platform === "linux" ? "/locus-tmp" : "/private/tmp";
   environment.PWD = repoRoot;
   return environment;
 }
@@ -900,19 +1023,21 @@ export async function runGuardedAgent({
   if (readGitHead(repoRoot) !== manifest.repository.baseSha) {
     throw new Error("Guard Run must start from the manifest's frozen base commit.");
   }
-  assertCleanGitCheckout(repoRoot, [".locus/scope.json", ".locus/run-receipt.json"]);
+  assertCleanGitCheckout(repoRoot, [...CONTROL_ARTIFACT_PATHS]);
 
-  const ephemeralRoot = fs.realpathSync(
-    fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-run-")),
-  );
+  const ephemeralRoot = guardTemporaryDirectory("locus-guard-run-");
+  const snapshotRoot = guardTemporaryDirectory("locus-guard-snapshot-");
   const workspace = path.join(ephemeralRoot, "workspace");
+  const snapshotWorkspace = path.join(snapshotRoot, "workspace");
   const checkWorkspace = path.join(ephemeralRoot, "check-worktree");
   const runtimeHome = path.join(ephemeralRoot, "runtime", "home");
   fs.mkdirSync(workspace, { recursive: true });
+  fs.mkdirSync(snapshotWorkspace, { recursive: true });
   fs.mkdirSync(path.join(ephemeralRoot, "runtime", "tmp"), { recursive: true });
   fs.mkdirSync(runtimeHome, { recursive: true });
   let candidateApplied = false;
   let checkWorktreeAdded = false;
+  let candidate = null;
   try {
     const baseline = materializeSlice({
       repoRoot,
@@ -951,8 +1076,9 @@ export async function runGuardedAgent({
       }),
       timeoutMs: AGENT_TIMEOUT_MS,
     });
-    const candidate = inspectWorkspaceCandidate({
-      workspace,
+    await captureCandidateSnapshot({ repoRoot, workspace, snapshotWorkspace });
+    candidate = inspectWorkspaceCandidate({
+      workspace: snapshotWorkspace,
       baseline,
       admittedPaths: manifest.scope.admittedPaths,
     });
@@ -1017,15 +1143,16 @@ export async function runGuardedAgent({
       if (readGitIdentity(repoRoot) !== currentManifest.repository.identity) {
         throw new Error("Guard Run repository identity changed while the contained agent was running.");
       }
-      assertCleanGitCheckout(repoRoot, [".locus/scope.json", ".locus/run-receipt.json"]);
+      assertCleanGitCheckout(repoRoot, [...CONTROL_ARTIFACT_PATHS]);
       if (readGitHead(repoRoot) !== currentManifest.repository.baseSha) {
         throw new Error("Repo HEAD changed while the contained agent was running.");
       }
+      assertRepoMatchesBaseline({ repoRoot, baseline });
       candidateApplied = true;
       applyCandidate({ repoRoot, candidate });
       violations.push(...inspectAppliedCandidate({ repoRoot, candidate }));
       if (violations.length > 0) {
-        rollbackGuardCandidate(repoRoot);
+        rollbackGuardCandidate(repoRoot, candidate.changedPaths);
         candidateApplied = false;
       }
     }
@@ -1097,7 +1224,7 @@ export async function runGuardedAgent({
     };
     return { ...body, receiptHash: sha256(canonicalJson(body)) };
   } catch (cause) {
-    if (candidateApplied) rollbackGuardCandidate(repoRoot);
+    if (candidateApplied && candidate) rollbackGuardCandidate(repoRoot, candidate.changedPaths);
     throw cause;
   } finally {
     if (checkWorktreeAdded) {
@@ -1108,5 +1235,6 @@ export async function runGuardedAgent({
       }
     }
     fs.rmSync(ephemeralRoot, { recursive: true, force: true });
+    fs.rmSync(snapshotRoot, { recursive: true, force: true });
   }
 }

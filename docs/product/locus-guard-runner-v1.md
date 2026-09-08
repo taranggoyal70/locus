@@ -39,8 +39,12 @@ The public test seams are:
   Slice as violations. Apply no candidate change when a violation exists.
 - Recheck manifest integrity, repository identity, frozen base, clean checkout,
   and unchanged HEAD immediately before applying the candidate.
-- Terminate the agent process group before inspecting the workspace, and read
-  candidate files without following symlinks.
+- Terminate the agent process group, then copy the workspace through a second
+  target-Repo-denying sandbox into a location the agent cannot write. Inspect
+  that immutable snapshot and read candidate files without following symlinks.
+- Bound agent/Check runtime, captured output memory, workspace entries, depth,
+  and aggregate apparent bytes. Hash/count the complete captured process stream
+  while retaining only bounded relevant output.
 
 The v1 boundary constrains access to the target Repo and host writes. It does
 not claim to hide unrelated readable host files from the agent, isolate the
@@ -80,12 +84,14 @@ network, or protect credentials the chosen provider CLI itself requires.
 - Sign canonical JSON, include the public-key fingerprint as `keyId`, and write
   the envelope using symlink-safe Guard artifact handling.
 - Remove the signing-key path from child environments and deny the agent and
-  Checks access to the canonical private-key directory. If signing or receipt
-  writing fails after application, restore the frozen base.
+  Checks access to the canonical private-key directory; require a dedicated
+  signer directory and protect its parent from renames on macOS. If signing or
+  receipt writing fails after application, restore only candidate paths.
 - Offline verification requires the independently supplied public key and may
   additionally require an expected key ID.
 - A human Review is `accepted` or `rejected`, records actor, time, criteria, and
-  notes, and binds `proposalHash` to the signed pending-review receipt. Updating
+  notes, records a pass/fail decision for every criterion, and binds
+  `proposalHash` to the signed pending-review receipt. Updating
   a reviewed receipt is not allowed; a new Run is required. The local command
   locks and atomically replaces one receipt artifact. Preventing decisions from
   copied pending artifacts requires a shared append-only service and is not a
@@ -98,3 +104,5 @@ network, or protect credentials the chosen provider CLI itself requires.
 - It does not commit, push, open a pull request, deploy, or approve delivery.
 - A signature proves integrity and signer possession, not signer identity,
   unless the verifier trusts the expected public key out of band.
+- The local Repo lock is cooperative. Other tools that ignore it can still race
+  delivery; production automation should run Guard in a dedicated checkout.

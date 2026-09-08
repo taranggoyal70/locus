@@ -574,7 +574,15 @@ async function runGuardAgent(rest) {
   let receipt;
   let envelope;
   let appliedCandidate = false;
+  let runError = null;
+  let lockCreated = false;
+  const lockPath = path.join(repoRoot, ".locus/run.lock");
   try {
+    writeJsonFile(lockPath, { pid: process.pid, base: "guard-run" }, {
+      allowedRoot: repoRoot,
+      exclusive: true,
+    });
+    lockCreated = true;
     const manifest = readJsonFile(manifestPath, "Guard scope manifest");
     receipt = await runGuardedAgent({
       manifest,
@@ -596,13 +604,26 @@ async function runGuardAgent(rest) {
   } catch (cause) {
     if (appliedCandidate) {
       try {
-        rollbackGuardCandidate(repoRoot);
+        rollbackGuardCandidate(repoRoot, receipt.candidate.changedPaths);
       } catch (rollbackCause) {
-        fail(`Guard could not sign the receipt and rollback also failed: ${rollbackCause.message}`);
+        runError = `Guard failed and rollback also failed: ${rollbackCause.message}`;
       }
     }
-    fail(cause instanceof Error ? cause.message : String(cause));
+    if (!runError) {
+      runError = cause?.code === "EEXIST"
+        ? "Guard Run is already locked by another process."
+        : cause instanceof Error ? cause.message : String(cause);
+    }
+  } finally {
+    if (lockCreated) {
+      try {
+        fs.unlinkSync(lockPath);
+      } catch (cause) {
+        if (!runError) runError = cause.message;
+      }
+    }
   }
+  if (runError) fail(runError);
   if (options.json) console.log(JSON.stringify(envelope, null, 2));
   else {
     console.log(`Locus Guard Run ${receipt.enforcement.result.toUpperCase()}: ${receipt.candidate.hash}`);

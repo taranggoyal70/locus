@@ -3,11 +3,22 @@ import { addHumanReview } from "../bin/guard-review.mjs";
 import { canonicalJson, sha256 } from "../bin/guard.mjs";
 
 function pendingReceipt(overrides = {}) {
+  const records = [{
+    path: "src/invoice.js",
+    state: "modified",
+    byteLength: 1,
+    contentHash: "b".repeat(64),
+    executable: false,
+  }];
   const body = {
     schemaVersion: "locus.guard.run-receipt.v1",
     enforcement: { mode: "contained-agent-run", result: "pass" },
     checks: [{ command: "pnpm test", result: "pass", exitCode: 0 }],
-    candidate: { hash: "a".repeat(64), changedPaths: ["src/invoice.js"], records: [] },
+    candidate: {
+      hash: sha256(canonicalJson(records)),
+      changedPaths: ["src/invoice.js"],
+      records,
+    },
     review: { status: "pending" },
     violations: [],
     ...overrides,

@@ -16,6 +16,9 @@ are useful policy hints, not a vendor-neutral fail-closed boundary.
 executes the provider CLI inside an operating-system containment backend. The
 original Repo is inaccessible to the child process. Host writes are limited to
 the ephemeral workspace/runtime. Locus refuses the Run if a backend is absent.
+After the agent process group exits, a second sandbox copies the workspace into
+an immutable snapshot outside the agent's write boundary before trusted
+inspection begins.
 
 The first backends are macOS Seatbelt and Linux Bubblewrap. Both constrain the
 target Repo, but v1 does not claim to conceal all other host-readable data or to
@@ -28,6 +31,7 @@ disposable detached worktree with Git metadata, the original Repo, and the
 dedicated signing-key directory write-protected. Locus reinspects the exact
 candidate after Checks, discards all Check artifacts, and only then copies the
 candidate into the original Repo. A signing failure still rolls that copy back.
+Candidate delivery is serialized by a cooperative local Repo lock.
 
 ## Consequences
 
