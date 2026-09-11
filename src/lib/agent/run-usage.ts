@@ -4,7 +4,7 @@ import { tenantClient } from "@/lib/supabase-tenant";
 /** What an account has spent against its Run quota right now. */
 export type RunUsage = {
   activeRuns: number;
-  dailyRuns: number;
+  runsInLast24Hours: number;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1_000;
@@ -29,7 +29,7 @@ export async function readRunUsage(userId: string): Promise<RunUsage> {
   const db = tenantClient(userId);
   const since = new Date(Date.now() - DAY_MS).toISOString();
 
-  const [active, daily] = await Promise.all([
+  const [active, rollingWindow] = await Promise.all([
     db
       .from("agent_runs")
       .select("id", { count: "exact", head: true })
@@ -42,9 +42,12 @@ export async function readRunUsage(userId: string): Promise<RunUsage> {
       .gte("created_at", since),
   ]);
 
-  if (active.error || daily.error) {
+  if (active.error || rollingWindow.error) {
     throw new Error("Run usage could not be read");
   }
 
-  return { activeRuns: active.count ?? 0, dailyRuns: daily.count ?? 0 };
+  return {
+    activeRuns: active.count ?? 0,
+    runsInLast24Hours: rollingWindow.count ?? 0,
+  };
 }

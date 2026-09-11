@@ -34,7 +34,7 @@ describe("public copy follows the admission door", () => {
     // Free execution capacity is one shared Run per UTC day across the whole
     // deployment, so the Tier's per-account daily number is a ceiling rather
     // than an allocation and must not be printed as a promise here.
-    const daily = runQuotaForTier("free").maxDailyRuns;
+    const daily = runQuotaForTier("free").maxRunsPerRolling24Hours;
     expect(renderToStaticMarkup(<SupportPage />)).not.toContain(`${daily} per day`);
   });
 });

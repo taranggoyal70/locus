@@ -50,7 +50,7 @@ beforeEach(() => {
 describe("readRunUsage", () => {
   it("reports the active and daily counts", async () => {
     outcomes.push({ count: 1, error: null }, { count: 7, error: null });
-    expect(await readRunUsage("user_1")).toEqual({ activeRuns: 1, dailyRuns: 7 });
+    expect(await readRunUsage("user_1")).toEqual({ activeRuns: 1, runsInLast24Hours: 7 });
   });
 
   it("counts only the caller's Runs", async () => {

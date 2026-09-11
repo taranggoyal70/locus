@@ -83,7 +83,8 @@ export function runStartRefusal(reason: AdmissionReason): string {
 export function signUpDescription(selfServeOpen: boolean): string {
   // Deliberately does not quote the free Tier's per-account allowance.
   //
-  // A Tier grants up to `runQuotaForTier("free").maxDailyRuns` Runs a day, but
+  // A Tier grants up to `runQuotaForTier("free").maxRunsPerRolling24Hours`
+  // Runs in the rolling window, but
   // free execution capacity is one shared Run per UTC day across the entire
   // deployment. Printing the per-account number on a sign-up page would promise
   // capacity that does not exist — the Tier is a ceiling on what one account may

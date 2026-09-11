@@ -228,7 +228,7 @@ describe("controlled-alpha Agent Run starts", () => {
     expect(rpc).toHaveBeenCalledWith("claim_agent_run_slot", expect.objectContaining({
       p_user_id: "user_design_partner",
       p_max_active: PARTNER_QUOTA.maxActiveRuns,
-      p_max_daily: PARTNER_QUOTA.maxDailyRuns,
+      p_max_daily: PARTNER_QUOTA.maxRunsPerRolling24Hours,
       p_active_statuses: [...ACTIVE_RUN_STATUSES],
       p_provider: "cloudflare-workers-ai",
       p_execution_mode: "shared",

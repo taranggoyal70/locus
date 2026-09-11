@@ -104,10 +104,10 @@ export function capabilitiesForTier(tier: AdmissionTier): AdmissionCapabilities 
   return { ...CAPABILITIES_BY_TIER[tier] };
 }
 
-/** How many Runs a Tier may hold open, and how many it may start in a day. */
+/** How many Runs a Tier may hold open, and how many it may start in a rolling 24-hour window. */
 export type RunQuota = {
   maxActiveRuns: number;
-  maxDailyRuns: number;
+  maxRunsPerRolling24Hours: number;
 };
 
 /**
@@ -128,10 +128,10 @@ export type RunQuota = {
  * loudly rather than admit a Run.
  */
 const RUN_QUOTA_BY_TIER: Record<AdmissionTier, RunQuota> = {
-  visitor: { maxActiveRuns: 0, maxDailyRuns: 0 },
-  free: { maxActiveRuns: 1, maxDailyRuns: 2 },
-  partner: { maxActiveRuns: 2, maxDailyRuns: 10 },
-  pro: { maxActiveRuns: 5, maxDailyRuns: 50 },
+  visitor: { maxActiveRuns: 0, maxRunsPerRolling24Hours: 0 },
+  free: { maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 },
+  partner: { maxActiveRuns: 2, maxRunsPerRolling24Hours: 10 },
+  pro: { maxActiveRuns: 5, maxRunsPerRolling24Hours: 50 },
 };
 
 export function runQuotaForTier(tier: AdmissionTier): RunQuota {

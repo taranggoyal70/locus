@@ -74,12 +74,12 @@ describe("admission copy", () => {
   });
 
   it("never advertises the per-account allowance as capacity a caller will get", () => {
-    // A Tier grants up to `maxDailyRuns` Runs a day, but free execution capacity
+    // A Tier grants up to `maxRunsPerRolling24Hours`, but free execution capacity
     // is one shared Run per UTC day across the whole deployment. Printing the
     // per-account number on a public surface would promise capacity that does
     // not exist: the Tier is a ceiling on what one account may hold, not an
     // allocation. This caught exactly that when the free-beta branch merged.
-    const daily = String(runQuotaForTier("free").maxDailyRuns);
+    const daily = String(runQuotaForTier("free").maxRunsPerRolling24Hours);
     for (const line of [
       admissionTag(true),
       admissionSentence(true),

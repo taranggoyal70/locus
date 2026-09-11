@@ -14,7 +14,7 @@ import {
 import { resolveRunTokenBudget } from "@/lib/agent/run-budget";
 import {
   agentRunQuotaDecision,
-  isQuotaReason,
+  quotaReasonFromClaim,
   quotaDenialMessage,
   quotaRetryAfterSeconds,
 } from "@/lib/agent/run-quota";
@@ -191,7 +191,7 @@ export async function POST(request: Request) {
   }
   const quota = agentRunQuotaDecision({
     activeRuns: usage.activeRuns,
-    dailyRuns: usage.dailyRuns,
+    runsInLast24Hours: usage.runsInLast24Hours,
     quota: admission.runQuota,
   });
   if (!quota.allowed) {
@@ -234,7 +234,9 @@ export async function POST(request: Request) {
     // two are independent: Admission decides how many Runs this account may
     // hold, the provider columns record which engine executed them.
     p_max_active: admission.runQuota.maxActiveRuns,
-    p_max_daily: admission.runQuota.maxDailyRuns,
+    // The SQL function predates the clarified product name. Its `p_max_daily`
+    // argument enforces the same rolling `now() - interval '24 hours'` window.
+    p_max_daily: admission.runQuota.maxRunsPerRolling24Hours,
     p_provider: CLOUDFLARE_PROVIDER,
     p_execution_mode: input.executionMode,
   });
@@ -247,7 +249,7 @@ export async function POST(request: Request) {
   }
   if (!claim.allowed) {
     await db.from("agent_tasks").delete().eq("id", task.id).eq("user_id", userId);
-    const reason = isQuotaReason(claim.reason) ? claim.reason : "active";
+    const reason = quotaReasonFromClaim(claim.reason) ?? "active";
     return NextResponse.json(
       { error: quotaDenialMessage(reason, admission.runQuota) },
       { status: 429, headers: { "Retry-After": String(quotaRetryAfterSeconds(reason)) } },

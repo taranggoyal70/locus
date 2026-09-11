@@ -45,7 +45,7 @@ export const NO_RUN_ACCESS: RunAccess = {
   canStart: false,
   tier: "visitor",
   reason: "signed_out",
-  quota: { maxActiveRuns: 0, maxDailyRuns: 0 },
+  quota: { maxActiveRuns: 0, maxRunsPerRolling24Hours: 0 },
   usage: null,
 };
 
@@ -78,9 +78,9 @@ export type RunAccessCopy = {
  */
 export function runAccessCopy(access: RunAccess): RunAccessCopy {
   if (access.canStart) {
-    const daily = access.quota.maxDailyRuns;
+    const rollingAllowance = access.quota.maxRunsPerRolling24Hours;
     const remaining = access.usage
-      ? Math.max(0, daily - access.usage.dailyRuns)
+      ? Math.max(0, rollingAllowance - access.usage.runsInLast24Hours)
       : null;
 
     // Offering an action that is certain to be refused is worse than saying so.
@@ -88,18 +88,18 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
     // whose only outcome is a 429.
     if (remaining === 0) {
       return {
-        action: "Daily Runs used",
+        action: "Run allowance used",
         href: null,
         explanation:
-          `You have used all ${daily} Agent ${daily === 1 ? "Run" : "Runs"} on this `
+          `You have used all ${rollingAllowance} Agent ${rollingAllowance === 1 ? "Run" : "Runs"} on this `
           + "plan in the last 24 hours. The allowance is a rolling window, so the "
           + "oldest Run frees a slot as it ages out.",
       };
     }
 
     const allowance = remaining === null
-      ? `${daily} Agent ${daily === 1 ? "Run" : "Runs"} per rolling 24 hours on this plan.`
-      : `${remaining} of ${daily} Agent ${daily === 1 ? "Run" : "Runs"} left in your rolling 24 hour window.`;
+      ? `${rollingAllowance} Agent ${rollingAllowance === 1 ? "Run" : "Runs"} per rolling 24 hours on this plan.`
+      : `${remaining} of ${rollingAllowance} Agent ${rollingAllowance === 1 ? "Run" : "Runs"} left in your rolling 24 hour window.`;
 
     return {
       action: "Run task with Locus",

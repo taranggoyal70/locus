@@ -21,30 +21,30 @@ describe("runAccessFromAdmission", () => {
       canStart: true,
       tier: "partner",
       reason: "partner_allowlist",
-      quota: { maxActiveRuns: 2, maxDailyRuns: 10 },
+      quota: { maxActiveRuns: 2, maxRunsPerRolling24Hours: 10 },
       usage: null,
     });
   });
 
   it("defaults a client with no server decision to no access at all", () => {
     expect(NO_RUN_ACCESS.canStart).toBe(false);
-    expect(NO_RUN_ACCESS.quota).toEqual({ maxActiveRuns: 0, maxDailyRuns: 0 });
+    expect(NO_RUN_ACCESS.quota).toEqual({ maxActiveRuns: 0, maxRunsPerRolling24Hours: 0 });
   });
 });
 
 describe("runAccessCopy", () => {
-  it("states the plan's daily allowance when the account can run", () => {
+  it("states the plan's rolling allowance when the account can run", () => {
     expect(
-      runAccessCopy(access({ canStart: true, tier: "free", quota: { maxActiveRuns: 1, maxDailyRuns: 2 } })),
+      runAccessCopy(access({ canStart: true, tier: "free", quota: { maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 } })),
     ).toMatchObject({ action: "Run task with Locus" });
     expect(
-      runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 2 } })).explanation,
+      runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 } })).explanation,
     ).toContain("2 Agent Runs per rolling 24 hours");
   });
 
   it("says Run, not Runs, for an allowance of one", () => {
     expect(
-      runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 1 } })).explanation,
+      runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxRunsPerRolling24Hours: 1 } })).explanation,
     ).toContain("1 Agent Run per rolling 24 hours");
   });
 
@@ -81,7 +81,7 @@ describe("refusals lead somewhere", () => {
   });
 
   it("offers no destination when the account can already run", () => {
-    expect(runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 2 } })).href)
+    expect(runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 } })).href)
       .toBeNull();
   });
 
@@ -129,11 +129,11 @@ describe("remaining allowance", () => {
     canStart: true,
     tier: "free" as const,
     reason: "self_serve" as const,
-    quota: { maxActiveRuns: 1, maxDailyRuns: 2 },
+    quota: { maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 },
   };
 
   it("states what is left rather than only what the plan includes", () => {
-    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 1 } });
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, runsInLast24Hours: 1 } });
     expect(copy.explanation).toContain("1 of 2 Agent Runs left in your rolling 24 hour window");
   });
 
@@ -146,8 +146,8 @@ describe("remaining allowance", () => {
   });
 
   it("does not offer an action that is certain to be refused", () => {
-    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 2 } });
-    expect(copy.action).toBe("Daily Runs used");
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, runsInLast24Hours: 2 } });
+    expect(copy.action).toBe("Run allowance used");
     expect(copy.explanation).toMatch(/rolling window/);
   });
 
@@ -155,22 +155,22 @@ describe("remaining allowance", () => {
     // The limit is a rolling 24 hours in claim_agent_run_slot, not a calendar
     // day, so "try again tomorrow" would be wrong for anyone whose Runs were
     // this afternoon.
-    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 2 } });
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, runsInLast24Hours: 2 } });
     expect(copy.explanation).not.toMatch(/tomorrow|midnight/i);
   });
 
   it("never reports a negative remainder when usage overshoots the quota", () => {
     // A tier downgrade can leave an account above its new allowance.
-    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 9 } });
-    expect(copy.action).toBe("Daily Runs used");
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, runsInLast24Hours: 9 } });
+    expect(copy.action).toBe("Run allowance used");
     expect(copy.explanation).not.toContain("-");
   });
 
   it("says Run, not Runs, for a one-Run allowance", () => {
     const copy = runAccessCopy({
       ...running,
-      quota: { maxActiveRuns: 1, maxDailyRuns: 1 },
-      usage: { activeRuns: 0, dailyRuns: 1 },
+      quota: { maxActiveRuns: 1, maxRunsPerRolling24Hours: 1 },
+      usage: { activeRuns: 0, runsInLast24Hours: 1 },
     });
     expect(copy.explanation).toContain("all 1 Agent Run on this plan");
   });

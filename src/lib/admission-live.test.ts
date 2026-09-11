@@ -102,7 +102,7 @@ describe.skipIf(!live)("Admission store against a live database", () => {
     });
 
     expect(admission.tier).toBe("free");
-    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxDailyRuns: 2 });
+    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 });
     expect(admission.capabilities.runStart).toBe(true);
     // The release record still withholds delivery from a real row, which is the
     // property the whole two-table design exists for.

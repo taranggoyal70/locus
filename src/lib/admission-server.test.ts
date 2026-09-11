@@ -53,7 +53,7 @@ describe("admissionForAccount", () => {
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_partner");
     const admission = await admissionForAccount("user_partner");
     expect(admission.tier).toBe("partner");
-    expect(admission.runQuota).toEqual({ maxActiveRuns: 2, maxDailyRuns: 10 });
+    expect(admission.runQuota).toEqual({ maxActiveRuns: 2, maxRunsPerRolling24Hours: 10 });
     // Still intersected with the release gate, so a partner starts Runs and
     // reaches nothing external.
     expect(admission.capabilities.runStart).toBe(true);
@@ -69,7 +69,7 @@ describe("admissionForAccount", () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
     const admission = await admissionForAccount("user_stranger");
     expect(admission).toMatchObject({ tier: "free", reason: "self_serve" });
-    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxDailyRuns: 2 });
+    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 });
   });
 
   it("reads the two inputs concurrently", async () => {

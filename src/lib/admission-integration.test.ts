@@ -66,7 +66,7 @@ describe("Admission end to end", () => {
 
     expect(admission.tier).toBe("pro");
     expect(admission.reason).toBe("operator_grant");
-    expect(admission.runQuota).toEqual({ maxActiveRuns: 5, maxDailyRuns: 50 });
+    expect(admission.runQuota).toEqual({ maxActiveRuns: 5, maxRunsPerRolling24Hours: 50 });
     // Still intersected with the release record. A pro grant does not ship
     // delivery, and the point of the two-table design is that it cannot.
     expect(admission.capabilities.runStart).toBe(true);
@@ -85,7 +85,7 @@ describe("Admission end to end", () => {
     expect(admission.tier).toBe("visitor");
     expect(admission.reason).toBe("suspended");
     expect(admission.capabilities.runStart).toBe(false);
-    expect(admission.runQuota).toEqual({ maxActiveRuns: 0, maxDailyRuns: 0 });
+    expect(admission.runQuota).toEqual({ maxActiveRuns: 0, maxRunsPerRolling24Hours: 0 });
   });
 
   it("promotes a live subscription to pro without an operator row", async () => {
@@ -103,7 +103,7 @@ describe("Admission end to end", () => {
     const admission = await admissionForAccount("user_lapsed");
 
     expect(admission).toMatchObject({ tier: "free", reason: "self_serve" });
-    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxDailyRuns: 2 });
+    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 });
   });
 
   it("scopes both reads to the authenticated account", async () => {

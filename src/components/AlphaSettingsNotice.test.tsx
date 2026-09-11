@@ -37,7 +37,7 @@ describe("Settings access notice", () => {
       const quota = runQuotaForTier(tier);
       const html = renderToStaticMarkup(<AlphaSettingsNotice tier={tier} />);
       expect(html, tier).toContain(`${quota.maxActiveRuns} Agent Run`);
-      expect(html, tier).toContain(`${quota.maxDailyRuns} per rolling 24 hours`);
+      expect(html, tier).toContain(`${quota.maxRunsPerRolling24Hours} per rolling 24 hours`);
     }
   });
 

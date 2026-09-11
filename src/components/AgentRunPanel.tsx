@@ -264,7 +264,7 @@ export function AgentRunPanel({
   // did not, so it invited configuration for an action it was refusing.
   const allowanceSpent = runAccess.canStart
     && runAccess.usage !== null
-    && runAccess.usage.dailyRuns >= runAccess.quota.maxDailyRuns;
+    && runAccess.usage.runsInLast24Hours >= runAccess.quota.maxRunsPerRolling24Hours;
   const canConfigureRun = canStartRun && !allowanceSpent;
   const canLaunch = canStartRun
     && Boolean(repository)

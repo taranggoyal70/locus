@@ -107,26 +107,28 @@ describe("Capabilities for a Tier", () => {
 
 describe("Run quota for a Tier", () => {
   it("gives a free account a small allowance it can finish in one sitting", () => {
-    expect(runQuotaForTier("free")).toEqual({ maxActiveRuns: 1, maxDailyRuns: 2 });
+    expect(runQuotaForTier("free")).toEqual({ maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 });
   });
 
   it("keeps the invited-partner allowance the controlled alpha already ran on", () => {
-    expect(runQuotaForTier("partner")).toEqual({ maxActiveRuns: 2, maxDailyRuns: 10 });
+    expect(runQuotaForTier("partner")).toEqual({ maxActiveRuns: 2, maxRunsPerRolling24Hours: 10 });
   });
 
   it("gives a paid account room to work in parallel", () => {
-    expect(runQuotaForTier("pro")).toEqual({ maxActiveRuns: 5, maxDailyRuns: 50 });
+    expect(runQuotaForTier("pro")).toEqual({ maxActiveRuns: 5, maxRunsPerRolling24Hours: 50 });
   });
 
   it("admits a visitor to nothing", () => {
-    expect(runQuotaForTier("visitor")).toEqual({ maxActiveRuns: 0, maxDailyRuns: 0 });
+    expect(runQuotaForTier("visitor")).toEqual({ maxActiveRuns: 0, maxRunsPerRolling24Hours: 0 });
   });
 
   it("never shrinks an allowance as the tier rises", () => {
     const active = ADMISSION_TIERS.map((tier) => runQuotaForTier(tier).maxActiveRuns);
-    const daily = ADMISSION_TIERS.map((tier) => runQuotaForTier(tier).maxDailyRuns);
+    const rolling = ADMISSION_TIERS.map(
+      (tier) => runQuotaForTier(tier).maxRunsPerRolling24Hours,
+    );
     expect(active).toEqual([...active].sort((a, b) => a - b));
-    expect(daily).toEqual([...daily].sort((a, b) => a - b));
+    expect(rolling).toEqual([...rolling].sort((a, b) => a - b));
   });
 
   it("stays inside the range claim_agent_run_slot will accept for a running tier", () => {
@@ -138,8 +140,8 @@ describe("Run quota for a Tier", () => {
       const quota = runQuotaForTier(tier);
       expect(quota.maxActiveRuns, `${tier} active`).toBeGreaterThanOrEqual(1);
       expect(quota.maxActiveRuns, `${tier} active`).toBeLessThanOrEqual(100);
-      expect(quota.maxDailyRuns, `${tier} daily`).toBeGreaterThanOrEqual(1);
-      expect(quota.maxDailyRuns, `${tier} daily`).toBeLessThanOrEqual(10_000);
+      expect(quota.maxRunsPerRolling24Hours, `${tier} rolling`).toBeGreaterThanOrEqual(1);
+      expect(quota.maxRunsPerRolling24Hours, `${tier} rolling`).toBeLessThanOrEqual(10_000);
     }
   });
 });

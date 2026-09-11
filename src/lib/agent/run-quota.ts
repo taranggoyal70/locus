@@ -1,6 +1,6 @@
 import type { RunQuota } from "@/lib/admission";
 
-export type QuotaReason = "active" | "daily";
+export type QuotaReason = "active" | "rolling_24_hours";
 
 // Retry-after policy lives here rather than in SQL. `claim_agent_run_slot`
 // enforces the invariant and reports which limit was hit; what to tell the user
@@ -8,7 +8,7 @@ export type QuotaReason = "active" | "daily";
 // advisory pre-check and the authoritative claim from answering differently.
 const RETRY_AFTER_SECONDS: Record<QuotaReason, number> = {
   active: 60,
-  daily: 3_600,
+  rolling_24_hours: 3_600,
 };
 
 // The message states the limit the account actually has. The previous wording
@@ -22,12 +22,15 @@ export function quotaDenialMessage(reason: QuotaReason, quota: RunQuota): string
       ? "An agent run is already active. Wait for it to finish."
       : `${quota.maxActiveRuns} agent runs are already active. Wait for one to finish.`;
   }
-  return `Agent Run quota reached (${quota.maxDailyRuns} per rolling 24 hours). A slot opens when your oldest Run ages out.`;
+  return `Agent Run quota reached (${quota.maxRunsPerRolling24Hours} per rolling 24 hours). A slot opens when your oldest Run ages out.`;
 }
 
 
-export function isQuotaReason(value: unknown): value is QuotaReason {
-  return value === "active" || value === "daily";
+/** Translate the legacy SQL reason at the persistence boundary. */
+export function quotaReasonFromClaim(value: unknown): QuotaReason | null {
+  if (value === "active") return "active";
+  if (value === "daily") return "rolling_24_hours";
+  return null;
 }
 
 export function quotaRetryAfterSeconds(reason: QuotaReason): number {
@@ -51,7 +54,7 @@ export function quotaRetryAfterSeconds(reason: QuotaReason): number {
  */
 export function agentRunQuotaDecision(input: {
   activeRuns: number;
-  dailyRuns: number;
+  runsInLast24Hours: number;
   quota: RunQuota;
 }):
   | { allowed: true }
@@ -59,8 +62,12 @@ export function agentRunQuotaDecision(input: {
   if (input.activeRuns >= input.quota.maxActiveRuns) {
     return { allowed: false, reason: "active", retryAfterSeconds: RETRY_AFTER_SECONDS.active };
   }
-  if (input.dailyRuns >= input.quota.maxDailyRuns) {
-    return { allowed: false, reason: "daily", retryAfterSeconds: RETRY_AFTER_SECONDS.daily };
+  if (input.runsInLast24Hours >= input.quota.maxRunsPerRolling24Hours) {
+    return {
+      allowed: false,
+      reason: "rolling_24_hours",
+      retryAfterSeconds: RETRY_AFTER_SECONDS.rolling_24_hours,
+    };
   }
   return { allowed: true };
 }
