@@ -36,7 +36,7 @@ describe("locus-context package", () => {
   });
 
   it("ships the license it claims", () => {
-    expect(cliManifest.license).toBe("MIT");
+    expect(cliManifest.license).toBe("UNLICENSED");
     expect(cliManifest.files).toContain("LICENSE");
     const shipped = readFileSync(path.join(cliDir, "LICENSE"), "utf8");
     expect(shipped).toBe(readFileSync(path.join(repoRoot, "LICENSE"), "utf8"));
