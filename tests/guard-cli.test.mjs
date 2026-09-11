@@ -933,7 +933,7 @@ describe("Guard signed evidence packet", { timeout: 60_000 }, () => {
     return { repo, receipt, manifest, privateKey, publicKey, executed };
   }
 
-  it("carries every field the packet promises", () => {
+  it.runIf(process.platform === "darwin")("carries every field the packet promises", () => {
     const { receipt } = signedRun();
     const payload = receipt.payload;
 
@@ -973,7 +973,7 @@ describe("Guard signed evidence packet", { timeout: 60_000 }, () => {
     expect(payload.schemaVersion).toBe("locus.guard.run-receipt.v2");
   });
 
-  it("includes a widen's justification, not merely a commitment that one happened", () => {
+  it.runIf(process.platform === "darwin")("includes a widen's justification, not merely a commitment that one happened", () => {
     const repo = makeRepo();
     const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
     temporaryRepos.push(keyDirectory);
@@ -1021,15 +1021,27 @@ describe("Guard signed evidence packet", { timeout: 60_000 }, () => {
   });
 
   it("still verifies a v1 receipt, which was honest evidence when it was produced", () => {
-    const { receipt } = signedRun();
-    const legacy = {
-      ...receipt.payload,
+    // Built directly rather than through `guard run`: this is a statement about
+    // the verifier, not the sandbox, and gating it on the host platform would
+    // mean the compatibility promise was never checked where CI runs.
+    const records = [{ path: "src/invoice.js", sha256: sha256("candidate\n") }];
+    const body = {
       schemaVersion: "locus.guard.run-receipt.v1",
+      enforcement: { mode: "contained-agent-run", result: "pass" },
+      candidate: {
+        hashAlgorithm: "sha256",
+        hash: sha256(canonicalJson(records)),
+        changedPaths: records.map((record) => record.path),
+        records,
+      },
+      // A passing receipt must carry a passing Check; the verifier refuses a
+      // "pass" that nothing actually verified.
+      checks: [{ command: "pnpm test", result: "pass" }],
+      review: { status: "pending" },
+      violations: [],
     };
-    delete legacy.receiptHash;
+    const receipt = { ...body, receiptHash: sha256(canonicalJson(body)) };
 
-    // Rehash so the only difference under test is the declared schema version.
-    const rehashed = { ...legacy, receiptHash: receipt.payload.receiptHash };
-    expect(() => verifyRunReceiptHash(rehashed)).not.toThrow(/Unsupported/);
+    expect(() => verifyRunReceiptHash(receipt)).not.toThrow();
   });
 });
