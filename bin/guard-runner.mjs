@@ -17,7 +17,16 @@ import {
   writeFileSafely,
 } from "./guard.mjs";
 
-export const GUARD_RUN_RECEIPT_SCHEMA = "locus.guard.run-receipt.v1";
+// v2 carries the full evidence packet rather than commitments to it: the
+// excluded ledger, why each admitted file was included, and the widen events
+// themselves instead of only their hashes. A v1 receipt is still verifiable —
+// it is honestly signed evidence of what it recorded — but it cannot answer the
+// questions v2 is required to answer, so the version distinguishes them.
+export const GUARD_RUN_RECEIPT_SCHEMA = "locus.guard.run-receipt.v2";
+export const SUPPORTED_RUN_RECEIPT_SCHEMAS = Object.freeze([
+  "locus.guard.run-receipt.v1",
+  "locus.guard.run-receipt.v2",
+]);
 const MAX_EVIDENCE_OUTPUT_BYTES = 8_000;
 const MAX_CAPTURE_OUTPUT_BYTES = 16 * 1024 * 1024;
 const MAX_CANDIDATE_FILE_BYTES = 16 * 1024 * 1024;
@@ -1244,6 +1253,16 @@ export async function runGuardedAgent({
         trust: "expected-hash",
         policyVersion: manifest.policy.version,
         admittedPaths: manifest.scope.admittedPaths,
+        // The receipt previously named only what was admitted. A reader could
+        // not tell a tight Slice from a repository with nothing else in it, nor
+        // why any given file was admitted, without the manifest beside it — and
+        // the receipt is the artifact that travels.
+        excludedPaths: manifest.scope.excludedPaths,
+        inclusionReasons: manifest.scope.inclusionReasons,
+        // The events, not merely their hashes. A hash commits to a widen having
+        // happened; it does not tell a reviewer what was opened, by whom, or on
+        // what justification. The chain is preserved so the hashes still verify.
+        widens: manifest.widens,
         widenEventHashes: manifest.widens.map((event) => event.eventHash),
       },
       containment: {

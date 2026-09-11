@@ -5,6 +5,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it } from "vitest";
 import { canonicalJson, sha256 } from "../bin/guard.mjs";
 import { createSignedEnvelope } from "../bin/guard-signing.mjs";
+import { verifyRunReceiptHash } from "../bin/guard-review.mjs";
 
 const cli = path.resolve("bin/locus.mjs");
 const temporaryRepos = [];
@@ -891,4 +892,144 @@ describe("locus guard CLI", { timeout: 30_000 }, () => {
     },
     30_000,
   );
+});
+
+// The signed receipt is the artifact that travels: it is what a reviewer, an
+// auditor, or a customer's security team actually reads. Each field below is a
+// question that artifact must answer on its own, without the manifest beside
+// it. Asserting them together is deliberate — the packet is a contract, and a
+// contract with a missing clause is what this test exists to catch.
+describe("Guard signed evidence packet", { timeout: 60_000 }, () => {
+  function signedRun() {
+    const repo = makeRepo();
+    const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+    temporaryRepos.push(keyDirectory);
+    const privateKey = path.join(keyDirectory, "private.pem");
+    const publicKey = path.join(keyDirectory, "public.pem");
+    expect(run(repo, [
+      "guard", "keygen", "--private-key", privateKey, "--public-key", publicKey,
+    ]).code).toBe(0);
+
+    expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+    const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+
+    const scriptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-agent-"));
+    temporaryRepos.push(scriptDirectory);
+    const agentScript = path.join(scriptDirectory, "agent.mjs");
+    fs.writeFileSync(agentScript, [
+      'import fs from "node:fs";',
+      'fs.writeFileSync("src/invoice.js", "export function retryInvoice() { return 1; }\\n");',
+      'process.stdout.write(JSON.stringify({ inputTokens: 1200, outputTokens: 340, costUsd: 0.0191 }));',
+    ].join("\n"));
+
+    const executed = run(repo, [
+      "guard", "run", "--agent", "command",
+      "--expected-manifest-hash", manifest.manifestHash,
+      "--signing-key", privateKey, "--check", "/usr/bin/true",
+      "--", process.execPath, agentScript,
+    ], { timeout: 60_000 });
+
+    const receipt = JSON.parse(fs.readFileSync(path.join(repo, ".locus/run-receipt.json"), "utf8"));
+    return { repo, receipt, manifest, privateKey, publicKey, executed };
+  }
+
+  it("carries every field the packet promises", () => {
+    const { receipt } = signedRun();
+    const payload = receipt.payload;
+
+    // 1. repository revision
+    expect(payload.repository.baseSha).toMatch(/^[a-f0-9]{40}$/);
+
+    // 2. included AND excluded files
+    expect(Array.isArray(payload.manifest.admittedPaths)).toBe(true);
+    expect(payload.manifest.admittedPaths.length).toBeGreaterThan(0);
+    expect(Array.isArray(payload.manifest.excludedPaths)).toBe(true);
+
+    // 3. inclusion reasons, per admitted path
+    expect(Array.isArray(payload.manifest.inclusionReasons)).toBe(true);
+    for (const entry of payload.manifest.inclusionReasons) {
+      expect(typeof entry.path).toBe("string");
+      expect(Array.isArray(entry.reasons)).toBe(true);
+    }
+
+    // 4. widening history, not only its hashes
+    expect(Array.isArray(payload.manifest.widens)).toBe(true);
+    expect(Array.isArray(payload.manifest.widenEventHashes)).toBe(true);
+
+    // 5. exact candidate hash
+    expect(payload.candidate.hash).toMatch(/^[a-f0-9]{64}$/);
+
+    // 6. checks and their results
+    expect(Array.isArray(payload.checks)).toBe(true);
+
+    // 7. human review decision (pending until `guard review` records one)
+    expect(payload.review.status).toBe("pending");
+
+    // 8. total cost and tokens
+    expect(payload.usage.inputTokens).toBe(1200);
+    expect(payload.usage.outputTokens).toBe(340);
+    expect(payload.usage.costUsd).toBe(0.0191);
+
+    expect(payload.schemaVersion).toBe("locus.guard.run-receipt.v2");
+  });
+
+  it("includes a widen's justification, not merely a commitment that one happened", () => {
+    const repo = makeRepo();
+    const keyDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-guard-keys-"));
+    temporaryRepos.push(keyDirectory);
+    const privateKey = path.join(keyDirectory, "private.pem");
+    expect(run(repo, [
+      "guard", "keygen", "--private-key", privateKey,
+      "--public-key", path.join(keyDirectory, "public.pem"),
+    ]).code).toBe(0);
+
+    expect(run(repo, ["guard", "init", "fix invoice retry"]).code).toBe(0);
+    expect(run(repo, [
+      "guard", "widen", "src/unrelated.js",
+      "--reason", "the retry path reads this setting",
+      "--actor", "reviewer@example.com",
+    ]).code).toBe(0);
+    const manifest = JSON.parse(fs.readFileSync(path.join(repo, ".locus/scope.json"), "utf8"));
+
+    const scriptDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "locus-agent-"));
+    temporaryRepos.push(scriptDirectory);
+    const agentScript = path.join(scriptDirectory, "agent.mjs");
+    // A Run with no admitted change is refused, so the agent must actually edit
+    // an admitted file for the receipt under test to be produced at all.
+    fs.writeFileSync(agentScript, [
+      'import fs from "node:fs";',
+      'fs.writeFileSync("src/invoice.js", "export function retryInvoice() { return 2; }\\n");',
+    ].join("\n"));
+
+    const executed = run(repo, [
+      "guard", "run", "--agent", "command",
+      "--expected-manifest-hash", manifest.manifestHash,
+      "--signing-key", privateKey, "--check", "/usr/bin/true",
+      "--", process.execPath, agentScript,
+    ], { timeout: 60_000 });
+    expect(executed.code, executed.err).toBe(0);
+
+    const receipt = JSON.parse(fs.readFileSync(path.join(repo, ".locus/run-receipt.json"), "utf8"));
+    const widen = receipt.payload.manifest.widens.find((e) => e.path === "src/unrelated.js");
+
+    expect(widen).toBeDefined();
+    expect(widen.reason).toBe("the retry path reads this setting");
+    expect(widen.decidedBy).toBe("reviewer@example.com");
+    expect(widen.decision).toBe("approved");
+    // The chain still verifies: richer content did not cost the commitment.
+    expect(receipt.payload.manifest.widenEventHashes).toContain(widen.eventHash);
+  });
+
+  it("still verifies a v1 receipt, which was honest evidence when it was produced", () => {
+    const { receipt } = signedRun();
+    const legacy = {
+      ...receipt.payload,
+      schemaVersion: "locus.guard.run-receipt.v1",
+    };
+    delete legacy.receiptHash;
+
+    // Rehash so the only difference under test is the declared schema version.
+    const rehashed = { ...legacy, receiptHash: receipt.payload.receiptHash };
+    expect(() => verifyRunReceiptHash(rehashed)).not.toThrow(/Unsupported/);
+  });
 });

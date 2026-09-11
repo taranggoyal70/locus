@@ -1,4 +1,4 @@
-import { GUARD_RUN_RECEIPT_SCHEMA } from "./guard-runner.mjs";
+import { SUPPORTED_RUN_RECEIPT_SCHEMAS } from "./guard-runner.mjs";
 import { canonicalJson, sha256 } from "./guard.mjs";
 
 function requireText(value, label) {
@@ -18,7 +18,10 @@ export function verifyRunReceiptHash(receipt) {
   if (!receipt || typeof receipt !== "object" || Array.isArray(receipt)) {
     throw new Error("Guard Run receipt must be a JSON object.");
   }
-  if (receipt.schemaVersion !== GUARD_RUN_RECEIPT_SCHEMA) {
+  // Every schema this build knows how to verify, not only the one it writes. A
+  // v1 receipt is honestly signed evidence of what it recorded, and refusing it
+  // would retroactively invalidate a trail that was valid when produced.
+  if (!SUPPORTED_RUN_RECEIPT_SCHEMAS.includes(receipt.schemaVersion)) {
     throw new Error(`Unsupported Guard Run receipt schema: ${receipt.schemaVersion ?? "missing"}`);
   }
   if (!receipt.enforcement || receipt.enforcement.mode !== "contained-agent-run"
