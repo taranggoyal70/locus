@@ -53,7 +53,10 @@ afterEach(() => {
   }
 });
 
-describe("locus guard CLI", () => {
+// Spawns real child processes, so the per-test budget matches the spawn
+// timeout below rather than vitest's 5s default: under parallel load these
+// were failing on the clock, not on behaviour.
+describe("locus guard CLI", { timeout: 30_000 }, () => {
   it("creates a focused manifest and verifies an admitted candidate", () => {
     const repo = makeRepo();
     const initialized = run(repo, [

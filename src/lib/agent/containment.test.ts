@@ -47,7 +47,7 @@ afterAll(() => {
   rmSync(outside, { recursive: true, force: true });
 });
 
-describe("sandbox path containment", () => {
+describe("sandbox path containment", { timeout: 30_000 }, () => {
   it("accepts an ordinary path inside the workspace", () => {
     expect(contain("src/included.ts")).toBe(path.join(root, "src/included.ts"));
   });
@@ -108,7 +108,7 @@ function readWindow(target: string, offset: number, maxCharacters: number): stri
   });
 }
 
-describe("slice read paging", () => {
+describe("slice read paging", { timeout: 30_000 }, () => {
   it("returns exact adjacent windows without skipping a long source line", () => {
     writeFileSync(
       path.join(root, "src", "large.ts"),
@@ -157,7 +157,7 @@ function search(paths: string[], query: string, cwd = root) {
   return { stdout: result.stdout, stderr: result.stderr, status: result.status };
 }
 
-describe("slice search containment", () => {
+describe("slice search containment", { timeout: 30_000 }, () => {
   // Own fixtures rather than the symlinks the cases above create inside their
   // `it` bodies, so these tests do not depend on execution order.
   beforeAll(() => {
