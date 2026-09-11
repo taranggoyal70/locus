@@ -259,3 +259,36 @@ describe("agent context budget", () => {
     expect(output).toContain("[truncated 11,000 characters]");
   });
 });
+
+// R14: the in-sandbox write allowlist is built from this, so it has to be
+// narrower than the read set wherever canWrite is.
+describe("AgentSlice.writablePaths", () => {
+  it("omits a sensitive file that is readable but never writable", () => {
+    const slice = new AgentSlice({
+      included: ["src/app.ts", ".github/workflows/ci.yml"],
+      excluded: [],
+    });
+
+    expect(slice.readablePaths()).toContain(".github/workflows/ci.yml");
+    expect(slice.writablePaths()).not.toContain(".github/workflows/ci.yml");
+    expect(slice.writablePaths()).toContain("src/app.ts");
+  });
+
+  it("agrees with canWrite for every readable path", () => {
+    const slice = new AgentSlice({
+      included: ["src/a.ts", "src/b.ts", ".github/workflows/ci.yml"],
+      excluded: [],
+    });
+
+    const writable = new Set(slice.writablePaths());
+    for (const path of slice.readablePaths()) {
+      expect(writable.has(path), path).toBe(slice.canWrite(path));
+    }
+  });
+
+  it("includes a file the Agent created during the run", () => {
+    const slice = new AgentSlice({ included: ["src/a.ts"], excluded: [] });
+    slice.create("src/new.ts");
+    expect(slice.writablePaths()).toContain("src/new.ts");
+  });
+});

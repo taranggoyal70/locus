@@ -211,6 +211,19 @@ export class AgentSlice {
     return sorted(new Set([...this.included, ...this.widened, ...this.created]));
   }
 
+  /**
+   * The paths a write may target, which is not the same set as `readablePaths`:
+   * a sensitive file can be in the Slice and readable while still being refused
+   * as a write target, per `canWrite`.
+   *
+   * This exists so the in-sandbox allowlist for a write can be narrower than the
+   * one for a read. Handing the write scripts `readablePaths` would make the
+   * sandbox boundary quietly weaker than the controller's own rule.
+   */
+  writablePaths(): string[] {
+    return this.readablePaths().filter((path) => this.canWrite(path));
+  }
+
   ledger(): AgentSliceLedger {
     return {
       included: sorted(this.included),

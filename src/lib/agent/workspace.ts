@@ -53,6 +53,12 @@ function evidence(result: AgentWorkspaceResult): string {
   return truncateToolOutput(streams.join("\n\n"));
 }
 
+/**
+ * Environment entry carrying the Slice allowlist into a sandbox script. Read by
+ * `CONTAINMENT_PRELUDE`; absent or empty means unrestricted.
+ */
+export const SLICE_ENV = "LOCUS_SLICE";
+
 // Canonical containment, executed inside the sandbox.
 //
 // validateRepoPath is a lexical check that runs on the host and can only see the
@@ -76,11 +82,38 @@ export const CONTAINMENT_PRELUDE = [
   'const fs=require("node:fs");',
   'const path=require("node:path");',
   "const root=fs.realpathSync(process.cwd());",
+  // R14: the Slice is enforced here, inside the sandbox, and not only by the
+  // controller that builds these commands.
+  //
+  // WorkspaceController.readFile already refuses a path outside the Slice, but
+  // that check lives in the process that *composes* the command. Anything that
+  // reaches a script without going through it — a new tool, a refactor that
+  // forgets the guard, a check command that shells out — falls back to
+  // workspace-root containment, which admits every file in the repository. The
+  // product claim is that an Agent cannot read outside its approved Slice, so
+  // the boundary belongs where the read actually happens.
+  //
+  // An absent or empty allowlist means unrestricted, which is what the
+  // repository-wide operations (diff, status, dependency install) need. Every
+  // path-taking script is invoked with the allowlist set.
+  `const sliceRaw=process.env.${SLICE_ENV};`,
+  "let slice=null;",
+  'if(typeof sliceRaw==="string"&&sliceRaw!==""){',
+  "let parsed;",
+  'try{parsed=JSON.parse(sliceRaw);}catch{throw new Error("malformed slice allowlist");}',
+  'if(!Array.isArray(parsed))throw new Error("malformed slice allowlist");',
+  "slice=new Set(parsed);",
+  "}",
   "function contain(value){",
   'if(typeof value!=="string"||!value)throw new Error("missing path");',
   "const absolute=path.resolve(root,value);",
   "const relative=path.relative(root,absolute);",
   'if(!relative||relative.startsWith("..")||path.isAbsolute(relative))throw new Error("path escapes the workspace");',
+  // Compared in posix spelling because the Slice ledger, the manifest and every
+  // path the localizer emits are posix, while path.relative uses the platform
+  // separator.
+  'const admitted=relative.split(path.sep).join("/");',
+  'if(slice&&!slice.has(admitted))throw new Error("outside the active Slice: "+admitted);',
   "let cursor=root;",
   "for(const segment of relative.split(path.sep)){",
   "cursor=path.join(cursor,segment);",
@@ -239,6 +272,21 @@ export class WorkspaceController {
     return this.slice.ledger();
   }
 
+  /**
+   * The allowlist handed to a sandbox script so `contain()` can enforce the
+   * Slice at the point of the read, rather than trusting that this class
+   * checked first. Recomputed per call because `create` and `widen` change it
+   * mid-run.
+   */
+  private readAllowlist(): Record<string, string> {
+    return { [SLICE_ENV]: JSON.stringify(this.slice.readablePaths()) };
+  }
+
+  /** As `readAllowlist`, narrowed to what `canWrite` permits. */
+  private writeAllowlist(): Record<string, string> {
+    return { [SLICE_ENV]: JSON.stringify(this.slice.writablePaths()) };
+  }
+
   listFiles(): AgentSliceLedger {
     return this.slice.ledger();
   }
@@ -274,6 +322,7 @@ export class WorkspaceController {
     const result = await this.workspace.run({
       command: `node -e ${shellQuote(READ_SLICE_SCRIPT)}`,
       env: {
+        ...this.readAllowlist(),
         LOCUS_PATH: path,
         LOCUS_OFFSET: String(offset),
         LOCUS_MAX_CHARACTERS: String(maxCharacters),
@@ -314,6 +363,7 @@ export class WorkspaceController {
     const result = await this.workspace.run({
       command: `node -e ${shellQuote(SEARCH_SCRIPT)}`,
       env: {
+        ...this.readAllowlist(),
         LOCUS_QUERY: term,
         [SEARCH_PATHS_ENV]: JSON.stringify(searched),
         LOCUS_MATCH_LIMIT: String(SEARCH_MATCH_LIMIT),
@@ -344,6 +394,7 @@ export class WorkspaceController {
     const result = await this.workspace.run({
       command: `node -e ${shellQuote(REPLACE_SCRIPT)}`,
       env: {
+        ...this.writeAllowlist(),
         LOCUS_PATH: path,
         LOCUS_BEFORE: before,
         LOCUS_AFTER: after,
@@ -373,7 +424,7 @@ export class WorkspaceController {
     if (content.length > 50_000) throw new Error("File content exceeds the 50,000 character limit");
     const result = await this.workspace.run({
       command: `node -e ${shellQuote(WRITE_SCRIPT)}`,
-      env: { LOCUS_PATH: path, LOCUS_CONTENT: content },
+      env: { ...this.writeAllowlist(), LOCUS_PATH: path, LOCUS_CONTENT: content },
       abortSignal,
       timeoutMs: 30_000,
     });
@@ -467,7 +518,7 @@ export class WorkspaceController {
 
       const result = await this.workspace.run({
         command: `node -e ${shellQuote(READ_BASE64_SCRIPT)}`,
-        env: { LOCUS_PATH: change.path },
+        env: { ...this.readAllowlist(), LOCUS_PATH: change.path },
         abortSignal,
         timeoutMs: 30_000,
       });
