@@ -166,13 +166,18 @@ describe("controlled-alpha Agent Run starts", () => {
     // Admission carries the same intent with per-tier quota, a verified-email
     // barrier, and an account ceiling, and it accepts only the exact word `open`.
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
-    successfulDatabase();
+    const { rpc } = successfulDatabase();
     appendRunStepMock.mockResolvedValue(undefined);
     startMock.mockResolvedValue({ runId: "workflow-id" });
 
     const response = await POST(runRequest());
 
     expect(response.status).toBe(202);
+    expect(rpc).toHaveBeenCalledWith("claim_agent_run_slot", expect.objectContaining({
+      p_user_id: "user_outside_alpha",
+      p_max_active: 1,
+      p_max_daily: 2,
+    }));
   });
 
   it("records versioned data-policy evidence before starting the workflow", async () => {

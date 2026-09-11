@@ -69,7 +69,7 @@ describe("admissionForAccount", () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
     const admission = await admissionForAccount("user_stranger");
     expect(admission).toMatchObject({ tier: "free", reason: "self_serve" });
-    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxDailyRuns: 3 });
+    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxDailyRuns: 2 });
   });
 
   it("reads the two inputs concurrently", async () => {

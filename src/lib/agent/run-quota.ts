@@ -22,7 +22,7 @@ export function quotaDenialMessage(reason: QuotaReason, quota: RunQuota): string
       ? "An agent run is already active. Wait for it to finish."
       : `${quota.maxActiveRuns} agent runs are already active. Wait for one to finish.`;
   }
-  return `Daily Agent Run quota reached (${quota.maxDailyRuns}). Try again tomorrow.`;
+  return `Agent Run quota reached (${quota.maxDailyRuns} per rolling 24 hours). A slot opens when your oldest Run ages out.`;
 }
 
 

@@ -112,7 +112,8 @@ export type RunQuota = {
 
 /**
  * Run quota is the cost control, so it belongs to the Tier rather than to a pair
- * of global constants. A free account gets one Run at a time and three a day:
+ * of global constants. A free account gets one Run at a time and two in a
+ * rolling 24-hour window:
  * enough to answer "does this work on my repository?" in one sitting, and small
  * enough that an unattended signup cannot drain provider capacity.
  *
@@ -128,7 +129,7 @@ export type RunQuota = {
  */
 const RUN_QUOTA_BY_TIER: Record<AdmissionTier, RunQuota> = {
   visitor: { maxActiveRuns: 0, maxDailyRuns: 0 },
-  free: { maxActiveRuns: 1, maxDailyRuns: 3 },
+  free: { maxActiveRuns: 1, maxDailyRuns: 2 },
   partner: { maxActiveRuns: 2, maxDailyRuns: 10 },
   pro: { maxActiveRuns: 5, maxDailyRuns: 50 },
 };

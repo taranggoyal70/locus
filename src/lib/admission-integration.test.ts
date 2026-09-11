@@ -103,7 +103,7 @@ describe("Admission end to end", () => {
     const admission = await admissionForAccount("user_lapsed");
 
     expect(admission).toMatchObject({ tier: "free", reason: "self_serve" });
-    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxDailyRuns: 3 });
+    expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxDailyRuns: 2 });
   });
 
   it("scopes both reads to the authenticated account", async () => {

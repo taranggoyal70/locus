@@ -35,17 +35,17 @@ describe("runAccessFromAdmission", () => {
 describe("runAccessCopy", () => {
   it("states the plan's daily allowance when the account can run", () => {
     expect(
-      runAccessCopy(access({ canStart: true, tier: "free", quota: { maxActiveRuns: 1, maxDailyRuns: 3 } })),
+      runAccessCopy(access({ canStart: true, tier: "free", quota: { maxActiveRuns: 1, maxDailyRuns: 2 } })),
     ).toMatchObject({ action: "Run task with Locus" });
     expect(
-      runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 3 } })).explanation,
-    ).toContain("3 Agent Runs per day");
+      runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 2 } })).explanation,
+    ).toContain("2 Agent Runs per rolling 24 hours");
   });
 
   it("says Run, not Runs, for an allowance of one", () => {
     expect(
       runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 1 } })).explanation,
-    ).toContain("1 Agent Run per day");
+    ).toContain("1 Agent Run per rolling 24 hours");
   });
 
   it("asks a signed-out visitor to sign in rather than to wait for an invitation", () => {
@@ -68,7 +68,7 @@ describe("runAccessCopy", () => {
 
   it("never claims an allowance it is refusing to honour", () => {
     for (const reason of ["signed_out", "waitlist", "suspended"] as const) {
-      expect(runAccessCopy(access({ reason })).explanation).not.toMatch(/per day/);
+      expect(runAccessCopy(access({ reason })).explanation).not.toMatch(/per (day|rolling)/);
     }
   });
 });
@@ -81,7 +81,7 @@ describe("refusals lead somewhere", () => {
   });
 
   it("offers no destination when the account can already run", () => {
-    expect(runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 3 } })).href)
+    expect(runAccessCopy(access({ canStart: true, quota: { maxActiveRuns: 1, maxDailyRuns: 2 } })).href)
       .toBeNull();
   });
 
@@ -129,12 +129,12 @@ describe("remaining allowance", () => {
     canStart: true,
     tier: "free" as const,
     reason: "self_serve" as const,
-    quota: { maxActiveRuns: 1, maxDailyRuns: 3 },
+    quota: { maxActiveRuns: 1, maxDailyRuns: 2 },
   };
 
   it("states what is left rather than only what the plan includes", () => {
     const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 1 } });
-    expect(copy.explanation).toContain("2 of 3 Agent Runs left today");
+    expect(copy.explanation).toContain("1 of 2 Agent Runs left in your rolling 24 hour window");
   });
 
   it("falls back to the plan allowance when usage could not be read", () => {
@@ -142,11 +142,11 @@ describe("remaining allowance", () => {
     // an unreadable count must not turn into a refusal.
     const copy = runAccessCopy({ ...running, usage: null });
     expect(copy.action).toBe("Run task with Locus");
-    expect(copy.explanation).toContain("3 Agent Runs per day");
+    expect(copy.explanation).toContain("2 Agent Runs per rolling 24 hours");
   });
 
   it("does not offer an action that is certain to be refused", () => {
-    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 3 } });
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 2 } });
     expect(copy.action).toBe("Daily Runs used");
     expect(copy.explanation).toMatch(/rolling window/);
   });
@@ -155,7 +155,7 @@ describe("remaining allowance", () => {
     // The limit is a rolling 24 hours in claim_agent_run_slot, not a calendar
     // day, so "try again tomorrow" would be wrong for anyone whose Runs were
     // this afternoon.
-    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 3 } });
+    const copy = runAccessCopy({ ...running, usage: { activeRuns: 0, dailyRuns: 2 } });
     expect(copy.explanation).not.toMatch(/tomorrow|midnight/i);
   });
 

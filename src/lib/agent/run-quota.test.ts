@@ -31,11 +31,11 @@ describe("agent run quota", () => {
       allowed: false,
       reason: "active",
     });
-    expect(agentRunQuotaDecision({ activeRuns: 0, dailyRuns: 3, quota: free })).toMatchObject({
+    expect(agentRunQuotaDecision({ activeRuns: 0, dailyRuns: 2, quota: free })).toMatchObject({
       allowed: false,
       reason: "daily",
     });
-    expect(agentRunQuotaDecision({ activeRuns: 0, dailyRuns: 2, quota: free })).toEqual({
+    expect(agentRunQuotaDecision({ activeRuns: 0, dailyRuns: 1, quota: free })).toEqual({
       allowed: true,
     });
   });
@@ -57,7 +57,7 @@ describe("agent run quota", () => {
     );
     expect(quotaDenialMessage("active", runQuotaForTier("pro"))).toContain("5 agent runs");
     expect(quotaDenialMessage("daily", free)).toBe(
-      "Daily Agent Run quota reached (3). Try again tomorrow.",
+      "Agent Run quota reached (2 per rolling 24 hours). A slot opens when your oldest Run ages out.",
     );
   });
 });

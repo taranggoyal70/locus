@@ -163,10 +163,10 @@ tokens are encrypted before persistence and never returned after submission.
 Every signed-in account resolves to one **Tier**, and the Tier decides both what
 the account may do and how many Agent Runs it may hold open.
 
-| Tier | How it is reached | Runs (active / daily) | Public Repos | Private Repos | PR delivery | Billing |
-|------|-------------------|----------------------|--------------|---------------|-------------|---------|
+| Tier | How it is reached | Runs (active / rolling 24 hours) | Public Repos | Private Repos | PR delivery | Billing |
+|------|-------------------|----------------------------------|--------------|---------------|-------------|---------|
 | `visitor` | Signed out, waitlisted, or suspended | 0 / 0 | read only | no | no | no |
-| `free` | Any signed-in account with a verified email, while `LOCUS_SELF_SERVE=open` and below the account ceiling | 1 / 3 | yes | no | no | yes |
+| `free` | Any signed-in account with a verified email, while `LOCUS_SELF_SERVE=open` and below the account ceiling | 1 / 2 | yes | no | no | yes |
 | `partner` | Listed in `ALPHA_ALLOWED_USER_IDS` | 2 / 10 | yes | yes | yes | comped |
 | `pro` | Active Stripe subscription | 5 / 50 | yes | yes | yes | yes |
 

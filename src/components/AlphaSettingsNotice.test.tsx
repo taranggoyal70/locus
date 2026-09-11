@@ -37,7 +37,7 @@ describe("Settings access notice", () => {
       const quota = runQuotaForTier(tier);
       const html = renderToStaticMarkup(<AlphaSettingsNotice tier={tier} />);
       expect(html, tier).toContain(`${quota.maxActiveRuns} Agent Run`);
-      expect(html, tier).toContain(`${quota.maxDailyRuns} per day`);
+      expect(html, tier).toContain(`${quota.maxDailyRuns} per rolling 24 hours`);
     }
   });
 
@@ -57,7 +57,8 @@ describe("shared free execution capacity", () => {
     // The Tier allowance and the shared pool bound different things: the tier is
     // what one account may hold, the pool is what the deployment can spend on
     // free Cloudflare inference in a UTC day. Stating only the tier would let a
-    // free account read "3 per day" as three guaranteed Runs.
+    // Stating only the tier would let a free account read its per-account
+    // ceiling as guaranteed shared capacity.
     const html = renderToStaticMarkup(<AlphaSettingsNotice tier="free" />);
     expect(html).toContain("one Agent Run per UTC day");
     expect(html).toContain("Connect your own Cloudflare account");

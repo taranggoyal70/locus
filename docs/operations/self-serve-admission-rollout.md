@@ -6,8 +6,9 @@ The release operator owns this rollout. Its scope is one variable,
 `LOCUS_SELF_SERVE`, and the `account_admissions` table introduced by migration
 018.
 
-Opening self-serve admits signed-in accounts to the `free` Tier: 1 concurrent and
-3 daily Agent Runs on public Repos. It does not release any capability. GitHub
+Opening self-serve admits signed-in accounts with a verified email to the `free`
+Tier: 1 concurrent and 2 Agent Runs in a rolling 24-hour window on public Repos.
+It does not release any capability. GitHub
 connection, private Repo reads, external delivery, Teams, billing, and Savings
 claims are withheld by `CAPABILITY_RELEASE` in `src/lib/admission.ts`, which is
 code and changes only through a reviewed commit. Do not treat this rollout as
@@ -42,8 +43,8 @@ Free-tier provider capacity serialises at one concurrent lease
 (`acquire_agent_provider_lease`, `p_max_concurrent: 1`). Every admitted account
 holding a Run open queues behind that single lease.
 
-Three daily Runs per free account against one concurrent lease means admission
-volume, not per-account quota, is the control that matters. Set
+Two Runs per rolling 24 hours per free account against one concurrent lease
+means admission volume, not per-account quota, is the control that matters. Set
 `LOCUS_SELF_SERVE_MAX_ACCOUNTS` before opening. Deciding a number and not
 enforcing it is not a control.
 
@@ -167,4 +168,4 @@ application version.
 - It does not enable Savings claims, which remain gated on the Release 1 paired
   evidence contract rather than on any Tier.
 - It does not change the invited-partner allowance, which stays at 2 concurrent
-  and 10 daily so Release 1 evidence collection is unaffected.
+  and 10 per rolling 24 hours so Release 1 evidence collection is unaffected.

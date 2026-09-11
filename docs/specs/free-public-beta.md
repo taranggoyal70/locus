@@ -18,7 +18,8 @@ presenting a small provider allowance as unlimited production capacity.
    user-owned Runs keep the configured bounded Run ceiling.
 3. A user may optionally connect their own Cloudflare Account ID and Workers AI
    API token. BYOK Runs do not consume the shared daily slot, but remain subject
-   to the existing per-user and concurrency controls.
+   to the per-account controls. A free account may start at most one Run at a
+   time and two Runs in a rolling 24-hour window.
 4. Provider tokens are accepted only by an authenticated, same-origin server
    route, encrypted with AES-256-GCM before persistence, never returned after
    submission, and removable by the owner. Logs, analytics, workflow arguments,

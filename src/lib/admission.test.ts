@@ -107,7 +107,7 @@ describe("Capabilities for a Tier", () => {
 
 describe("Run quota for a Tier", () => {
   it("gives a free account a small allowance it can finish in one sitting", () => {
-    expect(runQuotaForTier("free")).toEqual({ maxActiveRuns: 1, maxDailyRuns: 3 });
+    expect(runQuotaForTier("free")).toEqual({ maxActiveRuns: 1, maxDailyRuns: 2 });
   });
 
   it("keeps the invited-partner allowance the controlled alpha already ran on", () => {

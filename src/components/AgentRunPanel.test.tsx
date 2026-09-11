@@ -124,11 +124,11 @@ describe("controlled-alpha Agent Run start", () => {
         sliceCount={4}
         excludedCount={8}
         acceptanceCriteria={["The evidence contract is factual"]}
-        runAccess={{ canStart: true, tier: "free", reason: "self_serve", quota: { maxActiveRuns: 1, maxDailyRuns: 3 }, usage: null }}
+        runAccess={{ canStart: true, tier: "free", reason: "self_serve", quota: { maxActiveRuns: 1, maxDailyRuns: 2 }, usage: null }}
       />,
     );
 
-    expect(html).toContain("3 Agent Runs per day");
+    expect(html).toContain("2 Agent Runs per rolling 24 hours");
   });
 });
 
@@ -143,7 +143,7 @@ describe("spent daily allowance", () => {
         acceptanceCriteria={["The evidence contract is factual"]}
         runAccess={{
           canStart: true, tier: "free", reason: "self_serve",
-          quota: { maxActiveRuns: 1, maxDailyRuns: 3 }, usage,
+          quota: { maxActiveRuns: 1, maxDailyRuns: 2 }, usage,
         }}
       />,
     );
@@ -153,7 +153,7 @@ describe("spent daily allowance", () => {
     // The capability is still held, so the old markup kept rendering the
     // capacity chooser and the data-policy checkbox — inputs for a Run that
     // cannot start. Found by screenshotting the state rather than reading it.
-    const html = panel({ activeRuns: 0, dailyRuns: 3 });
+    const html = panel({ activeRuns: 0, dailyRuns: 2 });
     expect(html).toContain("Daily Runs used");
     expect(html).not.toContain("Choose capacity");
     expect(html).not.toContain("I confirm this public Repo");
@@ -163,7 +163,7 @@ describe("spent daily allowance", () => {
     const html = panel({ activeRuns: 0, dailyRuns: 1 });
     expect(html).toContain("Choose capacity");
     expect(html).toContain("I confirm this public Repo");
-    expect(html).toContain("2 of 3 Agent Runs left today");
+    expect(html).toContain("1 of 2 Agent Runs left in your rolling 24 hour window");
   });
 
   it("offers them when usage could not be read at all", () => {

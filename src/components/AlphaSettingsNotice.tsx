@@ -25,15 +25,15 @@ export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
       + "batches while the review and delivery boundaries are hardened.",
     free:
       "Repo localization is free and unmetered. Your plan includes 1 Agent Run at "
-      + "a time and 3 per day on public repositories, ending at a review-ready "
+      + "a time and 2 per rolling 24 hours on public repositories, ending at a review-ready "
       + "proposal. External GitHub delivery is off for every plan.",
     partner:
       "Repo localization is free and unmetered. As a design partner you "
-      + "have 2 Agent Runs at a time and 10 per day on public repositories. "
+      + "have 2 Agent Runs at a time and 10 per rolling 24 hours on public repositories. "
       + "External GitHub delivery is off for every plan.",
     pro:
       "Repo localization is free and unmetered. Your plan includes 5 Agent Runs at "
-      + "a time and 50 per day on public repositories. External GitHub delivery is "
+      + "a time and 50 per rolling 24 hours on public repositories. External GitHub delivery is "
       + "off for every plan.",
   }[tier];
 

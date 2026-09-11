@@ -7,7 +7,7 @@ import type { RunUsage } from "@/lib/agent/run-usage";
  * The panel previously received a single `canStartRun` boolean and, when it was
  * false, said "Invite required". That was true while an invitation was the only
  * way in. It is wrong for someone on the waitlist, wrong for a suspended
- * account, and wrong for anyone who has simply used today's quota - three
+ * account, and wrong for anyone who has simply used their current quota - three
  * different situations that a boolean collapses into one misleading sentence
  * telling the user to wait for something that is not coming.
  *
@@ -98,8 +98,8 @@ export function runAccessCopy(access: RunAccess): RunAccessCopy {
     }
 
     const allowance = remaining === null
-      ? `${daily} Agent ${daily === 1 ? "Run" : "Runs"} per day on this plan.`
-      : `${remaining} of ${daily} Agent ${daily === 1 ? "Run" : "Runs"} left today.`;
+      ? `${daily} Agent ${daily === 1 ? "Run" : "Runs"} per rolling 24 hours on this plan.`
+      : `${remaining} of ${daily} Agent ${daily === 1 ? "Run" : "Runs"} left in your rolling 24 hour window.`;
 
     return {
       action: "Run task with Locus",
