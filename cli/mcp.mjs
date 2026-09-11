@@ -5,7 +5,8 @@
 import path from "node:path";
 import { readFileSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext } from "./core.mjs";
+import { locateRemote } from "./api.mjs";
+import { loadLocalRepo, formatResult, buildPackedContext } from "./workspace.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -136,7 +137,7 @@ const TOOLS = [
   },
 ];
 
-function runLocate(args) {
+async function runLocate(args) {
   const task = args && args.task;
   if (!task || typeof task !== "string" || !task.trim()) {
     throw new Error("task (non-empty string) is required");
@@ -145,8 +146,7 @@ function runLocate(args) {
   const evidence = typeof args.evidence === "string" ? args.evidence : "";
   const pack = !!args.pack;
   const repo = loadLocalRepo(dir);
-  const graph = buildGraph(repo);
-  const result = locate(task, repo, graph, evidence);
+  const result = await locateRemote(task, repo, { evidence });
   let text = formatResult(result, repo);
   if (pack) {
     const packed = buildPackedContext(result, repo, 40000);
@@ -188,7 +188,7 @@ async function handleMessage(raw) {
         return;
       }
       try {
-        const text = runLocate(callArgs);
+        const text = await runLocate(callArgs);
         send({ jsonrpc: "2.0", id, result: { content: [{ type: "text", text }] } });
       } catch (err) {
         send({

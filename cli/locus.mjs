@@ -3,7 +3,8 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { buildGraph, locate, loadLocalRepo, formatResult, buildPackedContext, buildJsonResult } from "./core.mjs";
+import { LocusApiError, locateRemote } from "./api.mjs";
+import { loadLocalRepo, formatResult, buildPackedContext, buildJsonResult } from "./workspace.mjs";
 import {
   DEFAULT_SENSITIVE_PATTERNS,
   assertCleanGitCheckout,
@@ -45,6 +46,8 @@ locate options:
   --pack             Print a ready-to-paste context block for the slice
   --budget <n>       Token budget for --pack (default: 40000)
   --evidence <text>  Additional context (error message, stack trace) to improve matching
+  --api-key <key>    Locus API key (default: $LOCUS_API_KEY)
+  --api-url <url>    Locus API base URL (default: $LOCUS_API_URL)
   --                 End option parsing, for a task that begins with a dash
 
 Examples:
@@ -97,6 +100,8 @@ function parseLocateArgs(rest) {
   let pack = false;
   let budget = 40000;
   let evidence = "";
+  let apiKey = "";
+  let apiUrl = "";
   const positionals = [];
   let optionsEnded = false;
   for (let i = 0; i < rest.length; i++) {
@@ -126,6 +131,14 @@ function parseLocateArgs(rest) {
       const value = rest[++i];
       if (value === undefined) fail("--evidence requires a value.");
       evidence = value;
+    } else if (a === "--api-key") {
+      const value = rest[++i];
+      if (value === undefined) fail("--api-key requires a value.");
+      apiKey = value;
+    } else if (a === "--api-url") {
+      const value = rest[++i];
+      if (value === undefined) fail("--api-url requires a value.");
+      apiUrl = value;
     } else if (a === "-h" || a === "--help") {
       printHelp();
       process.exit(0);
@@ -135,11 +148,11 @@ function parseLocateArgs(rest) {
       positionals.push(a);
     }
   }
-  return { task: positionals.join(" "), dir, json, pack, budget, evidence };
+  return { task: positionals.join(" "), dir, json, pack, budget, evidence, apiKey, apiUrl };
 }
 
-function runLocate(rest) {
-  const { task, dir, json, pack, budget, evidence } = parseLocateArgs(rest);
+async function runLocate(rest) {
+  const { task, dir, json, pack, budget, evidence, apiKey, apiUrl } = parseLocateArgs(rest);
   if (!task || !task.trim()) {
     console.error('Usage: locus locate "<task>" [--path .] [--json] [--pack] [--budget <tokens>] [--evidence <text>]');
     process.exit(1);
@@ -151,8 +164,7 @@ function runLocate(rest) {
   } catch (cause) {
     fail(cause instanceof Error ? cause.message : String(cause));
   }
-  const graph = buildGraph(repo);
-  const result = locate(task, repo, graph, evidence);
+  const result = await locateRemote(task, repo, { evidence, budget, url: apiUrl, key: apiKey });
 
   if (json) {
     console.log(JSON.stringify(buildJsonResult(result, repo), null, 2));
@@ -172,6 +184,8 @@ function parseGuardInitArgs(rest) {
   let taskId = null;
   let actor = "local-user";
   let evidence = "";
+  let apiKey = "";
+  let apiUrl = "";
   const sensitivePatterns = [...DEFAULT_SENSITIVE_PATTERNS];
   const positionals = [];
   let optionsEnded = false;
@@ -183,7 +197,7 @@ function parseGuardInitArgs(rest) {
     }
     if (optionsEnded) {
       positionals.push(arg);
-    } else if (["--path", "--out", "--task-id", "--actor", "--evidence", "--sensitive"].includes(arg)) {
+    } else if (["--path", "--out", "--task-id", "--actor", "--evidence", "--sensitive", "--api-key", "--api-url"].includes(arg)) {
       const value = rest[++index];
       if (value === undefined) fail(`${arg} requires a value.`);
       if (arg === "--path") dir = value;
@@ -191,6 +205,8 @@ function parseGuardInitArgs(rest) {
       if (arg === "--task-id") taskId = value;
       if (arg === "--actor") actor = value;
       if (arg === "--evidence") evidence = value;
+      if (arg === "--api-key") apiKey = value;
+      if (arg === "--api-url") apiUrl = value;
       if (arg === "--sensitive") sensitivePatterns.push(value);
     } else if (arg.startsWith("-")) {
       fail(`Unknown guard init option: ${arg}`);
@@ -199,11 +215,11 @@ function parseGuardInitArgs(rest) {
     }
   }
   return {
-    task: positionals.join(" "), dir, out, taskId, actor, evidence, sensitivePatterns,
+    task: positionals.join(" "), dir, out, taskId, actor, evidence, sensitivePatterns, apiKey, apiUrl,
   };
 }
 
-function runGuardInit(rest) {
+async function runGuardInit(rest) {
   const options = parseGuardInitArgs(rest);
   if (!options.task.trim()) fail('Usage: locus guard init "<task>" [--path .] [--out .locus/scope.json]');
   const root = path.resolve(options.dir);
@@ -226,7 +242,11 @@ function runGuardInit(rest) {
   } catch (cause) {
     fail(cause instanceof Error ? cause.message : String(cause));
   }
-  const result = locate(options.task, repo, buildGraph(repo), options.evidence);
+  const result = await locateRemote(options.task, repo, {
+    evidence: options.evidence,
+    url: options.apiUrl,
+    key: options.apiKey,
+  });
   if (result.widened) {
     const detail = result.refinement?.unmatchedTerms?.length
       ? ` Unmatched terms: ${result.refinement.unmatchedTerms.join(", ")}.`
@@ -294,6 +314,8 @@ function parseGuardWidenArgs(rest) {
       if (arg === "--reason") reason = value;
       if (arg === "--actor") actor = value;
       if (arg === "--evidence") evidence = value;
+      if (arg === "--api-key") apiKey = value;
+      if (arg === "--api-url") apiUrl = value;
     } else if (arg === "--deny") {
       decision = "denied";
     } else if (arg === "--allow-sensitive") {
@@ -793,7 +815,7 @@ function runGuardReview(rest) {
 
 async function runGuard(rest) {
   const subcommand = rest[0];
-  if (subcommand === "init") return runGuardInit(rest.slice(1));
+  if (subcommand === "init") return await runGuardInit(rest.slice(1));
   if (subcommand === "widen") return runGuardWiden(rest.slice(1));
   if (subcommand === "verify") return runGuardVerify(rest.slice(1));
   if (subcommand === "keygen") return runGuardKeygen(rest.slice(1));
@@ -818,7 +840,7 @@ async function main() {
     return;
   }
   if (cmd === "locate") {
-    runLocate(args.slice(1));
+    await runLocate(args.slice(1));
     return;
   }
   if (cmd === "guard") {
@@ -830,4 +852,11 @@ async function main() {
   process.exit(1);
 }
 
-main();
+// An API failure is an ordinary outcome now that localization is a network call:
+// a missing key, an expired key, a rate limit, an offline laptop. Each already
+// carries a message the developer can act on, so print that and exit rather than
+// dumping a stack trace that buries it.
+main().catch((cause) => {
+  if (cause instanceof LocusApiError) fail(cause.message);
+  throw cause;
+});

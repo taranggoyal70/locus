@@ -7,6 +7,7 @@ import { buildGraph, locate } from "@/lib/localizer";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson } from "@/lib/request-security";
 import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
+import { UploadRejectedError, commonRoot, repoFromUpload } from "@/lib/uploaded-repo";
 
 const API_RATE_LIMIT = 30;
 
@@ -55,18 +56,6 @@ function parseRepo(input: string): { owner: string; repo: string; ref?: string }
     if (parts.length < 2) return null;
     return { owner: parts[0], repo: parts[1].replace(/\.git$/, ""), ref: parts[2] === "tree" && parts.length > 3 ? parts.slice(3).join("/") : undefined };
   } catch { return null; }
-}
-
-function commonRoot(paths: string[]): string {
-  const split = paths.map((p) => p.split("/").slice(0, -1)).filter((s) => s.length > 0);
-  if (!split.length) return "";
-  let prefix = split[0];
-  for (const parts of split) {
-    let i = 0;
-    while (i < prefix.length && i < parts.length && prefix[i] === parts[i]) i++;
-    prefix = prefix.slice(0, i);
-  }
-  return prefix.join("/");
 }
 
 function rawPath(path: string): string {
@@ -272,20 +261,42 @@ export async function POST(request: Request) {
     ), request);
   }
 
+  // Large enough to carry an uploaded working tree at the MAX_TOTAL_BYTES source
+  // budget plus JSON escaping overhead, which roughly doubles the worst case. The
+  // cap stays this high for repo-mode requests too; auth and the 30/minute rate
+  // limit above are what bound abuse here, not the body size.
   const parsed = await readLimitedJson<{
-    repo: string;
+    repo?: string;
+    files?: unknown;
+    name?: string;
     task: string;
     evidence?: string;
     budget?: number;
-  }>(request, 50_000);
+  }>(request, 12_000_000);
   if (!parsed.ok) return cors(NextResponse.json({ error: parsed.error }, { status: parsed.status }), request);
   const body = parsed.value;
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return cors(NextResponse.json({ error: "Request body must be a JSON object." }, { status: 400 }), request);
   }
 
-  if (!body.repo || typeof body.repo !== "string" || body.repo.length > 300) {
-    return cors(NextResponse.json({ error: "repo (string, max 300 chars) is required." }, { status: 400 }), request);
+  // Two source modes, and exactly one of them per request. `files` is the
+  // published client uploading the developer's working tree, which is the only
+  // way to localize uncommitted work; `repo` is the server fetching a public
+  // GitHub repository. Accepting both would leave it ambiguous which source the
+  // returned Slice describes.
+  const hasUpload = body.files !== undefined;
+  const hasRepo = body.repo !== undefined;
+  if (hasUpload && hasRepo) {
+    return cors(NextResponse.json(
+      { error: "Send either repo or files, not both." },
+      { status: 400 },
+    ), request);
+  }
+  if (!hasUpload && (!body.repo || typeof body.repo !== "string" || body.repo.length > 300)) {
+    return cors(NextResponse.json({ error: "repo (string, max 300 chars) or files (object) is required." }, { status: 400 }), request);
+  }
+  if (body.name !== undefined && (typeof body.name !== "string" || body.name.length > 300)) {
+    return cors(NextResponse.json({ error: "name must be a string under 300 characters." }, { status: 400 }), request);
   }
   if (!body.task || typeof body.task !== "string" || body.task.length > 1000) {
     return cors(NextResponse.json({ error: "task (string, max 1000 chars) is required." }, { status: 400 }), request);
@@ -295,7 +306,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { repo, coverage } = await fetchRepo(body.repo);
+    let repo: RepoData;
+    let coverage: RepoCoverage;
+    if (hasUpload) {
+      const uploaded = repoFromUpload(body.files, body.name ?? "workspace");
+      repo = uploaded.repo;
+      // An upload is never truncated by the server: the client chose what to
+      // send and every limit rejects rather than trims, so what was analyzed is
+      // exactly what was matched.
+      coverage = {
+        matchedFiles: uploaded.analyzedFiles,
+        analyzedFiles: uploaded.analyzedFiles,
+        truncated: false,
+        limit: MAX_FILES,
+      };
+    } else {
+      const fetched = await fetchRepo(body.repo as string);
+      repo = fetched.repo;
+      coverage = fetched.coverage;
+    }
     const graph = buildGraph(repo);
     const result = locate(body.task, repo, graph, body.evidence ?? "");
 
@@ -371,6 +400,12 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof RepositoryNotPublicError) {
       return cors(NextResponse.json({ error: error.message }, { status: 403 }), request);
+    }
+    // The caller authenticated and sent well-formed JSON; the map itself is
+    // wrong. Its message names the offending file so the CLI can print it
+    // verbatim and the developer can fix the upload.
+    if (error instanceof UploadRejectedError) {
+      return cors(NextResponse.json({ error: error.message }, { status: 400 }), request);
     }
     return cors(NextResponse.json(
       { error: error instanceof Error ? error.message : "Analysis failed." },

@@ -313,3 +313,83 @@ describe("locate API repository coverage", () => {
     expect(body.slice.length + body.excluded.length).toBe(body.coverage.analyzedFiles);
   });
 });
+
+// The published client cannot run the localizer: `locate` is server-side, which
+// is the whole reason the package is thin. It uploads the developer's working
+// tree instead, and that path has to reach the same Slice as a fetched repo
+// while refusing everything a fetched tree could never contain.
+describe("locate API uploaded workspace", () => {
+  beforeEach(() => {
+    authenticateApiKeyMock.mockResolvedValue({ userId: "user_123", keyId: "key_123" });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 29, retryAfterSeconds: 0 });
+    trackMock.mockReset();
+    vi.restoreAllMocks();
+  });
+
+  function upload(body: Record<string, unknown>) {
+    return new Request("https://locus.example/api/v1/locate", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer lk_test" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("localizes an uploaded tree without touching GitHub", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    const response = await POST(upload({
+      task: "fix the checkout total",
+      files: {
+        "src/checkout.ts": "import { total } from './total';\nexport function checkout() { return total(); }",
+        "src/total.ts": "export function total() { return 42; }",
+        "src/unrelated.ts": "export const colour = 'red';",
+      },
+    }));
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.slice.length).toBeGreaterThan(0);
+    expect(body.coverage.analyzedFiles).toBe(3);
+    // Nothing was fetched from anywhere: an uploaded tree is the whole input.
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("never reports an upload as truncated, because limits reject instead of trimming", async () => {
+    const response = await POST(upload({
+      task: "anything",
+      files: { "a.ts": "export const a = 1;" },
+    }));
+
+    const body = await response.json();
+    expect(body.coverage.truncated).toBe(false);
+    expect(body.coverage.matchedFiles).toBe(body.coverage.analyzedFiles);
+  });
+
+  it("refuses a request that names both sources", async () => {
+    const response = await POST(upload({
+      repo: "owner/repo",
+      task: "anything",
+      files: { "a.ts": "export const a = 1;" },
+    }));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toMatch(/not both/);
+  });
+
+  it("rejects a traversal path with the reason the CLI can print", async () => {
+    const response = await POST(upload({
+      task: "anything",
+      files: { "../../../etc/shadow.ts": "root:x" },
+    }));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toMatch(/\.\./);
+  });
+
+  it("still requires a source when neither is given", async () => {
+    const response = await POST(upload({ task: "anything" }));
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toMatch(/repo .* or files/);
+  });
+});
