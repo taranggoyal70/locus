@@ -40,8 +40,5 @@
     "directory": "cli"
   },
   "homepage": "https://locus-five-iota.vercel.app",
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  }
+  "private": true
 }

@@ -49,7 +49,10 @@ describe("locus-context package", () => {
     expect(cliManifest.description).toContain("Zero-dependency");
   });
 
-  it("publishes publicly with provenance", () => {
-    expect(cliManifest.publishConfig).toEqual({ access: "public", provenance: true });
+  it("cannot be released to a shared registry", () => {
+    // Locus is proprietary. npm refuses a manifest marked private, so this is
+    // the mechanical stop a stray release command hits.
+    expect(cliManifest.private).toBe(true);
+    expect(cliManifest.publishConfig).toBeUndefined();
   });
 });
