@@ -35,6 +35,7 @@ export const TENANT_TABLES: ReadonlySet<string> = new Set([
   "agent_runs",
   "agent_steps",
   "agent_tasks",
+  "agent_widen_events",
   "api_keys",
   "events",
   "github_connections",

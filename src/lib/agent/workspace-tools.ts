@@ -8,11 +8,41 @@ export type WidenRecord = {
   reason: string;
 };
 
+/** Why a widen attempt was refused, as a stable machine-readable cause. */
+export type WidenRefusal =
+  | "missing_reason"
+  | "not_excluded"
+  | "sensitive_path"
+  | "limit_exceeded"
+  | "invalid_path";
+
+/**
+ * One widen attempt, granted or refused.
+ *
+ * R15: the ledger previously recorded only grants. A Run that tried nine times
+ * to widen into .github/ and was refused every time looked identical, in the
+ * evidence a human reviews, to one that never tried — and that pattern is
+ * precisely the signal worth seeing, because widening is the documented way an
+ * injected instruction walks out of its Slice one justified-sounding file at a
+ * time. Refusals are recorded for the same reason a failed login is.
+ */
+export type WidenAttempt = {
+  /** 1-based order across the whole Run, so the sequence survives storage. */
+  sequence: number;
+  path: string;
+  reason: string;
+  outcome: "granted" | "refused";
+  refusal: WidenRefusal | null;
+  /** Human-readable cause, matching the error the Agent received. */
+  detail: string | null;
+};
+
 export type AgentSliceLedger = {
   included: string[];
   excluded: string[];
   widened: string[];
   widenReasons: WidenRecord[];
+  widenAttempts: WidenAttempt[];
   created: string[];
 };
 
@@ -144,6 +174,7 @@ export class AgentSlice {
   private readonly excluded: Set<string>;
   private readonly widened = new Set<string>();
   private readonly widenReasons: WidenRecord[] = [];
+  private readonly widenAttempts: WidenAttempt[] = [];
   private readonly created = new Set<string>();
 
   constructor(input: AgentSliceInput) {
@@ -169,27 +200,64 @@ export class AgentSlice {
   // approval evidence — a justification the reviewer never sees cannot inform
   // a decision, and the previous tool collected one and discarded it.
   widen(input: string, reason: string): string {
-    const path = validateRepoPath(input);
+    // R15: every attempt is recorded before it can throw, so the audit trail
+    // shows what was asked for and not merely what was allowed. The refusal
+    // message the Agent receives is the same string stored as `detail`, so the
+    // reviewer reads exactly what the Agent was told.
+    let path: string;
+    try {
+      path = validateRepoPath(input);
+    } catch (cause) {
+      // The raw input is recorded rather than a normalized path, because there
+      // is no valid path to record and the attempt itself is the evidence.
+      this.refuse(String(input), reason.trim(), "invalid_path", "Path must stay inside the repository");
+      throw cause;
+    }
+
     const justification = reason.trim();
     if (!justification) {
+      this.refuse(path, justification, "missing_reason", "Widening requires a concrete reason");
       throw new Error("Widening requires a concrete reason");
     }
     if (!this.excluded.has(path)) {
-      throw new Error(`${path} is not in the excluded file ledger`);
+      const detail = `${path} is not in the excluded file ledger`;
+      this.refuse(path, justification, "not_excluded", detail);
+      throw new Error(detail);
     }
     const sensitive = classifySensitivePath(path);
     if (sensitive) {
-      throw new Error(
-        `${path} is ${sensitive} and requires elevated review; it cannot be widened by the Agent`,
-      );
+      const detail = `${path} is ${sensitive} and requires elevated review; it cannot be widened by the Agent`;
+      this.refuse(path, justification, "sensitive_path", detail);
+      throw new Error(detail);
     }
     if (this.widened.size >= MAX_WIDENED_FILES) {
-      throw new Error(`Run exceeded the ${MAX_WIDENED_FILES} widened file limit`);
+      const detail = `Run exceeded the ${MAX_WIDENED_FILES} widened file limit`;
+      this.refuse(path, justification, "limit_exceeded", detail);
+      throw new Error(detail);
     }
     this.excluded.delete(path);
     this.widened.add(path);
     this.widenReasons.push({ path, reason: justification });
+    this.widenAttempts.push({
+      sequence: this.widenAttempts.length + 1,
+      path,
+      reason: justification,
+      outcome: "granted",
+      refusal: null,
+      detail: null,
+    });
     return path;
+  }
+
+  private refuse(path: string, reason: string, refusal: WidenRefusal, detail: string): void {
+    this.widenAttempts.push({
+      sequence: this.widenAttempts.length + 1,
+      path,
+      reason,
+      outcome: "refused",
+      refusal,
+      detail,
+    });
   }
 
   create(input: string): string {
@@ -230,6 +298,8 @@ export class AgentSlice {
       excluded: sorted(this.excluded),
       widened: sorted(this.widened),
       widenReasons: [...this.widenReasons],
+      // R15: grants and refusals, in the order they were attempted.
+      widenAttempts: [...this.widenAttempts],
       created: sorted(this.created),
     };
   }

@@ -28,6 +28,7 @@ import {
   failRun,
   patchRun,
   publishRunProposal,
+  recordWidenAttempts,
   releaseRunProviderLease,
   transitionRun,
 } from "@/lib/agent/run-store";
@@ -359,6 +360,16 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
     // the artifact that would be delivered, byte for byte.
     assertCandidateIntegrity({ base, diff, candidate });
 
+    // R15: the Widen trail is written before the proposal, so a Run whose
+    // publish fails still leaves the record of what it asked for. Grants and
+    // refusals both: a Run that spent its steps probing the Slice boundary is
+    // exactly the one whose evidence must survive a failed publish.
+    await recordWidenAttempts({
+      runId: localized.runId,
+      userId: localized.userId,
+      attempts: result.ledger.widenAttempts,
+    });
+
     const proposalHash = await publishRunProposal({
       runId: localized.runId,
       userId: localized.userId,
@@ -379,6 +390,10 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
         // approval evidence. toolDetail is hashed into proposal_hash, so the
         // reason the reviewer reads is bound to the decision they make.
         widenReasons: result.ledger.widenReasons,
+        // R15: refusals travel into the hashed approval evidence as well, so a
+        // reviewer sees what the Agent tried and was denied, not only what it
+        // was granted.
+        widenAttempts: result.ledger.widenAttempts,
       },
       verifyDetail: {
         // Evidence from the isolated sandbox, bound to the candidate digest it

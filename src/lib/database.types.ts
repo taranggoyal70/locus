@@ -183,6 +183,21 @@ type AgentReviewRow = {
   created_at: string;
 };
 
+// R15: one Widen attempt, granted or refused. Update is `never` in the Tables
+// entry below because migration 021 makes these rows immutable evidence.
+type AgentWidenEventRow = {
+  id: string;
+  run_id: string;
+  user_id: string;
+  sequence: number;
+  path: string;
+  reason: string;
+  outcome: string;
+  refusal: string | null;
+  detail: string | null;
+  created_at: string;
+};
+
 type AgentProviderLeaseRow = {
   run_id: string;
   model: string;
@@ -343,6 +358,12 @@ export type Database = {
         Insert: Omit<AgentReviewRow, "id" | "created_at" | "note"> & {
           note?: string | null;
         };
+        Update: never;
+        Relationships: [];
+      };
+      agent_widen_events: {
+        Row: AgentWidenEventRow;
+        Insert: Omit<AgentWidenEventRow, "id" | "created_at">;
         Update: never;
         Relationships: [];
       };

@@ -44,7 +44,10 @@ afterAll(() => {
   if (root) rmSync(root, { recursive: true, force: true });
 });
 
-describe("Slice containment inside the sandbox", () => {
+// Spawns real child processes, so the per-test budget matches the spawn
+// timeout below rather than vitest's 5s default: under parallel load these
+// were failing on the clock, not on behaviour.
+describe("Slice containment inside the sandbox", { timeout: 30_000 }, () => {
   it("admits a path the Slice lists", () => {
     const resolved = contain("src/included.ts", ["src/included.ts"]);
     expect(resolved).toBe(path.join(root, "src", "included.ts"));

@@ -18,7 +18,10 @@ const cli = path.join(repoRoot, "cli", "locus.mjs");
  * when localization moved server-side — that the CLI walks a tree, ships it,
  * and renders what comes back — which no amount of mocking `fetch` proves.
  */
-describe("locus CLI against a Locus API", () => {
+// Spawns real child processes, so the per-test budget matches the spawn
+// timeout below rather than vitest's 5s default: under parallel load these
+// were failing on the clock, not on behaviour.
+describe("locus CLI against a Locus API", { timeout: 30_000 }, () => {
   let server;
   let baseUrl;
   let workspace;

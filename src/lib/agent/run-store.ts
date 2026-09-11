@@ -7,6 +7,7 @@ import {
   isTerminalRun,
   type RunStatus,
 } from "@/lib/agent/run-state";
+import type { WidenAttempt } from "@/lib/agent/workspace-tools";
 import { serviceClient } from "@/lib/supabase";
 
 type RunUpdate = Database["public"]["Tables"]["agent_runs"]["Update"];
@@ -88,6 +89,39 @@ export async function appendRunStep(input: {
     completed_at: new Date().toISOString(),
   });
   if (error) throw new Error(`Could not append Run Step: ${error.message}`);
+}
+
+/**
+ * R15: persist the Widen attempt trail, grants and refusals alike.
+ *
+ * Written as its own rows rather than folded into the proposal blob because the
+ * questions it answers are per-attempt and ordered: what did this Run ask for,
+ * in what order, and what was it refused? A single array serialized at the end
+ * of a Run cannot answer either.
+ *
+ * Rows are immutable once written (see migration 021), so this is called once
+ * per Run with the complete trail. An empty trail writes nothing.
+ */
+export async function recordWidenAttempts(input: {
+  runId: string;
+  userId: string;
+  attempts: WidenAttempt[];
+}): Promise<void> {
+  if (input.attempts.length === 0) return;
+  const db = serviceClient();
+  const { error } = await db.from("agent_widen_events").insert(
+    input.attempts.map((attempt) => ({
+      run_id: input.runId,
+      user_id: input.userId,
+      sequence: attempt.sequence,
+      path: attempt.path.slice(0, 1000),
+      reason: attempt.reason.slice(0, 2000),
+      outcome: attempt.outcome,
+      refusal: attempt.refusal,
+      detail: attempt.detail ? attempt.detail.slice(0, 2000) : null,
+    })),
+  );
+  if (error) throw new Error(`Could not record Widen attempts: ${error.message}`);
 }
 
 export async function publishRunProposal(input: {
