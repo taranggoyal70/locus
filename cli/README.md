@@ -7,10 +7,17 @@ the signal it needs is buried in the noise it doesn't. `locus-context` maps a
 task to the files that task actually touches — a dependency **Slice** — and tells
 you exactly what it left out.
 
-Zero dependencies. No account, no API key, no network call. It reads your
-repository locally and prints.
+Zero npm dependencies. Localization runs on the Locus API, so a run needs an
+account, an API key, and a network connection: the CLI walks your working tree,
+uploads the source files it selected, and prints the Slice that comes back.
+
+**Your source is sent to the Locus API.** That is how an uncommitted working tree
+can be analyzed at all — there is nothing to fetch for a change you have not
+pushed — but it is a real property of using this tool, so it is stated here
+rather than in a footnote. See the [Privacy Policy](https://locus-five-iota.vercel.app/privacy).
 
 ```bash
+export LOCUS_API_KEY=lk_...   # https://locus-five-iota.vercel.app/pricing
 npx -y locus-context locate "the stripe webhook processes events out of order"
 ```
 
