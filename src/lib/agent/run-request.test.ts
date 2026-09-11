@@ -21,6 +21,7 @@ describe("agent run request", () => {
       task: "Fix the settings save flow",
       executionMode: "byok",
       acceptanceCriteria: ["Persists after refresh", "Tests pass"],
+      workflowId: null,
       dataPolicyVersion: CONTROLLED_ALPHA_DATA_POLICY_VERSION,
     });
   });
@@ -77,5 +78,77 @@ describe("agent run request", () => {
       executionMode: "fastest-provider",
       dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
     })).toThrow("Execution mode must be shared or byok");
+  });
+});
+
+// R16: a workflow-driven Run, end to end through the request parser. The point
+// of a template is that the task text and criteria come from code rather than
+// from whatever the operator typed this time.
+describe("workflow-driven Agent Run requests", () => {
+  const base = {
+    repository: "owner/repo",
+    dataPolicyAcceptance: { version: CONTROLLED_ALPHA_DATA_POLICY_VERSION },
+  };
+
+  it("builds task and criteria from the template", () => {
+    const parsed = parseAgentRunRequest({
+      ...base,
+      workflow: {
+        id: "api-migration",
+        values: {
+          fromApi: "createClient(url, key)",
+          toApi: "createClient({ url, key })",
+          rationale: "the positional signature is removed in v3",
+        },
+      },
+    });
+
+    expect(parsed.workflowId).toBe("api-migration");
+    expect(parsed.task).toContain("createClient(url, key)");
+    expect(parsed.acceptanceCriteria.length).toBeGreaterThan(0);
+  });
+
+  it("leaves a free-text Run with no workflow id", () => {
+    const parsed = parseAgentRunRequest({
+      ...base,
+      task: "fix the retry path in billing",
+    });
+    expect(parsed.workflowId).toBeNull();
+  });
+
+  // Silently preferring one over the other would surprise whoever sent both.
+  it("refuses a request carrying both a workflow and a task", () => {
+    expect(() => parseAgentRunRequest({
+      ...base,
+      task: "something else entirely",
+      workflow: { id: "api-migration", values: { fromApi: "a()", toApi: "b()", rationale: "why" } },
+    })).toThrow(/not both/);
+  });
+
+  it("refuses acceptance criteria alongside a workflow that supplies its own", () => {
+    expect(() => parseAgentRunRequest({
+      ...base,
+      acceptanceCriteria: ["my own criterion"],
+      workflow: { id: "api-migration", values: { fromApi: "a()", toApi: "b()", rationale: "why" } },
+    })).toThrow(/supplies its own/);
+  });
+
+  it("surfaces the template's own validation message", () => {
+    expect(() => parseAgentRunRequest({
+      ...base,
+      workflow: { id: "api-migration", values: { toApi: "b()", rationale: "why" } },
+    })).toThrow(/Current API is required/);
+  });
+
+  it("refuses a non-text parameter value", () => {
+    expect(() => parseAgentRunRequest({
+      ...base,
+      workflow: { id: "api-migration", values: { fromApi: 42 } },
+    })).toThrow(/workflow.values.fromApi must be text/);
+  });
+
+  it("refuses a workflow selection with no id", () => {
+    expect(() => parseAgentRunRequest({ ...base, workflow: { values: {} } }))
+      .toThrow(/workflow.id is required/);
   });
 });
