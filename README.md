@@ -347,4 +347,11 @@ pnpm eval:release1
 
 Next.js 16 · React 19 · TypeScript · Tailwind CSS v4 · Supabase · Clerk · Vitest · Vercel
 
-MIT © Tarang Goyal
+## License
+
+Copyright © 2026 Tarang Goyal. All rights reserved.
+
+Locus is **source-available, not open source**. The code is here so you can read
+it, evaluate it, and verify the claims in [Evidence](#evidence). No right to use,
+copy, modify, distribute, sublicense, or sell any part of it is granted. See
+[LICENSE](./LICENSE). For commercial terms, get in touch.
