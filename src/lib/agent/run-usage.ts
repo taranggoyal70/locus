@@ -39,7 +39,11 @@ export async function readRunUsage(userId: string): Promise<RunUsage> {
       .from("agent_runs")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .gte("created_at", since),
+      .gte("created_at", since)
+      // A provider-capacity refusal happens before the workflow starts. Keep
+      // the failed Run as truthful evidence, but do not spend one of the
+      // account's two attempts on work that never executed.
+      .or("status.neq.failed,failure_kind.neq.quota_exhausted,workflow_run_id.not.is.null"),
   ]);
 
   if (active.error || rollingWindow.error) {

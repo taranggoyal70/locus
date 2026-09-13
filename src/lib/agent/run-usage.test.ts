@@ -28,6 +28,10 @@ function builder() {
       query.filters.push([column, value]);
       return chain;
     },
+    or(expression: string) {
+      query.filters.push(["or", expression]);
+      return chain;
+    },
     then(resolve: (value: { count: number | null; error: unknown }) => unknown) {
       const outcome = outcomes.shift() ?? { count: 0, error: null };
       return Promise.resolve(resolve(outcome));
@@ -76,6 +80,16 @@ describe("readRunUsage", () => {
     const elapsed = before - Date.parse(since as string);
     expect(elapsed).toBeGreaterThanOrEqual(24 * 60 * 60 * 1_000 - 5_000);
     expect(elapsed).toBeLessThanOrEqual(24 * 60 * 60 * 1_000 + 5_000);
+  });
+
+  it("does not charge attempts rejected before provider execution", async () => {
+    outcomes.push({ count: 0, error: null }, { count: 0, error: null });
+    await readRunUsage("user_1");
+
+    expect(queries[1]?.filters).toContainEqual([
+      "or",
+      "status.neq.failed,failure_kind.neq.quota_exhausted,workflow_run_id.not.is.null",
+    ]);
   });
 
   it("counts exactly the statuses the Run lifecycle calls active", async () => {
