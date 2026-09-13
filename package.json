@@ -16,6 +16,7 @@
     "test": "vitest run",
     "check:merge-markers": "node scripts/check-merge-markers.mjs",
     "check:alpha-claims": "node scripts/check-alpha-claims.mjs",
+    "check:public-launch": "node scripts/verify-public-launch.mjs",
     "benchmark": "node scripts/benchmark.mjs --write",
     "eval:release1": "node scripts/release1-eval.mjs",
     "evidence:release1": "node scripts/release1-public-report.mjs",
