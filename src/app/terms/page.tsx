@@ -23,7 +23,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-paper">Service</h2>
             <p>
-              Locus is an experimental, open-source agent workspace operated by Tarang Goyal. It
+              Locus is an experimental, source-available agent workspace operated by Tarang Goyal. It
               localizes tasks for public JavaScript, TypeScript, and Python repositories for every signed-in
               user. During the limited free beta, signed-in users can request a shared Agent Run or
               connect their own Cloudflare Workers AI account, continue in an isolated Sandbox,
@@ -83,11 +83,12 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Open source</h2>
+            <h2 className="text-lg font-semibold text-paper">Source license</h2>
             <p>
-              Locus is licensed under the MIT License. You may self-host, modify, and distribute
-              the software in accordance with the license terms. CLI and MCP source runtimes can be
-              executed from a repository checkout; no npm distribution is currently published.
+              Copyright © 2026 Tarang Goyal. All rights reserved. The Locus source is available for
+              inspection and evaluation, but no right to use, copy, modify, distribute, sublicense,
+              or sell it is granted unless you have separate written permission. CLI and MCP source
+              runtimes are not currently published as installable packages.
             </p>
           </section>
 

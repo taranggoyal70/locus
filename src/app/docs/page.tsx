@@ -17,10 +17,11 @@ export default function DocsPage() {
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Experimental localization API</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-5xl">Localize before you spend.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-light">
-          Invite-only Agent Runs localize a public Repo, work in an isolated Sandbox, run
-          allowlisted checks, and stop at a review-ready proposal. The API below exposes only the
-          deterministic localization engine for experimental use. Authenticate with an API key
-          from your <Link href="/settings" className="text-accent hover:underline">settings page</Link>.
+          Any verified account can start an Agent Run for a public Repo. Each Run works in an
+          isolated Sandbox, records allowlisted checks, and stops at a review-ready proposal.
+          Locus provides one shared Run per UTC day across the beta, or you can connect your own
+          Cloudflare Workers AI account in <Link href="/settings" className="text-accent hover:underline">Settings</Link>.
+          The API below exposes the deterministic localization engine for experimental use.
         </p>
 
         <div className="aperture-rule mt-8" />
@@ -190,7 +191,7 @@ export default function DocsPage() {
         <section className="mt-10">
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Source runtimes</h2>
           <p className="mt-2 text-sm leading-6 text-muted-light">
-            CLI and MCP implementations exist in the open-source repository for development and
+            CLI and MCP implementations exist in the source-available repository for development and
             automated testing. The <code className="text-accent">locus-context</code> package is not
             published to npm, so no package-manager installation is currently advertised or supported.
           </p>
