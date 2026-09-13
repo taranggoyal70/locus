@@ -20,6 +20,7 @@ const complete = {
 const requiredSchemaPaths = {
   "/agent_provider_credentials": {},
   "/agent_provider_daily_claims": {},
+  "/agent_widen_events": {},
   "/rpc/claim_agent_provider_daily_slot": {},
   "/rpc/claim_agent_run_slot": {},
 };
@@ -175,6 +176,19 @@ describe("production readiness", () => {
   it("fails closed until the free-beta tables, columns, and RPCs are visible", async () => {
     const staleSchema = vi.fn(async (input: string | URL) => String(input).endsWith("/rest/v1/")
       ? Response.json({ paths: { "/agent_runs": {} } })
+      : new Response(null, { status: 200 }));
+
+    await expect(productionReadiness(complete, staleSchema)).resolves.toMatchObject({
+      ready: false,
+      missing: ["database"],
+    });
+  });
+
+  it("fails closed until Agent widen evidence storage is visible", async () => {
+    const schemaWithoutWidenEvents = { ...requiredSchemaPaths };
+    delete (schemaWithoutWidenEvents as Partial<typeof requiredSchemaPaths>)["/agent_widen_events"];
+    const staleSchema = vi.fn(async (input: string | URL) => String(input).endsWith("/rest/v1/")
+      ? Response.json({ paths: schemaWithoutWidenEvents })
       : new Response(null, { status: 200 }));
 
     await expect(productionReadiness(complete, staleSchema)).resolves.toMatchObject({

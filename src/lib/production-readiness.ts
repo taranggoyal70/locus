@@ -7,6 +7,7 @@ type DatabaseRequest = (input: string | URL, init?: RequestInit) => Promise<Resp
 const FREE_BETA_SCHEMA_PATHS = [
   "/agent_provider_credentials",
   "/agent_provider_daily_claims",
+  "/agent_widen_events",
   "/rpc/claim_agent_provider_daily_slot",
   "/rpc/claim_agent_run_slot",
 ] as const;
