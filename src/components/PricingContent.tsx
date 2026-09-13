@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { MarketingShell } from "@/components/MarketingShell";
@@ -31,7 +32,9 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
             {admissionGateNote(selfServeOpen)}{" "}
             Create a free account to inspect a task-sized Slice for any supported public Repo.
-            We are inviting a smaller group to test complete Agent Runs before introducing paid plans.
+            {selfServeOpen
+              ? " Every verified account can start up to two Agent Runs in a rolling 24-hour window."
+              : " We are inviting a smaller group to test complete Agent Runs before introducing paid plans."}
           </p>
         </div>
 
@@ -39,10 +42,10 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-                Design-partner access
+                {selfServeOpen ? "Self-serve Agent Runs" : "Design-partner access"}
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-paper">
-                One honest early-access contract
+                {selfServeOpen ? "Two Runs per rolling 24 hours" : "One honest early-access contract"}
               </h2>
             </div>
             <span className="rounded-full border border-line-strong bg-ink px-3 py-1.5 text-xs font-semibold text-paper">
@@ -59,19 +62,30 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
             ))}
           </ul>
 
-          <button
-            type="button"
-            onClick={() => setShowAccessForm(true)}
-            className="mt-8 w-full rounded-xl bg-accent px-5 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim"
-          >
-            Request Agent Run access
-          </button>
+          {selfServeOpen ? (
+            <Link
+              href="/workspace"
+              className="mt-8 block w-full rounded-xl bg-accent px-5 py-3.5 text-center text-sm font-semibold text-ink transition hover:bg-accent-dim"
+            >
+              Open the workspace
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowAccessForm(true)}
+              className="mt-8 w-full rounded-xl bg-accent px-5 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim"
+            >
+              Request Agent Run access
+            </button>
+          )}
           <p className="mt-3 text-center text-xs leading-5 text-muted">
-            Access is manually approved. No payment information is requested.
+            {selfServeOpen
+              ? "Verified email required. Shared capacity is limited, and no payment information is requested."
+              : "Access is manually approved. No payment information is requested."}
           </p>
         </section>
       </main>
-      {showAccessForm && <WaitlistForm onClose={() => setShowAccessForm(false)} />}
+      {!selfServeOpen && showAccessForm && <WaitlistForm onClose={() => setShowAccessForm(false)} />}
     </MarketingShell>
   );
 }

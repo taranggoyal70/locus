@@ -1,12 +1,13 @@
 import { writeFileSync } from "node:fs";
 
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LandingPage } from "@/components/LandingPage";
 
 describe("public early-access landing contract", () => {
   it("states the supported workflow and benchmark limits", () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "");
     const html = renderToStaticMarkup(<LandingPage />);
     const evidencePath = process.env.NO_MISTAKES_RENDERED_LANDING_HTML;
     if (evidencePath) writeFileSync(evidencePath, `${html}\n`);
@@ -31,4 +32,18 @@ describe("public early-access landing contract", () => {
     expect(html).not.toContain("Fewer total tokens per verified task");
     expect(html).not.toContain("measuring the whole token loop");
   });
+
+  it("offers Agent Runs directly when self serve is open", () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "open");
+    const html = renderToStaticMarkup(<LandingPage />);
+
+    expect(html).toContain("Any verified account can continue");
+    expect(html).toContain("Start an Agent Run");
+    expect(html).not.toContain("Invited design partners");
+    expect(html).not.toContain("Request Agent Run access");
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
