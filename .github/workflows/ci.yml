@@ -106,8 +106,13 @@ jobs:
 
   # Static analysis for the injection and path-handling classes this codebase
   # is most exposed to: it executes model-selected tools against
-  # repository-controlled input.
+  # repository-controlled input. GitHub does not accept CodeQL uploads from a
+  # private personal repository without code scanning being enabled, so keep
+  # this job available for a future organization/GitHub Advanced Security
+  # migration while the private free-launch setup uses the mandatory dependency,
+  # secret, lint, test, typecheck, and build gates above.
   codeql:
+    if: ${{ github.event.repository.private == false }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
