@@ -11,5 +11,7 @@ describe("public alpha support", () => {
     expect(html).toContain("response targets, not guarantees");
     expect(html).toContain("GitHub Security Advisory");
     expect(html).toContain("Data deletion");
+    expect(html).toContain("github.com/taranggoyal70/locus-support");
+    expect(html).not.toContain("github.com/taranggoyal70/locus/issues");
   });
 });

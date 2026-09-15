@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
-import { REPO_URL } from "@/lib/config";
+import { SUPPORT_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Locus",
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
             <p>
               Questions or a request deletion? Open a private-data request without including source
               code, task text, or credentials in the{" "}
-              <a href={`${REPO_URL}/issues/new`} className="text-accent hover:underline">
+              <a href={`${SUPPORT_URL}/issues/new`} className="text-accent hover:underline">
                 Locus issue tracker
               </a>.
             </p>

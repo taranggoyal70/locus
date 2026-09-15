@@ -11,6 +11,7 @@ describe("public early-access marketing navigation", () => {
     expect(html).toContain("Try Locus");
     expect(html).toContain('href="/demo"');
     expect(html).toContain('href="/evidence/release-1"');
+    expect(html).not.toContain("github.com/taranggoyal70/locus");
     const signInLink = html.match(/<a[^>]*href="\/sign-in"[^>]*>Sign in<\/a>/)?.[0];
     expect(signInLink).toBeTruthy();
     expect(signInLink).not.toContain("hidden");

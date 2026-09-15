@@ -156,7 +156,7 @@ pnpm dev
 | `LOCUS_SELF_SERVE_MAX_ACCOUNTS` | Ceiling on self-serve accounts. Absent means no ceiling; `0` admits nobody new without affecting existing accounts |
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
-| `NEXT_PUBLIC_REPO_URL` | Source repo URL |
+| `NEXT_PUBLIC_SUPPORT_URL` | Code-free public support repository URL |
 | `LOCUS_RUN_TOKEN_BUDGET` | BYOK hard budget; safe default 180,000. Shared Runs are additionally capped at 100,000 |
 | `OPS_ALERT_WEBHOOK_URL` | HTTPS operational alert destination; takes precedence over the external health-check marker |
 

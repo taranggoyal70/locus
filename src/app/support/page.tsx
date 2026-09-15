@@ -3,15 +3,15 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
 import { supportAvailability } from "@/lib/admission-copy";
-import { REPO_URL, SITE_URL } from "@/lib/config";
+import { SITE_URL, SUPPORT_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Support and service status — Locus",
   description: "How to report a Locus problem, security issue, or data request.",
 };
 
-const issueUrl = `${REPO_URL}/issues/new`;
-const securityUrl = `${REPO_URL}/security/advisories/new`;
+const issueUrl = `${SUPPORT_URL}/issues/new`;
+const securityUrl = `${SUPPORT_URL}/security/advisories/new`;
 
 export default function SupportPage() {
   return (

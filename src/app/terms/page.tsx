@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
-import { SITE_URL } from "@/lib/config";
+import { SITE_URL, SUPPORT_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Locus",
@@ -83,12 +83,13 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Source license</h2>
+            <h2 className="text-lg font-semibold text-paper">Intellectual property</h2>
             <p>
-              Copyright © 2026 Tarang Goyal. All rights reserved. The Locus source is available for
-              inspection and evaluation, but no right to use, copy, modify, distribute, sublicense,
-              or sell it is granted unless you have separate written permission. CLI and MCP source
-              runtimes are not currently published as installable packages.
+              Copyright © 2026 Tarang Goyal. All rights reserved. The Locus implementation is
+              proprietary and is not published as part of the service. Access to Locus does not grant
+              a right to copy, modify, distribute, sublicense, sell, reverse engineer, or create a
+              competing service from its protected software except where applicable law does not
+              permit that restriction or you have separate written permission.
             </p>
           </section>
 
@@ -98,10 +99,10 @@ export default function TermsPage() {
               We may update these terms as the service evolves. Questions and early-access support requests
               can be submitted through the{" "}
               <a
-                href="https://github.com/taranggoyal70/locus/issues/new"
+                href={`${SUPPORT_URL}/issues/new`}
                 className="text-accent hover:underline"
               >
-                Locus issue tracker
+                public Locus support tracker
               </a>.
             </p>
           </section>

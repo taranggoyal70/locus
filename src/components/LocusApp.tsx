@@ -14,7 +14,6 @@ import { RepoLoadFeedback } from "@/components/RepoLoadFeedback";
 import { TaskEvidence } from "@/components/TaskEvidence";
 import { TokenMeter } from "@/components/TokenMeter";
 import { useLocus } from "@/hooks/useLocus";
-import { REPO_URL } from "@/lib/config";
 import { NO_RUN_ACCESS, type RunAccess } from "@/lib/run-access";
 import { buildShareUrl } from "@/lib/share";
 
@@ -148,9 +147,9 @@ export function LocusApp({
             <Link href="/settings" className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
               Setup
             </Link>
-            <a href={REPO_URL} className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] md:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
-              Code
-            </a>
+            <Link href="/docs" className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] md:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+              Docs
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2 lg:flex-col">

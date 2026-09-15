@@ -4,7 +4,6 @@ import contract from "../../../../benchmarks/release1/contract.json";
 import report from "../../../../benchmarks/release1/public-report.json";
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
-import { REPO_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Release 1 evidence — Locus",
@@ -23,7 +22,6 @@ type AggregateMetrics = {
 type PublicReport = Omit<typeof report, "metrics"> & { metrics: AggregateMetrics | null };
 
 const evidence = report as PublicReport;
-const evidenceBase = `${REPO_URL}/blob/main/benchmarks/release1`;
 
 function percent(value: number) {
   return `${Math.round(value * 100)}%`;
@@ -147,11 +145,10 @@ export default function Release1EvidencePage() {
               <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">Frozen case ledger</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-paper">Every task is inspectable.</h2>
             </div>
-            <div className="flex flex-wrap gap-3 text-sm">
-              <a className="font-semibold text-accent hover:underline" href={`${evidenceBase}/contract.json`}>Contract</a>
-              <a className="font-semibold text-accent hover:underline" href={`${evidenceBase}/results.json`}>Raw results</a>
-              <a className="font-semibold text-accent hover:underline" href={`${evidenceBase}/public-report.json`}>Public report</a>
-            </div>
+            <p className="max-w-md text-sm leading-6 text-muted-light">
+              The frozen protocol, completion state, thresholds, and case ledger are published on
+              this page without exposing the private implementation or internal evaluation corpus.
+            </p>
           </div>
           <div className="mt-7 overflow-hidden rounded-2xl border border-line-strong bg-surface/75">
             <ul className="divide-y divide-line">

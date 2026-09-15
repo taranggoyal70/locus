@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { admissionSentence } from "@/lib/admission-copy";
-import { REPO_URL } from "@/lib/config";
 
 /**
  * `selfServeOpen` is a required prop rather than an environment read.
@@ -33,7 +32,6 @@ export function MarketingShell({
             <Link href="/evidence/release-1" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Evidence</Link>
             <Link href="/docs" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Docs</Link>
             <Link href="/pricing" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper md:block md:px-3">Agent access</Link>
-            <a href={REPO_URL} className="hidden rounded-lg px-3 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block">Source</a>
             <Link href="/sign-in" className="rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:px-3">Sign in</Link>
             <Link href="/workspace" className="ml-1 rounded-lg bg-paper px-3 py-2 text-white transition hover:bg-paper/90 sm:px-4">Try Locus</Link>
           </nav>
@@ -57,7 +55,6 @@ export function MarketingShell({
             <Link href="/privacy" className="hover:text-paper">Privacy</Link>
             <Link href="/terms" className="hover:text-paper">Terms</Link>
             <Link href="/support" className="hover:text-paper">Support</Link>
-            <a href={REPO_URL} className="hover:text-paper">GitHub</a>
           </div>
         </div>
       </footer>
