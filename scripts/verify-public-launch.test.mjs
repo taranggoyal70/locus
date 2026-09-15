@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import test from "node:test";
+import { expect, it } from "vitest";
 
 import { verifyPublicLaunch } from "./verify-public-launch.mjs";
 
@@ -13,7 +12,7 @@ function response(body, init = {}) {
   });
 }
 
-test("verifies the public pages, health contract, and signed-out Run boundary", async () => {
+it("verifies the public pages, health contract, and signed-out Run boundary", async () => {
   const requests = [];
   const fetcher = async (url, init = {}) => {
     const parsed = new URL(url);
@@ -43,12 +42,12 @@ test("verifies the public pages, health contract, and signed-out Run boundary", 
     fetcher,
   });
 
-  assert.equal(result.revision, "abc1234");
-  assert.equal(result.pagesChecked, 7);
-  assert.deepEqual(requests.at(-1), ["/api/agent/runs", "POST"]);
+  expect(result.revision).toBe("abc1234");
+  expect(result.pagesChecked).toBe(7);
+  expect(requests.at(-1)).toEqual(["/api/agent/runs", "POST"]);
 });
 
-test("fails when production is healthy but not self-serve", async () => {
+it("fails when production is healthy but not self-serve", async () => {
   const fetcher = async (url) => {
     const path = new URL(url).pathname;
     if (pages.has(path)) return response(`<title>Locus</title>${"ready ".repeat(80)}`);
@@ -62,13 +61,12 @@ test("fails when production is healthy but not self-serve", async () => {
     return response("{}", { status: 401, headers: { "content-type": "application/json" } });
   };
 
-  await assert.rejects(
+  await expect(
     verifyPublicLaunch({ baseUrl: "https://example.com", fetcher }),
-    /self-serve admission/i,
-  );
+  ).rejects.toThrow(/self-serve admission/i);
 });
 
-test("accepts a signed-out Run start that is redirected to sign-in", async () => {
+it("accepts a signed-out Run start that is redirected to sign-in", async () => {
   const fetcher = async (url) => {
     const path = new URL(url).pathname;
     if (pages.has(path)) return response(`<title>Locus</title>${"ready ".repeat(80)}`);
@@ -84,10 +82,12 @@ test("accepts a signed-out Run start that is redirected to sign-in", async () =>
     return redirected;
   };
 
-  await assert.doesNotReject(verifyPublicLaunch({ baseUrl: "https://example.com", fetcher }));
+  await expect(
+    verifyPublicLaunch({ baseUrl: "https://example.com", fetcher }),
+  ).resolves.toBeDefined();
 });
 
-test("accepts Clerk's protected-route rewrite for signed-out Run starts", async () => {
+it("accepts Clerk's protected-route rewrite for signed-out Run starts", async () => {
   const fetcher = async (url) => {
     const path = new URL(url).pathname;
     if (pages.has(path)) return response(`<title>Locus</title>${"ready ".repeat(80)}`);
@@ -107,10 +107,12 @@ test("accepts Clerk's protected-route rewrite for signed-out Run starts", async 
     });
   };
 
-  await assert.doesNotReject(verifyPublicLaunch({ baseUrl: "https://example.com", fetcher }));
+  await expect(
+    verifyPublicLaunch({ baseUrl: "https://example.com", fetcher }),
+  ).resolves.toBeDefined();
 });
 
-test("fails when a public page is unavailable", async () => {
+it("fails when a public page is unavailable", async () => {
   const fetcher = async (url) => {
     const path = new URL(url).pathname;
     if (path === "/demo") return response("missing", { status: 404 });
@@ -118,8 +120,7 @@ test("fails when a public page is unavailable", async () => {
     throw new Error("Health should not be reached after the page failure");
   };
 
-  await assert.rejects(
+  await expect(
     verifyPublicLaunch({ baseUrl: "https://example.com", fetcher }),
-    /\/demo returned 404/,
-  );
+  ).rejects.toThrow(/\/demo returned 404/);
 });
