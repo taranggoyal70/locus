@@ -28,7 +28,7 @@ describe("MigrationDemo", () => {
   });
 
   it("defaults to a plain-English explanation of the customer outcome", () => {
-    render(<MigrationDemo selfServeOpen={false} />);
+    const { container } = render(<MigrationDemo selfServeOpen={false} />);
 
     expect(screen.getByRole("heading", { name: /Your AI changed the code.*Locus proves what it touched/ })).toBeTruthy();
     expect(screen.getByText("Locus sets the safe area")).toBeTruthy();
@@ -36,6 +36,8 @@ describe("MigrationDemo", () => {
     expect(screen.getByText("Signed receipt", { exact: true })).toBeTruthy();
     expect(screen.queryByText("Guard scope")).toBeNull();
     expect(screen.queryByText("pnpm typecheck")).toBeNull();
+    expect(container.textContent).toContain("The Locus Guard runtime runs");
+    expect(container.textContent).not.toContain("source CLI");
   });
 
   it("lets developers inspect the exact evidence vocabulary and code diff", () => {

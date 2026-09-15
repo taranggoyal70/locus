@@ -12,10 +12,12 @@ describe("public beta documentation", () => {
     expect(html).toContain("one shared Run per UTC day");
     expect(html).toContain("own Cloudflare Workers AI account");
     expect(html).toContain("review-ready proposal");
-    expect(html).toContain("not published to npm");
+    expect(html).toContain("does not currently publish a CLI");
     expect(html).toContain("context included by this localization response");
     expect(html).not.toContain("Invite-only Agent Runs");
     expect(html).not.toContain("open-source repository");
+    expect(html).not.toContain("source-available");
+    expect(html).not.toContain("source CLI");
     expect(html).not.toContain("savedPct");
     expect(html).not.toContain("npx locus-context");
     expect(html).not.toContain("approve loop");

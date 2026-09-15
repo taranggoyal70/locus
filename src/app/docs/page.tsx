@@ -150,8 +150,8 @@ export default function DocsPage() {
             <code className="text-accent"> matchedFiles</code>. Everything else in the response then
             describes the analyzed portion only: <code className="text-accent">excluded</code> omits
             files that were never fetched, and <code className="text-accent">tokens.total</code> is the
-            analyzed total the reduction is measured against. Analyze a large repository with the
-            source CLI, which has no file cap.
+            analyzed total the reduction is measured against. Contact Locus support when a repository
+            exceeds the public API limit.
           </p>
           <p className="mt-3 rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm leading-6 text-muted-light">
             Token counts report only the context included by this localization response and the
@@ -189,11 +189,11 @@ export default function DocsPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Source runtimes</h2>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Public availability</h2>
           <p className="mt-2 text-sm leading-6 text-muted-light">
-            CLI and MCP implementations exist in the source-available repository for development and
-            automated testing. The <code className="text-accent">locus-context</code> package is not
-            published to npm, so no package-manager installation is currently advertised or supported.
+            The hosted API and signed-in Agent Run workspace are the supported public interfaces during
+            early access. Locus does not currently publish a CLI, MCP server, npm package, or product
+            implementation for download.
           </p>
         </section>
       </main>

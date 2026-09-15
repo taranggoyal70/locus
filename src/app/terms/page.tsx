@@ -23,7 +23,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-paper">Service</h2>
             <p>
-              Locus is an experimental, source-available agent workspace operated by Tarang Goyal. It
+              Locus is an experimental, proprietary agent workspace operated by Tarang Goyal. It
               localizes tasks for public JavaScript, TypeScript, and Python repositories for every signed-in
               user. During the limited free beta, signed-in users can request a shared Agent Run or
               connect their own Cloudflare Workers AI account, continue in an isolated Sandbox,

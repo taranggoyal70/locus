@@ -19,5 +19,7 @@ describe("public early-access terms", () => {
     expect(html).not.toContain("taranggoyal70/locus/issues/new");
     expect(html).not.toContain("MIT License");
     expect(html).not.toContain("open-source agent workspace");
+    expect(html).not.toContain("source-available");
+    expect(html).toContain("proprietary agent workspace");
   });
 });

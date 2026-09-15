@@ -294,7 +294,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
         <section className="mt-8 grid gap-4 md:grid-cols-2" aria-label="Demo capability boundaries">
           <div className="rounded-2xl border border-white/15 bg-white/[.035] p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8ef0c0]">{plainLanguage ? "Available today" : "Real in early access today"}</p>
-            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "The source CLI runs Codex, Claude, or another command inside a fail-closed target-Repo boundary: it cannot read excluded Repo files, cannot write elsewhere on the host, and emits an Ed25519-signed Run receipt." : `${demoCapabilitySummary(selfServeOpen)} The v0.4 source CLI binds target-Repo containment, the working-tree candidate, Check output, provider-reported usage, and immutable human Review in a signed receipt.`}</p>
+            <p className="mt-3 text-sm leading-6 text-[#bdcad8]">{plainLanguage ? "The Locus Guard runtime runs Codex, Claude, or another command inside a fail-closed target-Repo boundary: it cannot read excluded Repo files, cannot write elsewhere on the host, and emits an Ed25519-signed Run receipt." : `${demoCapabilitySummary(selfServeOpen)} The Locus Guard runtime binds target-Repo containment, the working-tree candidate, Check output, provider-reported usage, and immutable human Review in a signed receipt.`}</p>
           </div>
           <div className="rounded-2xl border border-[#e7b853]/20 bg-[#e7b853]/[.04] p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-[#f2c76d]">{plainLanguage ? "What we’re proving next" : "Being validated next"}</p>
