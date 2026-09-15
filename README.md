@@ -1,5 +1,12 @@
 # Locus
 
+> [!IMPORTANT]
+> **Proprietary and confidential.** This repository contains Locus's private
+> implementation. Access is limited to authorized collaborators. Do not copy,
+> redistribute, publish, or move its contents to another account or service
+> without the copyright holder's written approval. See
+> [`docs/security/ip-protection.md`](docs/security/ip-protection.md).
+
 **Review-ready engineering proposals with visible context evidence.**
 
 Locus maps a natural-language task to a focused JavaScript, TypeScript, or Python code Slice:

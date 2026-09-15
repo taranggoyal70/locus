@@ -1,0 +1,10 @@
+# Synthetic credential shapes intentionally committed to test log redaction and
+# documentation. These are exact historical fingerprints, not path-wide
+# exclusions; a new credential-like value in the same files will still fail.
+3a91b80404aa7f03c81f21c6c93b668322f462ee:src/lib/logger.test.ts:jwt:49
+3a91b80404aa7f03c81f21c6c93b668322f462ee:src/lib/logger.test.ts:jwt:50
+3a91b80404aa7f03c81f21c6c93b668322f462ee:src/lib/logger.test.ts:stripe-access-token:41
+bb77873e37ada77aa28d57a68d1e8fe6cc5c9b7a:.github/workflows/ci.yml:stripe-access-token:44
+9ab6912b5acfcdb5bca2b7c517f23ee21b62b461:README.md:curl-auth-header:63
+85f918fd4f4a0d8adc56cea60554c1c242e8196c:src/components/ApiKeysPanel.tsx:curl-auth-header:153
+9cc9dd40850edee4f81b8172c44d4ac4e1c8b2aa:src/app/docs/page.tsx:curl-auth-header:89
