@@ -27,6 +27,7 @@ const TENANT_COLUMN = "user_id";
 // Tables carrying a user_id column. Derived from database.types.ts; teams,
 // waitlist, and agent_provider_leases have no per-user column and are excluded.
 export const TENANT_TABLES: ReadonlySet<string> = new Set([
+  "account_admissions",
   "agent_approvals",
   "agent_artifacts",
   "agent_reviews",

@@ -117,7 +117,7 @@ pnpm dev
 |----------|---------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk authentication |
 | `CLERK_SECRET_KEY` | Clerk server-side auth |
-| `ALPHA_ALLOWED_USER_IDS` | Comma-separated Clerk user IDs allowed to start Agent Runs |
+| `ALPHA_ALLOWED_USER_IDS` | Comma-separated Clerk user IDs admitted to the `partner` Tier |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase persistence |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase browser client configuration |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-side only) |
@@ -129,6 +129,7 @@ pnpm dev
 
 | Variable | Purpose |
 |----------|---------|
+| `LOCUS_SELF_SERVE` | Set to `open` to admit any signed-in account to the `free` Tier. Absent keeps the deployment invite-only |
 | `GITHUB_TOKEN` | Higher GitHub API rate limits |
 | `NEXT_PUBLIC_SITE_URL` | Public URL (auto-detected on Vercel) |
 | `NEXT_PUBLIC_REPO_URL` | Source repo URL |
@@ -138,6 +139,31 @@ pnpm dev
 On Vercel, AI Gateway authentication uses the deployment's short-lived OIDC
 credential automatically. Local development can use `AI_GATEWAY_API_KEY`; do
 not add a direct model-provider key to the application.
+
+### Admission and Tiers
+
+Every signed-in account resolves to one **Tier**, and the Tier decides both what
+the account may do and how many Agent Runs it may hold open.
+
+| Tier | How it is reached | Runs (active / daily) | Public Repos | Private Repos | PR delivery | Billing |
+|------|-------------------|----------------------|--------------|---------------|-------------|---------|
+| `visitor` | Signed out, waitlisted, or suspended | 0 / 0 | read only | no | no | no |
+| `free` | Any signed-in account while `LOCUS_SELF_SERVE=open` | 1 / 3 | yes | no | no | yes |
+| `partner` | Listed in `ALPHA_ALLOWED_USER_IDS` | 2 / 10 | yes | yes | yes | comped |
+| `pro` | Active Stripe subscription | 5 / 50 | yes | yes | yes | yes |
+
+Several rules can match at once; the highest Tier wins, so a design partner who
+later subscribes gains the paid Tier rather than keeping the comped one.
+
+An operator row in `account_admissions` can raise an account above what these
+rules give it, or refuse one outright by storing `visitor`. A stored refusal
+beats every other rule, including an active subscription.
+
+Capabilities are withheld separately by `CAPABILITY_RELEASE` in
+[`src/lib/admission.ts`](src/lib/admission.ts). The table above is the ladder as
+designed; the release record is what has actually shipped, and the two are
+intersected. Opening self-serve therefore cannot release a capability by
+accident: that is always a separate, reviewable commit.
 
 ### Authentication
 
@@ -204,10 +230,14 @@ that directory. The unpublished package source lives in [`cli/`](./cli);
 
 ## Verification
 
-- **100+ automated tests**, including Run lifecycle, real CLI, and MCP stdio process tests
-- GitHub CI runs lint, tests, CLI sync, type-checking, and a production build
+- **600+ automated tests**, including Run lifecycle, Admission resolution, real
+  CLI, and MCP stdio process tests. The MCP tests build the directory layout npm
+  produces rather than running from the source tree, because the source tree is
+  the layout that hides packaging bugs
+- GitHub CI runs lint, tests, CLI sync, type-checking, a production build, a
+  dependency audit, and CodeQL
 - [`/api/health`](https://locus-five-iota.vercel.app/api/health) reports the
-  deployed package version and Git revision
+  deployed package version, Git revision, and which admission door is open
 - The historical benchmark is generated from declared parent snapshots and fails
   its gate if fix-file recall drops below 100%. It runs locally via
   `pnpm benchmark`, **not** in CI, and `benchmarks/results.json` is a committed
@@ -219,7 +249,7 @@ Run the same checks locally:
 ```bash
 pnpm lint
 pnpm test
-pnpm exec tsc --noEmit
+pnpm typecheck
 pnpm check-sync
 pnpm evidence:release1
 pnpm build

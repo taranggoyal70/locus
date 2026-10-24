@@ -9,6 +9,7 @@
     "locus-context": "locus.mjs"
   },
   "files": [
+    "LICENSE",
     "*.mjs",
     "README.md"
   ],
@@ -38,5 +39,9 @@
     "url": "git+https://github.com/taranggoyal70/locus.git",
     "directory": "cli"
   },
-  "homepage": "https://locus-five-iota.vercel.app"
+  "homepage": "https://locus-five-iota.vercel.app",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }

@@ -63,13 +63,33 @@ function containRequestedPath(input) {
 const MAX_MESSAGE_BYTES = 4 * 1024 * 1024;
 const MAX_BUFFER_BYTES = 8 * 1024 * 1024;
 
+// Two layouts, and only one of them was handled.
+//
+// In this repository the entrypoint lives in bin/ and the manifest is one level
+// up. In the published package the entrypoint sits at the package root with the
+// manifest beside it, and one level up is node_modules, which has no manifest at
+// all. Looking only upward therefore reported 0.1.0 for every npm install -
+// wrong in the one place the version is actually read, since it is what the MCP
+// handshake advertises to the client.
+//
+// The name check matters as much as the order. Without it, a manifest found by
+// accident higher in a tree would have its version reported as this server's.
+const MANIFEST_NAMES = new Set(["locus-context", "locus"]);
+
 function pkgVersion() {
-  try {
-    const pkg = JSON.parse(readFileSync(path.join(here, "..", "package.json"), "utf8"));
-    return pkg.version || "0.1.0";
-  } catch {
-    return "0.1.0";
+  const candidates = [
+    path.join(here, "package.json"),
+    path.join(here, "..", "package.json"),
+  ];
+  for (const candidate of candidates) {
+    try {
+      const pkg = JSON.parse(readFileSync(candidate, "utf8"));
+      if (MANIFEST_NAMES.has(pkg.name) && pkg.version) return pkg.version;
+    } catch {
+      // Missing or unparseable at this layout; try the next.
+    }
   }
+  return "0.1.0";
 }
 const VERSION = pkgVersion();
 

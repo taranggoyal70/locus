@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
+import { accountCan } from "@/lib/admission-server";
 import { globalClient } from "@/lib/supabase-tenant";
 
 function disabledResponse() {
@@ -22,7 +22,7 @@ function slugify(name: string): string {
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!alphaCapabilitiesForUser(userId).teams) return disabledResponse();
+  if (!(await accountCan(userId, "teams"))) return disabledResponse();
 
   const db = globalClient("team records are owned via team_members, not a user column");
   const { data: memberships } = await db
@@ -50,7 +50,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!alphaCapabilitiesForUser(userId).teams) return disabledResponse();
+  if (!(await accountCan(userId, "teams"))) return disabledResponse();
 
   let body: unknown;
   try { body = await request.json(); } catch {
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!alphaCapabilitiesForUser(userId).teams) return disabledResponse();
+  if (!(await accountCan(userId, "teams"))) return disabledResponse();
 
   const url = new URL(request.url);
   const teamId = url.searchParams.get("id");

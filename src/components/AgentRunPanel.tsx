@@ -10,6 +10,7 @@ import {
 } from "@/lib/agent/run-review";
 import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentStepView } from "@/lib/agent/run-view";
+import { runAccessCopy, type RunAccess } from "@/lib/run-access";
 
 const PHASES: Array<{ label: string; statuses: RunStatus[] }> = [
   { label: "Locate", statuses: ["queued", "localizing"] },
@@ -92,7 +93,7 @@ export function AgentRunPanel({
   excludedCount,
   initialRunId = null,
   acceptanceCriteria,
-  canStartRun,
+  runAccess,
 }: {
   repository: string | null;
   task: string;
@@ -100,7 +101,7 @@ export function AgentRunPanel({
   excludedCount: number;
   initialRunId?: string | null;
   acceptanceCriteria: string[];
-  canStartRun: boolean;
+  runAccess: RunAccess;
 }) {
   const [runId, setRunId] = useState<string | null>(initialRunId);
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
@@ -155,7 +156,7 @@ export function AgentRunPanel({
 
   async function launch() {
     if (
-      !canStartRun
+      !runAccess.canStart
       || !repository
       || task.trim().length < 10
       || !dataPolicyAccepted
@@ -233,6 +234,8 @@ export function AgentRunPanel({
     }
   }
 
+  const canStartRun = runAccess.canStart;
+  const accessCopy = runAccessCopy(runAccess);
   const canLaunch = canStartRun
     && Boolean(repository)
     && task.trim().length >= 10
@@ -295,19 +298,30 @@ export function AgentRunPanel({
                 </span>
               </label>
             )}
-            <button
-              type="button"
-              onClick={launch}
-              disabled={!canLaunch || launching}
-              className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span>{launching ? "Starting durable run…" : canStartRun ? "Run task with Locus" : "Invite required"}</span>
-              <span aria-hidden>→</span>
-            </button>
+            {!canStartRun && accessCopy.href ? (
+              // A refused account gets a control that actually goes somewhere.
+              // Rendering "Request access" on a disabled button was a dead end
+              // wearing the costume of a next step.
+              <a
+                href={accessCopy.href}
+                className="mt-4 flex w-full items-center justify-between rounded-xl border border-line-strong px-4 py-3.5 text-sm font-semibold text-paper transition hover:border-accent hover:text-accent"
+              >
+                <span>{accessCopy.action}</span>
+                <span aria-hidden>→</span>
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={launch}
+                disabled={!canLaunch || launching}
+                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <span>{launching ? "Starting durable run…" : accessCopy.action}</span>
+                <span aria-hidden>→</span>
+              </button>
+            )}
             <p className="mt-3 text-[11px] leading-5 text-muted">
-              {canStartRun
-                ? "Executes in an isolated Sandbox. GitHub delivery is disabled during early access."
-                : "Agent Runs are available only to invited design partners. You can still inspect the complete Slice above."}
+              {accessCopy.explanation}
             </p>
           </>
         ) : (

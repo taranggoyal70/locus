@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const executed: Array<{ table: string; filters: Array<[string, unknown]>; payload?: unknown }> = [];
@@ -40,7 +41,9 @@ vi.mock("@/lib/supabase", () => ({
   serviceClient: () => ({ from: (table: string) => fakeBuilder(table) }),
 }));
 
-const { TenantScopeError, globalClient, tenantClient } = await import("@/lib/supabase-tenant");
+const { TENANT_TABLES, TenantScopeError, globalClient, tenantClient } = await import(
+  "@/lib/supabase-tenant"
+);
 
 const USER = "user_123";
 const OTHER = "user_456";
@@ -170,5 +173,46 @@ describe("explicit cross-tenant access", () => {
 
   it("refuses to hand out an unlabelled escape hatch", () => {
     expect(() => globalClient("  ")).toThrow("globalClient requires a reason");
+  });
+});
+
+describe("TENANT_TABLES drift", () => {
+  // R7 depends on TENANT_TABLES naming every table that carries a per-user
+  // column. The set is maintained by hand from database.types.ts, and a table
+  // added to the types but forgotten here loses its fail-closed guard silently:
+  // the query still runs, still bypasses RLS as the service role, and returns
+  // every account's rows. Nothing in the type system catches that, so this
+  // reads the same file the set was derived from and derives it again.
+  const source = readFileSync(
+    new URL("./database.types.ts", import.meta.url),
+    "utf8",
+  );
+
+  const rowTypes = new Map(
+    [...source.matchAll(/type (\w+Row) = \{([\s\S]*?)\n\};/g)].map((match) => [
+      match[1],
+      match[2],
+    ]),
+  );
+
+  const tables = [...source.matchAll(/\n {6}(\w+): \{\n {8}Row: (\w+);/g)].map((match) => ({
+    table: match[1],
+    rowType: match[2],
+  }));
+
+  it("finds a row type for every table, so the derivation below is complete", () => {
+    // A failure here means the file's shape changed and the regexes silently
+    // stopped seeing tables, which would make the assertion after it vacuous.
+    expect(tables.length).toBeGreaterThan(0);
+    expect(tables.filter(({ rowType }) => !rowTypes.has(rowType))).toEqual([]);
+  });
+
+  it("names exactly the tables whose rows carry a user_id", () => {
+    const derived = tables
+      .filter(({ rowType }) => /\n\s*user_id\??:/.test(rowTypes.get(rowType) ?? ""))
+      .map(({ table }) => table)
+      .sort();
+
+    expect(derived).toEqual([...TENANT_TABLES].sort());
   });
 });

@@ -2,7 +2,7 @@
 
 ## Release contract
 
-The public launch opens account creation and self-serve localization for supported public JavaScript and TypeScript Repos. It does not open unrestricted Agent Runs. Agent execution remains invite-gated by `ALPHA_ALLOWED_USER_IDS`, which is the cost, safety, and rollback control.
+The public launch opens account creation and self-serve localization for supported public JavaScript and TypeScript Repos. It does not open unrestricted Agent Runs. Agent execution is gated by Admission: `ALPHA_ALLOWED_USER_IDS` admits invited partners and `LOCUS_SELF_SERVE` admits self-serve accounts to the free Tier. Both must be closed to pause admission, and both together are the cost, safety, and rollback control.
 
 The launch must not claim autonomous task completion, verified token savings, private-Repo support, billing, teams, or external GitHub delivery.
 
@@ -35,7 +35,7 @@ The launch must not claim autonomous task completion, verified token savings, pr
 
 Advance when production has no new client-error type, no Critical incident, and error/latency remain inside the thresholds above. Engagement is directional during early access; do not manufacture a minimum conversion claim from a small sample.
 
-Immediately pause Agent Run admission by clearing `ALPHA_ALLOWED_USER_IDS` when error rate exceeds twice baseline, p95 latency rises more than 50%, evidence integrity is questioned, a security issue is reported, or provider cost/quota is not understood. Roll application code back to the prior production deployment, leave additive migrations installed, verify health and the browser path, and publish a factual status update.
+Immediately pause Agent Run admission by clearing both `ALPHA_ALLOWED_USER_IDS` and `LOCUS_SELF_SERVE`, verified against `readiness.admission` on `/api/health`, when error rate exceeds twice baseline, p95 latency rises more than 50%, evidence integrity is questioned, a security issue is reported, or provider cost/quota is not understood. Roll application code back to the prior production deployment, leave additive migrations installed, verify health and the browser path, and publish a factual status update.
 
 ## Prepared channel copy
 

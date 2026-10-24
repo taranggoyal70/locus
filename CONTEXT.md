@@ -152,6 +152,29 @@ status, append-only Steps, Artifacts, Reviews, Approvals, Token ledger, and opti
 Savings claim. It is the interface used for refresh, history, and review.
 _Avoid_: response payload, session state, activity feed.
 
+**Tier** (`AdmissionTier`):
+The named level an account occupies: `visitor`, `free`, `partner`, or `pro`. A
+Tier is the single input that decides both which Capabilities an account holds
+and how many Runs it may hold open, so a new level is added by naming a Tier
+rather than by threading another boolean through the Run path.
+_Avoid_: plan, role, permission level, allowlist status.
+
+**Admission**:
+The decision that resolves an account to a Tier. It reads identity, the invited
+design-partner allowlist, subscription state, and whether self-serve is open,
+and it returns a Tier and nothing else. Admission decides who someone is;
+Capabilities decide what that lets them do.
+_Avoid_: authorization, gating, entitlement check.
+
+**Capability** (`AdmissionCapabilities`):
+One named thing an account may do: start a Run, connect GitHub, read a private
+Repo, use Teams, deliver externally, or manage billing. Capabilities are derived
+from a Tier, never stored per account and never read directly from an environment
+variable at a call site. There is deliberately no Capability for **Savings
+claims**: that is decided from paired-baseline evidence by `savingsClaimForRun`,
+and no Tier can buy past it.
+_Avoid_: feature flag, toggle, permission.
+
 ## Where it lives (read these, don't re-crawl)
 
 - `src/lib/types.ts` — the web/API **Repo**, `Graph`, and **LocateResult**
@@ -173,6 +196,17 @@ _Avoid_: response payload, session state, activity feed.
 - `src/app/api/attachments/route.ts` — authenticated in-memory document extraction.
 - `src/components/TaskEvidence.tsx` — attachment UI and browser-only screenshot OCR.
 - `src/components/DependencyGraph.tsx` — three-stage context trace; recolours by **Slice**.
+- `src/lib/admission.ts` — the whole **Admission** decision with no I/O: the
+  **Tier** ladder, the **Capability** table, per-Tier Run quota, and
+  `CAPABILITY_RELEASE`. The two tables answer different questions — what a Tier
+  deserves, and what has actually shipped — and are intersected, never merged.
+- `src/lib/admission-server.ts` — the impure half: reads the Admission record and
+  subscription state, and `accountCan` for a single Capability. Degrades to the
+  invited-partner allowlist with self-serve forced closed when those reads fail.
+- `src/lib/admission-store.ts` — `account_admissions` and `subscriptions` reads,
+  and the first-visit `free` grant that never overwrites an existing record.
+- `supabase/migrations/018_account_admissions.sql` — durable Admission records.
+  A stored `visitor` is an explicit refusal, distinct from an absent row.
 - `src/lib/agent/run-state.ts` — valid **Run** lifecycle transitions and
   verified-only **Savings claim** rules.
 - `src/lib/agent/run-store.ts` — guarded Run mutations and append-only Step writes.
@@ -214,6 +248,20 @@ _Avoid_: response payload, session state, activity feed.
   acceptance-criteria satisfaction remains a separate review decision.
 - **Measure the whole loop.** The USP is total tokens per verified task—not the
   size of the initial prompt alone.
+- **Admission decides who, Capabilities decide what.** A request handler asks
+  `accountCan` or reads a resolved Admission; it never reads an environment
+  variable to answer an access question, and it never stores a Capability per
+  account.
+- **A Tier cannot grant an unreleased Capability.** `CAPABILITY_RELEASE` is
+  intersected with the Tier's Capabilities, so a mistake in either can only
+  under-grant. Widening access is always an edit to that record, never a side
+  effect of adding a Tier.
+- **Refusal beats every other rule.** A stored `visitor` Admission overrides the
+  allowlist, an active subscription, and self-serve. An absent record means "not
+  yet decided" and falls through; the two are never collapsed.
+- **Admission fails closed on its own outage.** When the Admission rows cannot be
+  read, only the invited-partner allowlist is honoured and self-serve is forced
+  closed, because the suspension list is exactly what could not be read.
 
 ## Example dialogue
 

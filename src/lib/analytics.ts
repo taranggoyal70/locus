@@ -20,6 +20,18 @@ export type AnalyticsEventPayload =
       properties: { workflowCorrelated: boolean };
     }
   | {
+      // The Admission decision for a signed-in request. This is the funnel: how
+      // many accounts are held on the waitlist, how many the free tier admits,
+      // and how many are refused. None of it was observable before, so "should
+      // we open self-serve wider?" had no evidence behind it.
+      //
+      // The tier and the reason are closed enumerations the server produced. No
+      // user text is involved, so nothing here can carry what someone typed.
+      event: "admission_resolved";
+      userId: string;
+      properties: { tier: string; reason: string };
+    }
+  | {
       event: "repo_loaded";
       userId: string;
       properties: {

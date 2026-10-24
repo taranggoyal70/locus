@@ -1,0 +1,24 @@
+{
+  // Type-checking the source, with the generated route validators left out.
+  //
+  // The base config includes `.next/types` and `.next/dev/types`, which Next
+  // writes from `next build` and `next dev` respectively. Whichever command ran
+  // second leaves the other's copy stale, so `tsc --noEmit` locally reports
+  // missing modules for routes that exist - errors about the previous command,
+  // not about the code.
+  //
+  // CI never sees them: it installs and type-checks without building, so `.next`
+  // does not exist and both entries resolve to nothing. This file makes local
+  // match that exactly, rather than local being noisier for a reason unrelated
+  // to correctness.
+  //
+  // Route types are still checked, by `next build`, which regenerates them from
+  // the current routes first. That is the only point at which checking them
+  // means anything.
+  "extends": "./tsconfig.json",
+  // The same globs as the base config, minus the two generated directories.
+  // Narrowing to src/ would also drop next.config.ts and vitest.config.ts, which
+  // were being checked before and should stay checked.
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.mts"],
+  "exclude": ["node_modules", ".next"]
+}

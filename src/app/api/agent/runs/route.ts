@@ -9,8 +9,6 @@ import {
   isQuotaReason,
   quotaDenialMessage,
   quotaRetryAfterSeconds,
-  MAX_ACTIVE_RUNS,
-  MAX_DAILY_RUNS,
 } from "@/lib/agent/run-quota";
 import { parseAgentRunRequest } from "@/lib/agent/run-request";
 import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
@@ -20,7 +18,7 @@ import {
   transitionRun,
 } from "@/lib/agent/run-store";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
-import { alphaCapabilitiesForUser } from "@/lib/alpha-capabilities";
+import { admissionForAccount } from "@/lib/admission-server";
 import { track } from "@/lib/analytics";
 import { logger } from "@/lib/logger";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -88,9 +86,18 @@ export async function GET() {
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  if (!alphaCapabilitiesForUser(userId).runStart) {
+  // The Admission is resolved once and carried through the whole request. Every
+  // later decision - the advisory pre-check, the authoritative claim - reads the
+  // quota from this one object, so a Run cannot be admitted under one tier's
+  // limits and counted against another's.
+  const admission = await admissionForAccount(userId);
+  if (!admission.capabilities.runStart) {
     return NextResponse.json(
-      { error: "Agent Runs are limited to invited design partners during early access." },
+      {
+        error: admission.reason === "suspended"
+          ? "This account cannot start Agent Runs. Contact support."
+          : "Agent Runs are limited to invited design partners during early access.",
+      },
       { status: 403 },
     );
   }
@@ -161,10 +168,11 @@ export async function POST(request: Request) {
   const quota = agentRunQuotaDecision({
     activeRuns: activeResult.count ?? 0,
     dailyRuns: dailyResult.count ?? 0,
+    quota: admission.runQuota,
   });
   if (!quota.allowed) {
     return NextResponse.json(
-      { error: quotaDenialMessage(quota.reason) },
+      { error: quotaDenialMessage(quota.reason, admission.runQuota) },
       { status: 429, headers: { "Retry-After": String(quota.retryAfterSeconds) } },
     );
   }
@@ -198,8 +206,8 @@ export async function POST(request: Request) {
     p_model: model,
     p_token_budget: tokenBudget,
     p_active_statuses: [...ACTIVE_RUN_STATUSES],
-    p_max_active: MAX_ACTIVE_RUNS,
-    p_max_daily: MAX_DAILY_RUNS,
+    p_max_active: admission.runQuota.maxActiveRuns,
+    p_max_daily: admission.runQuota.maxDailyRuns,
   });
   const claim = claimData?.[0];
   if (claimError || !claim) {
@@ -212,7 +220,7 @@ export async function POST(request: Request) {
     await db.from("agent_tasks").delete().eq("id", task.id).eq("user_id", userId);
     const reason = isQuotaReason(claim.reason) ? claim.reason : "active";
     return NextResponse.json(
-      { error: quotaDenialMessage(reason) },
+      { error: quotaDenialMessage(reason, admission.runQuota) },
       { status: 429, headers: { "Retry-After": String(quotaRetryAfterSeconds(reason)) } },
     );
   }

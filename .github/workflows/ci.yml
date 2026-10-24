@@ -57,7 +57,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm tsc --noEmit
+      - run: pnpm typecheck
 
   build:
     runs-on: ubuntu-latest

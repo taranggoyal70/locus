@@ -76,9 +76,11 @@ These are real and should not be forgotten because the row above says closed.
   row. Closing this requires a watermark keyed on `stripe_subscription_id` that
   outlives the `subscriptions` row - a table, which is the ledger R17 originally
   named, needed here for ordering rather than deduplication. This is deliberately
-  deferred: billing is hard-disabled in `alpha-capabilities.ts`, where
-  `billing` is false for every user, there is no billing UI, and no Stripe keys
-  are configured. This repository already records the same policy for R4: a
+  deferred: billing is withheld by `CAPABILITY_RELEASE` in
+  `src/lib/admission.ts`, where `billing` is false, so no Tier can hold it and
+  `accountCan` refuses without a database read. There is no billing UI and no
+  Stripe keys are configured. Releasing `billing` is the change that must also
+  close this. This repository already records the same policy for R4: a
   dormant surface is finished in the change that enables the feature. Migration
   017 still strictly improves the previous behaviour, because this remaining
   sequence was equally open before it, but it must not be read as R17 fully
@@ -88,8 +90,8 @@ These are real and should not be forgotten because the row above says closed.
   shared `sameOriginMutation` guard. The inline form allowed `same-site` (a sibling
   subdomain), a request carrying no Fetch Metadata, and a foreign `Origin` — on the
   one route that writes to GitHub. Latent rather than live, because
-  `alphaCapabilitiesForUser().delivery` is false and returns 403 first, so the check
-  was unreachable. Now on the shared guard, with three regression tests covering the
+  `delivery` is withheld by `CAPABILITY_RELEASE` and the route returns 403 first, so
+  the check was unreachable. Now on the shared guard, with three regression tests covering the
   cases the inline form let through.
 
 ## The migration chain now applies to a fresh database
@@ -167,7 +169,7 @@ correct.
 
 | Risk | Priority | Why it is still open |
 | --- | --- | --- |
-| R4 | P0 *before enablement* | Dormant, and deliberately not built. GitHub connection, private repository reading, and delivery are hard-disabled (`alpha-capabilities.ts`), and migration 011 deleted stored tokens. Building the GitHub App path now would ship an auth surface nothing exercises, which drifts out of step with the delivery flow before that flow ever runs. It belongs in the same change that enables delivery. |
+| R4 | P0 *before enablement* | Dormant, and deliberately not built. GitHub connection, private repository reading, and delivery are withheld by `CAPABILITY_RELEASE` (`src/lib/admission.ts`), and migration 011 deleted stored tokens. Building the GitHub App path now would ship an auth surface nothing exercises, which drifts out of step with the delivery flow before that flow ever runs. It belongs in the same change that enables delivery. |
 
 ## Notes on the risks closed in this pass
 

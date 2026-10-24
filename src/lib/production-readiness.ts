@@ -1,3 +1,5 @@
+import { selfServeOpen } from "@/lib/admission";
+
 type Environment = Record<string, string | undefined>;
 type DatabaseRequest = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
@@ -108,7 +110,15 @@ export async function productionReadiness(
     !configured(environment.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
     || !configured(environment.CLERK_SECRET_KEY)
   ) missing.push("authentication");
-  if (!configured(environment.ALPHA_ALLOWED_USER_IDS)) missing.push("run_admission");
+  // Admission has two doors now. A deployment is misconfigured only when both
+  // are shut: an empty allowlist used to mean nobody could start a Run, but with
+  // self-serve open it is the normal and intended state. Continuing to require
+  // the allowlist would report a healthy public deployment as unready, and an
+  // unready signal nobody believes is worse than none.
+  const selfServe = selfServeOpen(environment);
+  if (!configured(environment.ALPHA_ALLOWED_USER_IDS) && !selfServe) {
+    missing.push("run_admission");
+  }
 
   const model = environment.LOCUS_AGENT_MODEL?.trim();
   const gatewayAuthenticated = configured(environment.VERCEL_OIDC_TOKEN)
@@ -132,6 +142,7 @@ export async function productionReadiness(
 
   return {
     ready: missing.length === 0,
+    admission: selfServe ? "self_serve" as const : "invite_only" as const,
     missing,
     alerting,
   };

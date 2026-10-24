@@ -35,6 +35,7 @@ describe("production readiness", () => {
   it("reports the runtime ready without exposing environment values", async () => {
     await expect(productionReadiness(complete, databaseReady)).resolves.toEqual({
       ready: true,
+      admission: "invite_only",
       missing: [],
       alerting: "webhook",
     });
@@ -44,6 +45,7 @@ describe("production readiness", () => {
     const incomplete = { ...complete, CRON_SECRET: "", LOCUS_AGENT_MODEL: "" };
     await expect(productionReadiness(incomplete, databaseReady)).resolves.toEqual({
       ready: false,
+      admission: "invite_only",
       missing: ["agent_provider", "retention_cron"],
       alerting: "webhook",
     });
@@ -187,5 +189,33 @@ describe("production readiness", () => {
       missing: [],
       alerting: "external_health_check",
     });
+  });
+});
+
+describe("run admission readiness", () => {
+  it("is unready when neither the allowlist nor self-serve admits anyone", async () => {
+    const result = await productionReadiness(
+      { ...complete, ALPHA_ALLOWED_USER_IDS: "" },
+      databaseReady,
+    );
+    expect(result.missing).toContain("run_admission");
+    expect(result.admission).toBe("invite_only");
+  });
+
+  it("is ready on an empty allowlist once self-serve is open", async () => {
+    // An empty allowlist used to mean nobody could start a Run. With self-serve
+    // open it is the normal state of a public deployment, and reporting that as
+    // unready would train an operator to ignore the signal.
+    const result = await productionReadiness(
+      { ...complete, ALPHA_ALLOWED_USER_IDS: "", LOCUS_SELF_SERVE: "open" },
+      databaseReady,
+    );
+    expect(result.missing).not.toContain("run_admission");
+    expect(result.admission).toBe("self_serve");
+  });
+
+  it("reports which door is open so an operator can see it without guessing", async () => {
+    const invited = await productionReadiness(complete, databaseReady);
+    expect(invited.admission).toBe("invite_only");
   });
 });
