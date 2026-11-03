@@ -15,7 +15,7 @@ export default function DocsPage() {
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Experimental localization API</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-ink sm:text-5xl">Localize before you spend.</h1>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink sm:text-5xl">Localize before you spend.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-light">
           Invite-only Agent Runs localize a public Repo, work in an isolated Sandbox, run
           allowlisted checks, and stop at a review-ready proposal. The API below exposes only the

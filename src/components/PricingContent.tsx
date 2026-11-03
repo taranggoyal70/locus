@@ -25,7 +25,7 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
             Public early access
           </p>
-          <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.05em] text-ink sm:text-6xl">
+          <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-ink sm:text-6xl">
             {admissionHeadline(selfServeOpen)}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">

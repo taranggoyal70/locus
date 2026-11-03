@@ -100,7 +100,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
         <header className="grid gap-7 py-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end lg:py-14">
           <div>
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#8ef0c0]">{plainLanguage ? "One task. 1,842 files." : "Locus Guard pilot"}</p>
-            <h1 className="mt-4 max-w-5xl font-display text-[clamp(3.2rem,7vw,7.2rem)] font-semibold leading-[.84] tracking-[-0.07em] text-white">
+            <h1 className="mt-4 max-w-5xl font-display text-[clamp(3.2rem,7vw,7.2rem)] font-semibold leading-[.84] tracking-[-0.04em] text-white">
               {plainLanguage ? "Your AI changed the code." : "Let agents code."}
               <span className="mt-2 block text-[#8ef0c0]">{plainLanguage ? "Locus proves what it touched." : "Gate what can merge."}</span>
             </h1>
@@ -186,7 +186,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 </svg>
                 <div className="migration-aperture__core absolute inset-[28%] grid place-items-center rounded-full border border-[#8ef0c0]/35 bg-[#0d1a2d]/95 text-center shadow-[0_0_70px_rgba(142,240,192,.12)]">
                   <div>
-                    <p className="migration-aperture__count font-display text-5xl font-semibold tracking-[-0.06em] text-white">{stage >= 2 ? "7" : "1,842"}</p>
+                    <p className="migration-aperture__count font-display text-5xl font-semibold tracking-[-0.04em] text-white">{stage >= 2 ? "7" : "1,842"}</p>
                     <p className="mt-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">{stage >= 2 ? plainLanguage ? "files needed" : "files admitted" : plainLanguage ? "files checked" : "files observed"}</p>
                   </div>
                 </div>

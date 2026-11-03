@@ -103,7 +103,7 @@ export function ContextLens({
       <div className="absolute inset-0 z-10 pointer-events-none">
         <div className="context-lens__readout absolute left-[48%] top-[43%] -translate-x-1/2 -translate-y-1/2 text-center">
           <p className="font-mono text-[8px] uppercase tracking-[0.18em] text-white/55">safe slice</p>
-          <p className="mt-0.5 text-lg font-semibold tracking-[-0.05em] text-white">
+          <p className="mt-0.5 text-lg font-semibold tracking-[-0.04em] text-white">
             {active ? `${includedShare}% included` : "standby"}
           </p>
         </div>

@@ -46,7 +46,7 @@ export default function Release1EvidencePage() {
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
               Release 1 / public evidence
             </p>
-            <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.055em] text-ink sm:text-6xl">
+            <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-ink sm:text-6xl">
               The claim stays locked until the evidence is complete.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-muted-light">
@@ -64,7 +64,7 @@ export default function Release1EvidencePage() {
                 {evidence.gatePassed ? "Passed" : "Locked"}
               </span>
             </div>
-            <p className="mt-5 tabular text-4xl font-semibold tracking-[-0.05em] text-ink">
+            <p className="mt-5 tabular text-4xl font-semibold tracking-[-0.04em] text-ink">
               {evidence.progress.validResults}<span className="text-xl text-muted">/{evidence.progress.expectedResults}</span>
             </p>
             <p className="mt-1 text-sm text-muted-light">valid reviewed arm results</p>

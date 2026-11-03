@@ -179,7 +179,7 @@ export function LocusApp({
                 Slice → Run → Evidence
               </span>
             </div>
-            <h1 className="max-w-2xl text-5xl font-bold leading-[0.9] tracking-[-0.065em] text-[#14233b] sm:text-6xl lg:text-[72px]">
+            <h1 className="max-w-2xl text-5xl font-bold leading-[0.9] tracking-[-0.04em] text-[#14233b] sm:text-6xl lg:text-[72px]">
               Map less.
               <span className="block text-[#314fd1]">Ship the task.</span>
             </h1>

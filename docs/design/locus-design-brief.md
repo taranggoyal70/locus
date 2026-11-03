@@ -143,19 +143,25 @@ make it ink.
 
 ## The aperture
 
-The single signature element. A Repo is drawn as a field of small file marks
-(dots or short bars) laid out by directory. When a task is submitted, Excluded
-marks fade to `--excluded`, Included marks pull into a tight cluster in
-`--included`, and any Widened marks arrive last in `--widened`. A count reads
-`7 of 26 files` beside it.
+The single signature element. A Repo is drawn as a field of small square file
+marks, one per file, in a column per top-level folder. It starts with every
+mark under one neutral cover: the whole Repo, the way an agent sees it without
+Locus. Closing lifts the covers: Excluded marks settle to `--excluded`, Slice
+marks show `--included`, and Anchors carry a hollow centre. A count changes
+from `125` to `14 / 125`.
 
-- **Data, not decoration.** On the landing page it renders a real, labelled run
-  on a real public Repo (a frozen snapshot is fine, marked "Recorded run").
-  In the app it renders the user's actual Slice.
+If a localization Widens, Locus returns the whole Repo, so every mark stays
+`--included` and the count says so. Amber `--widened` belongs to Agent Runs,
+where a Widen attempt asks to read one more file; the landing never shows it.
+
+- **Data, not decoration.** The landing page renders a recorded localization of
+  the copy of shadcn-ui/taxonomy bundled in `public/repos/` (`src/lib/landing-slice.ts`,
+  labelled "Recorded run"). `landing-slice.test.ts` re-runs the localizer and
+  fails if the record drifts. In the app it renders the user's actual Slice.
 - It appears in three places: the landing hero, the loading state while
   localizing, and the header of a Run receipt. Nowhere else.
-- Built from SVG and CSS in the existing `ContextLens` component. No new
-  dependency.
+- `src/components/Aperture.tsx`: HTML and CSS, no new dependency. The app's
+  `ContextLens` is a hand-placed illustration and moves onto it in step 4.
 
 ## Motion
 
@@ -170,8 +176,9 @@ marks fade to `--excluded`, Included marks pull into a tight cluster in
 
 - Buttons scale to `0.97` on press. No lift on hover; hover changes colour only.
 - Menus and popovers grow from their trigger's corner.
-- The aperture closes once when it enters the viewport: 200ms hold, 900ms close,
-  Widened files 300ms later. It does not loop.
+- The aperture closes once when it enters the viewport: 200ms hold, 900ms for
+  the covers to lift, then the Slice marks settle (`--dur-panel`). It does not
+  loop.
 - Loops are allowed only while real work is running (localizing, a Run in
   progress), and stop the moment it finishes. Remove `context-drift`,
   `migration-orbit` and the idle `migration-pulse`.
@@ -251,3 +258,33 @@ Run for every step, and record the result at the bottom of this file.
 - Not yet changed, by design: Bricolage is still the display face, the demo
   still uses its own hex palette, and the infinite animations still run. Steps
   2 and 3 handle them. The signed-in workspace was not checked (needs a login).
+
+### Step 2: marketing shell and landing (November 3, 2026)
+
+- New `Aperture` in the hero, drawing a recorded localization of
+  shadcn-ui/taxonomy for "the post editor loses changes on save": 14 of 125
+  files, 6,448 of 56,404 tokens, no Widen. It replaces the hand-made
+  "Illustrative example" card.
+- Hero: one headline, one sentence, one primary action ("Localize a public
+  Repo") and a text link to the demo. The pill, the stacked eyebrow and the
+  third button are gone. The Agent Run request and the admission tag moved to
+  the Agent Runs section, where they apply.
+- Teal now appears only on Slice marks and Anchor labels. The second headline
+  line is `--muted`, and the closing band uses `data-band="dark"` with an
+  inverted primary button instead of mint.
+- Header is solid (no blur); nav and buttons use `rounded-chip` and
+  `rounded-card`; buttons press to 0.97 and hover by colour only.
+- Bricolage is retired site-wide. Every display heading is Geist, and 16
+  headings tracked tighter than `-0.04em` were brought up to it.
+- No em dashes on the landing page; its test now asserts that.
+- Kept on purpose: the landing stays at `max-w-7xl` so it lines up with every
+  other page. Moving all pages to 1200px is step 5.
+- `pnpm lint`, `pnpm typecheck` and `pnpm check:alpha-claims` pass.
+  `pnpm test`: 963 passed, 9 skipped. New: `landing-slice.test.ts` (record
+  matches the localizer) and `Aperture.test.tsx` (one mark per file, closes once
+  in view, closed at once under reduced motion).
+- Browser at 1440, 1024, 390 and 320px: no sideways scroll, file names
+  readable, the list expands to all 14 files. Reduced motion is covered by the
+  jsdom test, not by browser emulation.
+- Screenshots: `landing-before-1440.jpg` (the live site),
+  `landing-after-1440.jpg`, `landing-after-390.jpg`.

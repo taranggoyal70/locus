@@ -85,7 +85,7 @@
   --shadow-panel: var(--shadow);
 
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
-  --font-display: var(--font-bricolage, var(--font-geist-sans), ui-sans-serif, sans-serif);
+  --font-display: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
 }
 
@@ -215,6 +215,67 @@ summary:focus-visible {
     transparent 1px,
     transparent 14px
   );
+}
+
+/* The Slice aperture (components/Aperture.tsx). Every mark wears a neutral
+   cover while the figure is open; closing fades the covers to reveal each
+   file's state, then the Slice settles in. Transform and opacity only. */
+.aperture-mark {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--excluded);
+}
+
+.aperture-mark[data-kind="included"],
+.aperture-mark[data-kind="anchor"] {
+  background: var(--included);
+}
+
+.aperture-mark[data-kind="anchor"]::before {
+  position: absolute;
+  inset: 30%;
+  border-radius: 1px;
+  content: "";
+  background: var(--surface);
+}
+
+.aperture-mark::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  background: var(--muted);
+  opacity: 0;
+  transition: opacity var(--dur-story) var(--ease-out) 200ms;
+}
+
+.aperture.is-open .aperture-mark::after {
+  opacity: .85;
+  transition: none;
+}
+
+.aperture:not(.is-open) .aperture-mark:not([data-kind="excluded"]) {
+  animation: aperture-admit var(--dur-panel) var(--ease-out) 700ms both;
+}
+
+.aperture-count {
+  transition: opacity var(--dur-panel) var(--ease-out) 700ms;
+}
+
+.aperture-count--slice,
+.aperture.is-open .aperture-count--repo {
+  opacity: 1;
+}
+
+.aperture-count--repo,
+.aperture.is-open .aperture-count--slice {
+  opacity: 0;
+}
+
+@keyframes aperture-admit {
+  from { transform: scale(.6); }
+  to { transform: scale(1); }
 }
 
 .migration-demo {
@@ -412,6 +473,13 @@ summary:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .aperture-mark,
+  .aperture-mark::after,
+  .aperture-count {
+    animation: none !important;
+    transition: none !important;
+  }
+
   *, *::before, *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;

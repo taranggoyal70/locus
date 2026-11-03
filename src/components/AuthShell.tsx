@@ -48,7 +48,7 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
         <div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-8 py-10 sm:gap-12 sm:py-14 lg:grid-cols-[minmax(0,1fr)_440px]">
           <section className="min-w-0 max-w-xl">
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">{eyebrow}</p>
-            <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.02] tracking-[-0.055em] text-ink sm:mt-5 sm:text-6xl sm:leading-[0.94]">{title}</h1>
+            <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.02] tracking-[-0.04em] text-ink sm:mt-5 sm:text-6xl sm:leading-[0.94]">{title}</h1>
             <p className="mt-4 max-w-lg text-base leading-7 text-muted-light sm:mt-6 sm:text-lg">{description}</p>
 
             <div className="mt-10 hidden overflow-hidden rounded-2xl border border-line-strong bg-surface/70 sm:block">
