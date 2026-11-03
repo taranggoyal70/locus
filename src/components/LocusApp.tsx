@@ -159,7 +159,7 @@ export function LocusApp({
               appearance={{
                 elements: {
                   avatarBox: "h-8 w-8 border border-[#14233b]/20",
-                  userButtonPopoverCard: "border border-line-strong bg-surface text-paper shadow-2xl",
+                  userButtonPopoverCard: "border border-line-strong bg-surface text-ink shadow-2xl",
                 },
               }}
             />
@@ -207,7 +207,7 @@ export function LocusApp({
           <div className="flex flex-col gap-2 px-2 pb-4 pt-1 sm:flex-row sm:items-center sm:justify-between sm:px-3">
             <div>
               <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">Active mission</p>
-              <p className="mt-1 text-sm font-semibold text-paper">{repo?.name ?? "Repository standby"}</p>
+              <p className="mt-1 text-sm font-semibold text-ink">{repo?.name ?? "Repository standby"}</p>
             </div>
             <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-light">
               <span className="h-2 w-2 rounded-sm bg-accent" />
@@ -221,14 +221,14 @@ export function LocusApp({
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
                   Task brief
                 </p>
-                <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-paper">
+                <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-ink">
                   What should the agent change?
                 </h2>
               </div>
 
               <div className="space-y-6 p-5">
                 <div>
-                  <label htmlFor="repo-input" className="flex items-center justify-between text-xs font-medium text-paper">
+                  <label htmlFor="repo-input" className="flex items-center justify-between text-xs font-medium text-ink">
                     <span>GitHub repository</span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">01</span>
                   </label>
@@ -239,13 +239,13 @@ export function LocusApp({
                       onChange={(event) => setGhUrl(event.target.value)}
                       onKeyDown={(event) => event.key === "Enter" && !loading && loadGithub()}
                       placeholder="owner/repository"
-                      className="min-w-0 flex-1 rounded-xl border border-line-strong bg-ink px-3 py-3 text-sm text-paper placeholder:text-muted focus:border-accent focus:outline-none"
+                      className="min-w-0 flex-1 rounded-xl border border-line-strong bg-canvas px-3 py-3 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => loadGithub()}
                       disabled={loading || !ghUrl.trim()}
-                      className="rounded-xl bg-paper px-3.5 py-3 text-xs font-semibold text-ink transition hover:bg-accent hover:text-ink disabled:cursor-not-allowed disabled:opacity-35"
+                      className="rounded-xl bg-ink px-3.5 py-3 text-xs font-semibold text-canvas transition hover:bg-accent hover:text-canvas disabled:cursor-not-allowed disabled:opacity-35"
                     >
                       {loading ? "…" : "Load"}
                     </button>
@@ -261,8 +261,8 @@ export function LocusApp({
                         onClick={() => pickBundled(source.slug)}
                         className={`rounded-full border px-2.5 py-1 text-[10px] transition ${
                           repo?.slug === source.slug
-                            ? "border-accent bg-accent text-ink"
-                            : "border-line-strong text-muted hover:text-paper"
+                            ? "border-accent bg-accent text-canvas"
+                            : "border-line-strong text-muted hover:text-ink"
                         }`}
                       >
                         {source.name}
@@ -273,7 +273,7 @@ export function LocusApp({
                     <div className="mt-3 border-t border-line pt-3">
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">Recent</span>
-                        <button type="button" onClick={clearRecents} className="text-[10px] text-muted hover:text-paper">
+                        <button type="button" onClick={clearRecents} className="text-[10px] text-muted hover:text-ink">
                           Clear
                         </button>
                       </div>
@@ -294,7 +294,7 @@ export function LocusApp({
                 </div>
 
                 <div>
-                  <label htmlFor="task-input" className="flex items-center justify-between text-xs font-medium text-paper">
+                  <label htmlFor="task-input" className="flex items-center justify-between text-xs font-medium text-ink">
                     <span>Engineering task</span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">02 · ⌘K</span>
                   </label>
@@ -306,7 +306,7 @@ export function LocusApp({
                     maxLength={5_000}
                     rows={5}
                     placeholder="Describe the bug, desired behavior, and what proves it is fixed."
-                    className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-ink px-3 py-3 text-sm leading-6 text-paper placeholder:text-muted focus:border-accent focus:outline-none"
+                    className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-canvas px-3 py-3 text-sm leading-6 text-ink placeholder:text-muted focus:border-accent focus:outline-none"
                   />
                   {examples.length > 0 && (
                     <button
@@ -321,7 +321,7 @@ export function LocusApp({
                 </div>
 
                 <div>
-                  <label htmlFor="definition-of-done" className="flex items-center justify-between text-xs font-medium text-paper">
+                  <label htmlFor="definition-of-done" className="flex items-center justify-between text-xs font-medium text-ink">
                     <span>Definition of done</span>
                     <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">03</span>
                   </label>
@@ -332,7 +332,7 @@ export function LocusApp({
                     maxLength={2_000}
                     rows={3}
                     placeholder="One verifiable outcome per line."
-                    className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-ink px-3 py-3 text-sm leading-6 text-paper placeholder:text-muted focus:border-accent focus:outline-none"
+                    className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-canvas px-3 py-3 text-sm leading-6 text-ink placeholder:text-muted focus:border-accent focus:outline-none"
                   />
                   <p className="mt-2 text-[10px] leading-4 text-muted">These are proof requirements for review. A passing command does not by itself prove the requested behavior.</p>
                 </div>
@@ -365,7 +365,7 @@ export function LocusApp({
                       <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
                         Slice aperture
                       </p>
-                      <p className="mt-1 truncate text-sm font-semibold text-paper">{repo?.name}</p>
+                      <p className="mt-1 truncate text-sm font-semibold text-ink">{repo?.name}</p>
                     </div>
                     {loadedRepositorySpecifier && (
                       <div className="flex gap-2">
@@ -373,14 +373,14 @@ export function LocusApp({
                           type="button"
                           onClick={saveAnalysis}
                           disabled={saveStatus === "saving"}
-                          className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-paper disabled:opacity-40"
+                          className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-ink disabled:opacity-40"
                         >
                           {saveStatus === "idle" ? "Save analysis" : saveStatus}
                         </button>
                         <button
                           type="button"
                           onClick={copyShareView}
-                          className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-paper"
+                          className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-ink"
                         >
                           {shareStatus === "idle" ? "Share view" : shareStatus}
                         </button>
@@ -430,7 +430,7 @@ export function LocusApp({
               <div className="grid min-h-[520px] place-items-center rounded-[22px] border border-dashed border-line-strong bg-surface p-10 text-center">
                 <div>
                   <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Waiting for a repository</p>
-                  <p className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-paper">
+                  <p className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-ink">
                     {loading ? "Reading the code graph…" : "Load a repository to open the Slice ledger."}
                   </p>
                 </div>

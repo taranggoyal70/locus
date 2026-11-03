@@ -42,7 +42,7 @@ export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
       <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">
         Public early access
       </p>
-      <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-paper">
+      <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-ink">
         {tier === "visitor" ? "Agent Runs are not enabled for this account" : "Your current access"}
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">{body}</p>

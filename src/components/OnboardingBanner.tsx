@@ -33,7 +33,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
         <button
           type="button"
           onClick={onDismiss}
-          className="absolute right-3 top-3 rounded-md px-2 py-1 text-xs text-muted transition hover:text-paper"
+          className="absolute right-3 top-3 rounded-md px-2 py-1 text-xs text-muted transition hover:text-ink"
           aria-label="Dismiss"
         >
           Dismiss
@@ -41,7 +41,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
         <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
           Getting started
         </p>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-paper">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink">
           Load a public Repo, describe one concrete engineering outcome, and inspect the Included
           and Excluded evidence before starting a Run.
         </p>

@@ -75,7 +75,7 @@ export function CloudflareConnectionPanel() {
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">
               Optional · Bring your own capacity
             </p>
-            <h3 className="mt-1 text-base font-semibold text-paper">Connect Cloudflare Workers AI</h3>
+            <h3 className="mt-1 text-base font-semibold text-ink">Connect Cloudflare Workers AI</h3>
           </div>
           <span className={`rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] ${
             status?.configured
@@ -93,9 +93,9 @@ export function CloudflareConnectionPanel() {
 
       <div className="space-y-5 p-5">
         <ol className="grid gap-3 text-xs leading-5 text-muted-light sm:grid-cols-3">
-          <li className="rounded-xl border border-line p-3"><strong className="block text-paper">1. Open Cloudflare</strong>Go to Workers AI and choose “Use REST API.”</li>
-          <li className="rounded-xl border border-line p-3"><strong className="block text-paper">2. Copy two values</strong>Create an API token and copy your Account ID.</li>
-          <li className="rounded-xl border border-line p-3"><strong className="block text-paper">3. Connect once</strong>Paste both below. The token is never shown again.</li>
+          <li className="rounded-xl border border-line p-3"><strong className="block text-ink">1. Open Cloudflare</strong>Go to Workers AI and choose “Use REST API.”</li>
+          <li className="rounded-xl border border-line p-3"><strong className="block text-ink">2. Copy two values</strong>Create an API token and copy your Account ID.</li>
+          <li className="rounded-xl border border-line p-3"><strong className="block text-ink">3. Connect once</strong>Paste both below. The token is never shown again.</li>
         </ol>
 
         <a
@@ -108,7 +108,7 @@ export function CloudflareConnectionPanel() {
         </a>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-xs font-medium text-paper">
+          <label className="text-xs font-medium text-ink">
             Cloudflare Account ID
             <input
               value={accountId}
@@ -116,10 +116,10 @@ export function CloudflareConnectionPanel() {
               autoComplete="off"
               spellCheck={false}
               placeholder="32-character Account ID"
-              className="mt-2 w-full rounded-xl border border-line-strong bg-ink px-3 py-3 font-mono text-xs text-paper placeholder:text-muted focus:border-accent focus:outline-none"
+              className="mt-2 w-full rounded-xl border border-line-strong bg-canvas px-3 py-3 font-mono text-xs text-ink placeholder:text-muted focus:border-accent focus:outline-none"
             />
           </label>
-          <label className="text-xs font-medium text-paper">
+          <label className="text-xs font-medium text-ink">
             Workers AI API token
             <input
               type="password"
@@ -127,7 +127,7 @@ export function CloudflareConnectionPanel() {
               onChange={(event) => setApiToken(event.target.value)}
               autoComplete="new-password"
               placeholder="Paste token once"
-              className="mt-2 w-full rounded-xl border border-line-strong bg-ink px-3 py-3 font-mono text-xs text-paper placeholder:text-muted focus:border-accent focus:outline-none"
+              className="mt-2 w-full rounded-xl border border-line-strong bg-canvas px-3 py-3 font-mono text-xs text-ink placeholder:text-muted focus:border-accent focus:outline-none"
             />
           </label>
         </div>
@@ -137,7 +137,7 @@ export function CloudflareConnectionPanel() {
             type="button"
             onClick={saveConnection}
             disabled={saving || !accountId.trim() || !apiToken.trim()}
-            className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-canvas disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? "Saving…" : status?.configured ? "Replace connection" : "Connect Cloudflare"}
           </button>

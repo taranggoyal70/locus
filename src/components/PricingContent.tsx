@@ -25,7 +25,7 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
             Public early access
           </p>
-          <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-6xl">
+          <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.05em] text-ink sm:text-6xl">
             {admissionHeadline(selfServeOpen)}
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
@@ -41,11 +41,11 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
               <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">
                 Design-partner access
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-paper">
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-ink">
                 One honest early-access contract
               </h2>
             </div>
-            <span className="rounded-full border border-line-strong bg-ink px-3 py-1.5 text-xs font-semibold text-paper">
+            <span className="rounded-full border border-line-strong bg-canvas px-3 py-1.5 text-xs font-semibold text-ink">
               $0 during early access
             </span>
           </div>
@@ -62,7 +62,7 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
           <button
             type="button"
             onClick={() => setShowAccessForm(true)}
-            className="mt-8 w-full rounded-xl bg-accent px-5 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim"
+            className="mt-8 w-full rounded-xl bg-accent px-5 py-3.5 text-sm font-semibold text-canvas transition hover:bg-accent-dim"
           >
             Request Agent Run access
           </button>

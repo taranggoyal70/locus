@@ -62,7 +62,7 @@ export function AgentRunTimeline({
                 }`}
               />
               <p className={`mt-2 truncate font-mono text-[9px] uppercase tracking-[0.12em] ${
-                current ? "text-recent" : complete ? "text-paper" : "text-muted"
+                current ? "text-recent" : complete ? "text-ink" : "text-muted"
               }`}>
                 {phase.label}{current ? " · Working" : ""}
               </p>
@@ -76,7 +76,7 @@ export function AgentRunTimeline({
             key={step.id}
             className="flex items-center justify-between gap-3 border-l-2 border-line-strong py-1 pl-3"
           >
-            <span className="text-xs text-paper">{step.title}</span>
+            <span className="text-xs text-ink">{step.title}</span>
             <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
               {step.status === "running" ? "Working" : step.status}
             </span>
@@ -289,7 +289,7 @@ export function AgentRunPanel({
             <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
               Agent Run
             </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-paper">
+            <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-ink">
               Turn the Slice into a review-ready proposal.
             </h2>
           </div>
@@ -308,9 +308,9 @@ export function AgentRunPanel({
                 ["Outside", `${excludedCount} out`],
                 ["Ledger", `${sliceCount + excludedCount} files`],
               ].map(([label, value]) => (
-                <div key={label} className="bg-ink px-3 py-3">
+                <div key={label} className="bg-canvas px-3 py-3">
                   <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">{label}</p>
-                  <p className="mt-1 text-sm font-semibold text-paper">{value}</p>
+                  <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
                 </div>
               ))}
             </div>
@@ -323,14 +323,14 @@ export function AgentRunPanel({
                   <label className={`cursor-pointer rounded-lg border p-3 transition ${
                     executionMode === "shared" ? "border-accent bg-accent/[0.07]" : "border-line"
                   }`}>
-                    <span className="flex items-center gap-2 text-xs font-semibold text-paper">
+                    <span className="flex items-center gap-2 text-xs font-semibold text-ink">
                       <input
                         type="radio"
                         name="execution-mode"
                         value="shared"
                         checked={executionMode === "shared"}
                         onChange={() => setExecutionMode("shared")}
-                        className="accent-[var(--accent)]"
+                        className="accent-[var(--included)]"
                       />
                       Use the shared beta Run
                     </span>
@@ -341,14 +341,14 @@ export function AgentRunPanel({
                   <label className={`cursor-pointer rounded-lg border p-3 transition ${
                     executionMode === "byok" ? "border-accent bg-accent/[0.07]" : "border-line"
                   }`}>
-                    <span className="flex items-center gap-2 text-xs font-semibold text-paper">
+                    <span className="flex items-center gap-2 text-xs font-semibold text-ink">
                       <input
                         type="radio"
                         name="execution-mode"
                         value="byok"
                         checked={executionMode === "byok"}
                         onChange={() => setExecutionMode("byok")}
-                        className="accent-[var(--accent)]"
+                        className="accent-[var(--included)]"
                       />
                       Use my Cloudflare account
                     </span>
@@ -372,7 +372,7 @@ export function AgentRunPanel({
                   type="checkbox"
                   checked={dataPolicyAccepted}
                   onChange={(event) => setDataPolicyAccepted(event.target.checked)}
-                  className="mt-1 size-3.5 shrink-0 accent-[var(--accent)]"
+                  className="mt-1 size-3.5 shrink-0 accent-[var(--included)]"
                 />
                 <span>
                   I confirm this public Repo, task, and criteria contain no private,
@@ -391,7 +391,7 @@ export function AgentRunPanel({
               // wearing the costume of a next step.
               <a
                 href={accessCopy.href}
-                className="mt-4 flex w-full items-center justify-between rounded-xl border border-line-strong px-4 py-3.5 text-sm font-semibold text-paper transition hover:border-accent hover:text-accent"
+                className="mt-4 flex w-full items-center justify-between rounded-xl border border-line-strong px-4 py-3.5 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent"
               >
                 <span>{accessCopy.action}</span>
                 <span aria-hidden>→</span>
@@ -401,7 +401,7 @@ export function AgentRunPanel({
                 type="button"
                 onClick={launch}
                 disabled={!canLaunch || launching}
-                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
+                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-canvas transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span>{launching ? "Starting durable run…" : accessCopy.action}</span>
                 <span aria-hidden>→</span>
@@ -414,7 +414,7 @@ export function AgentRunPanel({
         ) : (
           <>
             <AgentRunTimeline status={snapshot.run.status} steps={snapshot.steps} />
-            <div className="mt-5 flex items-center justify-between rounded-xl bg-ink px-3 py-3">
+            <div className="mt-5 flex items-center justify-between rounded-xl bg-canvas px-3 py-3">
               <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
                 {snapshot.run.status.replaceAll("_", " ")}
               </span>
@@ -441,7 +441,7 @@ export function AgentRunPanel({
             {summary?.content && <p className="mt-4 text-sm leading-6 text-muted-light">{summary.content}</p>}
             {diff?.content && (
               <details className="mt-4 rounded-xl border border-line">
-                <summary className="cursor-pointer px-3 py-3 text-xs font-medium text-paper">
+                <summary className="cursor-pointer px-3 py-3 text-xs font-medium text-ink">
                   Review proposed diff
                 </summary>
                 <pre className="max-h-80 overflow-auto border-t border-line p-3 font-mono text-[10px] leading-5 text-muted-light">
@@ -450,8 +450,8 @@ export function AgentRunPanel({
               </details>
             )}
             {snapshot.run.status === "awaiting_approval" && (
-              <fieldset className="mt-4 rounded-xl border border-line-strong bg-ink p-4">
-                <legend className="px-1 text-xs font-semibold text-paper">Review frozen acceptance criteria</legend>
+              <fieldset className="mt-4 rounded-xl border border-line-strong bg-canvas p-4">
+                <legend className="px-1 text-xs font-semibold text-ink">Review frozen acceptance criteria</legend>
                 <p className="mt-1 break-all font-mono text-[9px] text-muted">
                   Proposal {snapshot.run.proposal_hash}
                 </p>
@@ -467,7 +467,7 @@ export function AgentRunPanel({
                               ? { ...item, satisfied: event.target.checked }
                               : item,
                           ))}
-                          className="mt-1 size-3.5 accent-[var(--accent)]"
+                          className="mt-1 size-3.5 accent-[var(--included)]"
                         />
                         <span>{criterion.criterion}</span>
                       </label>
@@ -482,7 +482,7 @@ export function AgentRunPanel({
                         maxLength={2_000}
                         aria-label={`Evidence for ${criterion.criterion}`}
                         placeholder="Evidence or reason"
-                        className="mt-2 w-full rounded-md border border-line bg-surface px-2.5 py-2 text-xs text-paper placeholder:text-muted"
+                        className="mt-2 w-full rounded-md border border-line bg-surface px-2.5 py-2 text-xs text-ink placeholder:text-muted"
                       />
                     </div>
                   ))}
@@ -500,7 +500,7 @@ export function AgentRunPanel({
                     type="button"
                     onClick={() => submitReview("accepted")}
                     disabled={!reviewAvailability.canAccept || reviewing !== null}
-                    className="rounded-lg bg-accent px-3 py-2.5 text-xs font-semibold text-ink disabled:opacity-40"
+                    className="rounded-lg bg-accent px-3 py-2.5 text-xs font-semibold text-canvas disabled:opacity-40"
                   >
                     {reviewing === "accepted" ? "Recording…" : "Accept criteria"}
                   </button>
@@ -511,7 +511,7 @@ export function AgentRunPanel({
               </fieldset>
             )}
             {review && (
-              <p className="mt-4 rounded-xl border border-line-strong bg-ink px-4 py-3 text-xs leading-5 text-muted-light">
+              <p className="mt-4 rounded-xl border border-line-strong bg-canvas px-4 py-3 text-xs leading-5 text-muted-light">
                 Proposal {review.decision} with criterion-level review evidence.
               </p>
             )}
@@ -520,7 +520,7 @@ export function AgentRunPanel({
                 href={pullRequest.url}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink"
+                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-canvas"
               >
                 <span>{pullRequest.label}</span>
                 <span aria-hidden>↗</span>

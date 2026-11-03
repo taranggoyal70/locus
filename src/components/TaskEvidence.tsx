@@ -113,7 +113,7 @@ export function TaskEvidence({
         <label
           htmlFor="task-evidence-input"
           aria-disabled={Boolean(status) || evidence.length >= MAX_ATTACHMENTS}
-          className="cursor-pointer rounded-lg border border-line-strong px-3 py-2 text-[11px] font-medium text-muted-light transition hover:border-accent/40 hover:text-paper aria-disabled:pointer-events-none aria-disabled:opacity-40"
+          className="cursor-pointer rounded-lg border border-line-strong px-3 py-2 text-[11px] font-medium text-muted-light transition hover:border-accent/40 hover:text-ink aria-disabled:pointer-events-none aria-disabled:opacity-40"
         >
           Attach screenshot or document
         </label>
@@ -123,9 +123,9 @@ export function TaskEvidence({
       {evidence.length > 0 && (
         <ul className="mt-3 space-y-2" aria-label="Attached task evidence">
           {evidence.map((item) => (
-            <li key={item.id} className="flex items-start justify-between gap-3 rounded-lg border border-line bg-ink/70 px-3 py-2">
+            <li key={item.id} className="flex items-start justify-between gap-3 rounded-lg border border-line bg-canvas/70 px-3 py-2">
               <details className="min-w-0 flex-1">
-                <summary className="cursor-pointer truncate text-[11px] text-paper">
+                <summary className="cursor-pointer truncate text-[11px] text-ink">
                   {item.name} <span className="text-muted">· {item.kind.toUpperCase()} · {item.characters.toLocaleString()} characters</span>
                 </summary>
                 <p className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap font-mono text-[10px] leading-4 text-muted-light">
@@ -133,7 +133,7 @@ export function TaskEvidence({
                 </p>
                 {item.truncated && <p className="mt-2 text-[10px] text-recent">Long evidence was safely truncated.</p>}
               </details>
-              <button type="button" onClick={() => onRemove(item.id)} className="shrink-0 text-[11px] text-muted transition hover:text-paper">
+              <button type="button" onClick={() => onRemove(item.id)} className="shrink-0 text-[11px] text-muted transition hover:text-ink">
                 Remove
               </button>
             </li>

@@ -96,7 +96,7 @@ export function DependencyGraph({
       <section className="min-w-0 overflow-hidden rounded-[22px] border border-line-strong bg-surface">
         <div className="border-b border-line px-6 py-5">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Context trace</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-paper">
+          <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-ink">
             {result?.widened ? "Locus needs one more detail" : "Describe a task to build the trace"}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">
@@ -109,7 +109,7 @@ export function DependencyGraph({
         </div>
         {result?.widened ? (
           <div className="grid gap-px bg-line lg:grid-cols-2">
-            <div className="bg-ink/70 p-5">
+            <div className="bg-canvas/70 p-5">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
                 Make the task specific
               </p>
@@ -133,7 +133,7 @@ export function DependencyGraph({
                 </div>
               )}
             </div>
-            <div className="bg-ink/70 p-5">
+            <div className="bg-canvas/70 p-5">
               <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
                 {candidates.length > 0 ? "Possible starting files" : "No supported match yet"}
               </p>
@@ -143,7 +143,7 @@ export function DependencyGraph({
                     <button
                       key={file}
                       onClick={() => onSelect(file)}
-                      className="block w-full rounded-xl border border-line bg-surface/70 px-3 py-2.5 text-left font-mono text-[11px] text-paper transition hover:border-accent/40"
+                      className="block w-full rounded-xl border border-line bg-surface/70 px-3 py-2.5 text-left font-mono text-[11px] text-ink transition hover:border-accent/40"
                     >
                       {file}
                     </button>
@@ -159,7 +159,7 @@ export function DependencyGraph({
         ) : (
           <div className="grid gap-px bg-line md:grid-cols-3">
             {["Task matches", "Imported dependencies", "Nearby integration"].map((title, index) => (
-              <div key={title} className="min-h-44 bg-ink/70 p-5">
+              <div key={title} className="min-h-44 bg-canvas/70 p-5">
                 <span className="font-mono text-xs text-muted">0{index + 1}</span>
                 <p className="mt-8 text-sm font-medium text-muted-light">{title}</p>
                 <div className="mt-4 h-px bg-line-strong" />
@@ -178,7 +178,7 @@ export function DependencyGraph({
       <div className="flex flex-col gap-4 border-b border-line px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Context trace</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-paper">How Locus built this context</h2>
+          <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-ink">How Locus built this context</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted-light">
             Follow the selection from task evidence to the supporting files sent to the agent.
           </p>
@@ -195,11 +195,11 @@ export function DependencyGraph({
 
       <div className="grid gap-px bg-line lg:grid-cols-3">
         {trace.stages.map((stage) => (
-          <div key={stage.step} className="min-w-0 bg-ink/[0.72] p-5">
+          <div key={stage.step} className="min-w-0 bg-canvas/[0.72] p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="font-mono text-xs font-semibold text-accent">{stage.step}</p>
-                <h3 className="mt-2 text-sm font-semibold text-paper">{stage.title}</h3>
+                <h3 className="mt-2 text-sm font-semibold text-ink">{stage.title}</h3>
               </div>
               <span className="rounded-full border border-line px-2 py-1 font-mono text-[10px] text-muted">
                 {stage.files.length} files
@@ -221,7 +221,7 @@ export function DependencyGraph({
                         : "border-line bg-surface/70 hover:border-line-strong hover:bg-surface-raised"
                     }`}
                   >
-                    <span className="block break-all font-mono text-[11px] leading-5 text-paper">{file.rel}</span>
+                    <span className="block break-all font-mono text-[11px] leading-5 text-ink">{file.rel}</span>
                     <span className="mt-2 flex items-center justify-between gap-3 text-[10px]">
                       <span className={isAnchor ? "text-accent" : file.recent ? "text-recent" : "text-muted"}>
                         {isAnchor ? "task match" : file.recent ? "recently changed" : `distance ${file.dist}`}

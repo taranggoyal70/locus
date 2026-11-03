@@ -15,7 +15,7 @@ export default function DocsPage() {
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Experimental localization API</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-5xl">Localize before you spend.</h1>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-ink sm:text-5xl">Localize before you spend.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-light">
           Invite-only Agent Runs localize a public Repo, work in an isolated Sandbox, run
           allowlisted checks, and stop at a review-ready proposal. The API below exposes only the
@@ -26,7 +26,7 @@ export default function DocsPage() {
         <div className="aperture-rule mt-8" />
 
         <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Authentication</h2>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Authentication</h2>
           <p className="mt-2 text-sm leading-6 text-muted-light">
             All API requests require a Bearer token. Generate keys in <Link href="/settings" className="text-accent hover:underline">Settings</Link>.
           </p>
@@ -36,43 +36,43 @@ export default function DocsPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">POST /api/v1/locate</h2>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">POST /api/v1/locate</h2>
           <p className="mt-2 text-sm leading-6 text-muted-light">
             Analyze a repository for a given task and return the focused file slice with packed context.
           </p>
 
-          <h3 className="mt-6 text-sm font-semibold text-paper">Request body</h3>
+          <h3 className="mt-6 text-sm font-semibold text-ink">Request body</h3>
           <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
             <table className="min-w-[680px] text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface/50">
-                  <th className="px-4 py-2 text-left font-medium text-paper">Field</th>
-                  <th className="px-4 py-2 text-left font-medium text-paper">Type</th>
-                  <th className="px-4 py-2 text-left font-medium text-paper">Required</th>
-                  <th className="px-4 py-2 text-left font-medium text-paper">Description</th>
+                  <th className="px-4 py-2 text-left font-medium text-ink">Field</th>
+                  <th className="px-4 py-2 text-left font-medium text-ink">Type</th>
+                  <th className="px-4 py-2 text-left font-medium text-ink">Required</th>
+                  <th className="px-4 py-2 text-left font-medium text-ink">Description</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line text-muted-light">
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs text-paper">repo</td>
+                  <td className="px-4 py-2 font-mono text-xs text-ink">repo</td>
                   <td className="px-4 py-2">string</td>
                   <td className="px-4 py-2">Yes</td>
                   <td className="px-4 py-2">GitHub repo as <code className="text-accent">owner/repo</code>, <code className="text-accent">owner/repo@ref</code>, or a full GitHub URL</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs text-paper">task</td>
+                  <td className="px-4 py-2 font-mono text-xs text-ink">task</td>
                   <td className="px-4 py-2">string</td>
                   <td className="px-4 py-2">Yes</td>
                   <td className="px-4 py-2">Natural language description of the engineering task</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs text-paper">evidence</td>
+                  <td className="px-4 py-2 font-mono text-xs text-ink">evidence</td>
                   <td className="px-4 py-2">string</td>
                   <td className="px-4 py-2">No</td>
                   <td className="px-4 py-2">Additional context (error logs, screenshots text, etc.)</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs text-paper">budget</td>
+                  <td className="px-4 py-2 font-mono text-xs text-ink">budget</td>
                   <td className="px-4 py-2">number</td>
                   <td className="px-4 py-2">No</td>
                   <td className="px-4 py-2">Max tokens for the packed context (default: 40,000, capped at 200,000)</td>
@@ -81,7 +81,7 @@ export default function DocsPage() {
             </table>
           </div>
 
-          <h3 className="mt-6 text-sm font-semibold text-paper">Example request</h3>
+          <h3 className="mt-6 text-sm font-semibold text-ink">Example request</h3>
           <pre className="mt-2 overflow-x-auto rounded-xl border border-line-strong bg-surface p-4 font-mono text-xs leading-5 text-muted-light">
 {`curl -X POST ${SITE_URL}/api/v1/locate \\
   -H "Authorization: Bearer lk_your_key_here" \\
@@ -92,7 +92,7 @@ export default function DocsPage() {
   }'`}
           </pre>
 
-          <h3 className="mt-6 text-sm font-semibold text-paper">Response</h3>
+          <h3 className="mt-6 text-sm font-semibold text-ink">Response</h3>
           <pre className="mt-2 overflow-x-auto rounded-xl border border-line-strong bg-surface p-4 font-mono text-xs leading-5 text-muted-light">
 {`{
   "task": "fix the middleware redirect loop",
@@ -160,20 +160,20 @@ export default function DocsPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Rate limits</h2>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Rate limits</h2>
           <p className="mt-2 text-sm leading-6 text-muted-light">
             API requests are limited to 30 per minute per user. Exceeding the limit returns <code className="text-accent">429 Too Many Requests</code> with a <code className="text-accent">Retry-After</code> header.
           </p>
         </section>
 
         <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Error codes</h2>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Error codes</h2>
           <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
             <table className="min-w-[420px] text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface/50">
-                  <th className="px-4 py-2 text-left font-medium text-paper">Status</th>
-                  <th className="px-4 py-2 text-left font-medium text-paper">Meaning</th>
+                  <th className="px-4 py-2 text-left font-medium text-ink">Status</th>
+                  <th className="px-4 py-2 text-left font-medium text-ink">Meaning</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line text-muted-light">
@@ -188,7 +188,7 @@ export default function DocsPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Source runtimes</h2>
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Source runtimes</h2>
           <p className="mt-2 text-sm leading-6 text-muted-light">
             CLI and MCP implementations exist in the open-source repository for development and
             automated testing. The <code className="text-accent">locus-context</code> package is not

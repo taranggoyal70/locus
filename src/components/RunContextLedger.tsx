@@ -6,7 +6,7 @@ type LedgerGroupProps = {
 
 function LedgerGroup({ label, paths, tone }: LedgerGroupProps) {
   return (
-    <section className="min-w-0 rounded-xl border border-line bg-ink/65 p-3">
+    <section className="min-w-0 rounded-xl border border-line bg-canvas/65 p-3">
       <div className="flex items-center justify-between gap-3">
         <h3 className={`font-mono text-[9px] font-semibold uppercase tracking-[0.12em] ${tone}`}>
           {label}

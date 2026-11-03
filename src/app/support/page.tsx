@@ -18,7 +18,7 @@ export default function SupportPage() {
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-4xl px-5 py-12">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Operations</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Support and service status</h1>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-ink">Support and service status</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-light">
           {supportAvailability(selfServeOpen())}
           {" "}Shared Agent Run capacity resets daily at 00:00 UTC; connected Cloudflare accounts
@@ -28,7 +28,7 @@ export default function SupportPage() {
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <section className="rounded-2xl border border-line-strong bg-surface p-5">
-            <h2 className="text-lg font-semibold text-paper">Service status</h2>
+            <h2 className="text-lg font-semibold text-ink">Service status</h2>
             <p className="mt-2 text-sm leading-6 text-muted-light">
               Check the live revision and application readiness before reporting an outage.
             </p>
@@ -37,7 +37,7 @@ export default function SupportPage() {
             </a>
           </section>
           <section className="rounded-2xl border border-line-strong bg-surface p-5">
-            <h2 className="text-lg font-semibold text-paper">Product support</h2>
+            <h2 className="text-lg font-semibold text-ink">Product support</h2>
             <p className="mt-2 text-sm leading-6 text-muted-light">
               Report a reproducible bug without source code, credentials, personal data, or private task text.
             </p>
@@ -48,17 +48,17 @@ export default function SupportPage() {
         </div>
 
         <section className="mt-6 rounded-2xl border border-line-strong bg-surface p-5">
-          <h2 className="text-lg font-semibold text-paper">Incident severity</h2>
+          <h2 className="text-lg font-semibold text-ink">Incident severity</h2>
           <div className="mt-4 grid gap-3 text-sm leading-6 text-muted-light sm:grid-cols-3">
-            <div><strong className="block text-paper">Critical · 4 hours</strong>Confirmed data exposure, destructive behavior, or total service loss.</div>
-            <div><strong className="block text-paper">High · 1 business day</strong>Agent Runs broadly fail or review evidence is unavailable.</div>
-            <div><strong className="block text-paper">Normal · 3 business days</strong>Isolated defects, questions, and product feedback.</div>
+            <div><strong className="block text-ink">Critical · 4 hours</strong>Confirmed data exposure, destructive behavior, or total service loss.</div>
+            <div><strong className="block text-ink">High · 1 business day</strong>Agent Runs broadly fail or review evidence is unavailable.</div>
+            <div><strong className="block text-ink">Normal · 3 business days</strong>Isolated defects, questions, and product feedback.</div>
           </div>
         </section>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <section className="rounded-2xl border border-line-strong bg-surface p-5">
-            <h2 className="text-lg font-semibold text-paper">Security reports</h2>
+            <h2 className="text-lg font-semibold text-ink">Security reports</h2>
             <p className="mt-2 text-sm leading-6 text-muted-light">
               Do not open a public issue for a vulnerability. Use a private GitHub Security Advisory.
             </p>
@@ -67,7 +67,7 @@ export default function SupportPage() {
             </a>
           </section>
           <section className="rounded-2xl border border-line-strong bg-surface p-5">
-            <h2 className="text-lg font-semibold text-paper">Data deletion</h2>
+            <h2 className="text-lg font-semibold text-ink">Data deletion</h2>
             <p className="mt-2 text-sm leading-6 text-muted-light">
               Request early deletion with your account identifier only. Never paste source, task evidence, or credentials.
             </p>

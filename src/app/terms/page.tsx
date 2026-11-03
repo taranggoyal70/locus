@@ -15,13 +15,13 @@ export default function TermsPage() {
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-3xl px-5 py-12">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Terms</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Terms of Service</h1>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-ink">Terms of Service</h1>
         <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 30, 2026 · Terms for Locus public early access.</p>
         <div className="aperture-rule mt-8" />
 
         <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
           <section>
-            <h2 className="text-lg font-semibold text-paper">Service</h2>
+            <h2 className="text-lg font-semibold text-ink">Service</h2>
             <p>
               Locus is an experimental, open-source agent workspace operated by Tarang Goyal. It
               localizes tasks for public JavaScript, TypeScript, and Python repositories for every signed-in
@@ -35,7 +35,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Acceptable use</h2>
+            <h2 className="text-lg font-semibold text-ink">Acceptable use</h2>
             <p>
               You may use Locus for any lawful purpose. Do not use the service to circumvent
               GitHub&apos;s terms of service, abuse rate limits, or analyze repositories you do not
@@ -45,7 +45,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Accounts</h2>
+            <h2 className="text-lg font-semibold text-ink">Accounts</h2>
             <p>
               Authentication is handled by Clerk. You are responsible for maintaining the security
               of your account credentials and any provider token you connect. You authorize Locus to
@@ -55,7 +55,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Data handling</h2>
+            <h2 className="text-lg font-semibold text-ink">Data handling</h2>
             <p>
               Repository source is processed by Locus and its execution providers. Durable task,
               run, evidence, and approval records are stored for product operation. See our{" "}
@@ -65,7 +65,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Agent output</h2>
+            <h2 className="text-lg font-semibold text-ink">Agent output</h2>
             <p>
               Generated code, commands, summaries, and Check evidence may be incomplete, unsafe, or
               incorrect. A successful command does not prove that acceptance criteria are satisfied.
@@ -74,7 +74,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Limitation of liability</h2>
+            <h2 className="text-lg font-semibold text-ink">Limitation of liability</h2>
             <p>
               Locus is provided &ldquo;as is&rdquo; without warranties of any kind. We are not
               liable for any damages arising from the use or inability to use the service,
@@ -83,7 +83,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Open source</h2>
+            <h2 className="text-lg font-semibold text-ink">Open source</h2>
             <p>
               Locus is licensed under the MIT License. You may self-host, modify, and distribute
               the software in accordance with the license terms. CLI and MCP source runtimes can be
@@ -92,7 +92,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Changes</h2>
+            <h2 className="text-lg font-semibold text-ink">Changes</h2>
             <p>
               We may update these terms as the service evolves. Questions and early-access support requests
               can be submitted through the{" "}

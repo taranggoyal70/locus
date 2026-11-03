@@ -27,7 +27,7 @@ export function RepoLoadFeedback({
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-lg bg-paper px-3 py-1.5 text-[11px] font-semibold text-ink transition hover:bg-accent"
+            className="rounded-lg bg-ink px-3 py-1.5 text-[11px] font-semibold text-canvas transition hover:bg-accent"
           >
             Retry
           </button>
@@ -35,7 +35,7 @@ export function RepoLoadFeedback({
         <button
           type="button"
           onClick={onUseDemo}
-          className="rounded-lg border border-line-strong px-3 py-1.5 text-[11px] text-muted-light transition hover:border-accent hover:text-paper"
+          className="rounded-lg border border-line-strong px-3 py-1.5 text-[11px] text-muted-light transition hover:border-accent hover:text-ink"
         >
           Open demo Repo
         </button>

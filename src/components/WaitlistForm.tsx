@@ -94,7 +94,7 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
         aria-describedby="agent-access-description"
         className="relative w-full max-w-md rounded-2xl border border-line-strong bg-surface p-6 shadow-2xl"
       >
-        <button type="button" aria-label="Close Agent Run access form" onClick={onClose} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg text-muted transition hover:bg-ink hover:text-paper">
+        <button type="button" aria-label="Close Agent Run access form" onClick={onClose} className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-lg text-muted transition hover:bg-canvas hover:text-ink">
           <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
@@ -107,13 +107,13 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                 <path d="M20 6 9 17l-5-5" />
               </svg>
             </div>
-            <p id="agent-access-title" className="text-lg font-semibold text-paper">{result.message}</p>
+            <p id="agent-access-title" className="text-lg font-semibold text-ink">{result.message}</p>
             <p id="agent-access-description" className="sr-only">Your Agent Run access request was received.</p>
             <button type="button" onClick={onClose} className="mt-4 text-sm text-accent hover:underline">Close</button>
           </div>
         ) : (
           <>
-            <h2 id="agent-access-title" className="font-display text-2xl font-semibold tracking-[-0.04em] text-paper">Request Agent Run access</h2>
+            <h2 id="agent-access-title" className="font-display text-2xl font-semibold tracking-[-0.04em] text-ink">Request Agent Run access</h2>
             <p id="agent-access-description" className="mt-1 text-sm text-muted-light">Repo localization is already open. Tell us about one public Repo task if you want to test a complete Agent Run; every request is reviewed manually.</p>
 
             {result && !result.ok && (
@@ -132,7 +132,7 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@company.com"
-                  className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+                  className="w-full rounded-xl border border-line-strong bg-canvas px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-accent/50 focus:outline-none"
                 />
               </div>
               <div>
@@ -143,7 +143,7 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={200}
-                  className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper focus:border-accent/50 focus:outline-none"
+                  className="w-full rounded-xl border border-line-strong bg-canvas px-4 py-2.5 text-sm text-ink focus:border-accent/50 focus:outline-none"
                 />
               </div>
               <div>
@@ -154,7 +154,7 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   maxLength={200}
-                  className="w-full rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper focus:border-accent/50 focus:outline-none"
+                  className="w-full rounded-xl border border-line-strong bg-canvas px-4 py-2.5 text-sm text-ink focus:border-accent/50 focus:outline-none"
                 />
               </div>
               <div>
@@ -166,13 +166,13 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
                   placeholder="For example: fix a failing CI check"
                   maxLength={1000}
                   rows={3}
-                  className="w-full resize-none rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+                  className="w-full resize-none rounded-xl border border-line-strong bg-canvas px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-accent/50 focus:outline-none"
                 />
               </div>
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:opacity-40"
+                className="w-full rounded-xl bg-accent py-3 text-sm font-semibold text-canvas transition hover:bg-accent-dim disabled:opacity-40"
               >
                 {submitting ? "Requesting..." : "Request access"}
               </button>

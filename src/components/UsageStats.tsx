@@ -60,7 +60,7 @@ export function UsageStats() {
     <div className="grid gap-3 sm:grid-cols-4">
       {stats.map((stat) => (
         <div key={stat.label} className="rounded-xl border border-line-strong bg-surface/50 px-4 py-3">
-          <p className="font-mono text-2xl font-semibold tracking-[-0.03em] text-paper">{stat.value}</p>
+          <p className="font-mono text-2xl font-semibold tracking-[-0.03em] text-ink">{stat.value}</p>
           <p className="mt-1 text-xs text-muted">{stat.label}</p>
         </div>
       ))}

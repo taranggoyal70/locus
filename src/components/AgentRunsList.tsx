@@ -39,7 +39,7 @@ function statusTone(status: string): string {
   if (status === "completed") return "border-accent/35 bg-accent/10 text-accent";
   if (status === "failed" || status === "rejected" || status === "cancelled") return "border-recent/35 bg-recent/10 text-recent";
   if (status === "awaiting_approval") return "border-[#b78a22]/35 bg-[#e8c866]/25 text-[#765a18]";
-  return "border-line-strong bg-paper/[0.04] text-muted-light";
+  return "border-line-strong bg-ink/[0.04] text-muted-light";
 }
 
 function runDateLabel(value: string): string {
@@ -138,9 +138,9 @@ export function AgentRunsList() {
   if (runs.length === 0 && !error) {
     return (
       <div className="rounded-[22px] border border-line bg-surface p-12 text-center">
-        <p className="text-sm font-medium text-paper">No Agent Runs yet.</p>
+        <p className="text-sm font-medium text-ink">No Agent Runs yet.</p>
         <p className="mt-2 text-xs text-muted-light">Localize a real Repo and start a Run from the workspace.</p>
-        <Link href="/workspace" className="mt-5 inline-block rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink">
+        <Link href="/workspace" className="mt-5 inline-block rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-canvas">
           Start a Run
         </Link>
       </div>
@@ -165,11 +165,11 @@ export function AgentRunsList() {
               key={run.id}
               type="button"
               onClick={() => selectRun(run.id)}
-              className={`block w-full px-5 py-4 text-left transition hover:bg-paper/[0.035] ${selectedRunId === run.id ? "bg-paper/[0.055]" : ""}`}
+              className={`block w-full px-5 py-4 text-left transition hover:bg-ink/[0.035] ${selectedRunId === run.id ? "bg-ink/[0.055]" : ""}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-paper">{run.task?.task ?? "Agent Task"}</p>
+                  <p className="truncate text-sm font-semibold text-ink">{run.task?.task ?? "Agent Task"}</p>
                   <p className="mt-1 truncate font-mono text-[10px] text-muted">{run.task?.repo_url ?? "Unknown Repo"}</p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2 py-1 font-mono text-[8px] font-semibold uppercase tracking-[0.12em] ${statusTone(run.status)}`}>
@@ -195,40 +195,40 @@ export function AgentRunsList() {
             <div className="flex items-start justify-between gap-5 border-b border-line px-5 py-4">
               <div className="min-w-0">
                 <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Durable evidence</p>
-                <h2 className="mt-1 truncate text-lg font-semibold text-paper">{selectedSnapshot.task?.task ?? "Agent Run"}</h2>
+                <h2 className="mt-1 truncate text-lg font-semibold text-ink">{selectedSnapshot.task?.task ?? "Agent Run"}</h2>
                 <p className="mt-1 truncate font-mono text-[10px] text-muted">{selectedSnapshot.task?.repo_url}</p>
               </div>
-              <button type="button" onClick={closeRun} className="text-xs text-muted hover:text-paper">Close</button>
+              <button type="button" onClick={closeRun} className="text-xs text-muted hover:text-ink">Close</button>
             </div>
             <div className="space-y-5 p-5">
               <AgentRunTimeline status={selectedSnapshot.run.status} steps={selectedSnapshot.steps} />
               <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line">
-                <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">CONTEXT</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.run.included_files.length} in</p></div>
-                <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">OUTSIDE</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.run.excluded_files.length} out</p></div>
-                <div className="bg-ink p-3"><p className="font-mono text-[9px] text-muted">TOKENS</p><p className="mt-1 text-sm font-semibold text-paper">{selectedSnapshot.tokens.totalTokens.toLocaleString("en-US")}</p></div>
+                <div className="bg-canvas p-3"><p className="font-mono text-[9px] text-muted">CONTEXT</p><p className="mt-1 text-sm font-semibold text-ink">{selectedSnapshot.run.included_files.length} in</p></div>
+                <div className="bg-canvas p-3"><p className="font-mono text-[9px] text-muted">OUTSIDE</p><p className="mt-1 text-sm font-semibold text-ink">{selectedSnapshot.run.excluded_files.length} out</p></div>
+                <div className="bg-canvas p-3"><p className="font-mono text-[9px] text-muted">TOKENS</p><p className="mt-1 text-sm font-semibold text-ink">{selectedSnapshot.tokens.totalTokens.toLocaleString("en-US")}</p></div>
               </div>
               <RunContextLedger
                 included={selectedSnapshot.run.included_files}
                 excluded={selectedSnapshot.run.excluded_files}
                 widened={selectedSnapshot.run.widened_files}
               />
-              <p className="rounded-xl border border-line-strong bg-ink/60 px-3 py-2.5 text-[11px] leading-5 text-muted-light">
+              <p className="rounded-xl border border-line-strong bg-canvas/60 px-3 py-2.5 text-[11px] leading-5 text-muted-light">
                 Token usage is factual. Locus does not publish a Savings claim during early access.
               </p>
               {summary?.content && <p className="text-sm leading-6 text-muted-light">{summary.content}</p>}
               {diff?.content && (
                 <details className="rounded-xl border border-line">
-                  <summary className="cursor-pointer px-3 py-3 text-xs font-medium text-paper">Review proposed diff</summary>
+                  <summary className="cursor-pointer px-3 py-3 text-xs font-medium text-ink">Review proposed diff</summary>
                   <pre className="max-h-80 overflow-auto border-t border-line p-3 font-mono text-[10px] leading-5 text-muted-light">{diff.content}</pre>
                 </details>
               )}
               {selectedSnapshot.run.error && <p role="alert" className="text-xs leading-5 text-recent">{selectedSnapshot.run.error}</p>}
               {selectedSnapshot.run.status === "awaiting_approval" && (
-                <p className="rounded-xl border border-line-strong bg-ink px-4 py-3 text-xs leading-5 text-muted-light">
+                <p className="rounded-xl border border-line-strong bg-canvas px-4 py-3 text-xs leading-5 text-muted-light">
                   Ready for review. External GitHub writes remain disabled during early access.
                 </p>
               )}
-              {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-ink"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
+              {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-canvas"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
               {isActiveRun(selectedSnapshot.run.status) && (
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="text-xs font-medium text-accent hover:underline">Resume this Run in the workspace</Link>
@@ -246,7 +246,7 @@ export function AgentRunsList() {
           </>
         ) : (
           <div className="grid min-h-[520px] place-items-center px-8 text-center">
-            <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">Select a Run</p><p className="mt-3 text-xl font-semibold text-paper">Open its complete evidence ledger.</p></div>
+            <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">Select a Run</p><p className="mt-3 text-xl font-semibold text-ink">Open its complete evidence ledger.</p></div>
           </div>
         )}
       </section>

@@ -15,14 +15,34 @@ function contrast(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-describe("public color tokens", () => {
-  it("keeps muted and error text above WCAG AA contrast on the primary canvas", () => {
-    const css = readFileSync(new URL("./globals.css", import.meta.url), "utf8");
-    const background = css.match(/--ink:\s*(#[a-f\d]{6})/i)?.[1] ?? "";
-    const muted = css.match(/--muted:\s*(#[a-f\d]{6})/i)?.[1] ?? "";
-    const recent = css.match(/--recent:\s*(#[a-f\d]{6})/i)?.[1] ?? "";
+const css = readFileSync(new URL("./globals.css", import.meta.url), "utf8");
 
-    expect(contrast(muted, background)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(recent, background)).toBeGreaterThanOrEqual(4.5);
-  });
+/** The hex tokens declared in the first rule whose selector is `selector`. */
+function tokens(selector: string): Record<string, string> {
+  const start = css.indexOf(`${selector} {`);
+  const block = css.slice(start, css.indexOf("}", start));
+  return Object.fromEntries(
+    [...block.matchAll(/--([a-z\d-]+):\s*(#[a-f\d]{6})/gi)].map(([, name, hex]) => [name, hex]),
+  );
+}
+
+describe("public color tokens", () => {
+  const light = tokens(":root");
+  const dark = { ...light, ...tokens('[data-band="dark"]') };
+
+  it.each(["ink", "ink-2", "muted", "included", "widened", "failed"])(
+    "keeps --%s above WCAG AA contrast on the canvas and on surfaces",
+    (role) => {
+      expect(contrast(light[role], light.canvas)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(light[role], light.surface)).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it.each(["ink", "ink-2", "muted", "included"])(
+    "keeps --%s above WCAG AA contrast inside a dark band",
+    (role) => {
+      expect(contrast(dark[role], dark.canvas)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(dark[role], dark.surface)).toBeGreaterThanOrEqual(4.5);
+    },
+  );
 });

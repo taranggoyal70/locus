@@ -14,13 +14,13 @@ export default function PrivacyPage() {
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-3xl px-5 py-12">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Trust</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Privacy Policy</h1>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-ink">Privacy Policy</h1>
         <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 30, 2026 · What Locus processes, keeps, and shares.</p>
         <div className="aperture-rule mt-8" />
 
         <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
           <section>
-            <h2 className="text-lg font-semibold text-paper">What we collect</h2>
+            <h2 className="text-lg font-semibold text-ink">What we collect</h2>
             <p>
               Locus uses Clerk for authentication. When you create an account, Clerk stores your
               email address and authentication credentials on their infrastructure. We do not store
@@ -29,7 +29,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Repository data</h2>
+            <h2 className="text-lg font-semibold text-ink">Repository data</h2>
             <p>
               Hosted early access supports public repositories only. Source is fetched from GitHub and
               processed by Locus, the configured model provider, and its execution Sandbox. Locus
@@ -40,7 +40,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Durable Run records</h2>
+            <h2 className="text-lg font-semibold text-ink">Durable Run records</h2>
             <p>
               To make Agent Runs durable and auditable, Locus stores task metadata, included and
               excluded file paths, Run Steps and status, generated change sets, Check evidence,
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Task evidence</h2>
+            <h2 className="text-lg font-semibold text-ink">Task evidence</h2>
             <p>
               Screenshots, PDFs, and documents you upload for task evidence are processed
               server-side for text extraction. Uploaded binaries are not intentionally retained;
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Providers and operational data</h2>
+            <h2 className="text-lg font-semibold text-ink">Providers and operational data</h2>
             <p>
               Clerk, Supabase, GitHub, and Vercel process data needed for authentication, persistence,
               repository intake, hosting, workflow execution, and Sandbox operation. Cloudflare Workers
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Your Cloudflare connection</h2>
+            <h2 className="text-lg font-semibold text-ink">Your Cloudflare connection</h2>
             <p>
               You may optionally connect a Cloudflare Account ID and Workers AI API token so Runs
               use capacity from your account. Locus encrypts the token before storing it in Supabase,
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Retention and deletion</h2>
+            <h2 className="text-lg font-semibold text-ink">Retention and deletion</h2>
             <p>
               Terminal Agent Runs and their task, Step, proposal, and review evidence are
               automatically deleted after 30 days. Active and review-ready Runs remain available
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Contact</h2>
+            <h2 className="text-lg font-semibold text-ink">Contact</h2>
             <p>
               Questions or a request deletion? Open a private-data request without including source
               code, task text, or credentials in the{" "}

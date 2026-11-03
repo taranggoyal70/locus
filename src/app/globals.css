@@ -1,39 +1,89 @@
 @import "tailwindcss";
 
+/*
+ * Evidence datasheet: daylight paper, navy ink, hairline rules, mono for data.
+ * Teal, amber, grey and red describe a file's or Check's state and nothing
+ * else. Reference: docs/design/locus-design-brief.md.
+ */
 :root {
-  /* Mineral field: a daylight canvas with precise evidence signals. */
-  --ink: #edf1ee;
-  --surface: #f9fbf7;
-  --surface-raised: #dfe8e2;
+  /* surfaces */
+  --canvas: #f3f5f2;
+  --surface: #fbfcfa;
+  --surface-2: #e8ede9;
   --line: rgba(20, 35, 59, 0.1);
-  --line-strong: rgba(20, 35, 59, 0.2);
-  --muted: #596b67;
-  --muted-light: #4e605d;
-  --paper: #14233b;
-  --accent: #087864;
-  --accent-dim: #075e50;
-  /* The accent on a dark --paper surface. #087864 on #14233b is 2.91:1, below
-     the 4.5:1 WCAG AA needs for body text: both are dark. This lighter teal
-     reaches 6.9:1 on the same ground while staying the same hue. */
-  --accent-on-dark: #3fbf9f;
-  --excluded: #cad5cf;
-  --recent: #a33f32;
+  --line-2: rgba(20, 35, 59, 0.18);
+
+  /* ink */
+  --ink: #14233b;
+  --ink-2: #3e4f63;
+  --muted: #5c6a78;
+
+  /* state */
+  --included: #087864;
+  --widened: #925c0e;
+  /* Deliberately faint (1.5:1 on --canvas). An Excluded mark never carries
+     meaning alone: it always sits beside an --ink label. */
+  --excluded: #c3ccc6;
+  --failed: #b03a2e;
+
+  /* shape */
+  --r-sm: 6px;
+  --r: 10px;
+  --shadow: 0 1px 0 rgba(20, 35, 59, 0.04), 0 12px 32px -18px rgba(20, 35, 59, 0.22);
+
+  /* motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-press: 100ms;
+  --dur-quick: 160ms;
+  --dur-panel: 280ms;
+  --dur-story: 900ms;
+}
+
+/* The same roles on navy, for the demo and closing call-to-action bands.
+   #087864 on navy is 2.9:1, so --included lightens to stay above 4.5:1. */
+[data-band="dark"] {
+  --canvas: #0f1b2e;
+  --surface: #16263d;
+  --surface-2: #1d3049;
+  --line: rgba(238, 242, 240, 0.08);
+  --line-2: rgba(238, 242, 240, 0.15);
+  --ink: #eef2f0;
+  --ink-2: #b4c1ce;
+  --muted: #91a4b6;
+  --included: #3fbf9f;
 }
 
 @theme inline {
-  --color-ink: var(--ink);
+  --color-canvas: var(--canvas);
   --color-surface: var(--surface);
-  --color-surface-raised: var(--surface-raised);
+  --color-surface-2: var(--surface-2);
   --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
+  --color-line-2: var(--line-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
-  --color-muted-light: var(--muted-light);
-  --color-paper: var(--paper);
-  --color-accent: var(--accent);
-  --color-accent-dim: var(--accent-dim);
-  --color-accent-on-dark: var(--accent-on-dark);
+  --color-included: var(--included);
+  --color-widened: var(--widened);
   --color-excluded: var(--excluded);
-  --color-recent: var(--recent);
+  --color-failed: var(--failed);
+
+  /* Pre-datasheet names, kept until every component reads the roles above
+     (rollout step 6 in the design brief removes them). */
+  --color-surface-raised: var(--surface-2);
+  --color-line-strong: var(--line-2);
+  --color-muted-light: var(--ink-2);
+  --color-accent: var(--included);
+  --color-accent-dim: #065a4b;
+  --color-accent-on-dark: #3fbf9f;
+  --color-recent: var(--failed);
+
+  /* rounded-chip, rounded-card, shadow-panel. Own names, so Tailwind's
+     rounded-sm and ease-out keep their stock meaning. */
+  --radius-chip: var(--r-sm);
+  --radius-card: var(--r);
+  --shadow-panel: var(--shadow);
+
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
   --font-display: var(--font-bricolage, var(--font-geist-sans), ui-sans-serif, sans-serif);
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
@@ -44,25 +94,20 @@
 }
 
 html {
-  background: var(--ink);
+  background: var(--canvas);
   color-scheme: light;
 }
 
 body {
   min-height: 100vh;
-  background-color: var(--ink);
-  background-image:
-    linear-gradient(rgba(20, 35, 59, .045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 35, 59, .045) 1px, transparent 1px),
-    radial-gradient(circle at 74% 4%, rgba(142, 240, 192, .24), transparent 26rem);
-  background-size: 32px 32px, 32px 32px, 100% 100%;
-  color: var(--paper);
+  background-color: var(--canvas);
+  color: var(--ink);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: var(--accent);
+  background: var(--included);
   color: white;
 }
 
@@ -71,14 +116,14 @@ a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 summary:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--included);
   outline-offset: 2px;
 }
 
 .cl-footerActionLink,
 .cl-formFieldAction,
 .cl-identityPreviewEditButton {
-  color: var(--accent);
+  color: var(--included);
 }
 
 .tabular {
@@ -160,12 +205,6 @@ summary:focus-visible {
 
 .locus-stage {
   box-shadow: 0 32px 90px rgba(20, 35, 59, .18);
-}
-
-.site-noise {
-  background-image:
-    radial-gradient(circle at 16% 12%, rgba(255, 255, 255, .9), transparent 24rem),
-    radial-gradient(circle at 88% 20%, rgba(142, 240, 192, .18), transparent 22rem);
 }
 
 .aperture-rule {
@@ -362,7 +401,7 @@ summary:focus-visible {
   100% { background-position: 200% 0; }
 }
 .skeleton {
-  background: var(--surface-raised);
+  background: var(--surface-2);
   animation: pulse 1.8s ease-in-out infinite;
   border-radius: 8px;
 }

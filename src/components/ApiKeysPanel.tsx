@@ -104,7 +104,7 @@ export function ApiKeysPanel() {
         <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
           <p className="text-xs font-medium text-accent">Your new API key — copy it now, it won&apos;t be shown again.</p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 overflow-x-auto rounded-lg bg-ink px-3 py-2 font-mono text-xs text-paper">{revealedKey}</code>
+            <code className="flex-1 overflow-x-auto rounded-lg bg-canvas px-3 py-2 font-mono text-xs text-ink">{revealedKey}</code>
             <button
               onClick={copyKey}
               className="shrink-0 rounded-lg border border-accent/30 px-3 py-2 text-xs font-medium text-accent transition hover:bg-accent/10"
@@ -114,7 +114,7 @@ export function ApiKeysPanel() {
           </div>
           <button
             onClick={() => setRevealedKey(null)}
-            className="mt-2 text-xs text-muted-light hover:text-paper"
+            className="mt-2 text-xs text-muted-light hover:text-ink"
           >
             Dismiss
           </button>
@@ -128,12 +128,12 @@ export function ApiKeysPanel() {
           onKeyDown={(e) => e.key === "Enter" && !creating && createKey()}
           placeholder="Key name (e.g. CI pipeline)"
           maxLength={100}
-          className="min-w-0 flex-1 rounded-xl border border-line-strong bg-ink px-4 py-2.5 text-sm text-paper placeholder:text-muted focus:border-accent/50 focus:outline-none"
+          className="min-w-0 flex-1 rounded-xl border border-line-strong bg-canvas px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-accent/50 focus:outline-none"
         />
         <button
           onClick={createKey}
           disabled={creating}
-          className="shrink-0 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-accent-dim disabled:opacity-40"
+          className="shrink-0 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-canvas transition hover:bg-accent-dim disabled:opacity-40"
         >
           {creating ? "Creating..." : "Create key"}
         </button>
@@ -153,7 +153,7 @@ export function ApiKeysPanel() {
           {keys.map((key) => (
             <div key={key.id} className="flex items-center justify-between px-4 py-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-paper">{key.name}</p>
+                <p className="truncate text-sm font-medium text-ink">{key.name}</p>
                 <div className="mt-0.5 flex items-center gap-3 text-xs text-muted">
                   <code className="font-mono">{key.prefix}...</code>
                   <span>Created {new Date(key.created_at).toLocaleDateString()}</span>
@@ -172,8 +172,8 @@ export function ApiKeysPanel() {
       )}
 
       <div className="rounded-xl border border-line bg-surface/50 p-4">
-        <p className="text-xs font-medium text-paper">Quick start</p>
-        <pre className="mt-2 overflow-x-auto rounded-lg bg-ink p-3 font-mono text-xs leading-5 text-muted-light">{`curl -X POST ${origin}/api/v1/locate \\
+        <p className="text-xs font-medium text-ink">Quick start</p>
+        <pre className="mt-2 overflow-x-auto rounded-lg bg-canvas p-3 font-mono text-xs leading-5 text-muted-light">{`curl -X POST ${origin}/api/v1/locate \\
   -H "Authorization: Bearer lk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{"repo": "owner/repo", "task": "fix the login bug"}'`}</pre>

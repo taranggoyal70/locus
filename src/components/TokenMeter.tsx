@@ -100,7 +100,7 @@ export function TokenMeter({
       <div className="flex items-end justify-between">
         <div>
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">Context sent to the agent</p>
-          <p className="mt-1 font-mono text-sm text-paper tabular">
+          <p className="mt-1 font-mono text-sm text-ink tabular">
             {slice.toLocaleString()} <span className="text-muted">/ {total.toLocaleString()} tokens</span>
           </p>
         </div>
@@ -111,7 +111,7 @@ export function TokenMeter({
           <p className="text-[11px] text-muted">included share</p>
         </div>
       </div>
-      <div className="mt-4 h-3 overflow-hidden rounded-full bg-ink">
+      <div className="mt-4 h-3 overflow-hidden rounded-full bg-canvas">
         <div
           className={`h-full rounded-full transition-all duration-700 ${sparse ? "bg-muted" : "bg-accent"}`}
           style={{ width: `${Math.max(2, sliceFrac)}%` }}
@@ -142,7 +142,7 @@ export function TokenMeter({
                 key={key}
                 onClick={() => setFormat(key)}
                 className={`flex-1 rounded-md px-2 py-1.5 text-[11px] font-medium transition ${
-                  format === key ? "bg-accent/15 text-accent" : "text-muted hover:text-paper"
+                  format === key ? "bg-accent/15 text-accent" : "text-muted hover:text-ink"
                 }`}
               >
                 {label}
@@ -154,8 +154,8 @@ export function TokenMeter({
               onClick={copy}
               className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
                 result.widened
-                  ? "border border-line-strong bg-ink text-muted-light hover:border-accent/40 hover:text-paper"
-                  : "bg-accent text-ink shadow-[0_10px_24px_rgba(113,136,207,0.14)] hover:bg-accent-dim"
+                  ? "border border-line-strong bg-canvas text-muted-light hover:border-accent/40 hover:text-ink"
+                  : "bg-accent text-canvas shadow-[0_10px_24px_rgba(113,136,207,0.14)] hover:bg-accent-dim"
               }`}
             >
               {copied ?? (result.widened ? "Copy full repo context" : "Copy context")}
@@ -173,7 +173,7 @@ export function TokenMeter({
                 URL.revokeObjectURL(a.href);
                 trackClient("context_copied", { format, files: packed.files, tokens: packed.tokens, method: "download" });
               }}
-              className="rounded-xl border border-line-strong px-3 py-3 text-sm text-muted-light transition hover:border-accent/40 hover:text-paper"
+              className="rounded-xl border border-line-strong px-3 py-3 text-sm text-muted-light transition hover:border-accent/40 hover:text-ink"
               title="Download as file"
             >
               ↓
@@ -186,13 +186,13 @@ export function TokenMeter({
           <span className="text-[11px] text-muted">Was this context useful?</span>
           <button
             onClick={() => { setFeedback("up"); trackClient("context_feedback", { rating: "up", files: result.slice.length, includedTokens: result.sliceTokens, totalTokens: result.totalTokens }); }}
-            className={`rounded-md px-2 py-1 text-xs transition ${feedback === "up" ? "bg-accent/15 text-accent" : "text-muted hover:text-paper"}`}
+            className={`rounded-md px-2 py-1 text-xs transition ${feedback === "up" ? "bg-accent/15 text-accent" : "text-muted hover:text-ink"}`}
           >
             Yes
           </button>
           <button
             onClick={() => { setFeedback("down"); trackClient("context_feedback", { rating: "down", files: result.slice.length, includedTokens: result.sliceTokens, totalTokens: result.totalTokens }); }}
-            className={`rounded-md px-2 py-1 text-xs transition ${feedback === "down" ? "bg-recent/15 text-recent" : "text-muted hover:text-paper"}`}
+            className={`rounded-md px-2 py-1 text-xs transition ${feedback === "down" ? "bg-recent/15 text-recent" : "text-muted hover:text-ink"}`}
           >
             No
           </button>

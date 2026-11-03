@@ -15,10 +15,10 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="site-noise min-h-screen">
+    <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-line bg-surface/[0.86] backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <Link href="/workspace" className="flex items-center gap-3 text-paper">
+          <Link href="/workspace" className="flex items-center gap-3 text-ink">
             <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
             <span className="font-display font-semibold tracking-[-0.03em]">Locus</span>
           </Link>
@@ -29,8 +29,8 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={`rounded-full px-3 py-2 transition ${
                   pathname === item.href
-                    ? "bg-paper text-ink font-medium"
-                    : "text-muted-light hover:text-paper"
+                    ? "bg-ink text-canvas font-medium"
+                    : "text-muted-light hover:text-ink"
                 }`}
               >
                 {item.label}
@@ -40,7 +40,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
               appearance={{
                 elements: {
                   avatarBox: "h-9 w-9 border border-line-strong",
-                  userButtonPopoverCard: "border border-line-strong bg-surface text-paper shadow-2xl",
+                  userButtonPopoverCard: "border border-line-strong bg-surface text-ink shadow-2xl",
                 },
               }}
             />

@@ -73,7 +73,7 @@ export function ProjectsList() {
         </p>
         <Link
           href="/workspace"
-          className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink transition hover:bg-[#b5f34a]"
+          className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-canvas transition hover:bg-[#b5f34a]"
         >
           Go to workspace
         </Link>
@@ -89,7 +89,7 @@ export function ProjectsList() {
             href={`/workspace?repo=${encodeURIComponent(project.repo_url)}&task=${encodeURIComponent(project.task)}`}
             className="min-w-0 group"
           >
-            <p className="truncate text-sm font-medium text-paper group-hover:text-accent transition">{project.name}</p>
+            <p className="truncate text-sm font-medium text-ink group-hover:text-accent transition">{project.name}</p>
             <p className="mt-0.5 truncate text-xs text-muted-light">{project.task}</p>
             <div className="mt-1 flex items-center gap-3 text-xs text-muted">
               <span>{project.slice_files}/{project.total_files} files</span>

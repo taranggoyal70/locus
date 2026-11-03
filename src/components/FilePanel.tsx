@@ -29,7 +29,7 @@ export function ExcludedFileList({
             <span className="w-12 shrink-0 font-mono text-[9px] uppercase tracking-wide text-muted">
               out
             </span>
-            <span className="min-w-0 flex-1 break-all font-mono text-[12px] text-muted-light transition group-hover:text-paper">
+            <span className="min-w-0 flex-1 break-all font-mono text-[12px] text-muted-light transition group-hover:text-ink">
               {rel}
             </span>
             <span className="shrink-0 font-mono text-[9px] uppercase tracking-wide text-muted">
@@ -116,7 +116,7 @@ export function FilePanel({
                 setView(selectedView);
                 onSelect(null);
               }}
-              className="shrink-0 text-[11px] text-muted hover:text-paper"
+              className="shrink-0 text-[11px] text-muted hover:text-ink"
             >
               Back to {selectedView} list
             </button>
@@ -126,7 +126,7 @@ export function FilePanel({
         <div
           role="group"
           aria-label="Context file sets"
-          className="grid grid-cols-2 rounded-xl border border-line bg-ink/50 p-1"
+          className="grid grid-cols-2 rounded-xl border border-line bg-canvas/50 p-1"
         >
           <button
             type="button"
@@ -148,7 +148,7 @@ export function FilePanel({
             onClick={() => switchView("excluded")}
             className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-[11px] transition ${
               displayView === "excluded"
-                ? "bg-white/[0.05] text-paper"
+                ? "bg-white/[0.05] text-ink"
                 : "text-muted hover:text-muted-light disabled:cursor-not-allowed disabled:opacity-40"
             }`}
           >
@@ -197,7 +197,7 @@ export function FilePanel({
                     {result.anchors.includes(f.rel) ? "match" : `${f.dist} hop`}
                   </span>
                 )}
-                <span className="flex-1 truncate font-mono text-[12px] text-paper">{f.rel}</span>
+                <span className="flex-1 truncate font-mono text-[12px] text-ink">{f.rel}</span>
                 {f.recent && (
                   <span className="shrink-0 rounded-full bg-recent/15 px-1.5 py-0.5 text-[9px] font-semibold text-recent">
                     changed
@@ -219,7 +219,7 @@ export function FilePanel({
       )}
 
       {activeView === "excluded" && !selected && (
-        <div className="border-t border-dashed border-line-strong bg-ink/30 px-4 py-3">
+        <div className="border-t border-dashed border-line-strong bg-canvas/30 px-4 py-3">
           <p className="text-[11px] leading-5 text-muted">
             These files were loaded but not sent in the context pack. Opening one is inspection only—it does not change the slice.
           </p>
