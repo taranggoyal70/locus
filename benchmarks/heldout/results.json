@@ -1,0 +1,2214 @@
+{
+  "summary": {
+    "generatedAt": "2026-11-19T23:09:22.272Z",
+    "protocolVersion": "heldout-v1",
+    "cases": 60,
+    "repositories": 6,
+    "fixFileRecall": 1,
+    "casesWithFullRecall": 60,
+    "medianContextReductionPct": 71.5,
+    "widenedCases": 3,
+    "localized": {
+      "cases": 57,
+      "fixFileRecall": 1,
+      "casesWithFullRecall": 57,
+      "medianContextReductionPct": 72,
+      "meanChanceRecall": 0.25380145048770975,
+      "medianSliceTokens": 102159,
+      "medianRepositoryTokens": 419031
+    },
+    "withoutScope": {
+      "cases": 60,
+      "repositories": 6,
+      "fixFileRecall": 0.9436619718309859,
+      "casesWithFullRecall": 57,
+      "medianContextReductionPct": 70.5,
+      "widenedCases": 6,
+      "localized": {
+        "cases": 54,
+        "fixFileRecall": 0.9365079365079365,
+        "casesWithFullRecall": 51,
+        "medianContextReductionPct": 71.5,
+        "meanChanceRecall": 0.26425663373575364,
+        "medianSliceTokens": 109427.5,
+        "medianRepositoryTokens": 423114.5
+      }
+    }
+  },
+  "results": [
+    {
+      "repo": "honojs/hono",
+      "commit": "75ff8e3",
+      "snapshot": "a8ae5b1",
+      "subject": "fix(utils/types): keep JSONParsed cheap for non-recursive types (#5658)",
+      "task": "utils types keep JSONParsed cheap for non-recursive types",
+      "expected": [
+        "src/utils/types.ts"
+      ],
+      "found": [
+        "src/utils/types.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 61,
+      "repositoryFiles": 454,
+      "sliceTokens": 197519,
+      "repositoryTokens": 755366,
+      "contextReductionPct": 74,
+      "chanceRecall": 0.1343612334801762,
+      "anchors": [
+        "src/utils/types.test.ts",
+        "src/utils/types.ts",
+        "src/client/types.ts",
+        "src/client/utils.test.ts",
+        "src/helper/ssg/utils.ts",
+        "src/jsx/utils.test.ts",
+        "src/client/utils.ts",
+        "src/jsx/utils.ts"
+      ],
+      "withoutScope": {
+        "task": "keep JSONParsed cheap for non-recursive types",
+        "found": [
+          "src/utils/types.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 75,
+        "chanceRecall": 0.12555066079295155
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "a8ae5b1",
+      "snapshot": "fd7a330",
+      "subject": "fix(helper/websocket): do not depend on DOM-only types (#5653)",
+      "task": "helper websocket do not depend on DOM-only types",
+      "expected": [
+        "src/helper/websocket/index.ts"
+      ],
+      "found": [
+        "src/helper/websocket/index.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 53,
+      "repositoryFiles": 454,
+      "sliceTokens": 95783,
+      "repositoryTokens": 755163,
+      "contextReductionPct": 87,
+      "chanceRecall": 0.11674008810572688,
+      "anchors": [
+        "src/helper/websocket/index.ts",
+        "src/helper/conninfo/types.ts",
+        "src/helper/websocket/index.test.ts",
+        "src/client/client.test.ts",
+        "src/client/client.ts"
+      ],
+      "withoutScope": {
+        "task": "do not depend on DOM-only types",
+        "found": [
+          "src/helper/websocket/index.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 75,
+        "chanceRecall": 0.17400881057268722
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "fd7a330",
+      "snapshot": "95431d1",
+      "subject": "fix(cookie): do not accept a lone double quote as a cookie value (#5652)",
+      "task": "cookie do not accept a lone double quote as a cookie value",
+      "expected": [
+        "src/utils/cookie.ts"
+      ],
+      "found": [
+        "src/utils/cookie.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 131,
+      "repositoryFiles": 454,
+      "sliceTokens": 300780,
+      "repositoryTokens": 755084,
+      "contextReductionPct": 60,
+      "chanceRecall": 0.28854625550660795,
+      "anchors": [
+        "src/utils/cookie.ts",
+        "src/utils/accept.test.ts",
+        "src/jsx/intrinsic-elements.ts",
+        "adapters/lambda-edge/src/handler.test.ts",
+        "src/adapter/lambda-edge/handler.test.ts",
+        "src/context.test.ts",
+        "src/utils/accept.ts",
+        "adapters/lambda-edge/src/handler.ts",
+        "src/adapter/lambda-edge/handler.ts",
+        "src/context.ts"
+      ],
+      "withoutScope": {
+        "task": "do not accept a lone double quote as a cookie value",
+        "found": [
+          "src/utils/cookie.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 60,
+        "chanceRecall": 0.28854625550660795
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "95431d1",
+      "snapshot": "a46d602",
+      "subject": "fix(compress): send the compressed response headers for HEAD requests (#5651)",
+      "task": "compress send the compressed response headers for HEAD requests",
+      "expected": [
+        "src/middleware/compress/index.ts"
+      ],
+      "found": [
+        "src/middleware/compress/index.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 66,
+      "repositoryFiles": 454,
+      "sliceTokens": 102159,
+      "repositoryTokens": 754793,
+      "contextReductionPct": 86,
+      "chanceRecall": 0.14537444933920704,
+      "anchors": [
+        "src/middleware/compress/index.test.ts",
+        "src/middleware/compress/index.ts",
+        "src/middleware/secure-headers/secure-headers.ts",
+        "src/utils/headers.ts",
+        "src/middleware/secure-headers/index.test.ts",
+        "src/middleware/serve-static/index.test.ts",
+        "src/middleware/secure-headers/index.ts",
+        "src/middleware/serve-static/index.ts"
+      ],
+      "withoutScope": {
+        "task": "send the compressed response headers for HEAD requests",
+        "found": [
+          "src/middleware/compress/index.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 86,
+        "chanceRecall": 0.14537444933920704
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "a46d602",
+      "snapshot": "676c8f8",
+      "subject": "fix(client): keep class instances in the init options as they are (#5650)",
+      "task": "client keep class instances in the init options as they are",
+      "expected": [
+        "src/client/utils.ts"
+      ],
+      "found": [
+        "src/client/utils.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 117,
+      "repositoryFiles": 454,
+      "sliceTokens": 262301,
+      "repositoryTokens": 754456,
+      "contextReductionPct": 65,
+      "chanceRecall": 0.2577092511013216,
+      "anchors": [
+        "src/client/client.test.ts",
+        "src/client/client.ts",
+        "src/client/fetch-result-please.ts",
+        "src/client/types.ts",
+        "src/client/utils.test.ts",
+        "src/context.ts",
+        "src/client/utils.ts"
+      ],
+      "withoutScope": {
+        "task": "keep class instances in the init options as they are",
+        "found": [
+          "src/client/utils.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 82,
+        "chanceRecall": 0.15198237885462554
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "ab74a8d",
+      "snapshot": "399e7c9",
+      "subject": "fix(utils/types): stop JSONParsed at a recursive JSON type (#5645)",
+      "task": "utils types stop JSONParsed at a recursive JSON type",
+      "expected": [
+        "src/utils/types.ts"
+      ],
+      "found": [
+        "src/utils/types.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 118,
+      "repositoryFiles": 454,
+      "sliceTokens": 286700,
+      "repositoryTokens": 752368,
+      "contextReductionPct": 62,
+      "chanceRecall": 0.2599118942731278,
+      "anchors": [
+        "src/utils/types.test.ts",
+        "src/utils/types.ts",
+        "src/utils/jwt/types.ts",
+        "src/client/types.ts",
+        "src/types.test.ts",
+        "src/types.ts"
+      ],
+      "withoutScope": {
+        "task": "stop JSONParsed at a recursive JSON type",
+        "found": [
+          "src/utils/types.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 70,
+        "chanceRecall": 0.20704845814977973
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "399e7c9",
+      "snapshot": "dea44c8",
+      "subject": "fix(lambda-edge): omit body in a 204 result (#5643)",
+      "task": "lambda edge omit body in a 204 result",
+      "expected": [
+        "adapters/lambda-edge/src/handler.ts",
+        "src/adapter/lambda-edge/handler.ts"
+      ],
+      "found": [
+        "adapters/lambda-edge/src/handler.ts",
+        "src/adapter/lambda-edge/handler.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 64,
+      "repositoryFiles": 454,
+      "sliceTokens": 111308,
+      "repositoryTokens": 751911,
+      "contextReductionPct": 85,
+      "chanceRecall": 0.14096916299559473,
+      "anchors": [
+        "adapters/lambda-edge/src/handler.test.ts",
+        "adapters/lambda-edge/src/handler.ts",
+        "adapters/lambda-edge/test/index.test.ts",
+        "src/adapter/lambda-edge/handler.test.ts",
+        "src/adapter/lambda-edge/handler.ts",
+        "adapters/aws-lambda/src/handler.test.ts",
+        "adapters/aws-lambda/src/handler.ts"
+      ],
+      "withoutScope": {
+        "task": "omit body in a 204 result",
+        "found": [],
+        "widened": false,
+        "contextReductionPct": 68,
+        "chanceRecall": 0.20704845814977973
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "dea44c8",
+      "snapshot": "2198388",
+      "subject": "fix(jsx/dom): keep a falsy Suspense fallback (#5644)",
+      "task": "jsx dom keep a falsy Suspense fallback",
+      "expected": [
+        "src/jsx/dom/components.ts"
+      ],
+      "found": [
+        "src/jsx/dom/components.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 38,
+      "repositoryFiles": 454,
+      "sliceTokens": 112541,
+      "repositoryTokens": 751420,
+      "contextReductionPct": 85,
+      "chanceRecall": 0.08370044052863436,
+      "anchors": [
+        "src/jsx/dom/index.test.tsx",
+        "src/jsx/dom/intrinsic-element/components.test.tsx",
+        "src/jsx/dom/components.test.tsx",
+        "src/jsx/dom/components.ts",
+        "src/jsx/dom/context.test.tsx",
+        "src/jsx/dom/render.ts",
+        "src/jsx/dom/index.ts",
+        "src/jsx/dom/intrinsic-element/components.ts",
+        "src/jsx/dom/context.ts"
+      ],
+      "withoutScope": {
+        "task": "keep a falsy Suspense fallback",
+        "found": [
+          "src/jsx/dom/components.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 69,
+        "chanceRecall": 0.2092511013215859
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "265f36b",
+      "snapshot": "6dc11ed",
+      "subject": "fix(combine): continue the chain when a Condition returns true in every() (#5392)",
+      "task": "combine continue the chain when a Condition returns true in every()",
+      "expected": [
+        "src/middleware/combine/index.ts"
+      ],
+      "found": [
+        "src/middleware/combine/index.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 151,
+      "repositoryFiles": 454,
+      "sliceTokens": 355476,
+      "repositoryTokens": 751082,
+      "contextReductionPct": 53,
+      "chanceRecall": 0.33259911894273125,
+      "anchors": [
+        "src/middleware/combine/index.ts",
+        "src/middleware/combine/index.test.ts",
+        "src/client/client.test.ts",
+        "src/helper/ssg/ssg.test.tsx",
+        "src/context.ts",
+        "src/jsx/dom/render.ts",
+        "src/client/client.ts",
+        "src/helper/ssg/ssg.ts"
+      ],
+      "withoutScope": {
+        "task": "continue the chain when a Condition returns true in every()",
+        "found": [
+          "src/middleware/combine/index.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 53,
+        "chanceRecall": 0.33259911894273125
+      }
+    },
+    {
+      "repo": "honojs/hono",
+      "commit": "6dc11ed",
+      "snapshot": "64a1d5a",
+      "subject": "fix(jsx/dom): restore attributes and effects when Suspense children suspend again (#5642)",
+      "task": "jsx dom restore attributes and effects when Suspense children suspend again",
+      "expected": [
+        "src/jsx/dom/render.ts"
+      ],
+      "found": [
+        "src/jsx/dom/render.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 38,
+      "repositoryFiles": 454,
+      "sliceTokens": 112154,
+      "repositoryTokens": 750695,
+      "contextReductionPct": 85,
+      "chanceRecall": 0.08370044052863436,
+      "anchors": [
+        "src/jsx/dom/index.test.tsx",
+        "src/jsx/dom/render.ts",
+        "src/jsx/dom/components.ts",
+        "src/jsx/dom/index.ts",
+        "benchmarks/jsx-dom/benchmark.ts",
+        "src/jsx/dom/client.ts"
+      ],
+      "withoutScope": {
+        "task": "restore attributes and effects when Suspense children suspend again",
+        "found": [
+          "src/jsx/dom/render.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 80,
+        "chanceRecall": 0.10352422907488987
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "bf6e60a",
+      "snapshot": "e33b194",
+      "subject": "fix: devtools action dispatching (#3595)",
+      "task": "devtools action dispatching",
+      "expected": [
+        "src/middleware/devtools.ts"
+      ],
+      "found": [
+        "src/middleware/devtools.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 4,
+      "repositoryFiles": 36,
+      "sliceTokens": 4796,
+      "repositoryTokens": 17062,
+      "contextReductionPct": 72,
+      "chanceRecall": 0.1111111111111111,
+      "anchors": [
+        "src/middleware/devtools.ts"
+      ],
+      "withoutScope": {
+        "task": "devtools action dispatching",
+        "found": [
+          "src/middleware/devtools.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 72,
+        "chanceRecall": 0.1111111111111111
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "e33b194",
+      "snapshot": "382d29c",
+      "subject": "fix(middleware): persist migration supporting promise-like (#3583)",
+      "task": "middleware persist migration supporting promise-like",
+      "expected": [
+        "src/middleware/persist.ts"
+      ],
+      "found": [
+        "src/middleware/persist.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 3,
+      "repositoryFiles": 36,
+      "sliceTokens": 3958,
+      "repositoryTokens": 17050,
+      "contextReductionPct": 77,
+      "chanceRecall": 0.08333333333333333,
+      "anchors": [
+        "src/middleware/persist.ts"
+      ],
+      "withoutScope": {
+        "task": "persist migration supporting promise-like",
+        "found": [
+          "src/middleware/persist.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 77,
+        "chanceRecall": 0.08333333333333333
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "da2706c",
+      "snapshot": "a1fea2e",
+      "subject": "fix(persist): preserve external devtools action arguments (#3592)",
+      "task": "persist preserve external devtools action arguments",
+      "expected": [
+        "src/middleware/persist.ts"
+      ],
+      "found": [
+        "src/middleware/persist.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 5,
+      "repositoryFiles": 36,
+      "sliceTokens": 7789,
+      "repositoryTokens": 17046,
+      "contextReductionPct": 54,
+      "chanceRecall": 0.1388888888888889,
+      "anchors": [
+        "src/middleware/devtools.ts",
+        "src/middleware/persist.ts"
+      ],
+      "withoutScope": {
+        "task": "preserve external devtools action arguments",
+        "found": [],
+        "widened": false,
+        "contextReductionPct": 72,
+        "chanceRecall": 0.1111111111111111
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "a1fea2e",
+      "snapshot": "d867e6f",
+      "subject": "fix(devtools): preserve shared connections during store cleanup (#3580)",
+      "task": "devtools preserve shared connections during store cleanup",
+      "expected": [
+        "src/middleware/devtools.ts"
+      ],
+      "found": [
+        "src/middleware/devtools.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 4,
+      "repositoryFiles": 36,
+      "sliceTokens": 4726,
+      "repositoryTokens": 16976,
+      "contextReductionPct": 72,
+      "chanceRecall": 0.1111111111111111,
+      "anchors": [
+        "src/middleware/devtools.ts"
+      ],
+      "withoutScope": {
+        "task": "preserve shared connections during store cleanup",
+        "found": [
+          "src/middleware/devtools.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 72,
+        "chanceRecall": 0.1111111111111111
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "d867e6f",
+      "snapshot": "dac22e1",
+      "subject": "fix(devtools): apply serialize.reviver when parsing devtools messages (#3568)",
+      "task": "devtools apply serialize.reviver when parsing devtools messages",
+      "expected": [
+        "src/middleware/devtools.ts"
+      ],
+      "found": [
+        "src/middleware/devtools.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 4,
+      "repositoryFiles": 36,
+      "sliceTokens": 4663,
+      "repositoryTokens": 16913,
+      "contextReductionPct": 72,
+      "chanceRecall": 0.1111111111111111,
+      "anchors": [
+        "src/middleware/devtools.ts"
+      ],
+      "withoutScope": {
+        "task": "apply serialize.reviver when parsing devtools messages",
+        "found": [
+          "src/middleware/devtools.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 72,
+        "chanceRecall": 0.1111111111111111
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "3febf8c",
+      "snapshot": "f44cecc",
+      "subject": "fix(persist): clearStorage() should invalidate concurrent async rehydration (#3555)",
+      "task": "persist clearStorage() should invalidate concurrent async rehydration",
+      "expected": [
+        "src/middleware/persist.ts"
+      ],
+      "found": [
+        "src/middleware/persist.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 3,
+      "repositoryFiles": 36,
+      "sliceTokens": 3948,
+      "repositoryTokens": 16921,
+      "contextReductionPct": 77,
+      "chanceRecall": 0.08333333333333333,
+      "anchors": [
+        "src/middleware/persist.ts"
+      ],
+      "withoutScope": {
+        "task": "clearStorage() should invalidate concurrent async rehydration",
+        "found": [
+          "src/middleware/persist.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 77,
+        "chanceRecall": 0.08333333333333333
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "f44cecc",
+      "snapshot": "beca84e",
+      "subject": "fix(devtools): correct V8 stack regex when source path contains spaces (#3531)",
+      "task": "devtools correct V8 stack regex when source path contains spaces",
+      "expected": [
+        "src/middleware/devtools.ts"
+      ],
+      "found": [
+        "src/middleware/devtools.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 4,
+      "repositoryFiles": 36,
+      "sliceTokens": 4658,
+      "repositoryTokens": 16914,
+      "contextReductionPct": 72,
+      "chanceRecall": 0.1111111111111111,
+      "anchors": [
+        "src/middleware/devtools.ts"
+      ],
+      "withoutScope": {
+        "task": "correct V8 stack regex when source path contains spaces",
+        "found": [
+          "src/middleware/devtools.ts"
+        ],
+        "widened": true,
+        "contextReductionPct": 0,
+        "chanceRecall": 1
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "ad77bd3",
+      "snapshot": "8476d2c",
+      "subject": "fix(devtools): improve type inference for Devtools initializer (#3511)",
+      "task": "devtools improve type inference for Devtools initializer",
+      "expected": [
+        "src/middleware/devtools.ts"
+      ],
+      "found": [
+        "src/middleware/devtools.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 4,
+      "repositoryFiles": 36,
+      "sliceTokens": 4657,
+      "repositoryTokens": 16913,
+      "contextReductionPct": 72,
+      "chanceRecall": 0.1111111111111111,
+      "anchors": [
+        "src/middleware/devtools.ts"
+      ],
+      "withoutScope": {
+        "task": "improve type inference for Devtools initializer",
+        "found": [
+          "src/middleware/devtools.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 72,
+        "chanceRecall": 0.1111111111111111
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "4e9bcf0",
+      "snapshot": "4b96f4e",
+      "subject": "fix(devtools): support Firefox/Safari stack format in findCallerName (#3469)",
+      "task": "devtools support Firefox/Safari stack format in findCallerName",
+      "expected": [
+        "src/middleware/devtools.ts"
+      ],
+      "found": [
+        "src/middleware/devtools.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 4,
+      "repositoryFiles": 36,
+      "sliceTokens": 4595,
+      "repositoryTokens": 16851,
+      "contextReductionPct": 73,
+      "chanceRecall": 0.1111111111111111,
+      "anchors": [
+        "src/middleware/devtools.ts"
+      ],
+      "withoutScope": {
+        "task": "support Firefox/Safari stack format in findCallerName",
+        "found": [
+          "src/middleware/devtools.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 73,
+        "chanceRecall": 0.1111111111111111
+      }
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "commit": "89ebcd7",
+      "snapshot": "6213fc1",
+      "subject": "fix(devtools): correct redux devtools config type extension (#3414)",
+      "task": "devtools correct redux devtools config type extension",
+      "expected": [
+        "src/middleware/devtools.ts"
+      ],
+      "found": [
+        "src/middleware/devtools.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 8,
+      "repositoryFiles": 36,
+      "sliceTokens": 8561,
+      "repositoryTokens": 16896,
+      "contextReductionPct": 49,
+      "chanceRecall": 0.2222222222222222,
+      "anchors": [
+        "src/middleware/devtools.ts",
+        "src/middleware/redux.ts",
+        "src/middleware.ts",
+        "src/middleware/persist.ts"
+      ],
+      "withoutScope": {
+        "task": "correct redux devtools config type extension",
+        "found": [
+          "src/middleware/devtools.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 49,
+        "chanceRecall": 0.2222222222222222
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "9f4992c",
+      "snapshot": "9de9377",
+      "subject": "fix(internals): do not prune dependencies when a superseded promise settles (#3391)",
+      "task": "internals do not prune dependencies when a superseded promise settles",
+      "expected": [
+        "src/vanilla/internals.ts"
+      ],
+      "found": [
+        "src/vanilla/internals.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 8,
+      "repositoryFiles": 124,
+      "sliceTokens": 13511,
+      "repositoryTokens": 58631,
+      "contextReductionPct": 77,
+      "chanceRecall": 0.06451612903225806,
+      "anchors": [
+        "src/vanilla/internals.ts",
+        "src/react/continuablePromise.ts"
+      ],
+      "withoutScope": {
+        "task": "do not prune dependencies when a superseded promise settles",
+        "found": [
+          "src/vanilla/internals.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 77,
+        "chanceRecall": 0.06451612903225806
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "c4e3bc3",
+      "snapshot": "eb81bc4",
+      "subject": "fix(internals): unmount the last dependency when it is removed (#3385)",
+      "task": "internals unmount the last dependency when it is removed",
+      "expected": [
+        "src/vanilla/internals.ts"
+      ],
+      "found": [
+        "src/vanilla/internals.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 5,
+      "repositoryFiles": 124,
+      "sliceTokens": 12269,
+      "repositoryTokens": 58637,
+      "contextReductionPct": 79,
+      "chanceRecall": 0.04032258064516129,
+      "anchors": [
+        "src/vanilla/internals.ts"
+      ],
+      "withoutScope": {
+        "task": "unmount the last dependency when it is removed",
+        "found": [
+          "src/vanilla/internals.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 79,
+        "chanceRecall": 0.04032258064516129
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "eb81bc4",
+      "snapshot": "e5971ba",
+      "subject": "fix(utils): handle circular references and typed arrays in freezeAtom (#3383)",
+      "task": "utils handle circular references and typed arrays in freezeAtom",
+      "expected": [
+        "src/vanilla/utils/freezeAtom.ts"
+      ],
+      "found": [
+        "src/vanilla/utils/freezeAtom.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 22,
+      "repositoryFiles": 124,
+      "sliceTokens": 22414,
+      "repositoryTokens": 58594,
+      "contextReductionPct": 62,
+      "chanceRecall": 0.1774193548387097,
+      "anchors": [
+        "src/vanilla/utils/freezeAtom.ts",
+        "src/vanilla/utils/atomWithStorage.ts",
+        "src/vanilla/typeUtils.ts",
+        "src/vanilla/utils.ts",
+        "src/vanilla/internals.ts",
+        "website/gatsby-node.js"
+      ],
+      "withoutScope": {
+        "task": "handle circular references and typed arrays in freezeAtom",
+        "found": [
+          "src/vanilla/utils/freezeAtom.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 38,
+        "chanceRecall": 0.4112903225806452
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "85aa951",
+      "snapshot": "0c23f15",
+      "subject": "fix #3371 (#3373)",
+      "task": "#3371",
+      "expected": [
+        "src/react/useAtomValueRaw.ts"
+      ],
+      "found": [
+        "src/react/useAtomValueRaw.ts"
+      ],
+      "widened": true,
+      "sliceFiles": 124,
+      "repositoryFiles": 124,
+      "sliceTokens": 58371,
+      "repositoryTokens": 58371,
+      "contextReductionPct": 0,
+      "chanceRecall": 1,
+      "anchors": [],
+      "withoutScope": {
+        "task": "#3371",
+        "found": [
+          "src/react/useAtomValueRaw.ts"
+        ],
+        "widened": true,
+        "contextReductionPct": 0,
+        "chanceRecall": 1
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "0c23f15",
+      "snapshot": "5a61370",
+      "subject": "fix(vanilla): export store type (#3370)",
+      "task": "vanilla export store type",
+      "expected": [
+        "src/vanilla.ts",
+        "src/vanilla/store.ts"
+      ],
+      "found": [
+        "src/vanilla.ts",
+        "src/vanilla/store.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 37,
+      "repositoryFiles": 124,
+      "sliceTokens": 26995,
+      "repositoryTokens": 58350,
+      "contextReductionPct": 54,
+      "chanceRecall": 0.29838709677419356,
+      "anchors": [
+        "src/vanilla/store.ts",
+        "src/vanilla/typeUtils.ts",
+        "src/vanilla.ts",
+        "src/vanilla/utils/unwrap.ts",
+        "src/vanilla/atom.ts",
+        "src/vanilla/internals.ts"
+      ],
+      "withoutScope": {
+        "task": "export store type",
+        "found": [
+          "src/vanilla.ts",
+          "src/vanilla/store.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 71,
+        "chanceRecall": 0.1532258064516129
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "5f5c844",
+      "snapshot": "76bc2e8",
+      "subject": "fix(unwrap): prevent infinite microtask loop on rejected source recompute (#3363)",
+      "task": "unwrap prevent infinite microtask loop on rejected source recompute",
+      "expected": [
+        "src/vanilla/utils/unwrap.ts"
+      ],
+      "found": [
+        "src/vanilla/utils/unwrap.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 8,
+      "repositoryFiles": 130,
+      "sliceTokens": 13015,
+      "repositoryTokens": 62432,
+      "contextReductionPct": 79,
+      "chanceRecall": 0.06153846153846154,
+      "anchors": [
+        "src/vanilla/utils/unwrap.ts"
+      ],
+      "withoutScope": {
+        "task": "prevent infinite microtask loop on rejected source recompute",
+        "found": [
+          "src/vanilla/utils/unwrap.ts"
+        ],
+        "widened": true,
+        "contextReductionPct": 0,
+        "chanceRecall": 1
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "bc273fd",
+      "snapshot": "d8ed488",
+      "subject": "fix(vanilla): subscriber not notified after nested store.set and sub/unsub inside a write (#3354)",
+      "task": "vanilla subscriber not notified after nested store.set and sub/unsub inside a write",
+      "expected": [
+        "src/vanilla/internals.ts"
+      ],
+      "found": [
+        "src/vanilla/internals.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 17,
+      "repositoryFiles": 130,
+      "sliceTokens": 17689,
+      "repositoryTokens": 62393,
+      "contextReductionPct": 72,
+      "chanceRecall": 0.13076923076923078,
+      "anchors": [
+        "benchmarks/read-write.ts",
+        "src/vanilla/store.ts",
+        "src/vanilla/internals.ts",
+        "src/vanilla/atom.ts",
+        "src/vanilla/utils/atomWithStorage.ts",
+        "benchmarks/subscription.ts"
+      ],
+      "withoutScope": {
+        "task": "subscriber not notified after nested store.set and sub/unsub inside a write",
+        "found": [
+          "src/vanilla/internals.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 77,
+        "chanceRecall": 0.07692307692307693
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "32708c8",
+      "snapshot": "563f059",
+      "subject": "fix(internals): throw stackoverflow errors synchronously (#3330)",
+      "task": "internals throw stackoverflow errors synchronously",
+      "expected": [
+        "src/vanilla/internals.ts"
+      ],
+      "found": [
+        "src/vanilla/internals.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 5,
+      "repositoryFiles": 130,
+      "sliceTokens": 12404,
+      "repositoryTokens": 62261,
+      "contextReductionPct": 80,
+      "chanceRecall": 0.038461538461538464,
+      "anchors": [
+        "src/vanilla/internals.ts"
+      ],
+      "withoutScope": {
+        "task": "throw stackoverflow errors synchronously",
+        "found": [
+          "src/vanilla/internals.ts"
+        ],
+        "widened": true,
+        "contextReductionPct": 0,
+        "chanceRecall": 1
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "563f059",
+      "snapshot": "22ae563",
+      "subject": "fix(vanilla/utils/atomWithStorage): apply reviver when parsing subscription updates (#3326)",
+      "task": "vanilla utils atomWithStorage apply reviver when parsing subscription updates",
+      "expected": [
+        "src/vanilla/utils/atomWithStorage.ts"
+      ],
+      "found": [
+        "src/vanilla/utils/atomWithStorage.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 31,
+      "repositoryFiles": 130,
+      "sliceTokens": 24555,
+      "repositoryTokens": 62256,
+      "contextReductionPct": 61,
+      "chanceRecall": 0.23846153846153847,
+      "anchors": [
+        "src/vanilla/utils/atomWithStorage.ts",
+        "src/vanilla/utils/atomWithObservable.ts",
+        "src/vanilla/utils/atomFamily.ts",
+        "src/vanilla/utils/atomWithDefault.ts",
+        "src/vanilla/utils/atomWithLazy.ts",
+        "src/vanilla/utils/atomWithReducer.ts"
+      ],
+      "withoutScope": {
+        "task": "apply reviver when parsing subscription updates",
+        "found": [],
+        "widened": false,
+        "contextReductionPct": 82,
+        "chanceRecall": 0.038461538461538464
+      }
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "commit": "26f3e9c",
+      "snapshot": "e923843",
+      "subject": "fix(internals): guard atomOnInit hook with hasOnInit (#3312)",
+      "task": "internals guard atomOnInit hook with hasOnInit",
+      "expected": [
+        "src/vanilla/internals.ts"
+      ],
+      "found": [
+        "src/vanilla/internals.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 22,
+      "repositoryFiles": 130,
+      "sliceTokens": 18578,
+      "repositoryTokens": 62146,
+      "contextReductionPct": 70,
+      "chanceRecall": 0.16923076923076924,
+      "anchors": [
+        "src/vanilla/internals.ts",
+        "src/react/useAtomValue.ts",
+        "src/vanilla/atom.ts",
+        "src/vanilla/utils/atomWithLazy.ts",
+        "src/vanilla/utils/atomWithReset.ts",
+        "src/vanilla/utils/atomWithStorage.ts"
+      ],
+      "withoutScope": {
+        "task": "guard atomOnInit hook with hasOnInit",
+        "found": [
+          "src/vanilla/internals.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 69,
+        "chanceRecall": 0.17692307692307693
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "2f29b87",
+      "snapshot": "3a7ed0e",
+      "subject": "fix(static): join `indexNames` on a single `/` while keeping extension fallbacks (#1585)",
+      "task": "static join `indexNames` on a single `/` while keeping extension fallbacks",
+      "expected": [
+        "src/utils/static.ts"
+      ],
+      "found": [
+        "src/utils/static.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 95,
+      "repositoryFiles": 205,
+      "sliceTokens": 211226,
+      "repositoryTokens": 429501,
+      "contextReductionPct": 51,
+      "chanceRecall": 0.4634146341463415,
+      "anchors": [
+        "src/utils/static.ts",
+        "test/static.test.ts",
+        "src/utils/internal/path.ts",
+        "test/bench/path.ts",
+        "src/rules/match.ts",
+        "src/utils/path.ts"
+      ],
+      "withoutScope": {
+        "task": "join `indexNames` on a single `/` while keeping extension fallbacks",
+        "found": [
+          "src/utils/static.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 60,
+        "chanceRecall": 0.44390243902439025
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "3a7ed0e",
+      "snapshot": "d252549",
+      "subject": "fix(response): absorb rejected `iterator.return()` when `iterable` is cancelled",
+      "task": "response absorb rejected `iterator.return()` when `iterable` is cancelled",
+      "expected": [
+        "src/utils/response.ts"
+      ],
+      "found": [
+        "src/utils/response.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 70,
+      "repositoryFiles": 205,
+      "sliceTokens": 124601,
+      "repositoryTokens": 429126,
+      "contextReductionPct": 71,
+      "chanceRecall": 0.34146341463414637,
+      "anchors": [
+        "src/utils/response.ts",
+        "test/iterable.test.ts",
+        "src/response.ts",
+        "src/utils/internal/iterable.ts",
+        "test/proxy-response.test.ts",
+        "src/_deprecated.ts"
+      ],
+      "withoutScope": {
+        "task": "absorb rejected `iterator.return()` when `iterable` is cancelled",
+        "found": [
+          "src/utils/response.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 51,
+        "chanceRecall": 0.4585365853658537
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "d252549",
+      "snapshot": "2ce0e5f",
+      "subject": "fix(response): keep `iterable` streaming past skipped values (#1615)",
+      "task": "response keep `iterable` streaming past skipped values",
+      "expected": [
+        "src/utils/response.ts"
+      ],
+      "found": [
+        "src/utils/response.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 71,
+      "repositoryFiles": 205,
+      "sliceTokens": 138588,
+      "repositoryTokens": 428179,
+      "contextReductionPct": 68,
+      "chanceRecall": 0.3463414634146341,
+      "anchors": [
+        "src/utils/response.ts",
+        "test/iterable.test.ts",
+        "test/static.test.ts",
+        "src/response.ts",
+        "src/utils/proxy.ts",
+        "test/proxy.test.ts"
+      ],
+      "withoutScope": {
+        "task": "keep `iterable` streaming past skipped values",
+        "found": [
+          "src/utils/response.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 71,
+        "chanceRecall": 0.33170731707317075
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "060121a",
+      "snapshot": "ccd127b",
+      "subject": "fix(cache): honor request methods when evaluating cache headers (#1624)",
+      "task": "cache honor request methods when evaluating cache headers",
+      "expected": [
+        "src/utils/cache.ts",
+        "src/utils/internal/cache.ts"
+      ],
+      "found": [
+        "src/utils/cache.ts",
+        "src/utils/internal/cache.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 90,
+      "repositoryFiles": 204,
+      "sliceTokens": 170039,
+      "repositoryTokens": 426589,
+      "contextReductionPct": 60,
+      "chanceRecall": 0.4411764705882353,
+      "anchors": [
+        "src/rules/handlers/cache.ts",
+        "src/utils/request.ts",
+        "test/cache.test.ts",
+        "test/rules/cache.test.ts",
+        "src/rules/cache.ts",
+        "src/utils/cache.ts"
+      ],
+      "withoutScope": {
+        "task": "honor request methods when evaluating cache headers",
+        "found": [
+          "src/utils/cache.ts",
+          "src/utils/internal/cache.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 60,
+        "chanceRecall": 0.4411764705882353
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "ccd127b",
+      "snapshot": "fb2a994",
+      "subject": "fix(response): skip prepared headers merge for 101 upgrade responses (#1629)",
+      "task": "response skip prepared headers merge for 101 upgrade responses",
+      "expected": [
+        "src/response.ts"
+      ],
+      "found": [
+        "src/response.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 90,
+      "repositoryFiles": 204,
+      "sliceTokens": 160207,
+      "repositoryTokens": 426380,
+      "contextReductionPct": 62,
+      "chanceRecall": 0.4411764705882353,
+      "anchors": [
+        "src/response.ts",
+        "src/utils/response.ts",
+        "test/proxy-response.test.ts",
+        "src/utils/internal/staged-headers.ts",
+        "test/rules/merge.test.ts",
+        "src/rules/handlers/headers.ts"
+      ],
+      "withoutScope": {
+        "task": "skip prepared headers merge for 101 upgrade responses",
+        "found": [
+          "src/response.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 56,
+        "chanceRecall": 0.4362745098039216
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "fb2a994",
+      "snapshot": "e379a32",
+      "subject": "fix(proxy): preserve content-length for unencoded responses (#1643)",
+      "task": "proxy preserve content-length for unencoded responses",
+      "expected": [
+        "src/utils/internal/proxy.ts",
+        "src/utils/proxy.ts"
+      ],
+      "found": [
+        "src/utils/internal/proxy.ts",
+        "src/utils/proxy.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 67,
+      "repositoryFiles": 203,
+      "sliceTokens": 115862,
+      "repositoryTokens": 424555,
+      "contextReductionPct": 73,
+      "chanceRecall": 0.33004926108374383,
+      "anchors": [
+        "src/utils/internal/proxy.ts",
+        "src/utils/proxy.ts",
+        "test/bench/request-proxy.ts",
+        "test/proxy.test.ts",
+        "test/unit/proxy.test.ts",
+        "src/utils/response.ts"
+      ],
+      "withoutScope": {
+        "task": "preserve content-length for unencoded responses",
+        "found": [
+          "src/utils/internal/proxy.ts",
+          "src/utils/proxy.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 62,
+        "chanceRecall": 0.3645320197044335
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "e379a32",
+      "snapshot": "ef94151",
+      "subject": "fix(query): reject malformed Content-Type tokens (#1634)",
+      "task": "query reject malformed Content-Type tokens",
+      "expected": [
+        "src/utils/query.ts"
+      ],
+      "found": [
+        "src/utils/query.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 77,
+      "repositoryFiles": 203,
+      "sliceTokens": 125444,
+      "repositoryTokens": 423942,
+      "contextReductionPct": 70,
+      "chanceRecall": 0.3793103448275862,
+      "anchors": [
+        "examples/query.mjs",
+        "src/utils/query.ts",
+        "test/query.test.ts",
+        "src/types/h3.ts",
+        "src/h3.ts",
+        "src/utils/internal/proxy.ts"
+      ],
+      "withoutScope": {
+        "task": "reject malformed Content-Type tokens",
+        "found": [
+          "src/utils/query.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 71,
+        "chanceRecall": 0.37438423645320196
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "f90f4c8",
+      "snapshot": "9d70cf3",
+      "subject": "fix(rules): let `HTTPError.headers` opt out of `headers` rule on errors (#1613)",
+      "task": "rules let `HTTPError.headers` opt out of `headers` rule on errors",
+      "expected": [
+        "src/rules/handlers/headers.ts"
+      ],
+      "found": [
+        "src/rules/handlers/headers.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 93,
+      "repositoryFiles": 203,
+      "sliceTokens": 225483,
+      "repositoryTokens": 422287,
+      "contextReductionPct": 47,
+      "chanceRecall": 0.458128078817734,
+      "anchors": [
+        "src/rules/handlers/headers.ts",
+        "src/rules/cache.ts",
+        "src/rules/match.ts",
+        "test/rules/cache.test.ts",
+        "src/rules/index.ts",
+        "test/rules/_fixture.ts"
+      ],
+      "withoutScope": {
+        "task": "let `HTTPError.headers` opt out of `headers` rule on errors",
+        "found": [
+          "src/rules/handlers/headers.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 46,
+        "chanceRecall": 0.47783251231527096
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "1326e74",
+      "snapshot": "31062a0",
+      "subject": "fix: keep middleware-staged headers out of handler-level caches (#1608)",
+      "task": "keep middleware-staged headers out of handler-level caches",
+      "expected": [
+        "src/index.ts",
+        "src/rules/cache.ts",
+        "src/utils/cache.ts"
+      ],
+      "found": [
+        "src/index.ts",
+        "src/rules/cache.ts",
+        "src/utils/cache.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 90,
+      "repositoryFiles": 201,
+      "sliceTokens": 216720,
+      "repositoryTokens": 419031,
+      "contextReductionPct": 48,
+      "chanceRecall": 0.44776119402985076,
+      "anchors": [
+        "test/rules/cache.test.ts",
+        "test/rules/middleware.test.ts",
+        "src/rules/cache.ts",
+        "src/rules/handlers/cache.ts",
+        "src/handler.ts",
+        "src/rules/middleware.ts"
+      ],
+      "withoutScope": {
+        "task": "keep middleware-staged headers out of handler-level caches",
+        "found": [
+          "src/index.ts",
+          "src/rules/cache.ts",
+          "src/utils/cache.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 48,
+        "chanceRecall": 0.44776119402985076
+      }
+    },
+    {
+      "repo": "h3js/h3",
+      "commit": "d658815",
+      "snapshot": "48d650b",
+      "subject": "fix(rules): keep middleware-staged headers out of `cache` entries (#1606)",
+      "task": "rules keep middleware-staged headers out of `cache` entries",
+      "expected": [
+        "src/rules/cache.ts"
+      ],
+      "found": [
+        "src/rules/cache.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 89,
+      "repositoryFiles": 201,
+      "sliceTokens": 209234,
+      "repositoryTokens": 416754,
+      "contextReductionPct": 50,
+      "chanceRecall": 0.4427860696517413,
+      "anchors": [
+        "src/rules/cache.ts",
+        "test/rules/cache.test.ts",
+        "test/rules/middleware.test.ts",
+        "src/rules/handlers/cache.ts",
+        "src/rules/handlers/headers.ts",
+        "src/rules/match.ts"
+      ],
+      "withoutScope": {
+        "task": "keep middleware-staged headers out of `cache` entries",
+        "found": [
+          "src/rules/cache.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 62,
+        "chanceRecall": 0.40298507462686567
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "d9ddb03",
+      "snapshot": "d93adf8",
+      "subject": "Fix CI",
+      "task": "CI",
+      "expected": [
+        "test-d/fetch-extensions.ts"
+      ],
+      "found": [
+        "test-d/fetch-extensions.ts"
+      ],
+      "widened": true,
+      "sliceFiles": 97,
+      "repositoryFiles": 97,
+      "sliceTokens": 266408,
+      "repositoryTokens": 266408,
+      "contextReductionPct": 0,
+      "chanceRecall": 1,
+      "anchors": [],
+      "withoutScope": {
+        "task": "CI",
+        "found": [
+          "test-d/fetch-extensions.ts"
+        ],
+        "widened": true,
+        "contextReductionPct": 0,
+        "chanceRecall": 1
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "d4ce7b1",
+      "snapshot": "16b5936",
+      "subject": "Fix docs",
+      "task": "docs",
+      "expected": [
+        "source/core/Ky.ts",
+        "source/types/ky.ts",
+        "source/types/options.ts"
+      ],
+      "found": [
+        "source/core/Ky.ts",
+        "source/types/ky.ts",
+        "source/types/options.ts"
+      ],
+      "widened": true,
+      "sliceFiles": 89,
+      "repositoryFiles": 89,
+      "sliceTokens": 224772,
+      "repositoryTokens": 224772,
+      "contextReductionPct": 0,
+      "chanceRecall": 1,
+      "anchors": [],
+      "withoutScope": {
+        "task": "docs",
+        "found": [
+          "source/core/Ky.ts",
+          "source/types/ky.ts",
+          "source/types/options.ts"
+        ],
+        "widened": true,
+        "contextReductionPct": 0,
+        "chanceRecall": 1
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "481f6f7",
+      "snapshot": "96a25cc",
+      "subject": "Fix bytes shortcut return type for Blob and Response compatibility",
+      "task": "bytes shortcut return type for Blob and Response compatibility",
+      "expected": [
+        "source/types/ResponsePromise.ts"
+      ],
+      "found": [
+        "source/types/ResponsePromise.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 33,
+      "repositoryFiles": 56,
+      "sliceTokens": 75312,
+      "repositoryTokens": 164374,
+      "contextReductionPct": 54,
+      "chanceRecall": 0.5892857142857143,
+      "anchors": [
+        "source/types/ResponsePromise.ts",
+        "source/types/options.ts",
+        "source/utils/type-guards.ts",
+        "test/bytes.ts",
+        "source/core/constants.ts",
+        "source/types/retry.ts"
+      ],
+      "withoutScope": {
+        "task": "bytes shortcut return type for Blob and Response compatibility",
+        "found": [
+          "source/types/ResponsePromise.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 54,
+        "chanceRecall": 0.5892857142857143
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "8cf26e0",
+      "snapshot": "8546080",
+      "subject": "Fix stale array entries when merging JSON objects",
+      "task": "stale array entries when merging JSON objects",
+      "expected": [
+        "source/utils/merge.ts"
+      ],
+      "found": [
+        "source/utils/merge.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 37,
+      "repositoryFiles": 54,
+      "sliceTokens": 130791,
+      "repositoryTokens": 160044,
+      "contextReductionPct": 18,
+      "chanceRecall": 0.6851851851851852,
+      "anchors": [
+        "source/utils/merge.ts",
+        "test/hooks.ts",
+        "source/core/Ky.ts",
+        "test/headers.ts",
+        "test/main.ts",
+        "test/retry.ts"
+      ],
+      "withoutScope": {
+        "task": "stale array entries when merging JSON objects",
+        "found": [
+          "source/utils/merge.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 18,
+        "chanceRecall": 0.6851851851851852
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "8546080",
+      "snapshot": "3e2d81a",
+      "subject": "Fix UTF-8 decoding of JSON error responses",
+      "task": "UTF-8 decoding of JSON error responses",
+      "expected": [
+        "source/core/Ky.ts"
+      ],
+      "found": [
+        "source/core/Ky.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 34,
+      "repositoryFiles": 54,
+      "sliceTokens": 86769,
+      "repositoryTokens": 159874,
+      "contextReductionPct": 46,
+      "chanceRecall": 0.6296296296296297,
+      "anchors": [
+        "test/http-error.ts",
+        "source/types/ResponsePromise.ts",
+        "source/types/response.ts",
+        "source/core/Ky.ts",
+        "source/types/options.ts",
+        "test/headers.ts"
+      ],
+      "withoutScope": {
+        "task": "UTF-8 decoding of JSON error responses",
+        "found": [
+          "source/core/Ky.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 46,
+        "chanceRecall": 0.6296296296296297
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "6520f64",
+      "snapshot": "88e2432",
+      "subject": "Fix retry abort propagation and uploads without request stream support",
+      "task": "retry abort propagation and uploads without request stream support",
+      "expected": [
+        "source/core/Ky.ts"
+      ],
+      "found": [
+        "source/core/Ky.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 39,
+      "repositoryFiles": 54,
+      "sliceTokens": 110990,
+      "repositoryTokens": 159424,
+      "contextReductionPct": 30,
+      "chanceRecall": 0.7222222222222222,
+      "anchors": [
+        "test/retry.ts",
+        "source/core/Ky.ts",
+        "test/stream.ts",
+        "source/types/options.ts",
+        "source/core/constants.ts",
+        "test/browser.ts"
+      ],
+      "withoutScope": {
+        "task": "retry abort propagation and uploads without request stream support",
+        "found": [
+          "source/core/Ky.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 30,
+        "chanceRecall": 0.7222222222222222
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "88e2432",
+      "snapshot": "830ab47",
+      "subject": "Fix `init` hook mutations to nested `json` and `context` values leaking across requests",
+      "task": "`init` hook mutations to nested `json` and `context` values leaking across requests",
+      "expected": [
+        "source/core/Ky.ts",
+        "source/utils/merge.ts"
+      ],
+      "found": [
+        "source/core/Ky.ts",
+        "source/utils/merge.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 37,
+      "repositoryFiles": 54,
+      "sliceTokens": 122268,
+      "repositoryTokens": 158023,
+      "contextReductionPct": 23,
+      "chanceRecall": 0.6851851851851852,
+      "anchors": [
+        "test/hooks.ts",
+        "source/core/Ky.ts",
+        "test/retry.ts",
+        "test/context.ts",
+        "test/main.ts",
+        "source/types/options.ts"
+      ],
+      "withoutScope": {
+        "task": "`init` hook mutations to nested `json` and `context` values leaking across requests",
+        "found": [
+          "source/core/Ky.ts",
+          "source/utils/merge.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 23,
+        "chanceRecall": 0.6851851851851852
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "0e2501b",
+      "snapshot": "d5bacef",
+      "subject": "Fix `init` hooks receiving `undefined` for `headers` when no headers were provided",
+      "task": "`init` hooks receiving `undefined` for `headers` when no headers were provided",
+      "expected": [
+        "source/core/Ky.ts"
+      ],
+      "found": [
+        "source/core/Ky.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 33,
+      "repositoryFiles": 54,
+      "sliceTokens": 79319,
+      "repositoryTokens": 155509,
+      "contextReductionPct": 49,
+      "chanceRecall": 0.6111111111111112,
+      "anchors": [
+        "source/types/hooks.ts",
+        "test/headers.ts",
+        "test/hooks.ts",
+        "source/core/Ky.ts",
+        "source/core/constants.ts",
+        "source/types/options.ts"
+      ],
+      "withoutScope": {
+        "task": "`init` hooks receiving `undefined` for `headers` when no headers were provided",
+        "found": [
+          "source/core/Ky.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 49,
+        "chanceRecall": 0.6111111111111112
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "91ea8a9",
+      "snapshot": "7c1272b",
+      "subject": "Fix a search parameter removed with `undefined` staying in the input URL when a later layer re-adds it",
+      "task": "a search parameter removed with `undefined` staying in the input URL when a later layer re-adds it",
+      "expected": [
+        "source/types/options.ts",
+        "source/utils/merge.ts"
+      ],
+      "found": [
+        "source/types/options.ts",
+        "source/utils/merge.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 36,
+      "repositoryFiles": 54,
+      "sliceTokens": 100325,
+      "repositoryTokens": 151621,
+      "contextReductionPct": 34,
+      "chanceRecall": 0.6666666666666666,
+      "anchors": [
+        "test/main.ts",
+        "test/base-url.ts",
+        "source/core/Ky.ts",
+        "test/headers.ts",
+        "test/hooks.ts",
+        "source/types/options.ts"
+      ],
+      "withoutScope": {
+        "task": "a search parameter removed with `undefined` staying in the input URL when a later layer re-adds it",
+        "found": [
+          "source/types/options.ts",
+          "source/utils/merge.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 34,
+        "chanceRecall": 0.6666666666666666
+      }
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "commit": "7c1272b",
+      "snapshot": "92ef60e",
+      "subject": "Fix a user abort in Chromium being reported as `NetworkError` and retried",
+      "task": "a user abort in Chromium being reported as `NetworkError` and retried",
+      "expected": [
+        "source/core/Ky.ts"
+      ],
+      "found": [
+        "source/core/Ky.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 35,
+      "repositoryFiles": 54,
+      "sliceTokens": 92590,
+      "repositoryTokens": 149720,
+      "contextReductionPct": 38,
+      "chanceRecall": 0.6481481481481481,
+      "anchors": [
+        "source/errors/NetworkError.ts",
+        "source/types/options.ts",
+        "source/utils/is-network-error.ts",
+        "source/core/Ky.ts",
+        "test/hooks.ts",
+        "test/retry.ts"
+      ],
+      "withoutScope": {
+        "task": "a user abort in Chromium being reported as `NetworkError` and retried",
+        "found": [
+          "source/core/Ky.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 38,
+        "chanceRecall": 0.6481481481481481
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "ec55fef",
+      "snapshot": "e57a644",
+      "subject": "fix(openapi): document template literal outputs as strings (#8128)",
+      "task": "openapi document template literal outputs as strings",
+      "expected": [
+        "packages/openapi/src/generate.ts"
+      ],
+      "found": [
+        "packages/openapi/src/generate.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 153,
+      "repositoryFiles": 1208,
+      "sliceTokens": 217361,
+      "repositoryTokens": 1133766,
+      "contextReductionPct": 81,
+      "chanceRecall": 0.12665562913907286,
+      "anchors": [
+        "packages/openapi/test/generate.test.ts",
+        "packages/openapi/test/openApiCompat.test.ts",
+        "packages/openapi/src/generate.ts",
+        "packages/openapi/test/validateOpenApi.ts",
+        "packages/openapi/test/edgeCases.test.ts",
+        "scripts/verify-packed.ts"
+      ],
+      "withoutScope": {
+        "task": "document template literal outputs as strings",
+        "found": [
+          "packages/openapi/src/generate.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 86,
+        "chanceRecall": 0.08526490066225166
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "43f23d7",
+      "snapshot": "76a42d3",
+      "subject": "fix(client): stop the lazy wsClient inactivity timer polling while requests are pending (#8119)",
+      "task": "client stop the lazy wsClient inactivity timer polling while requests are pending",
+      "expected": [
+        "packages/client/src/links/wsLink/wsClient/requestManager.ts",
+        "packages/client/src/links/wsLink/wsClient/wsClient.ts"
+      ],
+      "found": [
+        "packages/client/src/links/wsLink/wsClient/requestManager.ts",
+        "packages/client/src/links/wsLink/wsClient/wsClient.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 124,
+      "repositoryFiles": 1207,
+      "sliceTokens": 128286,
+      "repositoryTokens": 1133185,
+      "contextReductionPct": 89,
+      "chanceRecall": 0.10273405136702568,
+      "anchors": [
+        "packages/client/src/links/wsLink/wsClient/wsClient.ts",
+        "packages/client/src/links/wsLink/wsClient/requestManager.ts",
+        "packages/client/src/links/wsLink/wsClient/options.ts",
+        "packages/client/src/internals/dataLoader.ts",
+        "examples/next-prisma-todomvc/src/trpc/query-client.ts",
+        "examples/next-prisma-websockets-starter/src/trpc/client.tsx"
+      ],
+      "withoutScope": {
+        "task": "stop the lazy wsClient inactivity timer polling while requests are pending",
+        "found": [
+          "packages/client/src/links/wsLink/wsClient/requestManager.ts",
+          "packages/client/src/links/wsLink/wsClient/wsClient.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 89,
+        "chanceRecall": 0.10273405136702568
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "b847a53",
+      "snapshot": "98f55c1",
+      "subject": "fix(upgrade): call the `createTRPCNext` config once per mount (#8108)",
+      "task": "upgrade call the `createTRPCNext` config once per mount",
+      "expected": [
+        "packages/upgrade/src/transforms/provider.ts"
+      ],
+      "found": [
+        "packages/upgrade/src/transforms/provider.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 157,
+      "repositoryFiles": 1177,
+      "sliceTokens": 193630,
+      "repositoryTokens": 1125897,
+      "contextReductionPct": 83,
+      "chanceRecall": 0.13338997451146983,
+      "anchors": [
+        "packages/upgrade/src/transforms/provider.ts",
+        "packages/upgrade/test/__fixtures__/provider/next.snap.tsx",
+        "packages/upgrade/test/__fixtures__/provider/nextOtherOptions.snap.tsx",
+        "packages/upgrade/test/__fixtures__/provider/nextConfigLocalAlias.tsx",
+        "packages/upgrade/test/__fixtures__/provider/nextConfigNamedLikeImport.tsx",
+        "packages/upgrade/test/__fixtures__/provider/nextConfigShorthand.tsx"
+      ],
+      "withoutScope": {
+        "task": "call the `createTRPCNext` config once per mount",
+        "found": [
+          "packages/upgrade/src/transforms/provider.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 83,
+        "chanceRecall": 0.14103653355989804
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "a670737",
+      "snapshot": "6a79023",
+      "subject": "fix(server): let mergeAsyncIterables release the last buffered value (#7932)",
+      "task": "server let mergeAsyncIterables release the last buffered value",
+      "expected": [
+        "packages/server/src/unstable-core-do-not-import/stream/utils/mergeAsyncIterables.ts"
+      ],
+      "found": [
+        "packages/server/src/unstable-core-do-not-import/stream/utils/mergeAsyncIterables.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 112,
+      "repositoryFiles": 1177,
+      "sliceTokens": 132951,
+      "repositoryTokens": 1125575,
+      "contextReductionPct": 88,
+      "chanceRecall": 0.0951571792693288,
+      "anchors": [
+        "packages/server/src/unstable-core-do-not-import/stream/utils/mergeAsyncIterables.test.ts",
+        "packages/server/src/unstable-core-do-not-import/stream/utils/mergeAsyncIterables.ts",
+        "packages/server/src/unstable-core-do-not-import/router.mergeRouters.test.ts",
+        "packages/server/src/unstable-core-do-not-import/stream/utils/asyncIterable.ts",
+        "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts",
+        "packages/server/src/unstable-core-do-not-import/procedureBuilder.ts"
+      ],
+      "withoutScope": {
+        "task": "let mergeAsyncIterables release the last buffered value",
+        "found": [
+          "packages/server/src/unstable-core-do-not-import/stream/utils/mergeAsyncIterables.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 87,
+        "chanceRecall": 0.0994052676295667
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "36dfdb2",
+      "snapshot": "32680cd",
+      "subject": "fix(tanstack-react-query): rethrow Next.js digest errors from loadHandles (#8100)",
+      "task": "tanstack react query rethrow Next.js digest errors from loadHandles",
+      "expected": [
+        "packages/tanstack-react-query/src/unstable-handles/handles.ts"
+      ],
+      "found": [
+        "packages/tanstack-react-query/src/unstable-handles/handles.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 126,
+      "repositoryFiles": 1175,
+      "sliceTokens": 162767,
+      "repositoryTokens": 1124958,
+      "contextReductionPct": 86,
+      "chanceRecall": 0.1072340425531915,
+      "anchors": [
+        "packages/tanstack-react-query/src/unstable-handles/entryError.ts",
+        "packages/tanstack-react-query/src/unstable-handles/handles.test.tsx",
+        "packages/tanstack-react-query/src/unstable-handles/handles.ts",
+        "packages/tanstack-react-query/src/unstable-handles/handles.awaited.test.tsx",
+        "packages/tanstack-react-query/src/unstable-handles/handles.hydration.test.tsx",
+        "packages/tanstack-react-query/src/unstable-handles/handles.render.test.tsx"
+      ],
+      "withoutScope": {
+        "task": "rethrow Next.js digest errors from loadHandles",
+        "found": [
+          "packages/tanstack-react-query/src/unstable-handles/handles.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 84,
+        "chanceRecall": 0.12085106382978723
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "95f0b5c",
+      "snapshot": "4a387e5",
+      "subject": "fix(client): release httpBatchStreamLink abort listeners when the response ends (#8056)",
+      "task": "client release httpBatchStreamLink abort listeners when the response ends",
+      "expected": [
+        "packages/client/src/links/httpBatchStreamLink.ts"
+      ],
+      "found": [
+        "packages/client/src/links/httpBatchStreamLink.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 104,
+      "repositoryFiles": 1091,
+      "sliceTokens": 115291,
+      "repositoryTokens": 1081811,
+      "contextReductionPct": 89,
+      "chanceRecall": 0.09532538955087076,
+      "anchors": [
+        "packages/client/src/links/httpBatchStreamLink.ts",
+        "packages/client/src/links/httpBatchLink.ts",
+        "packages/client/src/links/httpAbortCleanup.test.ts",
+        "packages/client/src/links/httpSubscriptionLink.ts",
+        "packages/client/src/links/httpLink.ts",
+        "packages/client/src/links/localLink.ts"
+      ],
+      "withoutScope": {
+        "task": "release httpBatchStreamLink abort listeners when the response ends",
+        "found": [
+          "packages/client/src/links/httpBatchStreamLink.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 90,
+        "chanceRecall": 0.0925756186984418
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "4a387e5",
+      "snapshot": "932816c",
+      "subject": "fix(server): keep the first router's root options in mergeRouters (#8068)",
+      "task": "server keep the first router's root options in mergeRouters",
+      "expected": [
+        "packages/server/src/unstable-core-do-not-import/router.ts"
+      ],
+      "found": [
+        "packages/server/src/unstable-core-do-not-import/router.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 96,
+      "repositoryFiles": 1091,
+      "sliceTokens": 107865,
+      "repositoryTokens": 1080724,
+      "contextReductionPct": 90,
+      "chanceRecall": 0.08799266727772685,
+      "anchors": [
+        "packages/server/src/unstable-core-do-not-import/router.mergeRouters.test.ts",
+        "packages/openapi/test/routers/amazonIonRouter-heyapi/core/serverSentEvents.gen.ts",
+        "packages/openapi/test/routers/appRouter-heyapi/core/serverSentEvents.gen.ts",
+        "packages/openapi/test/routers/cyclicTypesRouter-heyapi/core/serverSentEvents.gen.ts",
+        "packages/openapi/test/routers/defaultErrorFormatterRouter-heyapi/core/serverSentEvents.gen.ts",
+        "packages/openapi/test/routers/descriptionsRouter-heyapi/core/serverSentEvents.gen.ts"
+      ],
+      "withoutScope": {
+        "task": "keep the first router's root options in mergeRouters",
+        "found": [
+          "packages/server/src/unstable-core-do-not-import/router.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 91,
+        "chanceRecall": 0.07057745187901009
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "c4e063d",
+      "snapshot": "2feb6c3",
+      "subject": "fix(server): stop the node-http request body hanging when the client disconnects (#8062)",
+      "task": "server stop the node-http request body hanging when the client disconnects",
+      "expected": [
+        "packages/server/src/adapters/node-http/incomingMessageToRequest.ts"
+      ],
+      "found": [
+        "packages/server/src/adapters/node-http/incomingMessageToRequest.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 66,
+      "repositoryFiles": 1091,
+      "sliceTokens": 72612,
+      "repositoryTokens": 1079760,
+      "contextReductionPct": 93,
+      "chanceRecall": 0.06049495875343722,
+      "anchors": [
+        "packages/server/src/adapters/node-http/incomingMessageToRequest.ts",
+        "packages/server/src/adapters/node-http/nodeHTTPRequestHandler.ts",
+        "packages/server/src/adapters/node-http/incomingMessageToRequest.test.ts",
+        "packages/server/src/adapters/node-http/types.ts",
+        "packages/server/src/adapters/node-http/writeResponse.test.ts",
+        "packages/server/src/adapters/node-http/writeResponse.ts"
+      ],
+      "withoutScope": {
+        "task": "stop the node-http request body hanging when the client disconnects",
+        "found": [
+          "packages/server/src/adapters/node-http/incomingMessageToRequest.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 88,
+        "chanceRecall": 0.10724106324472961
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "2feb6c3",
+      "snapshot": "11a95bc",
+      "subject": "fix(server): pass a Buffer req.body through as bytes in the node-http adapter (#8061)",
+      "task": "server pass a Buffer req.body through as bytes in the node-http adapter",
+      "expected": [
+        "packages/server/src/adapters/node-http/incomingMessageToRequest.ts"
+      ],
+      "found": [
+        "packages/server/src/adapters/node-http/incomingMessageToRequest.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 66,
+      "repositoryFiles": 1091,
+      "sliceTokens": 72551,
+      "repositoryTokens": 1079699,
+      "contextReductionPct": 93,
+      "chanceRecall": 0.06049495875343722,
+      "anchors": [
+        "packages/server/src/adapters/node-http/incomingMessageToRequest.ts",
+        "packages/server/src/adapters/node-http/nodeHTTPRequestHandler.ts",
+        "packages/server/src/adapters/node-http/types.ts",
+        "packages/server/src/adapters/node-http/writeResponse.test.ts",
+        "packages/server/src/adapters/node-http/incomingMessageToRequest.test.ts",
+        "packages/server/src/adapters/node-http/writeResponse.ts"
+      ],
+      "withoutScope": {
+        "task": "pass a Buffer req.body through as bytes in the node-http adapter",
+        "found": [
+          "packages/server/src/adapters/node-http/incomingMessageToRequest.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 93,
+        "chanceRecall": 0.06049495875343722
+      }
+    },
+    {
+      "repo": "trpc/trpc",
+      "commit": "722649b",
+      "snapshot": "9d11185",
+      "subject": "fix(monorepo): credit everyone who pushed to a pull request in release notes (#8066)",
+      "task": "monorepo credit everyone who pushed to a pull request in release notes",
+      "expected": [
+        "tooling/release/src/notes.ts"
+      ],
+      "found": [
+        "tooling/release/src/notes.ts"
+      ],
+      "widened": false,
+      "sliceFiles": 12,
+      "repositoryFiles": 1091,
+      "sliceTokens": 28663,
+      "repositoryTokens": 1077936,
+      "contextReductionPct": 97,
+      "chanceRecall": 0.010999083409715857,
+      "anchors": [
+        "tooling/release/src/notes.test.ts",
+        "tooling/release/src/notes.ts",
+        "tooling/release/src/release.ts",
+        "tooling/release/src/changes.test.ts",
+        "tooling/release/src/changes.ts",
+        "tooling/release/src/config.ts"
+      ],
+      "withoutScope": {
+        "task": "credit everyone who pushed to a pull request in release notes",
+        "found": [
+          "tooling/release/src/notes.ts"
+        ],
+        "widened": false,
+        "contextReductionPct": 97,
+        "chanceRecall": 0.010999083409715857
+      }
+    }
+  ]
+}

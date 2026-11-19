@@ -18,6 +18,7 @@
     "check:alpha-claims": "node scripts/check-alpha-claims.mjs",
     "check:public-launch": "node scripts/verify-public-launch.mjs",
     "benchmark": "node scripts/benchmark.mjs --write",
+    "benchmark:heldout": "node scripts/benchmark-heldout.mjs --write",
     "eval:release1": "node scripts/release1-eval.mjs",
     "evidence:release1": "node scripts/release1-public-report.mjs",
     "evidence:release1:write": "node scripts/release1-public-report.mjs --write",
