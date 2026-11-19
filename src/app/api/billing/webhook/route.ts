@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logger } from "@/lib/logger";
 import { readLimitedBody } from "@/lib/request-security";
 import { stripe } from "@/lib/stripe";
 import { globalClient } from "@/lib/supabase-tenant";
@@ -44,13 +45,21 @@ export async function POST(request: Request) {
   // write are one statement because Stripe retries deliveries concurrently.
   const eventCreatedAt = new Date(event.created * 1_000).toISOString();
 
+  // A write that failed is different from a write the database refused. The
+  // ordering guard reports a stale or duplicate event as `applied: false` with
+  // no error, and that is acknowledged below. A transport or database error
+  // means nothing was recorded, so the route must not acknowledge it: Stripe
+  // only retries a delivery that received a non-2xx response, and each write is
+  // idempotent on the event ID, so the retry is safe.
+  let write: { error: unknown } | null = null;
+
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
       const userId = session.metadata?.userId ?? session.client_reference_id;
       if (!userId || !session.subscription || !session.customer) break;
 
-      await db.rpc("upsert_stripe_subscription", {
+      write = await db.rpc("upsert_stripe_subscription", {
         p_user_id: userId,
         p_customer_id: String(session.customer),
         p_subscription_id: String(session.subscription),
@@ -64,7 +73,7 @@ export async function POST(request: Request) {
 
     case "customer.subscription.updated": {
       const sub = event.data.object;
-      await db.rpc("apply_stripe_subscription_event", {
+      write = await db.rpc("apply_stripe_subscription_event", {
         p_subscription_id: sub.id,
         p_status: sub.status === "active" ? "active" : "inactive",
         // The plan is not part of this event, so it is left as it is rather than
@@ -78,7 +87,7 @@ export async function POST(request: Request) {
 
     case "customer.subscription.deleted": {
       const sub = event.data.object;
-      await db.rpc("apply_stripe_subscription_event", {
+      write = await db.rpc("apply_stripe_subscription_event", {
         p_subscription_id: sub.id,
         p_status: "cancelled",
         p_plan: "free",
@@ -87,6 +96,11 @@ export async function POST(request: Request) {
       });
       break;
     }
+  }
+
+  if (write?.error) {
+    logger.error("billing.webhook.write_failed", { eventType: event.type, eventId: event.id });
+    return NextResponse.json({ error: "Event not recorded; retry." }, { status: 500 });
   }
 
   // Acknowledged whether or not the event changed anything: a refused stale or
