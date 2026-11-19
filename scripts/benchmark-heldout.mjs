@@ -111,7 +111,7 @@ function cacheRoot() {
   return process.env.LOCUS_BENCH_CACHE ?? path.join(os.tmpdir(), "locus-benchmarks", "heldout");
 }
 
-function ensureClone(repo, head) {
+export function ensureClone(repo, head) {
   const dir = path.join(cacheRoot(), repo.replace("/", "--"));
   if (!fs.existsSync(path.join(dir, ".git"))) {
     fs.mkdirSync(path.dirname(dir), { recursive: true });
@@ -136,7 +136,7 @@ function modifiedFiles(cwd, commit) {
     .map(([, file]) => file);
 }
 
-function withSnapshot(cwd, ref, run) {
+export function withSnapshot(cwd, ref, run) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "locus-heldout-"));
   git(cwd, ["worktree", "add", "--quiet", "--detach", dir, ref]);
   try {
