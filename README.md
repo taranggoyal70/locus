@@ -96,34 +96,40 @@ and `pnpm benchmark`. Both are deterministic: rerunning them on 2026-11-19 repro
 ## How it works
 
 ```mermaid
-flowchart LR
-    subgraph Input
+flowchart TB
+    subgraph Input["Input"]
+        direction LR
         Task["Task in plain language"]
-        Evidence["Optional evidence: logs, PDFs, screenshots"]
-        Repo["Repository: GitHub or local checkout"]
+        Evidence["Optional evidence:<br/>logs, PDFs, screenshots"]
+        Repo["Public GitHub repo<br/>or local checkout"]
     end
-    subgraph Localizer["Localizer (deterministic)"]
-        Graph["Import graph: TS paths, NodeNext, workspaces, Python"]
-        Anchor["Anchor scoring: paths, source, routes, recency"]
-        Closure["Closure + direct consumers"]
-        Widen{"Evidence strong enough?"}
+    subgraph Localizer["Localizer: deterministic, no model calls"]
+        direction LR
+        Graph["Import graph<br/>TS paths · NodeNext · workspaces · Python"]
+        Anchor["Anchor scoring<br/>paths · source · routes · recency"]
+        Widen{"Evidence<br/>strong enough?"}
+        Closure["Closure +<br/>direct consumers"]
+        Whole["Whole repo +<br/>refinement terms"]
+        Graph --> Anchor --> Widen
+        Widen -->|yes| Closure
+        Widen -->|no| Whole
     end
-    subgraph Surfaces
-        Web["Web workspace and REST API"]
-        CLI["Source CLI and MCP server"]
+    subgraph Surfaces["Surfaces"]
+        direction LR
+        Web["Web workspace<br/>and REST API"]
+        Agent["Hosted Agent Run<br/>Workflow + Sandbox"]
+        CLI["Source CLI<br/>and MCP server"]
     end
     subgraph Guard["Locus Guard"]
-        Manifest["Scope manifest, hash kept out of band"]
-        Runner["Agent in Seatbelt or Bubblewrap, Slice only"]
-        Verify["Verify candidate paths, run checks"]
-        Receipt["Ed25519 receipt + human review"]
+        direction LR
+        Manifest["Scope manifest<br/>hash kept out of band"]
+        Runner["Agent in Seatbelt<br/>or Bubblewrap"]
+        Verify["Path gate<br/>+ checks"]
+        Receipt["Ed25519 receipt<br/>+ human review"]
+        Manifest --> Runner --> Verify --> Receipt
     end
-    Task --> Anchor
-    Evidence --> Anchor
-    Repo --> Graph --> Anchor --> Widen
-    Widen -->|yes| Closure --> Web & CLI
-    Widen -->|no: whole repo + refinement terms| Web & CLI
-    CLI --> Manifest --> Runner --> Verify --> Receipt
+    Input --> Localizer --> Surfaces
+    CLI --> Guard
 ```
 
 1. **Build the graph.** [`buildGraph`](src/lib/localizer.ts) parses `import`, `require()`, dynamic `import()`,
