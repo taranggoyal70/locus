@@ -1,0 +1,59 @@
+{
+  "version": "heldout-v1",
+  "frozenAt": "2026-11-19",
+  "purpose": "Measure Locus on repositories it was never developed or tuned against, with cases chosen by a fixed rule so that misses cannot be curated away.",
+  "repositories": [
+    {
+      "repo": "honojs/hono",
+      "head": "75ff8e3ea18485589816881c6278bc9783e56602"
+    },
+    {
+      "repo": "pmndrs/zustand",
+      "head": "9fed2eb2f3af672da9f7bf694b996df3831fc207"
+    },
+    {
+      "repo": "pmndrs/jotai",
+      "head": "5fe0e825f9674b16162e6952c0a1afea01c1485f"
+    },
+    {
+      "repo": "h3js/h3",
+      "head": "2f29b875617e8daf39d25118f7474fd4c24fbfe1"
+    },
+    {
+      "repo": "sindresorhus/ky",
+      "head": "3541888878c4d303a8bc2ad61815f4e048f55a5d"
+    },
+    {
+      "repo": "trpc/trpc",
+      "head": "596d03d93295f8b4876909cfce86f94a1e6afe51"
+    }
+  ],
+  "excludedRepositories": {
+    "vercel/swr": "Used while developing monorepo workspace resolution (see src/lib/localizer.test.ts), so it is not held out.",
+    "sindresorhus/got": "Used while developing NodeNext specifier resolution (see bin/core.mjs), so it is not held out."
+  },
+  "selection": {
+    "history": "First-parent, non-merge commits reachable from the pinned head, newest first.",
+    "subject": "The commit subject starts with the word 'fix' (case-insensitive), e.g. 'fix:', 'fix(scope):' or 'Fix ...'.",
+    "expectedFiles": "Files the commit modified (status M) that Locus loads as Graph nodes in the parent snapshot, excluding test files.",
+    "expectedFileCount": {
+      "minimum": 1,
+      "maximum": 3
+    },
+    "casesPerRepository": 10,
+    "task": "The commit subject with the leading 'fix' keyword, any '!' and ':' removed, the conventional-commit scope kept as plain words, and a trailing pull-request reference such as '(#123)' removed."
+  },
+  "run": "Check out the parent commit as a detached worktree and call loadLocalRepo(), buildGraph() and locate() from bin/core.mjs, exactly as the CLI does, with no evidence text.",
+  "metrics": {
+    "fixFileRecall": "Expected files present in the returned Slice, divided by all expected files.",
+    "fullRecallCase": "A case whose Slice contains every expected file.",
+    "contextReduction": "1 - Slice tokens / repository tokens, using Locus's chars/4 token estimate. A widened case reduces nothing.",
+    "chanceRecall": "Expected recall of a uniformly random Slice with the same number of files: Slice files / repository files."
+  },
+  "ablations": {
+    "withoutScope": {
+      "addedAfterFirstRun": true,
+      "task": "The same cases with the conventional-commit scope removed from the task text."
+    }
+  }
+}
