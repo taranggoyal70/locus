@@ -44,7 +44,7 @@ export default function DocsPage() {
 
           <h3 className="mt-6 text-sm font-semibold text-paper">Request body</h3>
           <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
-            <table className="min-w-[680px] text-sm">
+            <table className="w-full min-w-[680px] text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface/50">
                   <th className="px-4 py-2 text-left font-medium text-paper">Field</th>
@@ -170,7 +170,7 @@ export default function DocsPage() {
         <section className="mt-10">
           <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Error codes</h2>
           <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
-            <table className="min-w-[420px] text-sm">
+            <table className="w-full min-w-[420px] text-sm">
               <thead>
                 <tr className="border-b border-line bg-surface/50">
                   <th className="px-4 py-2 text-left font-medium text-paper">Status</th>
