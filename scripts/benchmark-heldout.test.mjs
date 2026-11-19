@@ -60,7 +60,7 @@ describe("held-out summary", () => {
   it("separates widened cases from the localized ones", () => {
     const summary = summarize([
       result({}),
-      result({ expected: ["x.ts", "y.ts"], found: ["x.ts"], contextReductionPct: 80 }),
+      result({ expected: ["x.ts", "y.ts"], found: ["x.ts"], contextReductionPct: 80, chanceRecall: 0.5 }),
       result({ widened: true, contextReductionPct: 0, chanceRecall: 1 }),
     ]);
 
@@ -74,7 +74,8 @@ describe("held-out summary", () => {
       fixFileRecall: 2 / 3,
       casesWithFullRecall: 1,
       medianContextReductionPct: 65,
-      meanChanceRecall: 0.25,
+      // Weighted by fix files like fixFileRecall: (1 * 0.25 + 2 * 0.5) / 3, not the per-case mean 0.375.
+      chanceFixFileRecall: 1.25 / 3,
     });
   });
 });

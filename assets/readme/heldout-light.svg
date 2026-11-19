@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="430" viewBox="0 0 1280 430" role="img" aria-labelledby="title desc">
 <title id="title">Held-out fix-file recall</title>
-<desc id="desc">Bar chart. With the task as written, Locus's Slice contained 100.0% of fix files on localized cases, against 25.4% for a random Slice of the same size. With the scope word removed, 93.7% against 26.4%.</desc>
+<desc id="desc">Bar chart. With the task as written, Locus's Slice contained 100.0% of fix files on localized cases, against 27.3% for a random Slice of the same size. With the scope word removed, 93.7% against 28.2%.</desc>
 <style>@media (prefers-reduced-motion: reduce){*{animation:none!important}}</style>
 <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="rgba(20, 35, 59, 0.05)"/></pattern></defs>
 <rect width="1280" height="430" rx="24" fill="#edf1ee"/>
@@ -15,8 +15,8 @@
 <text x="996" y="174" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#14233b">100.0%</text>
 <text x="1078" y="174" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#4e605d">Locus Slice</text>
 <rect x="380" y="190" width="600" height="24" rx="6" fill="#d3ddd7" opacity="0.5"/>
-<rect x="380" y="190" width="152.28087029262585" height="24" rx="6" fill="#6b7c78"/>
-<text x="996" y="208" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#14233b">25.4%</text>
+<rect x="380" y="190" width="163.88520873199823" height="24" rx="6" fill="#6b7c78"/>
+<text x="996" y="208" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#14233b">27.3%</text>
 <text x="1078" y="208" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#4e605d">Random Slice, same size</text>
 <text x="64" y="286" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="19" font-weight="600" fill="#14233b">Scope word removed</text>
 <text x="64" y="310" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#4e605d">54 localized cases</text>
@@ -26,8 +26,8 @@
 <text x="996" y="282" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#14233b">93.7%</text>
 <text x="1078" y="282" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#4e605d">Locus Slice</text>
 <rect x="380" y="298" width="600" height="24" rx="6" fill="#d3ddd7" opacity="0.5"/>
-<rect x="380" y="298" width="158.5539802414522" height="24" rx="6" fill="#6b7c78"/>
-<text x="996" y="316" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#14233b">26.4%</text>
+<rect x="380" y="298" width="169.3899930276508" height="24" rx="6" fill="#6b7c78"/>
+<text x="996" y="316" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#14233b">28.2%</text>
 <text x="1078" y="316" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#4e605d">Random Slice, same size</text>
 <text x="64" y="390" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#6b7c78">Source: benchmarks/heldout/results.json (heldout-v1). Recall is whether the files the maintainer changed are in the Slice, not whether an agent fixed the bug.</text>
 </svg>

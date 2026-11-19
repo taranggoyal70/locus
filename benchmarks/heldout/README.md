@@ -1,6 +1,6 @@
 # Locus held-out localization benchmark
 
-Generated 2026-11-19T23:09:22.272Z from [`protocol.json`](./protocol.json) (heldout-v1, frozen 2026-11-19).
+Generated 2026-11-19T23:29:34.933Z from [`protocol.json`](./protocol.json) (heldout-v1, frozen 2026-11-19).
 
 Locus was run on the parent snapshot of 60 bug fixes from 6 third-party
 TypeScript repositories that it was never developed or tuned against. The cases were not chosen by hand: the
@@ -17,12 +17,13 @@ misses included. The task text is the commit subject, mechanically cleaned.
 | Cases with every fix file in the Slice | 60/60 | 57/57 | 57/60 | 51/54 |
 | Widened to the whole repository | 3 | | 6 | |
 | Median estimated context reduction | 71.5% | 72% | 70.5% | 71.5% |
-| Recall of a random Slice of the same size | | 25.4% | | 26.4% |
+| Recall of a random Slice of the same size | | 27.3% | | 28.2% |
 
 - **Widened** cases are the conservative fallback: no file matched with enough confidence, so Locus returned
   the whole repository. They score full recall by definition and save nothing.
 - **Localized** cases are the ones where Locus committed to a smaller Slice. Their recall is the honest
-  measure of the ranking; the random-Slice row is what picking the same number of files blindly would recall.
+  measure of the ranking; the random-Slice row is what picking the same number of files blindly would recall,
+  pooled over fix files the same way.
 - **Scope removed** is an ablation added after the first run to test it. Conventional-commit scopes often name
   the fixed module (`devtools`, `jsx dom`), which hands the localizer a path match, so the same cases are
   rerun with the scope deleted from the task. The primary protocol was not changed.

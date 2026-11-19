@@ -452,7 +452,7 @@ function heldoutChart(heldout, themeName) {
     parts.push(`<text x="64" y="${y + 68}" font-family="${SANS}" font-size="15" fill="${theme.muted}">${stats.medianContextReductionPct}% median context saved</text>`);
     const bars = [
       ["Locus Slice", stats.fixFileRecall, theme.anchor],
-      ["Random Slice, same size", stats.meanChanceRecall, theme.faint],
+      ["Random Slice, same size", stats.chanceFixFileRecall, theme.faint],
     ];
     bars.forEach(([name, value, color], index) => {
       const barY = y + index * 34;
@@ -466,8 +466,8 @@ function heldoutChart(heldout, themeName) {
   }
   parts.push(`<text x="64" y="${height - 40}" font-family="${SANS}" font-size="14" fill="${theme.faint}">Source: benchmarks/heldout/results.json (${summary.protocolVersion}). Recall is whether the files the maintainer changed are in the Slice, not whether an agent fixed the bug.</text>`);
   const desc = `Bar chart. With the task as written, Locus's Slice contained ${(summary.localized.fixFileRecall * 100).toFixed(1)}% of fix files on localized cases, ` +
-    `against ${(summary.localized.meanChanceRecall * 100).toFixed(1)}% for a random Slice of the same size. With the scope word removed, ` +
-    `${(summary.withoutScope.localized.fixFileRecall * 100).toFixed(1)}% against ${(summary.withoutScope.localized.meanChanceRecall * 100).toFixed(1)}%.`;
+    `against ${(summary.localized.chanceFixFileRecall * 100).toFixed(1)}% for a random Slice of the same size. With the scope word removed, ` +
+    `${(summary.withoutScope.localized.fixFileRecall * 100).toFixed(1)}% against ${(summary.withoutScope.localized.chanceFixFileRecall * 100).toFixed(1)}%.`;
   return document({ width, height, title: "Held-out fix-file recall", desc, theme, body: parts.join("\n"), css: "" });
 }
 
