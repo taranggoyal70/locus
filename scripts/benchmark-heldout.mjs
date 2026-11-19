@@ -78,7 +78,10 @@ export function summarize(results) {
   const localized = results.filter((result) => !result.widened);
   const expectedTotal = (cases) => cases.reduce((sum, result) => sum + result.expected.length, 0);
   const foundTotal = (cases) => cases.reduce((sum, result) => sum + result.found.length, 0);
-  const mean = (values) => (values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null);
+  // Expected recall of a random Slice of the same size, pooled over fix files exactly as fixFileRecall is, so a
+  // case with three fix files counts three times in both. An unweighted mean of per-case chance would compare
+  // two different estimators.
+  const chanceTotal = (cases) => cases.reduce((sum, result) => sum + result.expected.length * result.chanceRecall, 0);
   return {
     cases: results.length,
     repositories: new Set(results.map((result) => result.repo)).size,
@@ -91,7 +94,7 @@ export function summarize(results) {
       fixFileRecall: ratio(foundTotal(localized), expectedTotal(localized)),
       casesWithFullRecall: localized.filter((result) => result.found.length === result.expected.length).length,
       medianContextReductionPct: median(localized.map((result) => result.contextReductionPct)),
-      meanChanceRecall: mean(localized.map((result) => result.chanceRecall)),
+      chanceFixFileRecall: ratio(chanceTotal(localized), expectedTotal(localized)),
       medianSliceTokens: median(localized.map((result) => result.sliceTokens)),
       medianRepositoryTokens: median(localized.map((result) => result.repositoryTokens)),
     },
@@ -236,12 +239,13 @@ misses included. The task text is the commit subject, mechanically cleaned.
 | Cases with every fix file in the Slice | ${summary.casesWithFullRecall}/${summary.cases} | ${localized.casesWithFullRecall}/${localized.cases} | ${unscoped.casesWithFullRecall}/${unscoped.cases} | ${unscoped.localized.casesWithFullRecall}/${unscoped.localized.cases} |
 | Widened to the whole repository | ${summary.widenedCases} | | ${unscoped.widenedCases} | |
 | Median estimated context reduction | ${summary.medianContextReductionPct}% | ${localized.medianContextReductionPct}% | ${unscoped.medianContextReductionPct}% | ${unscoped.localized.medianContextReductionPct}% |
-| Recall of a random Slice of the same size | | ${percent(localized.meanChanceRecall)} | | ${percent(unscoped.localized.meanChanceRecall)} |
+| Recall of a random Slice of the same size | | ${percent(localized.chanceFixFileRecall)} | | ${percent(unscoped.localized.chanceFixFileRecall)} |
 
 - **Widened** cases are the conservative fallback: no file matched with enough confidence, so Locus returned
   the whole repository. They score full recall by definition and save nothing.
 - **Localized** cases are the ones where Locus committed to a smaller Slice. Their recall is the honest
-  measure of the ranking; the random-Slice row is what picking the same number of files blindly would recall.
+  measure of the ranking; the random-Slice row is what picking the same number of files blindly would recall,
+  pooled over fix files the same way.
 - **Scope removed** is an ablation added after the first run to test it. Conventional-commit scopes often name
   the fixed module (\`devtools\`, \`jsx dom\`), which hands the localizer a path match, so the same cases are
   rerun with the scope deleted from the task. The primary protocol was not changed.

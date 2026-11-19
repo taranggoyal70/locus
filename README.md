@@ -51,14 +51,14 @@ The hero above is generated from a recorded benchmark run; [asset provenance](as
 
 | Question | Result | Held out how |
 | :--- | :--- | :--- |
-| Does the Slice contain the files a maintainer changed, on code Locus has never seen? | **60/60 cases** with every fix file in the Slice. On the 57 cases Locus localized, a **72% median** estimated context reduction; a random Slice of the same size would have contained **25.4%** of the fix files. | Six third-party repositories pinned on 2026-11-19, ten most recent qualifying fix commits each, chosen by a written rule and all scored. [Report](benchmarks/heldout/README.md) |
+| Does the Slice contain the files a maintainer changed, on code Locus has never seen? | **60/60 cases** with every fix file in the Slice. On the 57 cases Locus localized, a **72% median** estimated context reduction; a random Slice of the same size would have contained **27.3%** of the fix files. | Six third-party repositories pinned on 2026-11-19, ten most recent qualifying fix commits each, chosen by a written rule and all scored. [Report](benchmarks/heldout/README.md) |
 | How much of that depends on the task naming the module? | With the conventional-commit scope removed from every task: **94.4%** fix-file recall, **57/60** complete cases, **6** widened, 71.5% median reduction on localized cases. | The same 60 cases. This ablation was added after the first run, to test it. |
 | Does it still work on the project's own history? | **15/15** cases, 53% median reduction, 2 widened. | Not held out: fixes from repositories this project's author owns, gated on full recall. [Suite](benchmarks/README.md) |
 | Does a Slice cut total agent tokens without lowering accepted work? | **Not measured yet.** 0 of 40 arm results are recorded, so the gate stays locked and no outcome is claimed. | Frozen paired study with blinded human review. [Protocol](benchmarks/release1/README.md) |
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/heldout-dark.svg">
-  <img src="assets/readme/heldout-light.svg" width="100%" alt="Bar chart of fix-file recall on localized held-out cases. Task as written: Locus Slice 100.0%, random Slice of the same size 25.4%, 72% median context saved over 57 cases. Scope word removed: Locus Slice 93.7%, random Slice 26.4%, 71.5% median context saved over 54 cases.">
+  <img src="assets/readme/heldout-light.svg" width="100%" alt="Bar chart of fix-file recall on localized held-out cases. Task as written: Locus Slice 100.0%, random Slice of the same size 27.3%, 72% median context saved over 57 cases. Scope word removed: Locus Slice 93.7%, random Slice 28.2%, 71.5% median context saved over 54 cases.">
 </picture>
 
 ### How the held-out benchmark is built

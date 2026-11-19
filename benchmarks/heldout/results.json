@@ -1,6 +1,6 @@
 {
   "summary": {
-    "generatedAt": "2026-11-19T23:09:22.272Z",
+    "generatedAt": "2026-11-19T23:29:34.933Z",
     "protocolVersion": "heldout-v1",
     "cases": 60,
     "repositories": 6,
@@ -13,7 +13,7 @@
       "fixFileRecall": 1,
       "casesWithFullRecall": 57,
       "medianContextReductionPct": 72,
-      "meanChanceRecall": 0.25380145048770975,
+      "chanceFixFileRecall": 0.27314201455333037,
       "medianSliceTokens": 102159,
       "medianRepositoryTokens": 419031
     },
@@ -29,7 +29,7 @@
         "fixFileRecall": 0.9365079365079365,
         "casesWithFullRecall": 51,
         "medianContextReductionPct": 71.5,
-        "meanChanceRecall": 0.26425663373575364,
+        "chanceFixFileRecall": 0.28231665504608466,
         "medianSliceTokens": 109427.5,
         "medianRepositoryTokens": 423114.5
       }
