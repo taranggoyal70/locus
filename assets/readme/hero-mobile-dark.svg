@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1500.2" viewBox="0 0 720 1500.2" role="img" aria-labelledby="title desc">
+<title id="title">Locus: show your coding agent only the code it needs</title>
+<desc id="desc">Animated replay of a real held-out benchmark run. Task: &quot;vanilla subscriber not notified after nested store.set and sub/unsub inside a write&quot; on pmndrs/jotai at d8ed488. Each of the 130 cells is a source file. Locus anchors 6 files, adds their dependency closure, and excludes the rest: 17 of 130 files, 17.7K of 62.4K estimated tokens, 72% less context. The file the maintainer fixed, src/vanilla/internals.ts, is in the Slice.</desc>
+<style>@keyframes k0{0%,6.67%{transform:translateX(0);animation-timing-function:steps(39,end)}15.71%,98.33%{transform:translateX(514.8px)}100%{transform:translateX(0)}}.k0{animation:k0 12s linear infinite both}@keyframes k1{0%,6.67%{opacity:0}6.68%,16.96%{opacity:1}16.970000000000002%,100%{opacity:0}}.k1{animation:k1 12s linear infinite both}@keyframes k2{0%,15.71%{transform:translateX(0);animation-timing-function:steps(36,end)}24.05%,98.33%{transform:translateX(475.2px)}100%{transform:translateX(0)}}.k2{animation:k2 12s linear infinite both}@keyframes k3{0%,15.71%{opacity:0}15.72%,25.3%{opacity:1}25.310000000000002%,100%{opacity:0}}.k3{animation:k3 12s linear infinite both}@keyframes k4{0%,24.05%{transform:translateX(0);animation-timing-function:steps(26,end)}30%,98.33%{transform:translateX(343.2px)}100%{transform:translateX(0)}}.k4{animation:k4 12s linear infinite both}@keyframes k5{0%,24.05%{opacity:0}24.060000000000002%,31.25%{opacity:1}31.26%,100%{opacity:0}}.k5{animation:k5 12s linear infinite both}@keyframes k6{0%,50%{opacity:0}52.92%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k6{animation:k6 12s linear infinite both}@keyframes k7{0%,52.5%{opacity:0}55.42%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k7{animation:k7 12s linear infinite both}@keyframes k8{0%,55%{opacity:0}57.92%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k8{animation:k8 12s linear infinite both}@keyframes k9{0%,58.33%{opacity:0}61.25%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k9{animation:k9 12s linear infinite both}@keyframes k10{0%,1.25%{opacity:0}3.75%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k10{animation:k10 12s linear infinite both}@keyframes k11{0%,46.67%{opacity:1}50.83%,94.17%{opacity:0.32}98.33%,100%{opacity:1}}.k11{animation:k11 12s linear infinite both}@keyframes k12{0%,1.58%{opacity:0}4.08%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k12{animation:k12 12s linear infinite both}@keyframes k13{0%,38.33%{opacity:0}40.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k13{animation:k13 12s linear infinite both}@keyframes k14{0%,1.92%{opacity:0}4.42%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k14{animation:k14 12s linear infinite both}@keyframes k15{0%,38.83%{opacity:0}41.33%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k15{animation:k15 12s linear infinite both}@keyframes k16{0%,2.25%{opacity:0}4.75%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k16{animation:k16 12s linear infinite both}@keyframes k17{0%,39.33%{opacity:0}41.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k17{animation:k17 12s linear infinite both}@keyframes k18{0%,2.58%{opacity:0}5.08%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k18{animation:k18 12s linear infinite both}@keyframes k19{0%,39.83%{opacity:0}42.33%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k19{animation:k19 12s linear infinite both}@keyframes k20{0%,2.92%{opacity:0}5.42%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k20{animation:k20 12s linear infinite both}@keyframes k21{0%,33.33%{opacity:0}35.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k21{animation:k21 12s linear infinite both}@keyframes k22{0%,3.25%{opacity:0}5.75%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k22{animation:k22 12s linear infinite both}@keyframes k23{0%,3.58%{opacity:0}6.08%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k23{animation:k23 12s linear infinite both}@keyframes k24{0%,40.33%{opacity:0}42.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k24{animation:k24 12s linear infinite both}@keyframes k25{0%,3.92%{opacity:0}6.42%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k25{animation:k25 12s linear infinite both}@keyframes k26{0%,34%{opacity:0}36.5%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k26{animation:k26 12s linear infinite both}@keyframes k27{0%,4.25%{opacity:0}6.75%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k27{animation:k27 12s linear infinite both}@keyframes k28{0%,40.83%{opacity:0}43.33%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k28{animation:k28 12s linear infinite both}@keyframes k29{0%,4.58%{opacity:0}7.08%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k29{animation:k29 12s linear infinite both}@keyframes k30{0%,4.92%{opacity:0}7.42%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k30{animation:k30 12s linear infinite both}@keyframes k31{0%,5.25%{opacity:0}7.75%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k31{animation:k31 12s linear infinite both}@keyframes k32{0%,41.33%{opacity:0}43.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k32{animation:k32 12s linear infinite both}@keyframes k33{0%,41.83%{opacity:0}44.33%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k33{animation:k33 12s linear infinite both}@keyframes k34{0%,34.67%{opacity:0}37.17%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k34{animation:k34 12s linear infinite both}@keyframes k35{0%,35.33%{opacity:0}37.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k35{animation:k35 12s linear infinite both}@keyframes k36{0%,58.33%{opacity:0}60.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k36{animation:k36 12s linear infinite both}@keyframes k37{0%,36%{opacity:0}38.5%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k37{animation:k37 12s linear infinite both}@keyframes k38{0%,42.33%{opacity:0}44.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k38{animation:k38 12s linear infinite both}@keyframes k39{0%,42.83%{opacity:0}45.33%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k39{animation:k39 12s linear infinite both}@keyframes k40{0%,36.67%{opacity:0}39.17%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k40{animation:k40 12s linear infinite both}@keyframes k41{0%,43.33%{opacity:0}45.83%,94.17%{opacity:1}98.33%,100%{opacity:0}}.k41{animation:k41 12s linear infinite both}@media (prefers-reduced-motion: reduce){*{animation:none!important}}</style>
+<defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="rgba(237, 241, 238, 0.045)"/></pattern></defs>
+<rect width="720" height="1500.2" rx="24" fill="#0d1726"/>
+<rect width="720" height="1500.2" rx="24" fill="url(#grid)"/>
+<g transform="translate(40 48) scale(1.75)"><rect width="32" height="32" rx="7" fill="#14233b" stroke="rgba(237, 241, 238, 0.16)"/><path d="M7 10.5h8.5a6 6 0 0 1 6 6v5" fill="none" stroke="#8ef0c0" stroke-width="2.5" stroke-linecap="round"/><path d="M7 21.5h8.5a6 6 0 0 0 6-6v-5" fill="none" stroke="#ffd45c" stroke-width="2.5" stroke-linecap="round"/><rect x="19" y="19" width="6" height="6" rx="2" fill="#ff896e"/></g>
+<text x="114" y="89" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="40" font-weight="650" fill="#edf1ee">Locus</text>
+<text x="40" y="196" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="62" font-weight="650" letter-spacing="-2.5" fill="#edf1ee">Show your agent only</text>
+<text x="40" y="266" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="62" font-weight="650" letter-spacing="-2.5" fill="#edf1ee">the code it needs.</text>
+<text x="42" y="316" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="26" fill="#9fb2ad">Task-scoped context for coding agents.</text>
+<rect x="40" y="350" width="640" height="659" rx="24" fill="#14233b" stroke="rgba(237, 241, 238, 0.10)"/>
+<text x="74" y="400" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="26" font-weight="600" fill="#edf1ee">pmndrs/jotai · 130 files</text>
+<text x="74" y="432" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" fill="#9fb2ad">Held-out run · one cell per source file</text>
+<g class="k10"><rect class="k11" x="78.5" y="458" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<rect class="k12" x="122.5" y="458" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k13" x="122.5" y="458" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<rect class="k14" x="166.5" y="458" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k15" x="166.5" y="458" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<rect class="k16" x="210.5" y="458" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k17" x="210.5" y="458" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<rect class="k18" x="254.5" y="458" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k19" x="254.5" y="458" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<rect class="k20" x="298.5" y="458" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k21" x="298.5" y="458" width="35" height="35" rx="7.7" fill="#8ef0c0"/>
+<g class="k22"><rect class="k11" x="342.5" y="458" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<rect class="k23" x="386.5" y="458" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k24" x="386.5" y="458" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<rect class="k25" x="430.5" y="458" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k26" x="430.5" y="458" width="35" height="35" rx="7.7" fill="#8ef0c0"/>
+<rect class="k27" x="474.5" y="458" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k28" x="474.5" y="458" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<g class="k29"><rect class="k11" x="518.5" y="458" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k30"><rect class="k11" x="562.5" y="458" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="458" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k22"><rect class="k11" x="342.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k23"><rect class="k11" x="386.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k25"><rect class="k11" x="430.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k27"><rect class="k11" x="474.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k29"><rect class="k11" x="518.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k30"><rect class="k11" x="562.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="502" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k22"><rect class="k11" x="342.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k23"><rect class="k11" x="386.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k25"><rect class="k11" x="430.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k27"><rect class="k11" x="474.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k29"><rect class="k11" x="518.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k30"><rect class="k11" x="562.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="546" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k22"><rect class="k11" x="342.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k23"><rect class="k11" x="386.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k25"><rect class="k11" x="430.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k27"><rect class="k11" x="474.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<rect class="k29" x="518.5" y="590" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k32" x="518.5" y="590" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<g class="k30"><rect class="k11" x="562.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="590" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="634" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="634" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="634" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="634" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="634" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="634" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<rect class="k22" x="342.5" y="634" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k33" x="342.5" y="634" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<rect class="k23" x="386.5" y="634" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k34" x="386.5" y="634" width="35" height="35" rx="7.7" fill="#8ef0c0"/>
+<rect class="k25" x="430.5" y="634" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k35" x="430.5" y="634" width="35" height="35" rx="7.7" fill="#8ef0c0"/>
+<rect class="k36" x="427.35" y="630.85" width="41.3" height="41.3" rx="11.200000000000001" fill="none" stroke="#ff896e" stroke-width="2.45"/>
+<rect class="k27" x="474.5" y="634" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k37" x="474.5" y="634" width="35" height="35" rx="7.7" fill="#8ef0c0"/>
+<rect class="k29" x="518.5" y="634" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k38" x="518.5" y="634" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<rect class="k30" x="562.5" y="634" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k39" x="562.5" y="634" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<g class="k31"><rect class="k11" x="606.5" y="634" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<rect class="k22" x="342.5" y="678" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k40" x="342.5" y="678" width="35" height="35" rx="7.7" fill="#8ef0c0"/>
+<rect class="k23" x="386.5" y="678" width="35" height="35" rx="7.7" fill="#26374f"/><rect class="k41" x="386.5" y="678" width="35" height="35" rx="7.7" fill="#ffd45c"/>
+<g class="k25"><rect class="k11" x="430.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k27"><rect class="k11" x="474.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k29"><rect class="k11" x="518.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k30"><rect class="k11" x="562.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="678" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k22"><rect class="k11" x="342.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k23"><rect class="k11" x="386.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k25"><rect class="k11" x="430.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k27"><rect class="k11" x="474.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k29"><rect class="k11" x="518.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k30"><rect class="k11" x="562.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="722" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k22"><rect class="k11" x="342.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k23"><rect class="k11" x="386.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k25"><rect class="k11" x="430.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k27"><rect class="k11" x="474.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k29"><rect class="k11" x="518.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k30"><rect class="k11" x="562.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="766" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k22"><rect class="k11" x="342.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k23"><rect class="k11" x="386.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k25"><rect class="k11" x="430.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k27"><rect class="k11" x="474.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k29"><rect class="k11" x="518.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k30"><rect class="k11" x="562.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="810" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k10"><rect class="k11" x="78.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k12"><rect class="k11" x="122.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k14"><rect class="k11" x="166.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k16"><rect class="k11" x="210.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k18"><rect class="k11" x="254.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k20"><rect class="k11" x="298.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k22"><rect class="k11" x="342.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k23"><rect class="k11" x="386.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k25"><rect class="k11" x="430.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k27"><rect class="k11" x="474.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k29"><rect class="k11" x="518.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k30"><rect class="k11" x="562.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g class="k31"><rect class="k11" x="606.5" y="854" width="35" height="35" rx="7.7" fill="#26374f" opacity="0.32"/></g>
+<g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"><rect x="74" y="924" width="19" height="19" rx="4.75" fill="#8ef0c0"/><text x="101" y="942" font-size="19" fill="#9fb2ad">Anchor</text><rect x="179.03333333333333" y="924" width="19" height="19" rx="4.75" fill="#ffd45c"/><text x="206.03333333333333" y="942" font-size="19" fill="#9fb2ad">Closure</text><rect x="294.51666666666665" y="924" width="19" height="19" rx="4.75" fill="#26374f"/><text x="321.51666666666665" y="942" font-size="19" fill="#9fb2ad">Excluded</text><rect x="421.95" y="925.5" width="16" height="16" rx="5.32" fill="none" stroke="#ff896e" stroke-width="2.5"/><text x="447.45" y="942" font-size="19" fill="#9fb2ad">Fixed by maintainer</text></g>
+<clipPath id="terminal-40-1041"><rect x="41" y="1042" width="638" height="365.2" rx="15"/></clipPath>
+<rect x="40" y="1041" width="640" height="367.2" rx="16" fill="#0a1220" stroke="rgba(237,241,238,0.10)"/>
+<g clip-path="url(#terminal-40-1041)">
+<circle cx="70" cy="1073" r="5" fill="#ff896e" opacity="0.85"/>
+<circle cx="88" cy="1073" r="5" fill="#ffd45c" opacity="0.85"/>
+<circle cx="106" cy="1073" r="5" fill="#8ef0c0" opacity="0.85"/>
+<text x="70" y="1125.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="22" fill="#edf1ee" textLength="501.59999999999997" lengthAdjust="spacingAndGlyphs" xml:space="preserve">$ locus locate &quot;vanilla subscriber not</text>
+<g style="transform:translateX(514.8px)" class="k0"><rect x="68" y="1103.5" width="610" height="38" fill="#0a1220"/><rect class="k1" x="68" y="1105.5" width="13.2" height="24" fill="#8ef0c0" opacity="0"/></g>
+<text x="70" y="1163.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="22" fill="#edf1ee" textLength="462" lengthAdjust="spacingAndGlyphs" xml:space="preserve">notified after nested store.set and</text>
+<g style="transform:translateX(475.2px)" class="k2"><rect x="68" y="1141.5" width="610" height="38" fill="#0a1220"/><rect class="k3" x="68" y="1143.5" width="13.2" height="24" fill="#8ef0c0" opacity="0"/></g>
+<text x="70" y="1201.5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="22" fill="#edf1ee" textLength="330" lengthAdjust="spacingAndGlyphs" xml:space="preserve">sub/unsub inside a write&quot;</text>
+<g style="transform:translateX(343.2px)" class="k4"><rect x="68" y="1179.5" width="610" height="38" fill="#0a1220"/><rect class="k5" x="68" y="1181.5" width="13.2" height="24" fill="#8ef0c0" opacity="0"/></g>
+<text class="k6" x="70" y="1254.7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="22" fill="#edf1ee" xml:space="preserve">Slice   17 of 130 files</text>
+<text class="k7" x="70" y="1292.7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="22" fill="#edf1ee" xml:space="preserve">Tokens  17.7K of 62.4K (estimated)</text>
+<text class="k8" x="70" y="1330.7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="22" fill="#8ef0c0" xml:space="preserve">Saved   72% of the repository's context</text>
+<text class="k9" x="70" y="1368.7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="22" fill="#ff896e" xml:space="preserve">Fixed   src/vanilla/internals.ts  in Slice ✓</text>
+</g>
+<text x="40" y="1460.2" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" fill="#6f827e">Recorded from a real run. Tokens are chars/4 estimates.</text>
+</svg>

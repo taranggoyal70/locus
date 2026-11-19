@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="430" viewBox="0 0 1280 430" role="img" aria-labelledby="title desc">
+<title id="title">Held-out fix-file recall</title>
+<desc id="desc">Bar chart. With the task as written, Locus's Slice contained 100.0% of fix files on localized cases, against 25.4% for a random Slice of the same size. With the scope word removed, 93.7% against 26.4%.</desc>
+<style>@media (prefers-reduced-motion: reduce){*{animation:none!important}}</style>
+<defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="rgba(237, 241, 238, 0.045)"/></pattern></defs>
+<rect width="1280" height="430" rx="24" fill="#0d1726"/>
+<rect width="1280" height="430" rx="24" fill="url(#grid)"/>
+<text x="64" y="72" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="28" font-weight="650" fill="#edf1ee">Fix-file recall on 60 held-out bug fixes</text>
+<text x="64" y="104" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" fill="#9fb2ad">Localized cases from 6 third-party repositories Locus was never tuned on. Higher is better.</text>
+<text x="64" y="178" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="19" font-weight="600" fill="#edf1ee">Task as written</text>
+<text x="64" y="202" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#9fb2ad">57 localized cases</text>
+<text x="64" y="224" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#9fb2ad">72% median context saved</text>
+<rect x="380" y="156" width="600" height="24" rx="6" fill="#26374f" opacity="0.5"/>
+<rect x="380" y="156" width="600" height="24" rx="6" fill="#8ef0c0"/>
+<text x="996" y="174" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#edf1ee">100.0%</text>
+<text x="1078" y="174" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#9fb2ad">Locus Slice</text>
+<rect x="380" y="190" width="600" height="24" rx="6" fill="#26374f" opacity="0.5"/>
+<rect x="380" y="190" width="152.28087029262585" height="24" rx="6" fill="#6f827e"/>
+<text x="996" y="208" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#edf1ee">25.4%</text>
+<text x="1078" y="208" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#9fb2ad">Random Slice, same size</text>
+<text x="64" y="286" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="19" font-weight="600" fill="#edf1ee">Scope word removed</text>
+<text x="64" y="310" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#9fb2ad">54 localized cases</text>
+<text x="64" y="332" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#9fb2ad">71.5% median context saved</text>
+<rect x="380" y="264" width="600" height="24" rx="6" fill="#26374f" opacity="0.5"/>
+<rect x="380" y="264" width="561.9047619047619" height="24" rx="6" fill="#8ef0c0"/>
+<text x="996" y="282" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#edf1ee">93.7%</text>
+<text x="1078" y="282" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#9fb2ad">Locus Slice</text>
+<rect x="380" y="298" width="600" height="24" rx="6" fill="#26374f" opacity="0.5"/>
+<rect x="380" y="298" width="158.5539802414522" height="24" rx="6" fill="#6f827e"/>
+<text x="996" y="316" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="#edf1ee">26.4%</text>
+<text x="1078" y="316" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#9fb2ad">Random Slice, same size</text>
+<text x="64" y="390" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#6f827e">Source: benchmarks/heldout/results.json (heldout-v1). Recall is whether the files the maintainer changed are in the Slice, not whether an agent fixed the bug.</text>
+</svg>
