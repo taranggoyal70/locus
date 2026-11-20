@@ -12,11 +12,14 @@ const ELEMENTS = {
   card: "w-full bg-surface shadow-none",
   headerTitle: "font-display text-[26px] font-normal tracking-[-0.015em] text-ink",
   headerSubtitle: "text-ink-2",
-  socialButtonsBlockButton: "rounded-chip border-line-2 bg-canvas text-ink hover:bg-surface-2",
+  socialButtonsBlockButton: "rounded-chip bg-canvas text-ink hover:bg-surface-2",
   formFieldLabel: "text-ink-2",
-  formFieldInput: "rounded-chip border-line-2 bg-canvas text-ink",
-  formButtonPrimary: "rounded-chip bg-ink text-canvas shadow-none hover:bg-ink/90",
-  footer: "bg-canvas-2",
+  // Clerk draws input rings with box-shadow (including its error ring), so only
+  // the fill and shape change here.
+  formFieldInput: "rounded-chip bg-canvas text-ink",
+  // after:hidden removes Clerk's highlight overlay, which would tint the ink.
+  formButtonPrimary: "rounded-chip bg-ink text-canvas shadow-none after:hidden hover:bg-ink/90",
+  footer: "bg-none bg-canvas-2",
   footerActionText: "text-ink-2",
   footerActionLink: "text-ink underline decoration-line-2 underline-offset-4 hover:decoration-ink",
   dividerLine: "bg-line-2",

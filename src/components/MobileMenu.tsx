@@ -9,6 +9,7 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ href: string; lab
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
   const menuId = useId();
 
   // Close after navigating. Comparing during render avoids an effect cascade.
@@ -24,7 +25,10 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ href: string; lab
       if (!root.current?.contains(event.target as Node)) setOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Escape") return;
+      // Hand focus back to the button, or it would fall to the page as the sheet hides.
+      if (root.current?.contains(document.activeElement)) button.current?.focus();
+      setOpen(false);
     }
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -37,6 +41,7 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ href: string; lab
   return (
     <div ref={root} className="relative lg:hidden">
       <button
+        ref={button}
         type="button"
         aria-label="Menu"
         aria-expanded={open}
@@ -55,17 +60,24 @@ export function MobileMenu({ items }: { items: ReadonlyArray<{ href: string; lab
         hidden={!open}
         className="menu-pop absolute right-0 top-11 w-60 rounded-card border border-line-2 bg-surface p-1.5 shadow-panel"
       >
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => setOpen(false)}
-            className="flex h-10 items-center justify-between rounded-chip px-3 text-[15px] text-ink transition-colors hover:bg-surface-2"
-          >
-            {item.label}
-            <span aria-hidden="true" className="keycap">{item.shortcut}</span>
-          </Link>
-        ))}
+        {items.map((item) => {
+          // The current page reads as it does in the desktop header: its keycap is filled with ink.
+          const active = pathname === item.href || (pathname?.startsWith(`${item.href}/`) ?? false);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+              onClick={() => setOpen(false)}
+              className="flex h-10 items-center justify-between rounded-chip px-3 text-[15px] text-ink transition-colors hover:bg-surface-2"
+            >
+              {item.label}
+              <span aria-hidden="true" className={`keycap ${active ? "border-ink bg-ink text-canvas" : ""}`}>
+                {item.shortcut}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

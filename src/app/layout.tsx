@@ -6,6 +6,8 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+// layers.css first: it fixes the cascade layer order for everything after it.
+import "./layers.css";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -26,7 +28,8 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
-    card: "summary",
+    // The 1200 x 630 card from opengraph-image.tsx, shown full width.
+    card: "summary_large_image",
     title: "Locus · Evidence-first code localization",
     description: "Ship the task, not the repository. Build a task-sized Slice with visible context evidence.",
   },

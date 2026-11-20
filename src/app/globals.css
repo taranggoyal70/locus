@@ -149,10 +149,6 @@
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
 }
 
-* {
-  border-color: var(--line);
-}
-
 html {
   background: var(--canvas);
   -webkit-text-size-adjust: 100%;

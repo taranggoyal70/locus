@@ -41,25 +41,25 @@ export function packContext(repo: RepoData, result: LocateResult, format: Export
   if (format === "claude") {
     head =
       `<context task="${result.task}">\n` +
-      `<!-- ${parts.length} file(s), ~${tokens} tokens — localized by Locus -->\n`;
+      `<!-- ${parts.length} file(s), ~${tokens} tokens, localized by Locus -->\n`;
     const warning = sparseGraphWarning(result);
     if (warning) head += `<!-- ${warning} -->\n`;
   } else if (format === "cursor") {
     head =
       `// Context for: ${result.task}\n` +
-      `// ${parts.length} file(s), ~${tokens} tokens — localized by Locus\n`;
+      `// ${parts.length} file(s), ~${tokens} tokens, localized by Locus\n`;
     const warning = sparseGraphWarning(result);
     if (warning) head += `// ${warning}\n`;
   } else {
     head =
       `# Context for task: ${result.task}\n` +
-      `# ${parts.length} file(s), ~${tokens} tokens — localized by Locus\n`;
+      `# ${parts.length} file(s), ~${tokens} tokens, localized by Locus\n`;
     const warning = sparseGraphWarning(result);
     if (warning) head += `# ${warning}\n`;
   }
 
   let tail = "";
-  if (dropped) tail = `\n\n# ${dropped} file(s) omitted — exceeded ${BUDGET.toLocaleString()}-token budget`;
+  if (dropped) tail = `\n\n# ${dropped} file(s) omitted: they exceeded the ${BUDGET.toLocaleString()}-token budget`;
   if (format === "claude") tail += "\n</context>";
 
   return { text: head + parts.join("") + tail, files: parts.length, tokens };
@@ -152,7 +152,7 @@ export function TokenMeter({
           <div className="mt-2 flex gap-2">
             <button
               onClick={copy}
-              className={`inline-flex flex-1 items-center justify-center gap-2 rounded-card px-4 py-3 text-sm font-semibold transition ${
+              className={`inline-flex flex-1 items-center justify-center gap-2 rounded-chip px-4 py-3 text-sm font-medium transition ${
                 result.widened
                   ? "border border-line-2 bg-canvas text-ink-2 hover:border-ink/40 hover:text-ink"
                   : "bg-ink text-canvas shadow-panel hover:bg-ink/90"
@@ -173,7 +173,7 @@ export function TokenMeter({
                 URL.revokeObjectURL(a.href);
                 trackClient("context_copied", { format, files: packed.files, tokens: packed.tokens, method: "download" });
               }}
-              className="rounded-card border border-line-2 px-3 py-3 text-sm text-ink-2 transition hover:border-ink/40 hover:text-ink"
+              className="rounded-chip border border-line-2 px-3 py-3 text-sm text-ink-2 transition hover:border-ink/40 hover:text-ink"
               title="Download as file"
             >
               ↓

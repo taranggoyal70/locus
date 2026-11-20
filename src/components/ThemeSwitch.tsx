@@ -52,7 +52,7 @@ export function ThemeSwitch({ className = "" }: { className?: string }) {
               active ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"
             }`}
           >
-            <span aria-hidden="true" className="text-[10px] leading-none">{option.glyph}</span>
+            <span aria-hidden="true" className="text-[11px] leading-none">{option.glyph}</span>
             {option.label}
           </button>
         );

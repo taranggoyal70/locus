@@ -382,7 +382,7 @@ export function AgentRunPanel({
               </label>
             )}
             {allowanceSpent ? (
-              <p className="mt-4 flex w-full items-center justify-between rounded-card border border-line-2 px-4 py-3.5 text-sm font-semibold text-muted">
+              <p className="mt-4 flex w-full items-center justify-between rounded-chip border border-line-2 px-4 py-3.5 text-sm font-medium text-muted">
                 <span>{accessCopy.action}</span>
               </p>
             ) : !canStartRun && accessCopy.href ? (
@@ -391,7 +391,7 @@ export function AgentRunPanel({
               // wearing the costume of a next step.
               <a
                 href={accessCopy.href}
-                className="mt-4 flex w-full items-center justify-between rounded-card border border-line-2 px-4 py-3.5 text-sm font-semibold text-ink transition hover:border-ink/40 hover:text-ink"
+                className="mt-4 flex w-full items-center justify-between rounded-chip border border-line-2 px-4 py-3.5 text-sm font-medium text-ink transition hover:border-ink/40 hover:text-ink"
               >
                 <span>{accessCopy.action}</span>
                 <span aria-hidden>→</span>
@@ -401,7 +401,7 @@ export function AgentRunPanel({
                 type="button"
                 onClick={launch}
                 disabled={!canLaunch || launching}
-                className="mt-4 flex w-full items-center justify-between rounded-card bg-ink px-4 py-3.5 text-sm font-semibold text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="mt-4 flex w-full items-center justify-between rounded-chip bg-ink px-4 py-3.5 text-sm font-medium text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span>{launching ? "Starting durable run…" : accessCopy.action}</span>
                 <span aria-hidden>→</span>
@@ -520,7 +520,7 @@ export function AgentRunPanel({
                 href={pullRequest.url}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 flex w-full items-center justify-between rounded-card bg-ink px-4 py-3.5 text-sm font-semibold text-canvas"
+                className="mt-4 flex w-full items-center justify-between rounded-chip bg-ink px-4 py-3.5 text-sm font-medium text-canvas"
               >
                 <span>{pullRequest.label}</span>
                 <span aria-hidden>↗</span>

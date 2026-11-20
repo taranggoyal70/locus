@@ -29,7 +29,7 @@ export function AccountEmailPanel({ email, verified }: AccountEmailPanelProps) {
           </div>
           <Link
             href="/settings/account"
-            className="rounded-card border border-line-2 px-4 py-2.5 text-sm font-semibold text-ink transition hover:border-ink/40 hover:text-ink"
+            className="rounded-chip border border-line-2 px-4 py-2.5 text-sm font-medium text-ink transition hover:border-ink/40 hover:text-ink"
           >
             Manage account
           </Link>
@@ -55,7 +55,7 @@ export function AccountEmailPanel({ email, verified }: AccountEmailPanelProps) {
       </p>
       <Link
         href="/settings/account"
-        className="mt-5 inline-flex items-center gap-2 rounded-card bg-ink px-4 py-2.5 text-sm font-semibold text-canvas transition hover:bg-ink/90"
+        className="mt-5 inline-flex items-center gap-2 rounded-chip bg-ink px-4 py-2.5 text-sm font-medium text-canvas transition hover:bg-ink/90"
       >
         Verify email
         <span aria-hidden>→</span>

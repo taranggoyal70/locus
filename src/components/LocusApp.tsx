@@ -138,13 +138,13 @@ export function LocusApp({
           </Link>
 
           <nav className="flex items-center gap-1 text-[12px] font-medium text-muted lg:flex-col lg:gap-1.5" aria-label="App navigation">
-            <Link href="/workspace" aria-current="page" className="rounded-chip bg-surface-2 px-3 py-2.5 text-ink lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
+            <Link href="/workspace" aria-current="page" className="rounded-chip bg-surface-2 px-2.5 py-2.5 text-ink sm:px-3 lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
               Map
             </Link>
-            <Link href="/projects" className="hidden rounded-chip px-3 py-2.5 transition-colors duration-150 hover:text-ink sm:block lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
+            <Link href="/projects" className="rounded-chip px-2.5 py-2.5 transition-colors duration-150 hover:text-ink sm:px-3 lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
               Runs
             </Link>
-            <Link href="/settings" className="hidden rounded-chip px-3 py-2.5 transition-colors duration-150 hover:text-ink sm:block lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
+            <Link href="/settings" className="rounded-chip px-2.5 py-2.5 transition-colors duration-150 hover:text-ink sm:px-3 lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
               Setup
             </Link>
             <a href={REPO_URL} className="hidden rounded-chip px-3 py-2.5 transition-colors duration-150 hover:text-ink md:block lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
@@ -239,7 +239,7 @@ export function LocusApp({
                       type="button"
                       onClick={() => loadGithub()}
                       disabled={loading || !ghUrl.trim()}
-                      className="rounded-card bg-ink px-3.5 py-3 text-xs font-semibold text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-35"
+                      className="rounded-chip bg-ink px-3.5 py-3 text-xs font-medium text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-35"
                     >
                       {loading ? "…" : "Load"}
                     </button>

@@ -143,7 +143,7 @@ export function DependencyGraph({
                     <button
                       key={file}
                       onClick={() => onSelect(file)}
-                      className="block w-full rounded-card border border-line bg-surface/70 px-3 py-2.5 text-left font-mono text-[11px] text-ink transition hover:border-ink/40"
+                      className="block w-full rounded-chip border border-line bg-surface/70 px-3 py-2.5 text-left font-mono text-[11px] text-ink transition hover:border-ink/40"
                     >
                       {file}
                     </button>

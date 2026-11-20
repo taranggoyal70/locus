@@ -243,7 +243,7 @@ export function Aperture() {
             <button
               type="submit"
               disabled={!task.trim()}
-              className={`shrink-0 rounded-card bg-ink px-5 py-2.5 text-sm font-semibold text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${isPressed ? "scale-[0.97]" : ""}`}
+              className={`shrink-0 rounded-chip bg-ink px-5 py-2.5 text-sm font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${isPressed ? "scale-[0.97]" : ""}`}
             >
               Localize
             </button>

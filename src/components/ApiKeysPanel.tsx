@@ -133,7 +133,7 @@ export function ApiKeysPanel() {
         <button
           onClick={createKey}
           disabled={creating}
-          className="shrink-0 rounded-card bg-ink px-4 py-2.5 text-sm font-semibold text-canvas transition hover:bg-ink/90 disabled:opacity-40"
+          className="shrink-0 rounded-chip bg-ink px-4 py-2.5 text-sm font-medium text-canvas transition hover:bg-ink/90 disabled:opacity-40"
         >
           {creating ? "Creating..." : "Create key"}
         </button>

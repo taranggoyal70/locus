@@ -137,7 +137,7 @@ export function CloudflareConnectionPanel() {
             type="button"
             onClick={saveConnection}
             disabled={saving || !accountId.trim() || !apiToken.trim()}
-            className="rounded-card bg-ink px-4 py-2.5 text-sm font-semibold text-canvas disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-chip bg-ink px-4 py-2.5 text-sm font-medium text-canvas disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? "Saving…" : status?.configured ? "Replace connection" : "Connect Cloudflare"}
           </button>
@@ -146,7 +146,7 @@ export function CloudflareConnectionPanel() {
               type="button"
               onClick={removeConnection}
               disabled={saving}
-              className="rounded-card border border-failed/35 px-4 py-2.5 text-sm font-semibold text-failed disabled:opacity-40"
+              className="rounded-chip border border-failed/35 px-4 py-2.5 text-sm font-medium text-failed disabled:opacity-40"
             >
               Remove connection
             </button>

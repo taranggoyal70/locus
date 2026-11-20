@@ -140,7 +140,7 @@ export function AgentRunsList() {
       <div className="rounded-card border border-line bg-surface p-12 text-center">
         <p className="text-sm font-medium text-ink">No Agent Runs yet.</p>
         <p className="mt-2 text-xs text-ink-2">Localize a real Repo and start a Run from the workspace.</p>
-        <Link href="/workspace" className="mt-5 inline-block rounded-card bg-ink px-4 py-2.5 text-sm font-semibold text-canvas">
+        <Link href="/workspace" className="mt-5 inline-block rounded-chip bg-ink px-4 py-2.5 text-sm font-medium text-canvas">
           Start a Run
         </Link>
       </div>
@@ -228,7 +228,7 @@ export function AgentRunsList() {
                   Ready for review. External GitHub writes remain disabled during early access.
                 </p>
               )}
-              {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-card bg-ink px-4 py-3.5 text-sm font-semibold text-canvas"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
+              {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-chip bg-ink px-4 py-3.5 text-sm font-medium text-canvas"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
               {isActiveRun(selectedSnapshot.run.status) && (
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="text-xs font-medium text-included hover:underline">Resume this Run in the workspace</Link>
@@ -236,7 +236,7 @@ export function AgentRunsList() {
                     type="button"
                     onClick={() => void cancelRun(selectedSnapshot.run.id)}
                     disabled={cancelingRunId === selectedSnapshot.run.id}
-                    className="rounded-card border border-failed/35 px-3 py-2 text-xs font-medium text-failed transition hover:bg-failed/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-chip border border-failed/35 px-3 py-2 text-xs font-medium text-failed transition hover:bg-failed/10 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {cancelingRunId === selectedSnapshot.run.id ? "Cancelling..." : "Cancel Run"}
                   </button>

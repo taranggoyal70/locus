@@ -73,7 +73,7 @@ export function ProjectsList() {
         </p>
         <Link
           href="/workspace"
-          className="mt-4 inline-block rounded-card bg-ink px-4 py-2 text-sm font-semibold text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/90 active:scale-[0.97]"
+          className="mt-4 inline-block rounded-chip bg-ink px-4 py-2 text-sm font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/90 active:scale-[0.97]"
         >
           Go to workspace
         </Link>

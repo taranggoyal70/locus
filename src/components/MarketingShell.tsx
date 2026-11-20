@@ -114,9 +114,9 @@ export function MarketingShell({
                   {column.links.map((link) => (
                     <li key={link.href}>
                       {"external" in link ? (
-                        <a href={link.href} className="inline-block py-1 text-[14.5px] text-ink-2 transition-colors duration-150 hover:text-ink">{link.label}</a>
+                        <a href={link.href} className="inline-block py-1 text-[15px] text-ink-2 transition-colors duration-150 hover:text-ink">{link.label}</a>
                       ) : (
-                        <Link href={link.href} className="inline-block py-1 text-[14.5px] text-ink-2 transition-colors duration-150 hover:text-ink">{link.label}</Link>
+                        <Link href={link.href} className="inline-block py-1 text-[15px] text-ink-2 transition-colors duration-150 hover:text-ink">{link.label}</Link>
                       )}
                     </li>
                   ))}

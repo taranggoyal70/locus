@@ -84,14 +84,14 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center rounded-chip border border-line-2 bg-surface p-1" role="group" aria-label="Choose explanation level">
-              <button type="button" onClick={() => setAudience("plain")} aria-pressed={plainLanguage} className={`rounded-chip px-3 py-1.5 text-xs font-semibold transition ${plainLanguage ? "bg-ink text-canvas" : "text-ink-2 hover:text-ink"}`}>
+              <button type="button" onClick={() => setAudience("plain")} aria-pressed={plainLanguage} className={`rounded-chip px-3 py-1.5 text-xs font-medium transition ${plainLanguage ? "bg-ink text-canvas" : "text-ink-2 hover:text-ink"}`}>
                 Plain English
               </button>
-              <button type="button" onClick={() => setAudience("developer")} aria-pressed={!plainLanguage} className={`rounded-chip px-3 py-1.5 text-xs font-semibold transition ${!plainLanguage ? "bg-ink text-canvas" : "text-ink-2 hover:text-ink"}`}>
+              <button type="button" onClick={() => setAudience("developer")} aria-pressed={!plainLanguage} className={`rounded-chip px-3 py-1.5 text-xs font-medium transition ${!plainLanguage ? "bg-ink text-canvas" : "text-ink-2 hover:text-ink"}`}>
                 Developer evidence
               </button>
             </div>
-            <Link href="/workspace" className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-ink transition hover:text-included">
+            <Link href="/workspace" className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-ink underline decoration-line-2 underline-offset-4 transition-colors hover:decoration-ink">
               {plainLanguage ? "Try it on a public project →" : "Try the live Localizer →"}
             </Link>
           </div>
@@ -99,10 +99,10 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
 
         <header className="grid gap-7 py-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end lg:py-14">
           <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-included">{plainLanguage ? "One task. 1,842 files." : "Locus Guard pilot"}</p>
+            <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{plainLanguage ? "One task. 1,842 files." : "Locus Guard pilot"}</p>
             <h1 className="mt-4 max-w-5xl font-display text-[clamp(3.2rem,7vw,7.2rem)] font-normal leading-[0.98] tracking-[-0.02em] text-ink">
               {plainLanguage ? "Your AI changed the code." : "Let agents code."}
-              <span className="mt-2 block text-ink-2">{plainLanguage ? "Locus proves what it touched." : "Gate what can merge."}</span>
+              <span className="mt-2 block text-muted">{plainLanguage ? "Locus proves what it touched." : "Gate what can merge."}</span>
             </h1>
           </div>
           <div className="border-l border-line-2 pl-5">
@@ -114,7 +114,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
             <button
               type="button"
               onClick={play}
-              className="mt-5 inline-flex min-w-48 items-center justify-center gap-3 rounded-card bg-ink px-5 py-3 text-sm font-semibold text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/90 active:scale-[0.97] disabled:cursor-wait disabled:opacity-80"
+              className="mt-5 inline-flex min-w-48 items-center justify-center gap-3 rounded-chip bg-ink px-5 py-3 text-sm font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/90 active:scale-[0.97] disabled:cursor-wait disabled:opacity-80"
               disabled={playing}
             >
               <span className="text-lg leading-none" aria-hidden="true">{playing ? "◌" : stage === 4 ? "↻" : "▶"}</span>
@@ -276,7 +276,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 const active = itemStage === stage;
                 const complete = itemStage < stage;
                 return (
-                  <button key={item.label} type="button" onClick={() => inspect(itemStage)} className={`rounded-card px-3 py-3 text-left transition ${active ? "bg-line-2" : "hover:bg-surface"}`} aria-current={active ? "step" : undefined}>
+                  <button key={item.label} type="button" onClick={() => inspect(itemStage)} className={`rounded-chip px-3 py-3 text-left transition ${active ? "bg-line-2" : "hover:bg-surface"}`} aria-current={active ? "step" : undefined}>
                     <span className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink">
                       <span className={`grid h-5 w-5 place-items-center rounded-chip border text-[11px] ${active || complete ? "border-included bg-included text-canvas" : "border-line-2 text-muted"}`}>{complete ? "✓" : itemStage}</span>
                       {item.label}
