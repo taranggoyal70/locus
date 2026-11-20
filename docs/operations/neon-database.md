@@ -2,17 +2,21 @@
 
 Locus stores everything in one PostgreSQL database on Neon (resource `locus-db`,
 `us-east-1`), connected to the Vercel project through the Marketplace
-integration. The integration sets `DATABASE_URL` (pooled) and
-`DATABASE_URL_UNPOOLED` (direct). See ADR 0005 for why.
+integration for **Production only**. The integration sets `DATABASE_URL`
+(pooled) and `DATABASE_URL_UNPOOLED` (direct) as Sensitive variables, so they
+cannot be pulled back out of Vercel. See ADR 0005 for why.
 
 ## Apply migrations
 
 Migrations are not applied by a deploy. Apply them before merging a change that
 needs them, so the running build never sees a schema it does not know:
 
+Copy the direct (unpooled) connection string from the Neon console (**Open in
+Neon** on the `locus-db` page in Vercel, then **Connect**) and pass it for this
+one command only, so it never lands in a file:
+
 ```bash
-vercel env pull .env.local --environment=production   # or a narrower file
-pnpm db:migrate
+DATABASE_URL_UNPOOLED='postgresql://…' pnpm db:migrate
 ```
 
 `pnpm db:migrate` prefers `DATABASE_URL_UNPOOLED`, takes an advisory lock so two
@@ -59,8 +63,10 @@ Supabase, which keeps every row written before the move.
 
 ## Preview and development
 
-The Marketplace integration can attach the same database to Preview and
-Development. Preview deployments must not write production rows: either detach
-those environments from `locus-db`, or give them their own Neon branch. Local
-development uses its own database (a Neon branch or a local PostgreSQL) in
-`.env.local`.
+`locus-db` is attached to Production only (since 2026-11-19), so Preview and
+Development deployments have no database: `/api/health` reports `database`
+missing and database routes fail closed, as they did under Supabase. To give
+previews a database, enable **Create Database Branch For Deployment > Preview**
+on the connection, which gives each preview its own Neon branch; never attach
+`locus-db` itself. Local development uses its own database (a Neon branch or a
+local PostgreSQL) in `.env.local`.
