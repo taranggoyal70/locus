@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { calculateTokenLedger } from "@/lib/agent/coding-agent";
 import { controlledAlphaTokenView } from "@/lib/agent/run-view";
-import { tenantClient } from "@/lib/supabase-tenant";
+import { tenantDb } from "@/lib/db";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -17,32 +17,34 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Invalid run identifier." }, { status: 400 });
   }
 
-  const db = tenantClient(userId);
-  const { data: run, error: runError } = await db
-    .from("agent_runs")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", userId)
-    .single();
-  if (runError || !run) return NextResponse.json({ error: "Agent run not found." }, { status: 404 });
+  const db = tenantDb(userId);
+  const run = await db
+    .selectFrom("agent_runs")
+    .selectAll()
+    .where("id", "=", id)
+    .where("user_id", "=", userId)
+    .executeTakeFirst()
+    .catch(() => undefined);
+  if (!run) return NextResponse.json({ error: "Agent run not found." }, { status: 404 });
 
-  const [taskResult, stepsResult, artifactsResult, approvalsResult, reviewsResult] = await Promise.all([
-    db.from("agent_tasks").select("*").eq("id", run.task_id).eq("user_id", userId).single(),
-    db.from("agent_steps").select("*").eq("run_id", id).eq("user_id", userId).order("sequence"),
-    db.from("agent_artifacts").select("*").eq("run_id", id).eq("user_id", userId).order("created_at"),
-    db.from("agent_approvals").select("*").eq("run_id", id).eq("user_id", userId).order("created_at"),
-    db.from("agent_reviews").select("*").eq("run_id", id).eq("user_id", userId).order("created_at"),
-  ]);
-
-  if (
-    taskResult.error
-    || stepsResult.error
-    || artifactsResult.error
-    || approvalsResult.error
-    || reviewsResult.error
-  ) {
+  let evidence;
+  try {
+    evidence = await Promise.all([
+      db.selectFrom("agent_tasks").selectAll().where("id", "=", run.task_id).where("user_id", "=", userId)
+        .executeTakeFirstOrThrow(),
+      db.selectFrom("agent_steps").selectAll().where("run_id", "=", id).where("user_id", "=", userId)
+        .orderBy("sequence").execute(),
+      db.selectFrom("agent_artifacts").selectAll().where("run_id", "=", id).where("user_id", "=", userId)
+        .orderBy("created_at").execute(),
+      db.selectFrom("agent_approvals").selectAll().where("run_id", "=", id).where("user_id", "=", userId)
+        .orderBy("created_at").execute(),
+      db.selectFrom("agent_reviews").selectAll().where("run_id", "=", id).where("user_id", "=", userId)
+        .orderBy("created_at").execute(),
+    ]);
+  } catch {
     return NextResponse.json({ error: "Could not load complete run evidence." }, { status: 500 });
   }
+  const [task, steps, artifacts, approvals, reviews] = evidence;
 
   const tokenLedger = calculateTokenLedger({
     baselineContextTokens: run.baseline_tokens,
@@ -53,11 +55,11 @@ export async function GET(_request: Request, context: RouteContext) {
   });
   return NextResponse.json({
     run,
-    task: taskResult.data,
-    steps: stepsResult.data,
-    artifacts: artifactsResult.data,
-    approvals: approvalsResult.data,
-    reviews: reviewsResult.data,
+    task,
+    steps,
+    artifacts,
+    approvals,
+    reviews,
     tokens: controlledAlphaTokenView(tokenLedger),
   });
 }

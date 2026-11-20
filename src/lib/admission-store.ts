@@ -1,5 +1,6 @@
 import { isAdmissionTier, type AdmissionTier } from "@/lib/admission";
-import { globalClient, tenantClient } from "@/lib/supabase-tenant";
+import { globalDb, tenantDb } from "@/lib/db";
+import { databaseErrorCode } from "@/lib/db/errors";
 
 /** How an Admission record came to exist. Mirrors the source check in migration 018. */
 export type AdmissionSource = "self_serve" | "operator" | "subscription";
@@ -8,6 +9,10 @@ export type StoredAdmission = {
   tier: AdmissionTier;
   source: AdmissionSource;
 };
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 /** Postgres unique_violation. The only insert failure that is a lost race rather than a bug. */
 const UNIQUE_VIOLATION = "23505";
@@ -33,15 +38,17 @@ function toStoredAdmission(row: { tier: string; source: string }): StoredAdmissi
  * is how a suspended account gets back in.
  */
 export async function readStoredAdmission(userId: string): Promise<StoredAdmission | null> {
-  const db = tenantClient(userId);
-  const { data, error } = await db
-    .from("account_admissions")
-    .select("tier,source")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) throw new Error(`Admission could not be read: ${error.message}`);
-  return data ? toStoredAdmission(data) : null;
+  let row: { tier: string; source: string } | undefined;
+  try {
+    row = await tenantDb(userId)
+      .selectFrom("account_admissions")
+      .select(["tier", "source"])
+      .where("user_id", "=", userId)
+      .executeTakeFirst();
+  } catch (error) {
+    throw new Error(`Admission could not be read: ${errorMessage(error)}`, { cause: error });
+  }
+  return row ? toStoredAdmission(row) : null;
 }
 
 /**
@@ -59,15 +66,16 @@ export async function readStoredAdmission(userId: string): Promise<StoredAdmissi
  * silently answers "no subscription" during an outage makes that impossible.
  */
 export async function hasActiveSubscription(userId: string): Promise<boolean> {
-  const db = tenantClient(userId);
-  const { data, error } = await db
-    .from("subscriptions")
-    .select("status")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) throw new Error(`Account subscription could not be read: ${error.message}`);
-  return data?.status === "active";
+  try {
+    const row = await tenantDb(userId)
+      .selectFrom("subscriptions")
+      .select("status")
+      .where("user_id", "=", userId)
+      .executeTakeFirst();
+    return row?.status === "active";
+  } catch (error) {
+    throw new Error(`Account subscription could not be read: ${errorMessage(error)}`, { cause: error });
+  }
 }
 
 /**
@@ -83,34 +91,34 @@ export async function admitSelfServe(userId: string): Promise<StoredAdmission> {
   const existing = await readStoredAdmission(userId);
   if (existing) return existing;
 
-  const db = tenantClient(userId);
-  const { error } = await db
-    .from("account_admissions")
-    .insert({ user_id: userId, tier: "free", source: "self_serve" })
-    .select("tier,source")
-    .single();
-
-  if (!error) return { tier: "free", source: "self_serve" };
-
-  // Two tabs, one new account: the loser's insert violates the primary key. The
-  // right answer is the row that landed, not an error the user has to read. Any
-  // other failure is a real one and must not be reported as an admission.
-  if (error.code === UNIQUE_VIOLATION) {
-    const settled = await readStoredAdmission(userId);
-    if (settled) return settled;
+  try {
+    await tenantDb(userId)
+      .insertInto("account_admissions")
+      .values({ user_id: userId, tier: "free", source: "self_serve" })
+      .execute();
+    return { tier: "free", source: "self_serve" };
+  } catch (error) {
+    // Two tabs, one new account: the loser's insert violates the primary key.
+    // The right answer is the row that landed, not an error the user has to
+    // read. Any other failure is a real one and must not be reported as an
+    // admission.
+    if (databaseErrorCode(error) === UNIQUE_VIOLATION) {
+      const settled = await readStoredAdmission(userId);
+      if (settled) return settled;
+    }
+    throw new Error(`Admission could not be recorded: ${errorMessage(error)}`, { cause: error });
   }
-  throw new Error(`Admission could not be recorded: ${error.message}`);
 }
 
 /**
  * How many accounts self-serve has admitted on this deployment.
  *
  * Genuinely cross-tenant: the ceiling is a property of the deployment, not of
- * the account asking, so this uses globalClient with a stated reason rather than
+ * the account asking, so this uses globalDb with a stated reason rather than
  * the tenant guard. It is one of the enumerable exceptions that module exists to
  * keep enumerable.
  *
- * Counted with `head: true`, so the rows never leave the database - the answer
+ * Counted in the database, so the rows never leave it - the answer
  * is a number and transferring the identities of every admitted account to
  * produce it would be both slower and a needless widening of what this read can
  * see.
@@ -120,12 +128,14 @@ export async function admitSelfServe(userId: string): Promise<StoredAdmission> {
  * should not consume that budget, and a paying customer certainly should not.
  */
 export async function countSelfServeAdmissions(): Promise<number> {
-  const db = globalClient("counting self-serve admissions against the deployment ceiling");
-  const { count, error } = await db
-    .from("account_admissions")
-    .select("user_id", { count: "exact", head: true })
-    .eq("source", "self_serve");
-
-  if (error) throw new Error(`Self-serve admission count failed: ${error.message}`);
-  return count ?? 0;
+  try {
+    const row = await globalDb("counting self-serve admissions against the deployment ceiling")
+      .selectFrom("account_admissions")
+      .select((eb) => eb.fn.countAll<number>().as("count"))
+      .where("source", "=", "self_serve")
+      .executeTakeFirstOrThrow();
+    return Number(row.count);
+  } catch (error) {
+    throw new Error(`Self-serve admission count failed: ${errorMessage(error)}`, { cause: error });
+  }
 }

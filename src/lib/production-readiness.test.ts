@@ -1,11 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { sql } from "kysely";
+import { afterEach, describe, expect, it } from "vitest";
 
-import { productionReadiness } from "@/lib/production-readiness";
+import { SCHEMA_VERSION } from "@/lib/db/schema";
+import { probeDatabase, productionReadiness, schemaIsCurrent } from "@/lib/production-readiness";
+import { createTestDatabase, type TestDatabase } from "@/test/database";
 
 const complete = {
-  NEXT_PUBLIC_SUPABASE_URL: "https://project.supabase.co",
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_test_value_that_is_long_enough",
-  SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test_value_that_is_long_enough",
+  DATABASE_URL: "postgresql://locus@db.example/locus",
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_value",
   CLERK_SECRET_KEY: "sk_test_value",
   ALPHA_ALLOWED_USER_IDS: "user_partner",
@@ -17,34 +18,7 @@ const complete = {
   OPS_ALERT_WEBHOOK_URL: "https://alerts.example/locus",
 };
 
-const requiredSchemaPaths = {
-  "/agent_provider_credentials": {},
-  "/agent_provider_daily_claims": {},
-  "/agent_widen_events": {},
-  "/rpc/claim_agent_provider_daily_slot": {},
-  "/rpc/claim_agent_run_slot": {},
-};
-
-function successfulProbeResponse(input: string | URL): Response {
-  return String(input).endsWith("/rest/v1/")
-    ? Response.json({ paths: requiredSchemaPaths })
-    : new Response(null, { status: 200 });
-}
-
-const databaseReady = vi.fn(async (input: string | URL) => successfulProbeResponse(input));
-
-function recordingProbe() {
-  return vi.fn(async (input: string | URL, init?: RequestInit) => {
-    void init;
-    return successfulProbeResponse(input);
-  });
-}
-
-function legacyKey(role: "anon" | "service_role", ref = "project") {
-  const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url");
-  const payload = Buffer.from(JSON.stringify({ iss: "supabase", ref, role })).toString("base64url");
-  return `${header}.${payload}.${"x".repeat(64)}`;
-}
+const databaseReady = async () => true;
 
 describe("production readiness", () => {
   it("reports the runtime ready without exposing environment values", async () => {
@@ -107,103 +81,8 @@ describe("production readiness", () => {
     });
   });
 
-  it.each([
-    { name: "an invalid Supabase URL", environment: { ...complete, NEXT_PUBLIC_SUPABASE_URL: "not-a-url" } },
-    { name: "a non-Supabase database URL", environment: { ...complete, NEXT_PUBLIC_SUPABASE_URL: "https://database.example.com" } },
-    { name: "a missing browser key", environment: { ...complete, NEXT_PUBLIC_SUPABASE_ANON_KEY: "" } },
-    { name: "a placeholder browser key", environment: { ...complete, NEXT_PUBLIC_SUPABASE_ANON_KEY: "***********" } },
-    { name: "a placeholder service key", environment: { ...complete, SUPABASE_SERVICE_ROLE_KEY: "***********" } },
-  ])("fails closed for $name", async ({ environment }) => {
-    await expect(productionReadiness(environment, databaseReady)).resolves.toMatchObject({
-      ready: false,
-      missing: ["database"],
-    });
-  });
-
-  it("rejects swapped legacy Supabase roles before probing the backend", async () => {
-    const probe = vi.fn(async () => new Response(null, { status: 200 }));
-
-    await expect(productionReadiness({
-      ...complete,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: legacyKey("service_role"),
-      SUPABASE_SERVICE_ROLE_KEY: legacyKey("anon"),
-    }, probe)).resolves.toMatchObject({ ready: false, missing: ["database"] });
-    expect(probe).not.toHaveBeenCalled();
-  });
-
-  it("probes modern Supabase keys only through the apikey header", async () => {
-    const probe = recordingProbe();
-
-    await productionReadiness(complete, probe);
-
-    expect(probe.mock.calls.map(([, init]) => init?.headers)).toEqual([
-      { apikey: complete.NEXT_PUBLIC_SUPABASE_ANON_KEY },
-      { apikey: complete.SUPABASE_SERVICE_ROLE_KEY },
-      { apikey: complete.SUPABASE_SERVICE_ROLE_KEY },
-    ]);
-  });
-
-  it("validates the public key through Auth and the service key through PostgREST", async () => {
-    const probe = recordingProbe();
-
-    await productionReadiness(complete, probe);
-
-    expect(probe.mock.calls.map(([input]) => String(input))).toEqual([
-      "https://project.supabase.co/auth/v1/settings",
-      "https://project.supabase.co/rest/v1/",
-      "https://project.supabase.co/rest/v1/agent_runs?select=provider%2Cexecution_mode&limit=0",
-    ]);
-  });
-
-  it("adds bearer authorization only for legacy JWT keys", async () => {
-    const publicKey = legacyKey("anon");
-    const serviceKey = legacyKey("service_role");
-    const probe = recordingProbe();
-
-    await productionReadiness({
-      ...complete,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: publicKey,
-      SUPABASE_SERVICE_ROLE_KEY: serviceKey,
-    }, probe);
-
-    expect(probe.mock.calls.map(([, init]) => init?.headers)).toEqual([
-      { apikey: publicKey, Authorization: `Bearer ${publicKey}` },
-      { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
-      { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
-    ]);
-  });
-
-  it("fails closed until the free-beta tables, columns, and RPCs are visible", async () => {
-    const staleSchema = vi.fn(async (input: string | URL) => String(input).endsWith("/rest/v1/")
-      ? Response.json({ paths: { "/agent_runs": {} } })
-      : new Response(null, { status: 200 }));
-
-    await expect(productionReadiness(complete, staleSchema)).resolves.toMatchObject({
-      ready: false,
-      missing: ["database"],
-    });
-  });
-
-  it("fails closed until Agent widen evidence storage is visible", async () => {
-    const schemaWithoutWidenEvents = { ...requiredSchemaPaths };
-    delete (schemaWithoutWidenEvents as Partial<typeof requiredSchemaPaths>)["/agent_widen_events"];
-    const staleSchema = vi.fn(async (input: string | URL) => String(input).endsWith("/rest/v1/")
-      ? Response.json({ paths: schemaWithoutWidenEvents })
-      : new Response(null, { status: 200 }));
-
-    await expect(productionReadiness(complete, staleSchema)).resolves.toMatchObject({
-      ready: false,
-      missing: ["database"],
-    });
-  });
-
-  it("fails closed when Supabase rejects a well-shaped credential", async () => {
-    const rejectedCredential = vi.fn()
-      .mockResolvedValueOnce(new Response(null, { status: 200 }))
-      .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(new Response(null, { status: 200 }));
-
-    await expect(productionReadiness(complete, rejectedCredential)).resolves.toMatchObject({
+  it("reports the database missing when the probe fails", async () => {
+    await expect(productionReadiness(complete, async () => false)).resolves.toMatchObject({
       ready: false,
       missing: ["database"],
     });
@@ -257,5 +136,39 @@ describe("run admission readiness", () => {
   it("reports which door is open so an operator can see it without guessing", async () => {
     const invited = await productionReadiness(complete, databaseReady);
     expect(invited.admission).toBe("invite_only");
+  });
+});
+
+describe("database readiness", () => {
+  let database: TestDatabase | undefined;
+
+  afterEach(async () => {
+    await database?.destroy();
+    database = undefined;
+  });
+
+  it("fails closed without a connection string, before trying to connect", async () => {
+    await expect(probeDatabase({ ...complete, DATABASE_URL: "" })).resolves.toBe(false);
+    await expect(probeDatabase({ ...complete, DATABASE_URL: "   " })).resolves.toBe(false);
+  });
+
+  it("is ready when the newest migration this build knows about is recorded", async () => {
+    database = await createTestDatabase();
+
+    await expect(schemaIsCurrent(database)).resolves.toBe(true);
+  });
+
+  it("is unready when the database is behind this build", async () => {
+    database = await createTestDatabase();
+    await sql`delete from public.schema_migrations where name = ${SCHEMA_VERSION}`.execute(database);
+
+    await expect(schemaIsCurrent(database)).resolves.toBe(false);
+  });
+
+  it("is unready, not crashing, when the ledger itself is missing", async () => {
+    database = await createTestDatabase();
+    await sql`drop table public.schema_migrations`.execute(database);
+
+    await expect(schemaIsCurrent(database)).resolves.toBe(false);
   });
 });

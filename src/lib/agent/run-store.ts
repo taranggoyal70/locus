@@ -1,4 +1,5 @@
-import type { Database, Json } from "@/lib/database.types";
+import type { Updateable } from "kysely";
+
 import type { AgentFailureKind } from "@/lib/agent/run-budget";
 import type { AgentCriterionDecision } from "@/lib/agent/run-review";
 import {
@@ -8,9 +9,15 @@ import {
   type RunStatus,
 } from "@/lib/agent/run-state";
 import type { WidenAttempt } from "@/lib/agent/workspace-tools";
-import { serviceClient } from "@/lib/supabase";
+import { globalDb, rpc, tenantDb, type Json } from "@/lib/db";
+import { jsonb } from "@/lib/db/json";
+import type { AgentRunsTable } from "@/lib/db/schema";
 
-type RunUpdate = Database["public"]["Tables"]["agent_runs"]["Update"];
+type RunUpdate = Updateable<AgentRunsTable>;
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 export async function transitionRun(input: {
   runId: string;
@@ -20,29 +27,38 @@ export async function transitionRun(input: {
   values?: Omit<RunUpdate, "status">;
 }): Promise<void> {
   assertRunTransition(input.current, input.next);
-  const db = serviceClient();
-  const { data, error } = await db
-    .from("agent_runs")
-    .update({ ...input.values, status: input.next })
-    .eq("id", input.runId)
-    .eq("user_id", input.userId)
-    .eq("status", input.current)
-    .select("id")
-    .single();
-  if (!error && data) return;
+  const db = tenantDb(input.userId);
+  let cause: unknown;
+  try {
+    const updated = await db
+      .updateTable("agent_runs")
+      .set({ ...input.values, status: input.next })
+      .where("id", "=", input.runId)
+      .where("user_id", "=", input.userId)
+      .where("status", "=", input.current)
+      .returning("id")
+      .executeTakeFirst();
+    if (updated) return;
+  } catch (error) {
+    cause = error;
+  }
 
   // Durable Workflow can replay a step after the database update committed but
   // before the step result was acknowledged. Treat that exact replay as
   // success while preserving the compare-and-swap guard for every other state.
-  const { data: currentRun, error: currentError } = await db
-    .from("agent_runs")
-    .select("status")
-    .eq("id", input.runId)
-    .eq("user_id", input.userId)
-    .single();
-  if (!isTerminalRun(input.next) && !currentError && currentRun?.status === input.next) return;
+  try {
+    const currentRun = await db
+      .selectFrom("agent_runs")
+      .select("status")
+      .where("id", "=", input.runId)
+      .where("user_id", "=", input.userId)
+      .executeTakeFirst();
+    if (!isTerminalRun(input.next) && currentRun?.status === input.next) return;
+  } catch (error) {
+    cause ??= error;
+  }
 
-  throw new Error(`Run could not transition from ${input.current} to ${input.next}`);
+  throw new Error(`Run could not transition from ${input.current} to ${input.next}`, { cause });
 }
 
 export async function patchRun(input: {
@@ -52,16 +68,20 @@ export async function patchRun(input: {
   values: Omit<RunUpdate, "status">;
 }): Promise<void> {
   if (isTerminalRun(input.current)) throw new Error("Terminal Runs cannot be rewritten");
-  const db = serviceClient();
-  const { data, error } = await db
-    .from("agent_runs")
-    .update(input.values)
-    .eq("id", input.runId)
-    .eq("user_id", input.userId)
-    .eq("status", input.current)
-    .select("id")
-    .single();
-  if (error || !data) throw new Error(`Run is no longer ${input.current}`);
+  let updated: { id: string } | undefined;
+  try {
+    updated = await tenantDb(input.userId)
+      .updateTable("agent_runs")
+      .set(input.values)
+      .where("id", "=", input.runId)
+      .where("user_id", "=", input.userId)
+      .where("status", "=", input.current)
+      .returning("id")
+      .executeTakeFirst();
+  } catch (error) {
+    throw new Error(`Run is no longer ${input.current}`, { cause: error });
+  }
+  if (!updated) throw new Error(`Run is no longer ${input.current}`);
 }
 
 export async function appendRunStep(input: {
@@ -75,20 +95,22 @@ export async function appendRunStep(input: {
   inputTokens?: number;
   outputTokens?: number;
 }): Promise<void> {
-  const db = serviceClient();
-  const { error } = await db.from("agent_steps").insert({
-    run_id: input.runId,
-    user_id: input.userId,
-    sequence: input.sequence,
-    kind: input.kind,
-    status: input.status,
-    title: input.title,
-    detail: input.detail ?? {},
-    input_tokens: input.inputTokens ?? 0,
-    output_tokens: input.outputTokens ?? 0,
-    completed_at: new Date().toISOString(),
-  });
-  if (error) throw new Error(`Could not append Run Step: ${error.message}`);
+  try {
+    await tenantDb(input.userId).insertInto("agent_steps").values({
+      run_id: input.runId,
+      user_id: input.userId,
+      sequence: input.sequence,
+      kind: input.kind,
+      status: input.status,
+      title: input.title,
+      detail: jsonb(input.detail ?? {}),
+      input_tokens: input.inputTokens ?? 0,
+      output_tokens: input.outputTokens ?? 0,
+      completed_at: new Date().toISOString(),
+    }).execute();
+  } catch (error) {
+    throw new Error(`Could not append Run Step: ${errorMessage(error)}`, { cause: error });
+  }
 }
 
 /**
@@ -108,20 +130,22 @@ export async function recordWidenAttempts(input: {
   attempts: WidenAttempt[];
 }): Promise<void> {
   if (input.attempts.length === 0) return;
-  const db = serviceClient();
-  const { error } = await db.from("agent_widen_events").insert(
-    input.attempts.map((attempt) => ({
-      run_id: input.runId,
-      user_id: input.userId,
-      sequence: attempt.sequence,
-      path: attempt.path.slice(0, 1000),
-      reason: attempt.reason.slice(0, 2000),
-      outcome: attempt.outcome,
-      refusal: attempt.refusal,
-      detail: attempt.detail ? attempt.detail.slice(0, 2000) : null,
-    })),
-  );
-  if (error) throw new Error(`Could not record Widen attempts: ${error.message}`);
+  try {
+    await tenantDb(input.userId).insertInto("agent_widen_events").values(
+      input.attempts.map((attempt) => ({
+        run_id: input.runId,
+        user_id: input.userId,
+        sequence: attempt.sequence,
+        path: attempt.path.slice(0, 1000),
+        reason: attempt.reason.slice(0, 2000),
+        outcome: attempt.outcome,
+        refusal: attempt.refusal,
+        detail: attempt.detail ? attempt.detail.slice(0, 2000) : null,
+      })),
+    ).execute();
+  } catch (error) {
+    throw new Error(`Could not record Widen attempts: ${errorMessage(error)}`, { cause: error });
+  }
 }
 
 export async function publishRunProposal(input: {
@@ -140,8 +164,10 @@ export async function publishRunProposal(input: {
   widenedFiles: string[];
   excludedFiles: string[];
 }): Promise<string> {
-  const db = serviceClient();
-  const { data, error } = await db.rpc("publish_agent_proposal", {
+  let rows: { proposal_hash: string | null }[] = [];
+  let failure: unknown;
+  try {
+    rows = await rpc(tenantDb(input.userId), "publish_agent_proposal", {
     p_run_id: input.runId,
     p_user_id: input.userId,
     p_base_revision: input.baseRevision,
@@ -156,21 +182,30 @@ export async function publishRunProposal(input: {
     p_output_tokens: input.outputTokens,
     p_widened_files: input.widenedFiles,
     p_excluded_files: input.excludedFiles,
-  });
-  const proposalHash = data?.[0]?.proposal_hash;
-  if (error || !proposalHash) {
-    throw new Error(`Could not atomically publish Agent proposal: ${error?.message ?? "missing hash"}`);
+    });
+  } catch (error) {
+    failure = error;
+  }
+  const proposalHash = rows[0]?.proposal_hash;
+  if (failure || !proposalHash) {
+    throw new Error(
+      `Could not atomically publish Agent proposal: ${failure ? errorMessage(failure) : "missing hash"}`,
+      { cause: failure },
+    );
   }
   return proposalHash;
 }
 
 export async function releaseRunProviderLease(runId: string): Promise<void> {
-  const db = serviceClient();
-  const { error } = await db.rpc("release_agent_provider_lease", {
-    p_run_id: runId,
-    p_cooldown_seconds: 60,
-  });
-  if (error) throw new Error(`Could not release provider capacity: ${error.message}`);
+  try {
+    // Provider capacity is shared by every account; the lease is keyed by Run.
+    await rpc(globalDb("provider capacity leases span accounts"), "release_agent_provider_lease", {
+      p_run_id: runId,
+      p_cooldown_seconds: 60,
+    });
+  } catch (error) {
+    throw new Error(`Could not release provider capacity: ${errorMessage(error)}`, { cause: error });
+  }
 }
 
 export async function decideRunProposal(input: {
@@ -181,19 +216,22 @@ export async function decideRunProposal(input: {
   criteria: AgentCriterionDecision[];
   note: string | null;
 }): Promise<{ status: "completed" | "rejected"; reviewId: string }> {
-  const db = serviceClient();
-  const { data, error } = await db.rpc("decide_agent_proposal", {
-    p_run_id: input.runId,
-    p_user_id: input.userId,
-    p_proposal_hash: input.proposalHash,
-    p_decision: input.decision,
-    p_criterion_decisions: input.criteria,
-    p_note: input.note,
-  });
-  const result = data?.[0];
+  let result: { run_status: string | null; review_id: string | null } | undefined;
+  try {
+    [result] = await rpc(tenantDb(input.userId), "decide_agent_proposal", {
+      p_run_id: input.runId,
+      p_user_id: input.userId,
+      p_proposal_hash: input.proposalHash,
+      p_decision: input.decision,
+      p_criterion_decisions: input.criteria as unknown as Json,
+      p_note: input.note,
+    });
+  } catch (error) {
+    throw new Error("Run proposal decision could not be recorded", { cause: error });
+  }
   if (
-    error
-    || !result
+    !result
+    || !result.review_id
     || (result.run_status !== "completed" && result.run_status !== "rejected")
   ) {
     throw new Error("Run proposal decision could not be recorded");
@@ -206,13 +244,19 @@ export async function failRun(
   message: string,
   failureKind: AgentFailureKind = "workflow_error",
 ): Promise<void> {
-  const db = serviceClient();
-  const { data: run, error } = await db
-    .from("agent_runs")
-    .select("user_id,status")
-    .eq("id", runId)
-    .single();
-  if (error || !run || !isRunStatus(run.status)) return;
+  let run: { user_id: string; status: string } | undefined;
+  try {
+    // Called from workflow failure handlers that hold only the Run id; this
+    // lookup is how the owner is found.
+    run = await globalDb("failing a Run resolves its owner from the Run id")
+      .selectFrom("agent_runs")
+      .select(["user_id", "status"])
+      .where("id", "=", runId)
+      .executeTakeFirst();
+  } catch {
+    return;
+  }
+  if (!run || !isRunStatus(run.status)) return;
   if (isTerminalRun(run.status)) return;
   await transitionRun({
     runId,

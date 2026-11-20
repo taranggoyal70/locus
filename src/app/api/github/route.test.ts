@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { db } from "@/lib/db/client";
+
 const authMock = vi.hoisted(() => vi.fn());
-const serviceClientMock = vi.hoisted(() => vi.fn());
 const consumeRateLimitMock = vi.hoisted(() => vi.fn());
 const trackMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
-vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
 vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 vi.mock("@/lib/analytics", () => ({ track: trackMock }));
 
@@ -23,7 +23,7 @@ function request(body: string, ip: string, headers: Record<string, string> = {})
 describe("GitHub repository API request guards", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_123" });
-    serviceClientMock.mockReset();
+    vi.mocked(db).mockClear();
     consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5, retryAfterSeconds: 0 });
   });
 
@@ -83,7 +83,7 @@ describe("GitHub repository API request guards", () => {
     const response = await POST(request('{"url":"owner/repo"}', "198.51.100.20"));
 
     expect(response.status).toBe(502);
-    expect(serviceClientMock).not.toHaveBeenCalled();
+    expect(db).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({ error: "GitHub returned an invalid repository tree." });
     fetchMock.mockRestore();
   });
@@ -99,7 +99,7 @@ describe("GitHub repository API request guards", () => {
       error: "Repo not found. Public early access supports public repositories only.",
       code: "unavailable",
     });
-    expect(serviceClientMock).not.toHaveBeenCalled();
+    expect(db).not.toHaveBeenCalled();
     fetchMock.mockRestore();
   });
 

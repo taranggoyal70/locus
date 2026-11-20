@@ -1,111 +1,76 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { sql } from "kysely";
+import { describe, expect, it } from "vitest";
 
+import { readRunUsage } from "@/lib/agent/run-usage";
 import { ACTIVE_RUN_STATUSES } from "@/lib/agent/run-state";
+import { setupTestDatabase } from "@/test/database";
+import { seedRun } from "@/test/fixtures";
 
-type Query = {
-  filters: Array<[string, unknown]>;
-  count: number | null;
-  error: { message: string } | null;
-};
+const database = setupTestDatabase();
+const HOUR_MS = 60 * 60 * 1_000;
 
-const queries: Query[] = [];
-const outcomes: Array<{ count: number | null; error: { message: string } | null }> = [];
-
-function builder() {
-  const query: Query = { filters: [], count: null, error: null };
-  queries.push(query);
-  const chain = {
-    select: () => chain,
-    eq(column: string, value: unknown) {
-      query.filters.push([column, value]);
-      return chain;
-    },
-    in(column: string, value: unknown) {
-      query.filters.push([column, value]);
-      return chain;
-    },
-    gte(column: string, value: unknown) {
-      query.filters.push([column, value]);
-      return chain;
-    },
-    or(expression: string) {
-      query.filters.push(["or", expression]);
-      return chain;
-    },
-    then(resolve: (value: { count: number | null; error: unknown }) => unknown) {
-      const outcome = outcomes.shift() ?? { count: 0, error: null };
-      return Promise.resolve(resolve(outcome));
-    },
-  };
-  return chain;
+function hoursAgo(hours: number): string {
+  return new Date(Date.now() - hours * HOUR_MS).toISOString();
 }
 
-vi.mock("@/lib/supabase-tenant", () => ({
-  tenantClient: () => ({ from: () => builder() }),
-}));
-
-const { readRunUsage } = await import("@/lib/agent/run-usage");
-
-beforeEach(() => {
-  queries.length = 0;
-  outcomes.length = 0;
-});
-
 describe("readRunUsage", () => {
-  it("reports the active and daily counts", async () => {
-    outcomes.push({ count: 1, error: null }, { count: 7, error: null });
-    expect(await readRunUsage("user_1")).toEqual({ activeRuns: 1, runsInLast24Hours: 7 });
+  it("reports the active and rolling-day counts", async () => {
+    await seedRun(database(), "user_1", { status: "queued" });
+    await seedRun(database(), "user_1", { status: "completed" });
+    await seedRun(database(), "user_1", { status: "completed", created_at: hoursAgo(30) });
+
+    expect(await readRunUsage("user_1")).toEqual({ activeRuns: 1, runsInLast24Hours: 2 });
   });
 
   it("counts only the caller's Runs", async () => {
-    outcomes.push({ count: 0, error: null }, { count: 0, error: null });
-    await readRunUsage("user_1");
-    for (const query of queries) {
-      expect(query.filters).toContainEqual(["user_id", "user_1"]);
-    }
+    await seedRun(database(), "user_1", { status: "queued" });
+    await seedRun(database(), "user_2", { status: "queued" });
+    await seedRun(database(), "user_2", { status: "localizing" });
+
+    expect(await readRunUsage("user_1")).toEqual({ activeRuns: 1, runsInLast24Hours: 1 });
   });
 
   it("measures the day as a rolling window, matching the authoritative claim", async () => {
     // claim_agent_run_slot uses `now() - interval '24 hours'`. A calendar-day
     // window here would disagree with the database every evening, refusing a
     // user the interface had just told was clear.
-    outcomes.push({ count: 0, error: null }, { count: 0, error: null });
-    const before = Date.now();
-    await readRunUsage("user_1");
+    await seedRun(database(), "user_1", { status: "completed", created_at: hoursAgo(23.9) });
+    await seedRun(database(), "user_1", { status: "completed", created_at: hoursAgo(24.1) });
 
-    const since = queries
-      .flatMap((query) => query.filters)
-      .find(([column]) => column === "created_at")?.[1];
-    expect(typeof since).toBe("string");
-    const elapsed = before - Date.parse(since as string);
-    expect(elapsed).toBeGreaterThanOrEqual(24 * 60 * 60 * 1_000 - 5_000);
-    expect(elapsed).toBeLessThanOrEqual(24 * 60 * 60 * 1_000 + 5_000);
+    expect((await readRunUsage("user_1")).runsInLast24Hours).toBe(1);
   });
 
   it("does not charge attempts rejected before provider execution", async () => {
-    outcomes.push({ count: 0, error: null }, { count: 0, error: null });
-    await readRunUsage("user_1");
+    // Refused for provider capacity before the workflow started: kept as
+    // evidence, not charged.
+    await seedRun(database(), "user_1", { status: "failed", failure_kind: "quota_exhausted" });
+    // Each of these did execute, or failed for another reason, and is charged.
+    await seedRun(database(), "user_1", {
+      status: "failed",
+      failure_kind: "quota_exhausted",
+      workflow_run_id: "wrun_started",
+    });
+    await seedRun(database(), "user_1", { status: "failed", failure_kind: "workflow_error" });
+    await seedRun(database(), "user_1", { status: "completed" });
 
-    expect(queries[1]?.filters).toContainEqual([
-      "or",
-      "status.neq.failed,failure_kind.neq.quota_exhausted,workflow_run_id.not.is.null",
-    ]);
+    expect((await readRunUsage("user_1")).runsInLast24Hours).toBe(3);
   });
 
   it("counts exactly the statuses the Run lifecycle calls active", async () => {
-    outcomes.push({ count: 0, error: null }, { count: 0, error: null });
-    await readRunUsage("user_1");
-    expect(queries.flatMap((query) => query.filters)).toContainEqual([
-      "status",
-      [...ACTIVE_RUN_STATUSES],
-    ]);
+    for (const status of ACTIVE_RUN_STATUSES) await seedRun(database(), "user_1", { status });
+    for (const status of ["completed", "failed", "cancelled", "rejected"]) {
+      await seedRun(database(), "user_1", { status });
+    }
+
+    expect((await readRunUsage("user_1")).activeRuns).toBe(ACTIVE_RUN_STATUSES.length);
   });
 
   it("throws rather than reporting zero when a count fails", async () => {
     // Zero would read as "no Runs used", which admits a Run the account may not
     // be entitled to. The authoritative claim would still refuse it, but the
     // user would have been told they had room.
-    outcomes.push({ count: null, error: { message: "connection reset" } }, { count: 0, error: null });
+    await sql`drop table public.agent_runs cascade`.execute(database());
+
     await expect(readRunUsage("user_1")).rejects.toThrow(/usage/i);
   });
 });

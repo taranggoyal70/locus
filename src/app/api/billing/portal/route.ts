@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { accountCan } from "@/lib/admission-server";
 import { stripe } from "@/lib/stripe";
-import { tenantClient } from "@/lib/supabase-tenant";
+import { tenantDb } from "@/lib/db";
 
 export async function POST() {
   const { userId } = await auth();
@@ -15,12 +15,16 @@ export async function POST() {
     );
   }
 
-  const db = tenantClient(userId);
-  const { data } = await db
-    .from("subscriptions")
-    .select("stripe_customer_id")
-    .eq("user_id", userId)
-    .single();
+  let data: { stripe_customer_id: string | null } | undefined;
+  try {
+    data = await tenantDb(userId)
+      .selectFrom("subscriptions")
+      .select("stripe_customer_id")
+      .where("user_id", "=", userId)
+      .executeTakeFirst();
+  } catch {
+    return NextResponse.json({ error: "Subscription could not be read." }, { status: 500 });
+  }
 
   if (!data?.stripe_customer_id) {
     return NextResponse.json({ error: "No active subscription." }, { status: 404 });

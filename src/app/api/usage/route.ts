@@ -1,35 +1,39 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { tenantClient } from "@/lib/supabase-tenant";
+import { tenantDb } from "@/lib/db";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const db = tenantClient(userId);
+  const db = tenantDb(userId);
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [eventsResult, projectsResult, keysResult] = await Promise.all([
+  // Usage is a summary panel, so a part that cannot be read shows as empty
+  // rather than failing the whole page.
+  const countOf = (table: "projects" | "api_keys") => db
+    .selectFrom(table)
+    .select((eb) => eb.fn.countAll<number>().as("count"))
+    .where("user_id", "=", userId)
+    .executeTakeFirst()
+    .then((row) => Number(row?.count ?? 0), () => 0);
+
+  const [events, projectCount, keyCount] = await Promise.all([
     db
-      .from("events")
-      .select("event, created_at")
-      .eq("user_id", userId)
-      .gte("created_at", thirtyDaysAgo)
-      .order("created_at", { ascending: false })
-      .limit(500),
-    db
-      .from("projects")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId),
-    db
-      .from("api_keys")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId),
+      .selectFrom("events")
+      .select(["event", "created_at"])
+      .where("user_id", "=", userId)
+      .where("created_at", ">=", thirtyDaysAgo)
+      .orderBy("created_at", "desc")
+      .limit(500)
+      .execute()
+      .catch(() => []),
+    countOf("projects"),
+    countOf("api_keys"),
   ]);
 
-  const events = eventsResult.data ?? [];
   const byType: Record<string, number> = {};
   const byDay: Record<string, number> = {};
   for (const e of events) {
@@ -43,7 +47,7 @@ export async function GET() {
     totalEvents: events.length,
     byType,
     byDay,
-    projectCount: projectsResult.count ?? 0,
-    keyCount: keysResult.count ?? 0,
+    projectCount,
+    keyCount,
   });
 }

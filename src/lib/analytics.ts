@@ -1,5 +1,6 @@
-import type { Json } from "@/lib/database.types";
 import type { ClientAnalyticsEvent } from "@/lib/analytics-events";
+import { databaseConfigured, globalDb, jsonb } from "@/lib/db";
+import type { Json } from "@/lib/db/schema";
 import { logger } from "@/lib/logger";
 
 type ClientEventPayload = {
@@ -53,39 +54,37 @@ export type AnalyticsEventPayload =
       };
     };
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ANALYTICS_TIMEOUT_MS = 1_500;
 
+/**
+ * Records one product event. Analytics never fails or slows the request it
+ * describes: an unconfigured database skips it, and a write that errors or takes
+ * longer than ANALYTICS_TIMEOUT_MS is logged and abandoned.
+ */
 export async function track(payload: AnalyticsEventPayload) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  if (!databaseConfigured()) return;
 
   const { event, properties } = payload;
   const userId = "userId" in payload ? payload.userId : undefined;
 
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/events`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify({
-        event,
-        user_id: userId ?? null,
-        properties,
-      }),
-      signal: AbortSignal.timeout(ANALYTICS_TIMEOUT_MS),
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error("timeout")), ANALYTICS_TIMEOUT_MS);
     });
-    if (!response.ok) {
-      logger.warn("analytics_insert_failed", {
-        event,
-        status: response.status,
-      });
-    }
-  } catch {
-    logger.warn("analytics_insert_failed", { event, status: "network_error" });
+    // Some events (a waitlist request) happen before there is an account.
+    const write = globalDb("analytics events may precede an account")
+      .insertInto("events")
+      .values({ event, user_id: userId ?? null, properties: jsonb(properties) })
+      .execute();
+    write.catch(() => {});
+    await Promise.race([write, timeout]);
+  } catch (error) {
+    logger.warn("analytics_insert_failed", {
+      event,
+      status: error instanceof Error && error.message === "timeout" ? "timeout" : "database_error",
+    });
+  } finally {
+    clearTimeout(timer);
   }
 }

@@ -1,7 +1,6 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Kysely } from "kysely";
 
-import type { Database } from "@/lib/database.types";
-import { serviceClient } from "@/lib/supabase";
+import { globalDb, rpc, type Database } from "@/lib/db";
 
 type RateLimitInput = {
   namespace: string;
@@ -23,16 +22,25 @@ async function sha256(value: string): Promise<string> {
 
 export async function consumeRateLimit(
   input: RateLimitInput,
-  db: Pick<SupabaseClient<Database>, "rpc"> = serviceClient(),
+  database?: Kysely<Database>,
 ): Promise<RateLimitDecision> {
   const identityHash = await sha256(input.identity);
-  const { data, error } = await db.rpc("consume_api_rate_limit", {
-    p_bucket: `${input.namespace}:${identityHash}`,
-    p_limit: input.limit,
-    p_window_seconds: input.windowSeconds,
-  });
-  const row = data?.[0];
-  if (error || !row) throw new Error("Rate limit could not be verified");
+  let rows: Awaited<ReturnType<typeof rpc<"consume_api_rate_limit">>>;
+  try {
+    // A bucket is keyed by a hash of the caller, not by an account, so it spans
+    // tenants by design.
+    rows = await rpc(database ?? globalDb("rate limit buckets are keyed by caller hash"), "consume_api_rate_limit", {
+      p_bucket: `${input.namespace}:${identityHash}`,
+      p_limit: input.limit,
+      p_window_seconds: input.windowSeconds,
+    });
+  } catch (error) {
+    throw new Error("Rate limit could not be verified", { cause: error });
+  }
+  const row = rows[0];
+  if (!row || row.allowed === null || row.remaining === null || row.retry_after_seconds === null) {
+    throw new Error("Rate limit could not be verified");
+  }
 
   return {
     allowed: row.allowed,

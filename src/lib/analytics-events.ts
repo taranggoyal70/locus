@@ -1,4 +1,4 @@
-import type { Json } from "@/lib/database.types";
+import type { Json } from "@/lib/db/schema";
 
 /**
  * Analytics properties that arrive from a browser are user input. R13's privacy

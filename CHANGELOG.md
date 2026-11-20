@@ -11,8 +11,22 @@ Notable changes to Locus. Versions follow `package.json`; dates are UTC. This fi
   brace-expansion, devalue, vite, proxy-addr, body-parser, source-map-js, sharp, zod) inside their current major
   lines, so `pnpm audit --audit-level high` passes again.
 
+### Changed
+
+- The database moved from Supabase to Neon Postgres. The application now talks to Postgres directly through
+  Kysely and `pg` instead of the Supabase REST API, with query types generated from the migrations
+  (`pnpm db:types`) and a `pnpm db:migrate` runner that records a checksum for every applied file. Tenant
+  scoping is enforced on the query itself: a per-user query that does not filter on the signed-in user is
+  refused before it reaches the database. Configuration is `DATABASE_URL` in place of the three Supabase
+  variables. See [ADR 0005](docs/adr/0005-postgres-without-a-backend-service.md).
+- Database tests run against an in-process PostgreSQL with every migration applied, instead of mocked clients.
+  The Stripe ordering contract and the Admission store, previously opt-in against a live database, now run in CI.
+
 ### Fixed
 
+- The team member route, not yet released, never enforced its ten-member limit. The count is now checked
+  before the insert.
+- Removing a GitHub connection reported success when the delete failed.
 - The Stripe webhook acknowledged events whose database write had failed, so Stripe never retried them and a
   paid checkout or cancellation could be lost. A failed write now returns 500; a refused stale or duplicate event
   still returns 200.
