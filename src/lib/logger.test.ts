@@ -63,6 +63,18 @@ describe("secret redaction by value shape", () => {
     expect(redactSecrets("header: Basic dXNlcjpwYXNzd29yZA==")).toBe("header: Basic [REDACTED]");
   });
 
+  it("drops the credentials from a database connection string but keeps the host", () => {
+    // A connection error from the driver can echo the URL it was given.
+    const output = redactSecrets(
+      "connect failed: postgresql://neondb_owner:npg_s3cretValue@ep-x-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require",
+    );
+
+    expect(output).toBe(
+      "connect failed: postgresql://[REDACTED]@ep-x-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require",
+    );
+    expect(redactSecrets("postgres://app:pw@localhost:5432/locus")).toBe("postgres://[REDACTED]@localhost:5432/locus");
+  });
+
   it("removes every occurrence, not just the first", () => {
     const output = redactSecrets("lk_aaaaaaaaaaaa then lk_bbbbbbbbbbbb");
 

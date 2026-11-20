@@ -4,9 +4,10 @@ import { getRun } from "workflow/api";
 
 import { releaseRunProviderLease, transitionRun } from "@/lib/agent/run-store";
 import { isRunStatus, isTerminalRun } from "@/lib/agent/run-state";
+import { tenantDb } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { sameOriginMutation } from "@/lib/request-security";
-import { tenantClient } from "@/lib/supabase-tenant";
+
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -40,14 +41,14 @@ export async function POST(request: Request, context: RouteContext) {
 
   // Tenant-scoped read: a Run belonging to another user must be indistinguishable
   // from one that does not exist.
-  const db = tenantClient(userId);
-  const { data: run, error: runError } = await db
-    .from("agent_runs")
-    .select("id,status,workflow_run_id")
-    .eq("id", id)
-    .eq("user_id", userId)
-    .single();
-  if (runError || !run) return NextResponse.json({ error: "Agent run not found." }, { status: 404 });
+  const run = await tenantDb(userId)
+    .selectFrom("agent_runs")
+    .select(["id", "status", "workflow_run_id"])
+    .where("id", "=", id)
+    .where("user_id", "=", userId)
+    .executeTakeFirst()
+    .catch(() => undefined);
+  if (!run) return NextResponse.json({ error: "Agent run not found." }, { status: 404 });
   if (!isRunStatus(run.status)) {
     return NextResponse.json({ error: "Agent run has an unrecognized status." }, { status: 409 });
   }

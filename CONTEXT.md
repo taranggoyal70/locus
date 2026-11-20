@@ -292,7 +292,7 @@ _Avoid_: feature flag, toggle, permission.
   invited-partner allowlist with self-serve forced closed when those reads fail.
 - `src/lib/admission-store.ts` — `account_admissions` and `subscriptions` reads,
   and the first-visit `free` grant that never overwrites an existing record.
-- `supabase/migrations/018_account_admissions.sql` — durable Admission records.
+- `db/migrations/018_account_admissions.sql` — durable Admission records.
   A stored `visitor` is an explicit refusal, distinct from an absent row.
 - `src/lib/agent/run-state.ts` — valid **Run** lifecycle transitions and
   verified-only **Savings claim** rules.
@@ -300,11 +300,11 @@ _Avoid_: feature flag, toggle, permission.
 - `src/lib/agent/run-view.ts` — the shared **Run evidence snapshot** interface.
 - `src/components/AgentRunsList.tsx` — durable Run history, review, resume,
   cancellation, and approval.
-- `supabase/migrations/005_agent_runs.sql` — durable Agent Tasks, Runs, Steps,
+- `db/migrations/005_agent_runs.sql` — durable Agent Tasks, Runs, Steps,
   Artifacts, and Approvals.
-- `supabase/migrations/012_release1_run_evidence.sql` — immutable proposal
+- `db/migrations/012_release1_run_evidence.sql` — immutable proposal
   hashes, Reviews, and atomic review-ready publication.
-- `supabase/migrations/020_free_public_beta.sql` — frozen provider and **Agent
+- `db/migrations/020_free_public_beta.sql` — frozen provider and **Agent
   execution mode**, encrypted **Provider connections**, and atomic **Provider
   daily claims**.
 

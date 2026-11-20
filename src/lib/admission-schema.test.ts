@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ADMISSION_TIERS } from "@/lib/admission";
 
 const migration = readFileSync(
-  new URL("../../supabase/migrations/018_account_admissions.sql", import.meta.url),
+  new URL("../../db/migrations/018_account_admissions.sql", import.meta.url),
   "utf8",
 ).toLowerCase();
 
@@ -46,7 +46,7 @@ describe("Account admissions migration", () => {
 
 describe("Self-serve ceiling migration", () => {
   const ceiling = readFileSync(
-    new URL("../../supabase/migrations/019_self_serve_admission_ceiling.sql", import.meta.url),
+    new URL("../../db/migrations/019_self_serve_admission_ceiling.sql", import.meta.url),
     "utf8",
   ).toLowerCase();
 

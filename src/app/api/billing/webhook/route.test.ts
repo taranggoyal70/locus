@@ -1,31 +1,50 @@
+import { sql } from "kysely";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// R17: this route grants and revokes paid access and had no tests at all.
+import { setupTestDatabase } from "@/test/database";
+
+// R17: this route grants and revokes paid access.
 //
 // The property under test is not "does a duplicate event write twice": every
 // handler here is a last-write-wins write, so it does not. It is that a stale
 // event cannot undo a newer one. Stripe does not guarantee delivery order, so a
 // delayed `customer.subscription.updated` carrying `status: active` can arrive
 // after `customer.subscription.deleted` and restore access to a cancelled
-// account. The ordering guard lives in migration 017; these tests pin the
-// contract this route relies on it for.
+// account. The ordering guard lives in migration 017, and these tests run the
+// route against it on a real migrated database.
 
 const constructEventMock = vi.fn();
-const rpcMock = vi.fn();
 
 vi.mock("@/lib/stripe", () => ({
   stripe: () => ({ webhooks: { constructEvent: constructEventMock } }),
 }));
 
-vi.mock("@/lib/supabase-tenant", () => ({
-  globalClient: () => ({ rpc: rpcMock }),
-}));
-
 const { POST } = await import("@/app/api/billing/webhook/route");
 
+const database = setupTestDatabase();
+
 // 2026-01-01T12:00:00Z as Stripe delivers it: unix seconds.
-const EVENT_CREATED_SECONDS = 1_767_268_800;
-const EVENT_CREATED_ISO = new Date(EVENT_CREATED_SECONDS * 1_000).toISOString();
+const T = 1_767_268_800;
+const HOUR = 3_600;
+
+type StripeEvent = { id: string; created: number; type: string; data: { object: Record<string, unknown> } };
+
+function checkout(id: string, created: number, metadata: Record<string, string> = { userId: "user_paying" }): StripeEvent {
+  return {
+    id,
+    created,
+    type: "checkout.session.completed",
+    data: { object: { metadata, subscription: "sub_123", customer: "cus_123" } },
+  };
+}
+
+function updated(id: string, created: number, status: string): StripeEvent {
+  return { id, created, type: "customer.subscription.updated", data: { object: { id: "sub_123", status } } };
+}
+
+function deleted(id: string, created: number): StripeEvent {
+  return { id, created, type: "customer.subscription.deleted", data: { object: { id: "sub_123", status: "canceled" } } };
+}
 
 function webhookRequest(body = "{}", headers: Record<string, string> = {}) {
   return new Request("http://localhost/api/billing/webhook", {
@@ -35,12 +54,21 @@ function webhookRequest(body = "{}", headers: Record<string, string> = {}) {
   });
 }
 
+async function deliver(event: StripeEvent) {
+  constructEventMock.mockReturnValueOnce(event);
+  return POST(webhookRequest());
+}
+
+async function subscriptions() {
+  return database().selectFrom("subscriptions")
+    .select(["user_id", "stripe_customer_id", "stripe_subscription_id", "plan", "status", "last_event_id", "last_event_created_at"])
+    .execute();
+}
+
 beforeEach(() => {
   vi.unstubAllEnvs();
   vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec_test");
   constructEventMock.mockReset();
-  rpcMock.mockReset();
-  rpcMock.mockResolvedValue({ data: [{ applied: true, skipped_reason: null }], error: null });
 });
 
 describe("Stripe subscription webhook", () => {
@@ -48,7 +76,7 @@ describe("Stripe subscription webhook", () => {
     const response = await POST(webhookRequest("{}", { "stripe-signature": "" }));
 
     expect(response.status).toBe(400);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(constructEventMock).not.toHaveBeenCalled();
   });
 
   it("rejects a body whose signature does not verify", async () => {
@@ -60,7 +88,7 @@ describe("Stripe subscription webhook", () => {
 
     expect(response.status).toBe(400);
     // Nothing reaches the database on an unverified body.
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(await subscriptions()).toEqual([]);
   });
 
   it("refuses to run without a configured webhook secret", async () => {
@@ -73,145 +101,86 @@ describe("Stripe subscription webhook", () => {
   });
 
   it("grants access on checkout completion, carrying the event identity", async () => {
-    constructEventMock.mockReturnValue({
-      id: "evt_checkout",
-      created: EVENT_CREATED_SECONDS,
-      type: "checkout.session.completed",
-      data: {
-        object: {
-          metadata: { userId: "user_paying" },
-          subscription: "sub_123",
-          customer: "cus_123",
-        },
-      },
-    });
-
-    const response = await POST(webhookRequest());
+    const response = await deliver(checkout("evt_checkout", T));
 
     expect(response.status).toBe(200);
-    expect(rpcMock).toHaveBeenCalledWith("upsert_stripe_subscription", {
-      p_user_id: "user_paying",
-      p_customer_id: "cus_123",
-      p_subscription_id: "sub_123",
-      p_plan: "pro",
-      p_status: "active",
-      p_event_id: "evt_checkout",
-      p_event_created: EVENT_CREATED_ISO,
-    });
+    expect(await subscriptions()).toEqual([{
+      user_id: "user_paying",
+      stripe_customer_id: "cus_123",
+      stripe_subscription_id: "sub_123",
+      plan: "pro",
+      status: "active",
+      last_event_id: "evt_checkout",
+      last_event_created_at: new Date(T * 1_000).toISOString().replace("Z", "+00:00").replace(".000", ""),
+    }]);
   });
 
-  it("cancels through the guarded write rather than a bare update", async () => {
-    constructEventMock.mockReturnValue({
-      id: "evt_deleted",
-      created: EVENT_CREATED_SECONDS,
-      type: "customer.subscription.deleted",
-      data: { object: { id: "sub_123", status: "canceled" } },
-    });
+  it("cancels the subscription and drops it to the free plan", async () => {
+    await deliver(checkout("evt_checkout", T));
 
-    await POST(webhookRequest());
+    const response = await deliver(deleted("evt_deleted", T + HOUR));
 
-    expect(rpcMock).toHaveBeenCalledWith("apply_stripe_subscription_event", {
-      p_subscription_id: "sub_123",
-      p_status: "cancelled",
-      p_plan: "free",
-      p_event_id: "evt_deleted",
-      p_event_created: EVENT_CREATED_ISO,
-    });
+    expect(response.status).toBe(200);
+    expect(await subscriptions()).toMatchObject([{ plan: "free", status: "cancelled", last_event_id: "evt_deleted" }]);
   });
 
   it("leaves the plan alone on a status update", async () => {
-    constructEventMock.mockReturnValue({
-      id: "evt_updated",
-      created: EVENT_CREATED_SECONDS,
-      type: "customer.subscription.updated",
-      data: { object: { id: "sub_123", status: "past_due" } },
-    });
-
-    await POST(webhookRequest());
-
     // A non-active status must not be read as a downgrade to the free plan: this
     // event does not carry the plan, so guessing it would revoke paid features on
     // a recoverable payment failure.
-    expect(rpcMock).toHaveBeenCalledWith("apply_stripe_subscription_event", expect.objectContaining({
-      p_status: "inactive",
-      p_plan: null,
-    }));
+    await deliver(checkout("evt_checkout", T));
+
+    await deliver(updated("evt_updated", T + HOUR, "past_due"));
+
+    expect(await subscriptions()).toMatchObject([{ plan: "pro", status: "inactive" }]);
   });
 
-  it("passes the event timestamp so the database can refuse a stale event", async () => {
-    // The ordering guard is only as good as the watermark it is given. If the
-    // route sent its own clock instead of `event.created`, a stale event would
-    // look current and overwrite newer state.
-    const older = EVENT_CREATED_SECONDS - 3_600;
-    constructEventMock.mockReturnValue({
-      id: "evt_stale",
-      created: older,
-      type: "customer.subscription.updated",
-      data: { object: { id: "sub_123", status: "active" } },
-    });
-
-    await POST(webhookRequest());
-
-    const [, args] = rpcMock.mock.calls[0];
-    expect(args.p_event_created).toBe(new Date(older * 1_000).toISOString());
-    expect(args.p_event_created).not.toBe(EVENT_CREATED_ISO);
-  });
-
-  it("acknowledges an event the database refused as stale", async () => {
-    // A refusal is correct handling, not a failure. Returning non-2xx would make
+  it("does not let a delayed update restore a cancelled subscription", async () => {
+    // The update was sent before the cancellation but delivered after it. A
+    // refusal is correct handling, not a failure: returning non-2xx would make
     // Stripe retry a stale event indefinitely.
-    rpcMock.mockResolvedValue({
-      data: [{ applied: false, skipped_reason: "stale-duplicate-or-unknown" }],
-      error: null,
-    });
-    constructEventMock.mockReturnValue({
-      id: "evt_stale",
-      created: EVENT_CREATED_SECONDS,
-      type: "customer.subscription.deleted",
-      data: { object: { id: "sub_123" } },
-    });
+    await deliver(checkout("evt_checkout", T));
+    await deliver(deleted("evt_deleted", T + 2 * HOUR));
 
-    const response = await POST(webhookRequest());
+    const response = await deliver(updated("evt_stale", T + HOUR, "active"));
 
     expect(response.status).toBe(200);
+    expect(await subscriptions()).toMatchObject([{ plan: "free", status: "cancelled", last_event_id: "evt_deleted" }]);
+  });
+
+  it("acknowledges a redelivered event without applying it twice", async () => {
+    await deliver(checkout("evt_checkout", T));
+    await deliver(updated("evt_updated", T + HOUR, "past_due"));
+
+    const response = await deliver(updated("evt_updated", T + HOUR, "past_due"));
+
+    expect(response.status).toBe(200);
+    expect(await subscriptions()).toMatchObject([{ status: "inactive", last_event_id: "evt_updated" }]);
   });
 
   it.each([
-    ["checkout.session.completed", { metadata: { userId: "user_paying" }, subscription: "sub_123", customer: "cus_123" }],
-    ["customer.subscription.updated", { id: "sub_123", status: "active" }],
-    ["customer.subscription.deleted", { id: "sub_123" }],
-  ])("asks Stripe to retry %s when the database write fails", async (type, object) => {
+    ["checkout.session.completed", checkout("evt_unwritten", T)],
+    ["customer.subscription.updated", updated("evt_unwritten", T, "active")],
+    ["customer.subscription.deleted", deleted("evt_unwritten", T)],
+  ])("asks Stripe to retry %s when the database write fails", async (_type, event) => {
     // A failed write is not a refusal. Acknowledging it would tell Stripe the
     // event was handled, so a paid checkout would never be granted and a
     // cancellation would never be applied. Every write is idempotent on the
     // event ID, so a retry is safe.
-    rpcMock.mockResolvedValue({ data: null, error: { message: "connection refused" } });
-    constructEventMock.mockReturnValue({
-      id: "evt_unwritten",
-      created: EVENT_CREATED_SECONDS,
-      type,
-      data: { object },
-    });
+    await sql`drop table public.subscriptions cascade`.execute(database());
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const response = await POST(webhookRequest());
+    const response = await deliver(event);
 
     expect(response.status).toBe(500);
     errorSpy.mockRestore();
   });
 
   it("ignores a checkout session with no user to attribute it to", async () => {
-    constructEventMock.mockReturnValue({
-      id: "evt_anon",
-      created: EVENT_CREATED_SECONDS,
-      type: "checkout.session.completed",
-      data: { object: { metadata: {}, subscription: "sub_123", customer: "cus_123" } },
-    });
-
-    const response = await POST(webhookRequest());
+    const response = await deliver(checkout("evt_anon", T, {}));
 
     expect(response.status).toBe(200);
-    expect(rpcMock).not.toHaveBeenCalled();
+    expect(await subscriptions()).toEqual([]);
   });
 
   it("bounds the body before reading it", async () => {

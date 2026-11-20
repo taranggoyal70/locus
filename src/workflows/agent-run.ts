@@ -36,9 +36,9 @@ import { createVercelWorkspace } from "@/lib/agent/vercel-workspace";
 import { verifyFrozenCandidate } from "@/lib/agent/verification";
 import { MAX_REVIEW_DIFF_CHARACTERS, WorkspaceController } from "@/lib/agent/workspace";
 import { AgentSlice, buildAgentPrompt } from "@/lib/agent/workspace-tools";
+import { globalDb } from "@/lib/db";
 import { buildGraph, locate } from "@/lib/localizer";
 import { logger } from "@/lib/logger";
-import { serviceClient } from "@/lib/supabase";
 
 type AgentRunWorkflowInput = {
   runId: string;
@@ -68,24 +68,23 @@ type LocalizedRun = {
 async function localizeRunStep(runId: string): Promise<LocalizedRun> {
   "use step";
 
-  const db = serviceClient();
-  const { data: run, error: runError } = await db
-    .from("agent_runs")
-    .select("*")
-    .eq("id", runId)
-    .single();
-  if (runError || !run) throw new FatalError("Agent Run was not found");
+  // The workflow is started with only the Run id; this read is how the owner is
+  // found. A database error is thrown as-is so the durable step retries it;
+  // only a Run that genuinely does not exist is fatal.
+  const db = globalDb("the workflow resolves a Run's owner from its id");
+  const run = await db.selectFrom("agent_runs").selectAll().where("id", "=", runId).executeTakeFirst();
+  if (!run) throw new FatalError("Agent Run was not found");
   if (run.provider !== CLOUDFLARE_PROVIDER || !isAgentExecutionMode(run.execution_mode)) {
     throw new FatalError("Agent Run provider policy is unavailable");
   }
 
-  const { data: task, error: taskError } = await db
-    .from("agent_tasks")
-    .select("*")
-    .eq("id", run.task_id)
-    .eq("user_id", run.user_id)
-    .single();
-  if (taskError || !task) throw new FatalError("Agent task was not found");
+  const task = await db
+    .selectFrom("agent_tasks")
+    .selectAll()
+    .where("id", "=", run.task_id)
+    .where("user_id", "=", run.user_id)
+    .executeTakeFirst();
+  if (!task) throw new FatalError("Agent task was not found");
 
   await transitionRun({
     runId,

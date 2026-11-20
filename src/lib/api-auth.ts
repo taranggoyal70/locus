@@ -1,4 +1,4 @@
-import { serviceClient } from "@/lib/supabase";
+import { globalDb } from "@/lib/db";
 
 export type ApiKeyInfo = {
   userId: string;
@@ -13,21 +13,31 @@ export async function authenticateApiKey(request: Request): Promise<ApiKeyInfo |
   const hash = await hashKey(token);
 
   try {
-    const db = serviceClient();
-    const { data } = await db
-      .from("api_keys")
-      .select("id, user_id")
-      .eq("key_hash", hash)
-      .single();
+    // The key is the credential: nobody is authenticated yet, so the lookup
+    // cannot be scoped to a user. It matches one hash and returns one owner.
+    const db = globalDb("API key lookup establishes the user");
+    const rows = await db
+      .selectFrom("api_keys")
+      .select(["id", "user_id"])
+      .where("key_hash", "=", hash)
+      .limit(2)
+      .execute();
 
-    if (!data) return null;
+    // Exactly one match, as before: an ambiguous hash authenticates nobody.
+    if (rows.length !== 1) return null;
+    const [key] = rows;
 
-    db.from("api_keys")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("id", data.id)
-      .then();
+    // Best effort and off the request path. Kysely rejects where the old client
+    // resolved with an error, so the catch is what keeps a failed timestamp
+    // write from becoming an unhandled rejection.
+    void db
+      .updateTable("api_keys")
+      .set({ last_used_at: new Date().toISOString() })
+      .where("id", "=", key.id)
+      .execute()
+      .catch(() => {});
 
-    return { userId: data.user_id, keyId: data.id };
+    return { userId: key.user_id, keyId: key.id };
   } catch {
     return null;
   }

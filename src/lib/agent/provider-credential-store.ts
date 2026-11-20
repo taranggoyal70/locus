@@ -1,4 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Kysely } from "kysely";
 
 import {
   decryptProviderToken,
@@ -8,10 +8,9 @@ import {
   CLOUDFLARE_PROVIDER,
   type CloudflareCredential,
 } from "@/lib/agent/provider-config";
-import type { Database } from "@/lib/database.types";
-import { tenantClient } from "@/lib/supabase-tenant";
+import { tenantDb, type Database } from "@/lib/db";
 
-type CredentialDatabase = SupabaseClient<Database>;
+type CredentialDatabase = Kysely<Database>;
 
 function encryptionKey(environment: Record<string, string | undefined> = process.env): string {
   return environment.LOCUS_CREDENTIAL_ENCRYPTION_KEY ?? "";
@@ -19,16 +18,19 @@ function encryptionKey(environment: Record<string, string | undefined> = process
 
 export async function cloudflareCredentialStatus(
   userId: string,
-  db: CredentialDatabase = tenantClient(userId),
+  db: CredentialDatabase = tenantDb(userId),
 ): Promise<{ configured: boolean }> {
-  const { data, error } = await db
-    .from("agent_provider_credentials")
-    .select("user_id")
-    .eq("user_id", userId)
-    .eq("provider", CLOUDFLARE_PROVIDER)
-    .maybeSingle();
-  if (error) throw new Error("Could not read provider connection status.");
-  return { configured: Boolean(data) };
+  try {
+    const row = await db
+      .selectFrom("agent_provider_credentials")
+      .select("user_id")
+      .where("user_id", "=", userId)
+      .where("provider", "=", CLOUDFLARE_PROVIDER)
+      .executeTakeFirst();
+    return { configured: Boolean(row) };
+  } catch (error) {
+    throw new Error("Could not read provider connection status.", { cause: error });
+  }
 }
 
 export async function saveCloudflareCredential(input: {
@@ -37,20 +39,32 @@ export async function saveCloudflareCredential(input: {
   environment?: Record<string, string | undefined>;
   db?: CredentialDatabase;
 }): Promise<void> {
-  const db = input.db ?? tenantClient(input.userId);
+  const db = input.db ?? tenantDb(input.userId);
   const encryptedApiToken = encryptProviderToken({
     apiToken: input.credential.apiToken,
     userId: input.userId,
     encryptionKey: encryptionKey(input.environment),
   });
-  const { error } = await db.from("agent_provider_credentials").upsert({
-    user_id: input.userId,
-    provider: CLOUDFLARE_PROVIDER,
-    account_id: input.credential.accountId,
-    encrypted_api_token: encryptedApiToken,
-    updated_at: new Date().toISOString(),
-  }, { onConflict: "user_id,provider" });
-  if (error) throw new Error("Could not save provider connection.");
+  const now = new Date().toISOString();
+  try {
+    await db
+      .insertInto("agent_provider_credentials")
+      .values({
+        user_id: input.userId,
+        provider: CLOUDFLARE_PROVIDER,
+        account_id: input.credential.accountId,
+        encrypted_api_token: encryptedApiToken,
+        updated_at: now,
+      })
+      .onConflict((conflict) => conflict.columns(["user_id", "provider"]).doUpdateSet({
+        account_id: input.credential.accountId,
+        encrypted_api_token: encryptedApiToken,
+        updated_at: now,
+      }))
+      .execute();
+  } catch (error) {
+    throw new Error("Could not save provider connection.", { cause: error });
+  }
 }
 
 export async function loadCloudflareCredential(input: {
@@ -58,14 +72,18 @@ export async function loadCloudflareCredential(input: {
   environment?: Record<string, string | undefined>;
   db?: CredentialDatabase;
 }): Promise<CloudflareCredential | null> {
-  const db = input.db ?? tenantClient(input.userId);
-  const { data, error } = await db
-    .from("agent_provider_credentials")
-    .select("account_id,encrypted_api_token")
-    .eq("user_id", input.userId)
-    .eq("provider", CLOUDFLARE_PROVIDER)
-    .maybeSingle();
-  if (error) throw new Error("Could not load provider connection.");
+  const db = input.db ?? tenantDb(input.userId);
+  let data: { account_id: string; encrypted_api_token: string } | undefined;
+  try {
+    data = await db
+      .selectFrom("agent_provider_credentials")
+      .select(["account_id", "encrypted_api_token"])
+      .where("user_id", "=", input.userId)
+      .where("provider", "=", CLOUDFLARE_PROVIDER)
+      .executeTakeFirst();
+  } catch (error) {
+    throw new Error("Could not load provider connection.", { cause: error });
+  }
   if (!data) return null;
   return {
     accountId: data.account_id,
@@ -79,12 +97,15 @@ export async function loadCloudflareCredential(input: {
 
 export async function deleteCloudflareCredential(
   userId: string,
-  db: CredentialDatabase = tenantClient(userId),
+  db: CredentialDatabase = tenantDb(userId),
 ): Promise<void> {
-  const { error } = await db
-    .from("agent_provider_credentials")
-    .delete()
-    .eq("provider", CLOUDFLARE_PROVIDER)
-    .eq("user_id", userId);
-  if (error) throw new Error("Could not remove provider connection.");
+  try {
+    await db
+      .deleteFrom("agent_provider_credentials")
+      .where("provider", "=", CLOUDFLARE_PROVIDER)
+      .where("user_id", "=", userId)
+      .execute();
+  } catch (error) {
+    throw new Error("Could not remove provider connection.", { cause: error });
+  }
 }

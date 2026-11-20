@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { db } from "@/lib/db/client";
+
 const authMock = vi.hoisted(() => vi.fn());
-const serviceClientMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
-vi.mock("@/lib/supabase", () => ({ serviceClient: serviceClientMock }));
 
 import { GET as githubStatus } from "@/app/api/github/status/route";
 import { GET as billingStatus } from "@/app/api/billing/status/route";
@@ -18,21 +18,21 @@ import {
 describe("controlled-alpha disabled APIs", () => {
   beforeEach(() => {
     authMock.mockResolvedValue({ userId: "user_123" });
-    serviceClientMock.mockReset();
+    vi.mocked(db).mockClear();
   });
 
   it("does not inspect legacy GitHub connections", async () => {
     const response = await githubStatus();
 
     expect(response.status).toBe(403);
-    expect(serviceClientMock).not.toHaveBeenCalled();
+    expect(db).not.toHaveBeenCalled();
   });
 
   it("does not inspect legacy billing records", async () => {
     const response = await billingStatus();
 
     expect(response.status).toBe(403);
-    expect(serviceClientMock).not.toHaveBeenCalled();
+    expect(db).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -46,6 +46,6 @@ describe("controlled-alpha disabled APIs", () => {
     const response = await callRoute();
 
     expect(response.status).toBe(403);
-    expect(serviceClientMock).not.toHaveBeenCalled();
+    expect(db).not.toHaveBeenCalled();
   });
 });

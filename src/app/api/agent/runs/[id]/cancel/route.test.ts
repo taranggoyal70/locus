@@ -6,7 +6,6 @@ const releaseRunProviderLeaseMock = vi.hoisted(() => vi.fn());
 const getRunMock = vi.hoisted(() => vi.fn());
 const workflowCancelMock = vi.hoisted(() => vi.fn());
 const workflowStatusMock = vi.hoisted(() => vi.fn());
-const singleMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
 vi.mock("workflow/api", () => ({ getRun: getRunMock }));
@@ -14,20 +13,20 @@ vi.mock("@/lib/agent/run-store", () => ({
   transitionRun: transitionRunMock,
   releaseRunProviderLease: releaseRunProviderLeaseMock,
 }));
-vi.mock("@/lib/supabase-tenant", () => ({
-  tenantClient: () => ({
-    from: () => ({
-      select: () => ({ eq: () => ({ eq: () => ({ single: singleMock }) }) }),
-    }),
-  }),
-}));
 
 import { POST } from "@/app/api/agent/runs/[id]/cancel/route";
+import { setupTestDatabase } from "@/test/database";
+import { seedRun } from "@/test/fixtures";
 
-const RUN_ID = "3f8a1c2e-5b4d-4e7a-9c1f-0a2b3c4d5e6f";
+const database = setupTestDatabase();
+let RUN_ID: string;
 
 function context(id = RUN_ID) {
   return { params: Promise.resolve({ id }) };
+}
+
+async function setRun(values: { status?: string; workflow_run_id?: string | null }) {
+  await database().updateTable("agent_runs").set(values).where("id", "=", RUN_ID).execute();
 }
 
 function request(headers: Record<string, string> = { origin: "https://locus.example" }) {
@@ -38,7 +37,8 @@ function request(headers: Record<string, string> = { origin: "https://locus.exam
 }
 
 describe("cancel an agent run", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    RUN_ID = await seedRun(database(), "user_123", { status: "executing", workflow_run_id: "workflow-id" });
     authMock.mockResolvedValue({ userId: "user_123" });
     transitionRunMock.mockReset().mockResolvedValue(undefined);
     releaseRunProviderLeaseMock.mockReset().mockResolvedValue(undefined);
@@ -50,10 +50,6 @@ describe("cancel an agent run", () => {
       },
     });
     workflowCancelMock.mockReset().mockResolvedValue(undefined);
-    singleMock.mockReset().mockResolvedValue({
-      data: { id: RUN_ID, status: "executing", workflow_run_id: "workflow-id" },
-      error: null,
-    });
   });
 
   it("cancels a running durable workflow without releasing provider capacity early", async () => {
@@ -100,10 +96,7 @@ describe("cancel an agent run", () => {
 
   it("cancels from any non-terminal status", async () => {
     for (const status of ["queued", "localizing", "planning", "executing", "verifying"]) {
-      singleMock.mockResolvedValueOnce({
-        data: { id: RUN_ID, status, workflow_run_id: "workflow-id" },
-        error: null,
-      });
+      await setRun({ status });
 
       const response = await POST(request(), context());
 
@@ -112,7 +105,7 @@ describe("cancel an agent run", () => {
   });
 
   it("refuses a run that already finished", async () => {
-    singleMock.mockResolvedValueOnce({ data: { id: RUN_ID, status: "completed" }, error: null });
+    await setRun({ status: "completed" });
 
     const response = await POST(request(), context());
 
@@ -144,10 +137,7 @@ describe("cancel an agent run", () => {
   });
 
   it("does not release provider capacity without a workflow handle", async () => {
-    singleMock.mockResolvedValueOnce({
-      data: { id: RUN_ID, status: "executing", workflow_run_id: null },
-      error: null,
-    });
+    await setRun({ workflow_run_id: null });
 
     const response = await POST(request(), context());
 
@@ -196,7 +186,7 @@ describe("cancel an agent run", () => {
   });
 
   it("reports another user's run as not found", async () => {
-    singleMock.mockResolvedValueOnce({ data: null, error: { message: "no rows" } });
+    RUN_ID = await seedRun(database(), "user_other", { status: "executing", workflow_run_id: "workflow-other" });
 
     const response = await POST(request(), context());
 

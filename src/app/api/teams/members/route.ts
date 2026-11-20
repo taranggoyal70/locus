@@ -1,8 +1,20 @@
 import { auth } from "@clerk/nextjs/server";
+import type { Kysely } from "kysely";
 import { NextResponse } from "next/server";
 
 import { accountCan } from "@/lib/admission-server";
-import { globalClient } from "@/lib/supabase-tenant";
+import { globalDb, type Database } from "@/lib/db";
+
+/** The user's role in the team, or undefined when they are not in it (or it cannot be read). */
+function roleIn(db: Kysely<Database>, teamId: string, userId: string) {
+  return db
+    .selectFrom("team_members")
+    .select("role")
+    .where("team_id", "=", teamId)
+    .where("user_id", "=", userId)
+    .executeTakeFirst()
+    .catch(() => undefined);
+}
 
 function disabledResponse() {
   return NextResponse.json(
@@ -20,23 +32,20 @@ export async function GET(request: Request) {
   const teamId = url.searchParams.get("teamId");
   if (!teamId) return NextResponse.json({ error: "teamId required." }, { status: 400 });
 
-  const db = globalClient("team administration acts on other members' rows; authorization is by team role");
+  const db = globalDb("team administration acts on other members' rows; authorization is by team role");
 
-  const { data: membership } = await db
-    .from("team_members")
-    .select("role")
-    .eq("team_id", teamId)
-    .eq("user_id", userId)
-    .single();
+  const membership = await roleIn(db, teamId, userId);
   if (!membership) return NextResponse.json({ error: "Not a member." }, { status: 403 });
 
-  const { data: members } = await db
-    .from("team_members")
-    .select("id, user_id, role, created_at")
-    .eq("team_id", teamId)
-    .order("created_at");
+  const members = await db
+    .selectFrom("team_members")
+    .select(["id", "user_id", "role", "created_at"])
+    .where("team_id", "=", teamId)
+    .orderBy("created_at")
+    .execute()
+    .catch(() => []);
 
-  return NextResponse.json({ members: members ?? [] });
+  return NextResponse.json({ members });
 }
 
 export async function POST(request: Request) {
@@ -53,40 +62,37 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "teamId and inviteUserId required." }, { status: 400 });
   }
 
-  const db = globalClient("team administration acts on other members' rows; authorization is by team role");
+  const db = globalDb("team administration acts on other members' rows; authorization is by team role");
 
-  const { data: caller } = await db
-    .from("team_members")
-    .select("role")
-    .eq("team_id", teamId)
-    .eq("user_id", userId)
-    .single();
+  const caller = await roleIn(db, teamId, userId);
   if (!caller || !["owner", "admin"].includes(caller.role)) {
     return NextResponse.json({ error: "Only owners and admins can invite members." }, { status: 403 });
   }
 
-  const { data: existing } = await db
-    .from("team_members")
-    .select("id")
-    .eq("team_id", teamId)
-    .eq("user_id", inviteUserId)
-    .single();
-  if (existing) return NextResponse.json({ error: "Already a member." }, { status: 409 });
-
-  const { data: memberCount } = await db
-    .from("team_members")
-    .select("id", { count: "exact", head: true })
-    .eq("team_id", teamId);
-  if ((memberCount as unknown as number) >= 10) {
-    return NextResponse.json({ error: "Team is at capacity (10 members on free plan)." }, { status: 403 });
+  if (await roleIn(db, teamId, inviteUserId)) {
+    return NextResponse.json({ error: "Already a member." }, { status: 409 });
   }
 
-  const { error } = await db.from("team_members").insert({
-    team_id: teamId,
-    user_id: inviteUserId,
-    role: "member",
-  });
-  if (error) return NextResponse.json({ error: "Failed to add member." }, { status: 500 });
+  try {
+    // This read used to compare the empty body of a count-only response with
+    // 10, so the cap was never enforced. It is now the count itself.
+    const { count } = await db
+      .selectFrom("team_members")
+      .select((eb) => eb.fn.countAll<number>().as("count"))
+      .where("team_id", "=", teamId)
+      .executeTakeFirstOrThrow();
+    if (Number(count) >= 10) {
+      return NextResponse.json({ error: "Team is at capacity (10 members on free plan)." }, { status: 403 });
+    }
+
+    await db.insertInto("team_members").values({
+      team_id: teamId,
+      user_id: inviteUserId,
+      role: "member",
+    }).execute();
+  } catch {
+    return NextResponse.json({ error: "Failed to add member." }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true }, { status: 201 });
 }
@@ -103,29 +109,29 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "teamId and memberId required." }, { status: 400 });
   }
 
-  const db = globalClient("team administration acts on other members' rows; authorization is by team role");
+  const db = globalDb("team administration acts on other members' rows; authorization is by team role");
 
-  const { data: caller } = await db
-    .from("team_members")
-    .select("role")
-    .eq("team_id", teamId)
-    .eq("user_id", userId)
-    .single();
+  const caller = await roleIn(db, teamId, userId);
   if (!caller || !["owner", "admin"].includes(caller.role)) {
     return NextResponse.json({ error: "Only owners and admins can remove members." }, { status: 403 });
   }
 
-  const { data: target } = await db
-    .from("team_members")
-    .select("user_id, role")
-    .eq("id", memberId)
-    .eq("team_id", teamId)
-    .single();
+  const target = await db
+    .selectFrom("team_members")
+    .select(["user_id", "role"])
+    .where("id", "=", memberId)
+    .where("team_id", "=", teamId)
+    .executeTakeFirst()
+    .catch(() => undefined);
   if (!target) return NextResponse.json({ error: "Member not found." }, { status: 404 });
   if (target.role === "owner") {
     return NextResponse.json({ error: "Cannot remove the team owner." }, { status: 403 });
   }
 
-  await db.from("team_members").delete().eq("id", memberId);
+  try {
+    await db.deleteFrom("team_members").where("id", "=", memberId).where("team_id", "=", teamId).execute();
+  } catch {
+    return NextResponse.json({ error: "Failed to remove member." }, { status: 500 });
+  }
   return NextResponse.json({ removed: true });
 }

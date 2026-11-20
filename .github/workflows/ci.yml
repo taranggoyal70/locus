@@ -71,6 +71,7 @@ jobs:
       - run: pnpm evidence:release1
       - run: pnpm check-sync
       - run: pnpm readme:assets --check
+      - run: pnpm db:types --check
 
   typecheck:
     runs-on: ubuntu-latest
