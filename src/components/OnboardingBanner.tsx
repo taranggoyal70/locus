@@ -28,7 +28,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
   const runStep = tier === "visitor" ? "3. Request Agent Run access" : "3. Start an Agent Run";
 
   return (
-    <div className="mx-auto max-w-7xl px-5 pt-4 sm:px-8">
+    <section aria-label="Getting started" className="mx-auto max-w-7xl px-5 pt-4 sm:px-8">
       <div className="relative overflow-hidden rounded-card border border-line-2 bg-surface px-5 py-4 sm:px-6">
         <button
           type="button"
@@ -64,7 +64,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
           </Link>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

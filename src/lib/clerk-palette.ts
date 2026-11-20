@@ -14,7 +14,7 @@ export const CLERK_PALETTE = {
     colorTextOnPrimaryBackground: "#f3f2ee",
     colorNeutral: "#161513",
     colorDanger: "#b42346",
-    colorSuccess: "#2c7a4b",
+    colorSuccess: "#286f45",
   },
   dark: {
     colorPrimary: "#eceae4",

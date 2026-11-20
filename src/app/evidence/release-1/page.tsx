@@ -62,7 +62,15 @@ export default function Release1EvidencePage() {
                 {evidence.progress.validResults}<span className="text-xl text-muted">/{evidence.progress.expectedResults}</span>
               </p>
               <p className="mt-2 text-[14px] text-ink-2">valid reviewed arm results</p>
-              <div className="mt-5 h-1.5 overflow-hidden rounded-[2px] bg-surface-2" aria-label={`${percent(completion)} complete`}>
+              <div
+                className="mt-5 h-1.5 overflow-hidden rounded-[2px] bg-surface-2"
+                role="progressbar"
+                aria-label="Valid reviewed arm results"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(completion * 100)}
+                aria-valuetext={`${percent(completion)} complete`}
+              >
                 <div className="h-full bg-included" style={{ width: percent(completion) }} />
               </div>
             </div>

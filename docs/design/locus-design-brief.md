@@ -10,9 +10,10 @@ Locus sells one idea: an agent should see the task, not the Repo, and you should
 be able to check what it saw. The page has to make that visible in a few seconds
 and then hold up under a skeptical engineer's second look.
 
-The look is a technical datasheet, set like a well-printed form. Warm paper,
-navy ink, a regular-weight serif for display headings, hairline rules, mono for
-data, and colour that only ever means a Slice state. It follows the system into
+The look is a technical datasheet, set like a well-printed form. Warm grey
+paper, near-black ink, a regular-weight serif for display headings, hairline
+rules, mono for data, and one orange signal that only ever marks the Slice.
+Every other colour is a Check's or file's state. It follows the system into
 a full dark theme. The signature is the **aperture**: a Repo drawn as a field of
 files that closes onto the Slice. It is the only illustration Locus needs.
 
@@ -39,7 +40,8 @@ Measured in `src/` and on https://locus-five-iota.vercel.app at 1024px.
   `0.18em`) sit above nearly every block, so none of them signal anything.
 - **Em dashes in copy** in 15 component files.
 
-What already works and stays: the navy and teal identity, Geist and Geist Mono,
+What already works and stays: the navy and teal identity (until November 20,
+2026; see "The palette" under Avoid), Geist and Geist Mono,
 the evidence strip that states its own limits, the Locate / Implement / Check /
 Review sequence, and the aperture idea in `ContextLens` and `MigrationDemo`.
 
@@ -52,9 +54,11 @@ Principles to adapt, not layouts or assets to copy.
   match in spirit. A whole system in one short token block: two surfaces, two
   line weights, four ink weights, one signal colour plus a "check passed" green,
   one ease, two radii (6px and 10px). Adopt the datasheet discipline and the
-  rule that colour means "something changed." Avoid its orange, which is its
-  identity, not ours. (Its warm paper was on this avoid list until November 20,
-  2026; the PigeonBox entry below says why it came off.)
+  rule that colour means "something changed." Its palette is Locus's palette
+  since November 20, 2026: paper, ink, graphite, the orange signal and the
+  green. Aiden Guan, its author, cleared the reuse. (Its orange and warm paper
+  were on this avoid list until then; "The palette" under Avoid says why they
+  came off.)
 - [PigeonBox design docs](https://github.com/aiden-guan/pigeonbox/tree/main/docs/design):
   the process this brief follows. Dated references with adopt and avoid notes, a
   six-role palette table, motion in exact milliseconds, an explicit avoid list,
@@ -91,66 +95,77 @@ Principles to adapt, not layouts or assets to copy.
 
 Rename the tokens so names match roles, and move every hex literal in
 components onto them. Each token is also a Tailwind colour of the same name
-(`bg-canvas`, `text-ink-2`, `border-line-2`, `text-included`).
+(`bg-canvas`, `text-ink-2`, `border-line-2`, `text-included-ink`). The values
+are Continuity's (November 20, 2026), with the changes noted.
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--canvas` | `#F3F1EA` | Page background (warm paper) |
-| `--canvas-2` | `#EBE8DF` | Recessed band (the closing ticket section, table heads) |
-| `--surface` | `#FBFAF6` | Cards, panels, inputs |
-| `--surface-2` | `#E9E6DD` | Wells, active nav items, skeletons |
-| `--line` | `rgba(20, 35, 59, 0.11)` | Default hairline |
-| `--line-2` | `rgba(20, 35, 59, 0.20)` | Emphasised hairline, input borders |
-| `--ink` | `#14233B` | Headlines, body, primary button, object borders |
-| `--ink-2` | `#3E4F63` | Supporting text |
-| `--muted` | `#5C6A78` | Captions, metadata, the second headline line |
-| `--included` | `#087864` | Included files, passing Checks, focus ring |
-| `--widened` | `#925C0E` | Widen, attention needed |
-| `--excluded` | `#D6D1C5` | Excluded files (always paired with a label) |
-| `--failed` | `#B03A2E` | Failed Checks and errors only |
+| `--canvas` | `#F3F2EE` | Page background (warm grey paper) |
+| `--canvas-2` | `#EAE8E2` | Recessed band (the closing ticket section, table heads) |
+| `--surface` | `#FBFAF8` | Cards, panels, inputs |
+| `--surface-2` | `#E4E2DC` | Wells, active nav items, skeletons (Locus's own) |
+| `--line` | `rgba(22, 21, 19, 0.09)` | Default hairline |
+| `--line-2` | `rgba(22, 21, 19, 0.17)` | Emphasised hairline, input borders |
+| `--ink` | `#161513` | Headlines, body, primary button, object borders |
+| `--ink-2` | `#44423D` | Supporting text |
+| `--muted` | `#67645E` | Captions, metadata, the second headline line. Continuity's `#7B7871` is 3.9:1 here, so the hue is kept and the value darkened to AA on every ground |
+| `--included` | `#E2501D` | The signal: Included marks, the Slice's bars and fills, focus ring (3.5:1, a graphic) |
+| `--included-ink` | `#B0380E` | The signal as text: Included counts, labels, Anchor paths (Continuity's `#B93C10`, darkened to AA on wells) |
+| `--passed` | `#286F45` | Passed Checks, success, completed steps (Continuity's `#2C7A4B`, darkened to AA on wells) |
+| `--widened` | `#7A6000` | Widen, attention needed (ochre, so it never reads as the signal) |
+| `--excluded` | `#D3D0C7` | Excluded files (always paired with a label) |
+| `--failed` | `#B42346` | Failed Checks and errors only (crimson, so it never reads as the signal) |
 
 The same roles have two dark sets. Each is the same tokens with swapped values,
 so components never branch on the theme.
 
 | Token | Dark band | Dark theme |
 | --- | --- | --- |
-| `--canvas` | `#0F1B2E` | `#0D1420` |
-| `--canvas-2` | `#0B1524` | `#0A101A` |
-| `--surface` | `#16263D` | `#142033` |
-| `--surface-2` | `#1D3049` | `#1B2A40` |
-| `--ink` | `#ECE8DF` | `#ECE8DF` |
-| `--ink-2` | `#B4C1CE` | `#B8C2CD` |
-| `--muted` | `#91A4B6` | `#8F9FB0` |
-| `--included` | `#3FBF9F` | `#45C4A3` |
-| `--widened` | `#E0A53C` | `#E0A53C` |
-| `--excluded` | `#2B3A52` | `#2A3749` |
-| `--failed` | `#F08F80` | `#F08F80` |
+| `--canvas` | `#161513` | `#0F0F0E` |
+| `--canvas-2` | `#11100F` | `#0A0A09` |
+| `--surface` | `#1F1E1B` | `#171716` |
+| `--surface-2` | `#282724` | `#201F1D` |
+| `--ink` | `#ECEAE4` | `#ECEAE4` |
+| `--ink-2` | `#B8B5AD` | `#B8B5AD` |
+| `--muted` | `#939088` | `#8A877F` |
+| `--included` | `#FF6A3D` | `#FF6A3D` |
+| `--included-ink` | `#FF8A64` | `#FF8A64` |
+| `--passed` | `#5DC48A` | `#5DC48A` |
+| `--widened` | `#E2B341` | `#E2B341` |
+| `--excluded` | `#2F2E2A` | `#2B2A27` |
+| `--failed` | `#FF7A8A` | `#FF7A8A` |
 
 - **Dark band** (`data-band="dark"`): the demo, the pricing contract half, the
   evidence thresholds and the footer. In the light theme it is the only dark
-  ground on the page. Inside the dark theme it sits one step deeper (`--canvas`
-  `#080E18`, `--surface` `#0F1828`) so it still reads as a band.
-- **Dark theme**: the band promoted to the whole page. It follows
+  ground on the page: the ink itself (`#161513`). Inside the dark theme it sits
+  one step deeper (`--canvas` `#0A0A09`, `--surface` `#121211`) so it still
+  reads as a band.
+- **Dark theme**: Continuity's graphite, a near-black that is not blue. It follows
   `prefers-color-scheme` unless the reader pins Light or Dark with the switch in
   the footer, the auth pages or Settings (stored in `localStorage` as
   `locus-theme`). A blocking script in `<head>` sets `data-theme` before first
   paint, so a pinned theme never flashes the other one; it carries the CSP nonce.
-- Hairlines on navy are the warm ink at 9% and 17%, not white, so they stay in
-  the same family as the text.
+- Hairlines on the dark grounds are the warm paper at 8% and 15%, not white, so
+  they stay in the same family as the text.
 - Clerk's widgets take literal colours, so `src/lib/clerk-palette.ts` mirrors the
-  surface, canvas, ink, ink-2, failed and included values for each theme, and
-  the components pick a palette from the resolved theme.
+  surface, canvas, ink, ink-2, failed and passed values for each theme, and the
+  components pick a palette from the resolved theme.
 
-`src/app/design-tokens.test.ts` holds every text and state colour above 4.5:1
-on its canvas and surface in all four grounds (light page, dark band, dark
-theme, band inside the dark theme), checks that the system-setting copy of the
-dark theme matches the pinned one, and checks the Clerk palette against the
-tokens.
+`src/app/design-tokens.test.ts` holds every text role (ink, ink-2, muted,
+included-ink, passed, widened, failed) above 4.5:1 on canvas, canvas-2, surface
+and surface-2 in all four grounds (light page, dark band, dark theme, band inside the dark
+theme), holds the signal above 3:1 as a graphic on the same grounds, checks that
+the system-setting copy of the dark theme matches the pinned one, and checks the
+Clerk palette against the tokens.
 
-**Colour rule:** teal, amber and grey describe a file's or Check's state. They
-are never decoration. If a teal element does not mean Included or passing,
-make it ink. That includes navigation (the current page's key cap is filled
-with ink) and links (ink with a hairline underline that darkens on hover).
+**Colour rule:** the orange signal marks the Slice: Included files, their counts
+and Anchor paths, the bars that measure them, and the focus ring. Green means
+passed or done, ochre means Widened, crimson means failed, and grey means
+Excluded. None of them is decoration. If a coloured element means none of
+these, make it ink. That includes navigation (the current page's key cap is
+filled with ink), selected options (an ink border) and links (ink with a
+hairline underline that darkens on hover). Text in the signal uses
+`--included-ink`; `--included` is for marks, rings and fills.
 
 ### Type
 
@@ -213,7 +228,7 @@ marks show `--included`, and Anchors carry a hollow centre. A count changes
 from `125` to `14 / 125`.
 
 If a localization Widens, Locus returns the whole Repo, so every mark stays
-`--included` and the count says so. Amber `--widened` belongs to Agent Runs,
+`--included` and the count says so. Ochre `--widened` belongs to Agent Runs,
 where a Widen attempt asks to read one more file; the landing never shows it.
 
 - **Data, not decoration.** The landing page renders a recorded localization of
@@ -312,8 +327,9 @@ Italic headings, a serif in bold or semibold, serif body text, gradient text,
 mint glow, glassmorphism, floating icon confetti, a row of three identical
 feature cards, numbered feature lists used as decoration, fake trust logos,
 testimonial carousels, endless background animation, more than one accent
-colour on a screen, copper or orange anywhere, and any mono uppercase text
-under 11px.
+colour on a screen, navy or slate-blue greys, a blue-black dark theme, mint or
+teal accents, orange used as decoration rather than as the signal, and any mono
+uppercase text under 11px.
 
 **Changed November 20, 2026.** This list ruled out a display serif, and the
 Continuity note ruled out warm paper. Both came off when PigeonBox became the
@@ -330,6 +346,26 @@ main visual reference. The reasoning:
   and only for state, the file field as the only illustration, and no copper.
 - Only at regular weight, and only for display. A bold serif turns an editorial
   page into a magazine cover, and a serif in dense UI text costs legibility.
+
+**The palette (changed again November 20, 2026).** Navy ink, slate-blue greys,
+a navy dark theme with a mint accent, and beige paper together read as a
+generated template, which is the opposite of a page an engineer should trust.
+The palette is now Continuity's, adopted with its author's agreement: warm grey
+paper, warm near-black ink, graphite for dark, one orange signal and one green.
+The reasoning:
+
+- Neutral greys and a near-black that is not blue take away the template look
+  without adding anything. Orange is the only colour left that draws the eye,
+  so it can carry the one thing the page is about: the files in the Slice.
+- Continuity has two colours; Locus has five states. Orange takes Included and
+  green takes passed, as in Continuity. Widened moves to ochre and failed to
+  crimson, far enough from orange that a failure never reads as part of the
+  Slice and the reverse. Each still sits beside a label, so no state depends on
+  hue alone.
+- Three Continuity values change for accessibility: muted is darkened to 4.5:1,
+  orange text uses a darker ink (`#B0380E`) while marks and rings use the
+  brighter signal, and the green darkens a step, so every text colour clears
+  4.5:1 on wells and table heads as well as the page.
 
 ## Rollout order
 

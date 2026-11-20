@@ -219,7 +219,7 @@ export function AgentRunsList() {
               {diff?.content && (
                 <details className="rounded-card border border-line">
                   <summary className="cursor-pointer px-3 py-3 text-xs font-medium text-ink">Review proposed diff</summary>
-                  <pre className="max-h-80 overflow-auto border-t border-line p-3 font-mono text-[11px] leading-5 text-ink-2">{diff.content}</pre>
+                  <pre className="max-h-80 overflow-auto border-t border-line p-3 font-mono text-[11px] leading-5 text-ink-2" tabIndex={0}>{diff.content}</pre>
                 </details>
               )}
               {selectedSnapshot.run.error && <p role="alert" className="text-xs leading-5 text-failed">{selectedSnapshot.run.error}</p>}

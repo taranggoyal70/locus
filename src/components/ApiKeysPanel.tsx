@@ -173,7 +173,7 @@ export function ApiKeysPanel() {
 
       <div className="rounded-card border border-line bg-surface/50 p-4">
         <p className="text-xs font-medium text-ink">Quick start</p>
-        <pre className="mt-2 overflow-x-auto rounded-chip bg-canvas p-3 font-mono text-xs leading-5 text-ink-2">{`curl -X POST ${origin}/api/v1/locate \\
+        <pre className="mt-2 overflow-x-auto rounded-chip bg-canvas p-3 font-mono text-xs leading-5 text-ink-2" tabIndex={0}>{`curl -X POST ${origin}/api/v1/locate \\
   -H "Authorization: Bearer lk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{"repo": "owner/repo", "task": "fix the login bug"}'`}</pre>

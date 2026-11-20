@@ -168,7 +168,7 @@ export function FilePanel({
           >
             {selected}
           </p>
-          <pre className="max-h-[320px] overflow-auto p-4 font-mono text-[11px] leading-relaxed text-ink-2 sm:max-h-[420px]">
+          <pre className="max-h-[320px] overflow-auto p-4 font-mono text-[11px] leading-relaxed text-ink-2 sm:max-h-[420px]" tabIndex={0}>
             {selectedContent}
           </pre>
         </div>

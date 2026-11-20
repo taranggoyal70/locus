@@ -56,7 +56,7 @@ export default function DocsPage() {
           <p className="mt-4">
             All API requests require a Bearer token. Generate keys in <Link href="/settings" className="doc-link">Settings</Link>.
           </p>
-          <pre className="doc-code mt-4">
+          <pre className="doc-code mt-4" tabIndex={0}>
 {`Authorization: Bearer lk_your_key_here`}
           </pre>
         </section>
@@ -69,7 +69,7 @@ export default function DocsPage() {
           </p>
 
           <h3>Request body</h3>
-          <div className="doc-table">
+          <div className="doc-table" role="region" aria-label="Request body" tabIndex={0}>
             <table className="min-w-[640px]">
               <thead>
                 <tr>
@@ -109,7 +109,7 @@ export default function DocsPage() {
           </div>
 
           <h3>Example request</h3>
-          <pre className="doc-code mt-4">
+          <pre className="doc-code mt-4" tabIndex={0}>
 {`curl -X POST ${SITE_URL}/api/v1/locate \\
   -H "Authorization: Bearer lk_your_key_here" \\
   -H "Content-Type: application/json" \\
@@ -120,7 +120,7 @@ export default function DocsPage() {
           </pre>
 
           <h3>Response</h3>
-          <pre className="doc-code mt-4">
+          <pre className="doc-code mt-4" tabIndex={0}>
 {`{
   "task": "fix the middleware redirect loop",
   "widened": false,
@@ -197,7 +197,7 @@ export default function DocsPage() {
         <section id="errors" className="doc-section">
           <p className={monoLabel}>04</p>
           <h2 className="mt-3 font-display text-[clamp(28px,3vw,38px)] font-normal leading-[1.08] tracking-[-0.02em] text-ink">Error codes</h2>
-          <div className="doc-table">
+          <div className="doc-table" role="region" aria-label="Error codes" tabIndex={0}>
             <table className="min-w-[420px]">
               <thead>
                 <tr>

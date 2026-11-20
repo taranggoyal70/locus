@@ -27,8 +27,18 @@ const TEXT_ROLES = ["ink", "ink-2", "muted", "included-ink", "passed", "widened"
  * in the signal uses --included-ink instead.
  */
 function expectSignalGraphic(palette: Record<string, string>) {
-  expect(contrast(palette.included, palette.canvas)).toBeGreaterThanOrEqual(3);
-  expect(contrast(palette.included, palette.surface)).toBeGreaterThanOrEqual(3);
+  for (const ground of GROUNDS) {
+    expect(contrast(palette.included, palette[ground])).toBeGreaterThanOrEqual(3);
+  }
+}
+
+/** Every ground text can sit on: the page, recessed bands and table heads, cards, wells. */
+const GROUNDS = ["canvas", "canvas-2", "surface", "surface-2"];
+
+function expectReadable(palette: Record<string, string>, role: string) {
+  for (const ground of GROUNDS) {
+    expect(contrast(palette[role], palette[ground]), `${role} on ${ground}`).toBeGreaterThanOrEqual(4.5);
+  }
 }
 
 /** The hex tokens declared in the first rule whose selector is `selector`. */
@@ -50,18 +60,16 @@ describe("public color tokens", () => {
   });
 
   it.each(TEXT_ROLES)(
-    "keeps --%s above WCAG AA contrast on the canvas and on surfaces",
+    "keeps --%s above WCAG AA contrast on every light ground",
     (role) => {
-      expect(contrast(light[role], light.canvas)).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(light[role], light.surface)).toBeGreaterThanOrEqual(4.5);
+      expectReadable(light, role);
     },
   );
 
   it.each(TEXT_ROLES)(
     "keeps --%s above WCAG AA contrast inside a dark band",
     (role) => {
-      expect(contrast(dark[role], dark.canvas)).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(dark[role], dark.surface)).toBeGreaterThanOrEqual(4.5);
+      expectReadable(dark, role);
     },
   );
 });
@@ -85,16 +93,14 @@ describe("dark theme tokens", () => {
   it.each(TEXT_ROLES)(
     "keeps --%s above WCAG AA contrast on the dark canvas and surfaces",
     (role) => {
-      expect(contrast(theme[role], theme.canvas)).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(theme[role], theme.surface)).toBeGreaterThanOrEqual(4.5);
+      expectReadable(theme, role);
     },
   );
 
   it.each(TEXT_ROLES)(
     "keeps --%s above WCAG AA contrast in a band inside the dark theme",
     (role) => {
-      expect(contrast(band[role], band.canvas)).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(band[role], band.surface)).toBeGreaterThanOrEqual(4.5);
+      expectReadable(band, role);
     },
   );
 

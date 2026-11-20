@@ -204,7 +204,7 @@ export function LocusApp({
               <p className="mt-1 text-sm font-semibold text-ink">{repo?.name ?? "Repository standby"}</p>
             </div>
             <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-2">
-              <span className="h-2 w-2 rounded-sm bg-included" />
+              <span className="h-2 w-2 rounded-full bg-passed" />
               Context engine online
             </div>
           </div>

@@ -18,16 +18,17 @@
   --line: rgba(22, 21, 19, 0.09);
   --line-2: rgba(22, 21, 19, 0.17);
 
-  /* ink. Continuity's muted (#7b7871) is 3.9:1 here; this keeps its hue at AA. */
+  /* ink. Continuity's muted (#7b7871) is 3.9:1 here; this keeps its hue at AA
+     on every ground, the recessed ones included. */
   --ink: #161513;
   --ink-2: #44423d;
-  --muted: #6d6a63;
+  --muted: #67645e;
 
-  /* state. The signal is #e2501d for marks, rings and fills (3.5:1, enough for
-     a graphic); text in the signal uses --included-ink (5:1). */
+  /* state. The signal is #e2501d for marks, rings and fills (at least 3:1, enough
+     for a graphic); text in the signal uses --included-ink (AA on every ground). */
   --included: #e2501d;
-  --included-ink: #b93c10;
-  --passed: #2c7a4b;
+  --included-ink: #b0380e;
+  --passed: #286f45;
   --widened: #7a6000;
   /* Deliberately faint (about 1.4:1 on --canvas). An Excluded mark never carries
      meaning alone: it always sits beside an --ink label. */
@@ -62,7 +63,7 @@
   --line-2: rgba(236, 234, 228, 0.15);
   --ink: #eceae4;
   --ink-2: #b8b5ad;
-  --muted: #8f8c84;
+  --muted: #939088;
   --included: #ff6a3d;
   --included-ink: #ff8a64;
   --passed: #5dc48a;
@@ -85,7 +86,7 @@
   --line-2: rgba(236, 234, 228, 0.15);
   --ink: #eceae4;
   --ink-2: #b8b5ad;
-  --muted: #838079;
+  --muted: #8a877f;
   --included: #ff6a3d;
   --included-ink: #ff8a64;
   --passed: #5dc48a;
@@ -107,7 +108,7 @@
     --line-2: rgba(236, 234, 228, 0.15);
     --ink: #eceae4;
     --ink-2: #b8b5ad;
-    --muted: #838079;
+    --muted: #8a877f;
     --included: #ff6a3d;
     --included-ink: #ff8a64;
     --passed: #5dc48a;
@@ -186,7 +187,8 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 summary:focus-visible,
-[role="radio"]:focus-visible {
+[role="radio"]:focus-visible,
+[tabindex="0"]:focus-visible {
   outline: 2px solid var(--included);
   outline-offset: 2px;
 }
