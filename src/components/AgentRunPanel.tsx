@@ -58,7 +58,7 @@ export function AgentRunTimeline({
             <li key={phase.label} className="min-w-0">
               <div
                 className={`h-1.5 rounded-full ${
-                  complete ? "bg-included" : current ? "bg-ink" : "bg-excluded"
+                  complete ? "bg-passed" : current ? "bg-ink" : "bg-excluded"
                 }`}
               />
               <p className={`mt-2 truncate font-mono text-[11px] uppercase tracking-[0.08em] ${
@@ -321,7 +321,7 @@ export function AgentRunPanel({
                 </legend>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label className={`cursor-pointer rounded-chip border p-3 transition ${
-                    executionMode === "shared" ? "border-included bg-included/[0.07]" : "border-line"
+                    executionMode === "shared" ? "border-ink bg-surface" : "border-line"
                   }`}>
                     <span className="flex items-center gap-2 text-xs font-semibold text-ink">
                       <input
@@ -339,7 +339,7 @@ export function AgentRunPanel({
                     </span>
                   </label>
                   <label className={`cursor-pointer rounded-chip border p-3 transition ${
-                    executionMode === "byok" ? "border-included bg-included/[0.07]" : "border-line"
+                    executionMode === "byok" ? "border-ink bg-surface" : "border-line"
                   }`}>
                     <span className="flex items-center gap-2 text-xs font-semibold text-ink">
                       <input
@@ -360,7 +360,7 @@ export function AgentRunPanel({
                   </label>
                 </div>
                 {executionMode === "byok" && byokConfigured !== true && (
-                  <Link href="/settings" className="mt-3 inline-block text-[11px] font-semibold text-included hover:underline">
+                  <Link href="/settings" className="mt-3 inline-block text-[11px] font-medium text-ink underline decoration-line-2 underline-offset-4 transition-colors hover:decoration-ink">
                     Connect Cloudflare in Settings →
                   </Link>
                 )}
@@ -418,7 +418,7 @@ export function AgentRunPanel({
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
                 {snapshot.run.status.replaceAll("_", " ")}
               </span>
-              <span className="font-mono text-xs font-semibold text-included">
+              <span className="font-mono text-xs font-medium text-included-ink">
                 {snapshot.tokens.totalTokens.toLocaleString("en-US")} tokens used
               </span>
             </div>

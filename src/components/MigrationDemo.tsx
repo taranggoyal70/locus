@@ -145,7 +145,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 </div>
                 <div className={`mt-5 space-y-3 text-xs leading-5 ${plainLanguage ? "" : "font-mono"}`}>
                   <p className="rounded-chip bg-failed/10 px-3 py-2 text-failed line-through decoration-failed/60">{plainLanguage ? "Unrelated deploy change rejected" : ".github/workflows/deploy.yml: outside scope"}</p>
-                  <p className="rounded-chip bg-included/10 px-3 py-2 text-included">{plainLanguage ? "One relevant file approved with a reason" : "src/lib/idempotency.ts: Widen approved"}</p>
+                  <p className="rounded-chip bg-passed/10 px-3 py-2 text-passed">{plainLanguage ? "One relevant file approved with a reason" : "src/lib/idempotency.ts: Widen approved"}</p>
                 </div>
               </div>
 
@@ -186,13 +186,13 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 <div className="migration-aperture__core absolute inset-[28%] grid place-items-center rounded-card border border-included/35 bg-surface text-center">
                   <div>
                     <p className="migration-aperture__count font-display text-5xl font-normal tracking-[-0.02em] text-ink">{stage >= 2 ? "7" : "1,842"}</p>
-                    <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-included">{stage >= 2 ? plainLanguage ? "files needed" : "files admitted" : plainLanguage ? "files checked" : "files observed"}</p>
+                    <p className="mt-1 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-included-ink">{stage >= 2 ? plainLanguage ? "files needed" : "files admitted" : plainLanguage ? "files checked" : "files observed"}</p>
                   </div>
                 </div>
               </div>
 
               <div className="relative z-10 mt-4 grid w-full max-w-md grid-cols-3 gap-px overflow-hidden rounded-card border border-line bg-line-2 text-center">
-                <div className="bg-surface p-3"><p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{plainLanguage ? "Needed" : "Admitted"}</p><p className="mt-1 text-sm font-semibold text-included">{stage >= 2 ? "7" : "·"}</p></div>
+                <div className="bg-surface p-3"><p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{plainLanguage ? "Needed" : "Admitted"}</p><p className="mt-1 text-sm font-semibold text-included-ink">{stage >= 2 ? "7" : "·"}</p></div>
                 <div className="bg-surface p-3"><p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{plainLanguage ? "Untouched" : "Excluded"}</p><p className="mt-1 text-sm font-semibold text-ink">{stage >= 2 ? "1,835" : "·"}</p></div>
                 <div className="bg-surface p-3"><p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{plainLanguage ? "Extra approved" : "Widens"}</p><p className="mt-1 text-sm font-semibold text-ink">{stage >= 3 ? "1" : stage >= 2 ? "0" : "·"}</p></div>
               </div>
@@ -201,7 +201,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
             <section className="relative flex flex-col p-5 sm:p-7" aria-labelledby="proposal-title">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{plainLanguage ? "Merge decision" : "Exact candidate"}</p>
-                <span className={`rounded-chip border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] ${stage >= 4 ? "border-included/30 bg-included/10 text-included" : "border-line-2 text-muted"}`}>
+                <span className={`rounded-chip border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] ${stage >= 4 ? "border-passed/30 bg-passed/10 text-passed" : "border-line-2 text-muted"}`}>
                   {stage >= 4 ? plainLanguage ? "Ready for review" : "Signature verified" : "Waiting"}
                 </span>
               </div>
@@ -212,13 +212,13 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 <div className="migration-reveal__inner">
                   {plainLanguage ? (
                     <div className="p-4">
-                      <div className="migration-diff__line migration-diff__line--add rounded-card border border-included/15 p-4" style={{ transitionDelay: "55ms" }}>
+                      <div className="migration-diff__line migration-diff__line--add rounded-card border border-passed/15 p-4" style={{ transitionDelay: "55ms" }}>
                         <p className="text-sm font-semibold text-ink">One retry file updated</p>
                         <p className="mt-2 text-xs leading-5 text-ink-2">The fix prevents the same invoice from being charged twice.</p>
                       </div>
                       <div className="migration-diff__line migration-diff__line--context mt-3 flex items-center justify-between rounded-card border border-line px-4 py-3" style={{ transitionDelay: "165ms" }}>
                         <span className="text-xs text-ink-2">Unapproved candidate changes</span>
-                        <span className="text-xs font-semibold text-included">Rejected before merge</span>
+                        <span className="text-xs font-semibold text-passed">Rejected before merge</span>
                       </div>
                     </div>
                   ) : (
@@ -244,7 +244,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                   {checks.map(([label, value], index) => (
                     <div aria-hidden={stage < 3} key={label} className={`migration-check flex items-center justify-between rounded-card border border-line px-3.5 py-3 ${stage >= 3 ? "migration-check--visible" : ""}`} style={{ transitionDelay: `${420 + index * 110}ms` }}>
                       <span className="font-mono text-[11px] text-ink-2">{label}</span>
-                      <span className="flex items-center gap-2 font-mono text-[11px] font-semibold text-included"><span aria-hidden="true">✓</span>{value}</span>
+                      <span className="flex items-center gap-2 font-mono text-[11px] font-semibold text-passed"><span aria-hidden="true">✓</span>{value}</span>
                     </div>
                   ))}
                 </div>
@@ -253,9 +253,9 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
               <div aria-hidden={stage < 4} className={`migration-review-stamp lg:mt-auto ${stage >= 4 ? "migration-review-stamp--visible" : ""}`}>
                 <div className="migration-reveal__inner">
                   <div className="pt-7">
-                    <div className="rounded-card border border-included/25 bg-included/[.07] p-4">
+                    <div className="rounded-card border border-passed/25 bg-passed/[.07] p-4">
                       <div className="flex items-start gap-3">
-                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-included font-bold text-canvas">✓</span>
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-passed font-bold text-canvas">✓</span>
                         <div>
                           <p className="text-sm font-semibold text-ink">{plainLanguage ? "Candidate stayed inside the approved boundary" : "Signed Guard Run receipt assembled"}</p>
                           <p className="mt-1 text-xs leading-5 text-ink-2">{plainLanguage ? "A person still reviews whether the fix is correct. Their signed decision is bound to this exact proposal file." : "Ed25519 signs integrity and signer possession. A human Review separately accepts or rejects the proposal hash in the same locked artifact."}</p>
@@ -278,7 +278,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 return (
                   <button key={item.label} type="button" onClick={() => inspect(itemStage)} className={`rounded-chip px-3 py-3 text-left transition ${active ? "bg-line-2" : "hover:bg-surface"}`} aria-current={active ? "step" : undefined}>
                     <span className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink">
-                      <span className={`grid h-5 w-5 place-items-center rounded-chip border text-[11px] ${active || complete ? "border-included bg-included text-canvas" : "border-line-2 text-muted"}`}>{complete ? "✓" : itemStage}</span>
+                      <span className={`grid h-5 w-5 place-items-center rounded-chip border text-[11px] ${active || complete ? "border-included-ink bg-included-ink text-canvas" : "border-line-2 text-muted"}`}>{complete ? "✓" : itemStage}</span>
                       {item.label}
                     </span>
                     <span className="mt-2 hidden text-xs leading-4 text-muted sm:block">{item.note}</span>
@@ -292,7 +292,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
 
         <section className="mt-8 grid gap-4 md:grid-cols-2" aria-label="Demo capability boundaries">
           <div className="rounded-card border border-line-2 bg-surface p-5">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-included">{plainLanguage ? "Available today" : "Real in early access today"}</p>
+            <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-passed">{plainLanguage ? "Available today" : "Real in early access today"}</p>
             <p className="mt-3 text-sm leading-6 text-ink-2">{plainLanguage ? "The source CLI runs Codex, Claude, or another command inside a fail-closed target-Repo boundary: it cannot read excluded Repo files, cannot write elsewhere on the host, and emits an Ed25519-signed Run receipt." : `${demoCapabilitySummary(selfServeOpen)} The v0.4 source CLI binds target-Repo containment, the working-tree candidate, Check output, provider-reported usage, and immutable human Review in a signed receipt.`}</p>
           </div>
           <div className="rounded-card border border-widened/20 bg-widened/[.04] p-5">

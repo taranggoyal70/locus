@@ -39,7 +39,7 @@ export function RunContextLedger({
 }) {
   return (
     <div className="grid gap-2 sm:grid-cols-3" aria-label="Run context ledger">
-      <LedgerGroup label="Included" paths={included} tone="text-included" />
+      <LedgerGroup label="Included" paths={included} tone="text-included-ink" />
       <LedgerGroup label="Excluded" paths={excluded} tone="text-ink-2" />
       <LedgerGroup label="Widened" paths={widened} tone="text-widened" />
     </div>

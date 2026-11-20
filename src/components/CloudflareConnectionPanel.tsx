@@ -79,7 +79,7 @@ export function CloudflareConnectionPanel() {
           </div>
           <span className={`rounded-full border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] ${
             status?.configured
-              ? "border-included/35 bg-included/10 text-muted"
+              ? "border-passed/35 bg-passed/10 text-passed"
               : "border-line-2 text-muted"
           }`}>
             {status?.configured ? "Connected" : "Not connected"}
@@ -102,7 +102,7 @@ export function CloudflareConnectionPanel() {
           href="https://dash.cloudflare.com/?to=/:account/ai/workers-ai"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-included hover:underline"
+          className="inline-flex items-center gap-2 text-xs font-medium text-ink underline decoration-line-2 underline-offset-4 transition-colors hover:decoration-ink"
         >
           Open Cloudflare Workers AI <span aria-hidden>↗</span>
         </a>

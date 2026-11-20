@@ -184,10 +184,10 @@ export function DependencyGraph({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2 text-xs">
-          <span className="rounded-full border border-included/25 bg-included/[0.08] px-3 py-1.5 font-mono text-included">
+          <span className="rounded-chip border border-included/25 bg-included/[0.08] px-3 py-1.5 font-mono text-included-ink">
             {result.slice.length} selected
           </span>
-          <span className="rounded-full border border-line-2 px-3 py-1.5 font-mono text-ink-2">
+          <span className="rounded-chip border border-line-2 px-3 py-1.5 font-mono text-ink-2">
             {result.excluded.length} excluded
           </span>
         </div>
@@ -198,7 +198,7 @@ export function DependencyGraph({
           <div key={stage.step} className="min-w-0 bg-canvas/[0.72] p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-xs font-semibold text-included">{stage.step}</p>
+                <p className="font-mono text-xs font-medium text-included-ink">{stage.step}</p>
                 <h3 className="mt-2 text-sm font-semibold text-ink">{stage.title}</h3>
               </div>
               <span className="rounded-full border border-line px-2 py-1 font-mono text-[11px] text-muted">
@@ -223,7 +223,7 @@ export function DependencyGraph({
                   >
                     <span className="block break-all font-mono text-[11px] leading-5 text-ink">{file.rel}</span>
                     <span className="mt-2 flex items-center justify-between gap-3 text-[11px]">
-                      <span className={isAnchor ? "text-included" : file.recent ? "text-ink" : "text-muted"}>
+                      <span className={isAnchor ? "text-included-ink" : file.recent ? "text-ink" : "text-muted"}>
                         {isAnchor ? "task match" : file.recent ? "recently changed" : `distance ${file.dist}`}
                       </span>
                       <span className="font-mono text-muted">{file.tokens.toLocaleString()} tokens</span>

@@ -38,7 +38,7 @@ export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
   }[tier];
 
   return (
-    <section className="rounded-card border border-included/25 bg-included/[0.06] p-5">
+    <section className="rounded-card border border-line-2 bg-surface p-5">
       <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">
         Public early access
       </p>

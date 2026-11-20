@@ -19,6 +19,18 @@ function contrast(foreground: string, background: string): number {
 
 const css = readFileSync(new URL("./globals.css", import.meta.url), "utf8");
 
+/** Roles that colour text: each must reach WCAG AA (4.5:1). */
+const TEXT_ROLES = ["ink", "ink-2", "muted", "included-ink", "passed", "widened", "failed"];
+
+/**
+ * The signal as a mark, ring or fill. A graphic needs 3:1 (WCAG 1.4.11); text
+ * in the signal uses --included-ink instead.
+ */
+function expectSignalGraphic(palette: Record<string, string>) {
+  expect(contrast(palette.included, palette.canvas)).toBeGreaterThanOrEqual(3);
+  expect(contrast(palette.included, palette.surface)).toBeGreaterThanOrEqual(3);
+}
+
 /** The hex tokens declared in the first rule whose selector is `selector`. */
 function tokens(selector: string): Record<string, string> {
   const start = css.indexOf(`${selector} {`);
@@ -32,7 +44,12 @@ describe("public color tokens", () => {
   const light = tokens(":root");
   const dark = { ...light, ...tokens('[data-band="dark"]') };
 
-  it.each(["ink", "ink-2", "muted", "included", "widened", "failed"])(
+  it("keeps the signal visible as a graphic on light and band grounds", () => {
+    expectSignalGraphic(light);
+    expectSignalGraphic(dark);
+  });
+
+  it.each(TEXT_ROLES)(
     "keeps --%s above WCAG AA contrast on the canvas and on surfaces",
     (role) => {
       expect(contrast(light[role], light.canvas)).toBeGreaterThanOrEqual(4.5);
@@ -40,7 +57,7 @@ describe("public color tokens", () => {
     },
   );
 
-  it.each(["ink", "ink-2", "muted", "included", "widened", "failed"])(
+  it.each(TEXT_ROLES)(
     "keeps --%s above WCAG AA contrast inside a dark band",
     (role) => {
       expect(contrast(dark[role], dark.canvas)).toBeGreaterThanOrEqual(4.5);
@@ -60,7 +77,12 @@ describe("dark theme tokens", () => {
     ...tokens(':root[data-theme="dark"] [data-band="dark"]'),
   };
 
-  it.each(["ink", "ink-2", "muted", "included", "widened", "failed"])(
+  it("keeps the signal visible as a graphic on dark grounds", () => {
+    expectSignalGraphic(theme);
+    expectSignalGraphic(band);
+  });
+
+  it.each(TEXT_ROLES)(
     "keeps --%s above WCAG AA contrast on the dark canvas and surfaces",
     (role) => {
       expect(contrast(theme[role], theme.canvas)).toBeGreaterThanOrEqual(4.5);
@@ -68,7 +90,7 @@ describe("dark theme tokens", () => {
     },
   );
 
-  it.each(["ink", "ink-2", "muted", "included", "widened", "failed"])(
+  it.each(TEXT_ROLES)(
     "keeps --%s above WCAG AA contrast in a band inside the dark theme",
     (role) => {
       expect(contrast(band[role], band.canvas)).toBeGreaterThanOrEqual(4.5);
@@ -103,6 +125,6 @@ describe("Clerk palette", () => {
     expect(clerk.colorTextOnPrimaryBackground).toBe(palette.canvas);
     expect(clerk.colorTextSecondary).toBe(palette["ink-2"]);
     expect(clerk.colorDanger).toBe(palette.failed);
-    expect(clerk.colorSuccess).toBe(palette.included);
+    expect(clerk.colorSuccess).toBe(palette.passed);
   });
 });

@@ -101,13 +101,13 @@ export function ApiKeysPanel() {
       )}
 
       {revealedKey && (
-        <div className="rounded-card border border-included/30 bg-included/5 p-4">
-          <p className="text-xs font-medium text-included">Your new API key. Copy it now; it won&apos;t be shown again.</p>
+        <div className="rounded-card border border-passed/30 bg-passed/5 p-4">
+          <p className="text-xs font-medium text-passed">Your new API key. Copy it now; it won&apos;t be shown again.</p>
           <div className="mt-2 flex items-center gap-2">
             <code className="flex-1 overflow-x-auto rounded-chip bg-canvas px-3 py-2 font-mono text-xs text-ink">{revealedKey}</code>
             <button
               onClick={copyKey}
-              className="shrink-0 rounded-chip border border-included/30 px-3 py-2 text-xs font-medium text-included transition hover:bg-included/10"
+              className="shrink-0 rounded-chip border border-passed/30 px-3 py-2 text-xs font-medium text-passed transition hover:bg-passed/10"
             >
               Copy
             </button>

@@ -29,7 +29,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-5 pt-4 sm:px-8">
-      <div className="relative overflow-hidden rounded-card border border-included/20 bg-included/[0.04] px-5 py-4 sm:px-6">
+      <div className="relative overflow-hidden rounded-card border border-line-2 bg-surface px-5 py-4 sm:px-6">
         <button
           type="button"
           onClick={onDismiss}
@@ -50,7 +50,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
             (step) => (
               <span
                 key={step}
-                className="rounded-full border border-line-2 px-3 py-1.5 text-ink-2"
+                className="rounded-chip border border-line-2 px-3 py-1.5 text-ink-2"
               >
                 {step}
               </span>
@@ -58,7 +58,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
           )}
           <Link
             href="/docs"
-            className="rounded-full border border-included/30 px-3 py-1.5 text-included transition hover:bg-included/10"
+            className="rounded-chip border border-ink px-3 py-1.5 text-ink transition-colors hover:bg-surface-2"
           >
             Read the API docs
           </Link>

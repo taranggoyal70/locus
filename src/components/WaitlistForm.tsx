@@ -102,8 +102,8 @@ export function WaitlistForm({ onClose }: { onClose: () => void }) {
 
         {result?.ok ? (
           <div className="py-6 text-center" role="status" aria-live="polite">
-            <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-chip border border-included/40">
-              <svg viewBox="0 0 24 24" className="h-6 w-6 text-included" fill="none" stroke="currentColor" strokeWidth={2}>
+            <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-chip border border-passed/40">
+              <svg viewBox="0 0 24 24" className="h-6 w-6 text-passed" fill="none" stroke="currentColor" strokeWidth={2}>
                 <path d="M20 6 9 17l-5-5" />
               </svg>
             </div>

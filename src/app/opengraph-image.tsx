@@ -9,13 +9,13 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 // Light tokens from globals.css. The card is always the paper theme.
-const canvas = "#f3f1ea";
-const ink = "#14233b";
-const ink2 = "#3e4f63";
-const muted = "#5c6a78";
-const line2 = "rgba(20, 35, 59, 0.2)";
-const included = "#087864";
-const excluded = "#d6d1c5";
+const canvas = "#f3f2ee";
+const ink = "#161513";
+const ink2 = "#44423d";
+const muted = "#6d6a63";
+const line2 = "rgba(22, 21, 19, 0.17)";
+const included = "#e2501d";
+const excluded = "#d3d0c7";
 
 // The renderer reads neither WOFF2 nor variable fonts, so these are static,
 // Latin-only instances of the site's own faces (see src/assets/fonts/OFL.txt).
@@ -31,9 +31,9 @@ function Mark({ size: px }: { size: number }) {
   return (
     <svg width={px} height={px} viewBox="0 0 32 32">
       <rect width="32" height="32" rx="7" fill={ink} />
-      <path d="M7 10.5h8.5a6 6 0 0 1 6 6v5" fill="none" stroke="#8ef0c0" strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M7 21.5h8.5a6 6 0 0 0 6-6v-5" fill="none" stroke="#ffd45c" strokeWidth="2.5" strokeLinecap="round" />
-      <rect x="19" y="19" width="6" height="6" rx="2" fill="#ff896e" />
+      <path d="M7 10.5h8.5a6 6 0 0 1 6 6v5" fill="none" stroke={canvas} strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M7 21.5h8.5a6 6 0 0 0 6-6v-5" fill="none" stroke={canvas} strokeWidth="2.5" strokeLinecap="round" />
+      <rect x="19" y="19" width="6" height="6" rx="2" fill={included} />
     </svg>
   );
 }

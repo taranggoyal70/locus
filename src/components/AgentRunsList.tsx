@@ -36,7 +36,7 @@ export function alphaRunStatusLabel(status: string): string {
 }
 
 function statusTone(status: string): string {
-  if (status === "completed") return "border-included/35 bg-included/10 text-included";
+  if (status === "completed") return "border-passed/35 bg-passed/10 text-passed";
   if (status === "failed" || status === "rejected" || status === "cancelled") return "border-failed/35 bg-failed/10 text-failed";
   if (status === "awaiting_approval") return "border-widened/35 bg-widened/10 text-widened";
   return "border-line-2 bg-ink/[0.04] text-ink-2";
@@ -231,7 +231,7 @@ export function AgentRunsList() {
               {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className="flex w-full items-center justify-between rounded-chip bg-ink px-4 py-3.5 text-sm font-medium text-canvas"><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
               {isActiveRun(selectedSnapshot.run.status) && (
                 <div className="flex flex-wrap items-center justify-center gap-3">
-                  <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="text-xs font-medium text-included hover:underline">Resume this Run in the workspace</Link>
+                  <Link href={`/workspace?run=${selectedSnapshot.run.id}`} className="text-xs font-medium text-ink underline decoration-line-2 underline-offset-4 transition-colors hover:decoration-ink">Resume this Run in the workspace</Link>
                   <button
                     type="button"
                     onClick={() => void cancelRun(selectedSnapshot.run.id)}

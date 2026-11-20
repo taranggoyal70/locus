@@ -134,7 +134,7 @@ export function FilePanel({
             onClick={() => switchView("included")}
             className={`flex items-center justify-between rounded-chip px-3 py-2 text-left text-[11px] transition ${
               displayView === "included"
-                ? "bg-included/[0.09] text-included"
+                ? "bg-included/[0.09] text-included-ink"
                 : "text-muted hover:text-ink-2"
             }`}
           >
@@ -164,7 +164,7 @@ export function FilePanel({
             id="file-panel-detail-heading"
             ref={detailHeadingRef}
             tabIndex={-1}
-            className="border-b border-line px-4 py-2 font-mono text-[11px] text-included focus:outline-none"
+            className="border-b border-line px-4 py-2 font-mono text-[11px] text-included-ink focus:outline-none"
           >
             {selected}
           </p>

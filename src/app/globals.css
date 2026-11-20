@@ -1,40 +1,44 @@
 @import "tailwindcss";
 
 /*
- * Evidence datasheet: warm paper, navy ink, hairline rules, a serif for display
- * and mono for data. Teal, amber, grey and red describe a file's or Check's
- * state and nothing else. Every role has a light value, a dark-theme value and
- * a dark-band value. Reference: docs/design/locus-design-brief.md.
+ * Evidence datasheet: Continuity's palette (warm grey paper, warm near-black
+ * ink, graphite for dark) with one orange signal. Orange marks the Slice;
+ * green, ochre, crimson and grey describe a Check's or file's state. Nothing
+ * else carries colour. Every role has a light value, a dark-theme value and a
+ * dark-band value. Reference: docs/design/locus-design-brief.md.
  */
 :root {
   color-scheme: light;
 
   /* surfaces */
-  --canvas: #f3f1ea;
-  --canvas-2: #ebe8df;
-  --surface: #fbfaf6;
-  --surface-2: #e9e6dd;
-  --line: rgba(20, 35, 59, 0.11);
-  --line-2: rgba(20, 35, 59, 0.2);
+  --canvas: #f3f2ee;
+  --canvas-2: #eae8e2;
+  --surface: #fbfaf8;
+  --surface-2: #e4e2dc;
+  --line: rgba(22, 21, 19, 0.09);
+  --line-2: rgba(22, 21, 19, 0.17);
 
-  /* ink */
-  --ink: #14233b;
-  --ink-2: #3e4f63;
-  --muted: #5c6a78;
+  /* ink. Continuity's muted (#7b7871) is 3.9:1 here; this keeps its hue at AA. */
+  --ink: #161513;
+  --ink-2: #44423d;
+  --muted: #6d6a63;
 
-  /* state */
-  --included: #087864;
-  --widened: #925c0e;
+  /* state. The signal is #e2501d for marks, rings and fills (3.5:1, enough for
+     a graphic); text in the signal uses --included-ink (5:1). */
+  --included: #e2501d;
+  --included-ink: #b93c10;
+  --passed: #2c7a4b;
+  --widened: #7a6000;
   /* Deliberately faint (about 1.4:1 on --canvas). An Excluded mark never carries
      meaning alone: it always sits beside an --ink label. */
-  --excluded: #d6d1c5;
-  --failed: #b03a2e;
+  --excluded: #d3d0c7;
+  --failed: #b42346;
 
   /* shape */
   --r-sm: 4px;
   --r: 8px;
-  --shadow: 0 1px 0 rgba(20, 35, 59, 0.04), 0 12px 32px -18px rgba(20, 35, 59, 0.24);
-  --frame-shadow: 0 32px 64px -36px rgba(20, 35, 59, 0.45);
+  --shadow: 0 1px 0 rgba(22, 21, 19, 0.04), 0 12px 32px -18px rgba(40, 32, 20, 0.22);
+  --frame-shadow: 0 32px 64px -36px rgba(40, 32, 20, 0.42);
 
   /* motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -45,81 +49,87 @@
   --dur-story: 900ms;
 }
 
-/* The same roles on navy, for the demo and the footer. In the light theme a
-   band is the only dark ground on the page. #087864 on navy is 2.9:1, so
-   --included lightens to stay above 4.5:1. */
+/* The same roles on the ink, for the demo and the footer. In the light theme a
+   band is the only dark ground on the page. The signal brightens to the dark
+   theme's values so text in it stays above 4.5:1. */
 [data-band="dark"] {
   color-scheme: dark;
-  --canvas: #0f1b2e;
-  --canvas-2: #0b1524;
-  --surface: #16263d;
-  --surface-2: #1d3049;
-  --line: rgba(236, 232, 223, 0.09);
-  --line-2: rgba(236, 232, 223, 0.17);
-  --ink: #ece8df;
-  --ink-2: #b4c1ce;
-  --muted: #91a4b6;
-  --included: #3fbf9f;
-  --widened: #e0a53c;
-  --excluded: #2b3a52;
-  --failed: #f08f80;
-  --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 36px -16px rgba(0, 0, 0, 0.6);
+  --canvas: #161513;
+  --canvas-2: #11100f;
+  --surface: #1f1e1b;
+  --surface-2: #282724;
+  --line: rgba(236, 234, 228, 0.08);
+  --line-2: rgba(236, 234, 228, 0.15);
+  --ink: #eceae4;
+  --ink-2: #b8b5ad;
+  --muted: #8f8c84;
+  --included: #ff6a3d;
+  --included-ink: #ff8a64;
+  --passed: #5dc48a;
+  --widened: #e2b341;
+  --excluded: #2f2e2a;
+  --failed: #ff7a8a;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 12px 32px -18px rgba(0, 0, 0, 0.6);
   --frame-shadow: 0 32px 64px -30px rgba(0, 0, 0, 0.7);
 }
 
-/* The dark theme: the band promoted to the whole page, one step darker. It
-   applies when pinned, or by default when the system asks for dark. */
+/* The dark theme: Continuity's graphite. It applies when pinned, or by default
+   when the system asks for dark. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --canvas: #0d1420;
-  --canvas-2: #0a101a;
-  --surface: #142033;
-  --surface-2: #1b2a40;
-  --line: rgba(236, 232, 223, 0.09);
-  --line-2: rgba(236, 232, 223, 0.17);
-  --ink: #ece8df;
-  --ink-2: #b8c2cd;
-  --muted: #8f9fb0;
-  --included: #45c4a3;
-  --widened: #e0a53c;
-  --excluded: #2a3749;
-  --failed: #f08f80;
-  --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 36px -16px rgba(0, 0, 0, 0.6);
+  --canvas: #0f0f0e;
+  --canvas-2: #0a0a09;
+  --surface: #171716;
+  --surface-2: #201f1d;
+  --line: rgba(236, 234, 228, 0.08);
+  --line-2: rgba(236, 234, 228, 0.15);
+  --ink: #eceae4;
+  --ink-2: #b8b5ad;
+  --muted: #838079;
+  --included: #ff6a3d;
+  --included-ink: #ff8a64;
+  --passed: #5dc48a;
+  --widened: #e2b341;
+  --excluded: #2b2a27;
+  --failed: #ff7a8a;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 12px 32px -18px rgba(0, 0, 0, 0.6);
   --frame-shadow: 0 32px 64px -30px rgba(0, 0, 0, 0.75);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --canvas: #0d1420;
-    --canvas-2: #0a101a;
-    --surface: #142033;
-    --surface-2: #1b2a40;
-    --line: rgba(236, 232, 223, 0.09);
-    --line-2: rgba(236, 232, 223, 0.17);
-    --ink: #ece8df;
-    --ink-2: #b8c2cd;
-    --muted: #8f9fb0;
-    --included: #45c4a3;
-    --widened: #e0a53c;
-    --excluded: #2a3749;
-    --failed: #f08f80;
-    --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 36px -16px rgba(0, 0, 0, 0.6);
+    --canvas: #0f0f0e;
+    --canvas-2: #0a0a09;
+    --surface: #171716;
+    --surface-2: #201f1d;
+    --line: rgba(236, 234, 228, 0.08);
+    --line-2: rgba(236, 234, 228, 0.15);
+    --ink: #eceae4;
+    --ink-2: #b8b5ad;
+    --muted: #838079;
+    --included: #ff6a3d;
+    --included-ink: #ff8a64;
+    --passed: #5dc48a;
+    --widened: #e2b341;
+    --excluded: #2b2a27;
+    --failed: #ff7a8a;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 12px 32px -18px rgba(0, 0, 0, 0.6);
     --frame-shadow: 0 32px 64px -30px rgba(0, 0, 0, 0.75);
   }
 
   :root:not([data-theme="light"]) [data-band="dark"] {
-    --canvas: #080e18;
-    --canvas-2: #060b13;
-    --surface: #0f1828;
+    --canvas: #0a0a09;
+    --canvas-2: #070706;
+    --surface: #121211;
   }
 }
 
 /* On a dark page a band sits one step deeper, so it still reads as a band. */
 :root[data-theme="dark"] [data-band="dark"] {
-  --canvas: #080e18;
-  --canvas-2: #060b13;
-  --surface: #0f1828;
+  --canvas: #0a0a09;
+  --canvas-2: #070706;
+  --surface: #121211;
 }
 
 @theme inline {
@@ -133,6 +143,8 @@
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
   --color-included: var(--included);
+  --color-included-ink: var(--included-ink);
+  --color-passed: var(--passed);
   --color-widened: var(--widened);
   --color-excluded: var(--excluded);
   --color-failed: var(--failed);
@@ -164,7 +176,7 @@ body {
 }
 
 ::selection {
-  background: var(--included);
+  background: var(--included-ink);
   color: var(--canvas);
 }
 
@@ -636,7 +648,7 @@ textarea::placeholder {
 
 .migration-diff__line--context { color: var(--ink-2); }
 .migration-diff__line--remove { color: var(--failed); background: color-mix(in srgb, var(--failed) 9%, transparent); }
-.migration-diff__line--add { color: var(--included); background: color-mix(in srgb, var(--included) 9%, transparent); }
+.migration-diff__line--add { color: var(--passed); background: color-mix(in srgb, var(--passed) 9%, transparent); }
 
 .migration-check,
 .migration-review-stamp {

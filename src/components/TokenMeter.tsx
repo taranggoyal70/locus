@@ -105,7 +105,7 @@ export function TokenMeter({
           </p>
         </div>
         <div className="text-right">
-          <p className={`font-mono text-4xl font-semibold tabular transition-all duration-500 ${sparse ? "text-ink-2" : "text-included"}`}>
+          <p className={`font-mono text-4xl font-semibold tabular transition-all duration-500 ${sparse ? "text-ink-2" : "text-included-ink"}`}>
             {result ? `${includedShare}%` : "·"}
           </p>
           <p className="text-[11px] text-muted">included share</p>
@@ -142,7 +142,7 @@ export function TokenMeter({
                 key={key}
                 onClick={() => setFormat(key)}
                 className={`flex-1 rounded-chip px-2 py-1.5 text-[11px] font-medium transition ${
-                  format === key ? "bg-included/15 text-included" : "text-muted hover:text-ink"
+                  format === key ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"
                 }`}
               >
                 {label}
@@ -186,7 +186,7 @@ export function TokenMeter({
           <span className="text-[11px] text-muted">Was this context useful?</span>
           <button
             onClick={() => { setFeedback("up"); trackClient("context_feedback", { rating: "up", files: result.slice.length, includedTokens: result.sliceTokens, totalTokens: result.totalTokens }); }}
-            className={`rounded-chip px-2 py-1 text-xs transition ${feedback === "up" ? "bg-included/15 text-included" : "text-muted hover:text-ink"}`}
+            className={`rounded-chip px-2 py-1 text-xs transition ${feedback === "up" ? "bg-passed/15 text-passed" : "text-muted hover:text-ink"}`}
           >
             Yes
           </button>
