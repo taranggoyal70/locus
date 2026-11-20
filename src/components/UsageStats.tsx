@@ -32,7 +32,7 @@ export function UsageStats() {
   if (loading) {
     return (
       <div className="grid gap-3 sm:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => <div key={i} className="skeleton h-20 rounded-xl" />)}
+        {[0, 1, 2, 3].map((i) => <div key={i} className="skeleton h-20 rounded-card" />)}
       </div>
     );
   }
@@ -43,7 +43,7 @@ export function UsageStats() {
   // something.
   if (!data) {
     return (
-      <p className="rounded-xl border border-line px-4 py-6 text-center text-sm text-muted">
+      <p className="rounded-card border border-line px-4 py-6 text-center text-sm text-muted">
         Usage could not be loaded. Your Runs and API activity are unaffected.
       </p>
     );
@@ -59,7 +59,7 @@ export function UsageStats() {
   return (
     <div className="grid gap-3 sm:grid-cols-4">
       {stats.map((stat) => (
-        <div key={stat.label} className="rounded-xl border border-line-strong bg-surface/50 px-4 py-3">
+        <div key={stat.label} className="rounded-card border border-line-2 bg-surface/50 px-4 py-3">
           <p className="font-mono text-2xl font-semibold tracking-[-0.03em] text-ink">{stat.value}</p>
           <p className="mt-1 text-xs text-muted">{stat.label}</p>
         </div>

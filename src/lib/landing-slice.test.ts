@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { apertureColumns, RECORDED_SLICE } from "@/lib/landing-slice";
+import { apertureColumns, RECORDED_RESULT, RECORDED_SLICE } from "@/lib/landing-slice";
 import { buildGraph, locate } from "@/lib/localizer";
 import type { RepoData } from "@/lib/types";
 
@@ -11,14 +11,19 @@ const repo = JSON.parse(
 
 describe("the landing page's recorded Slice", () => {
   it("is still what the localizer returns for the recorded task", () => {
-    const result = locate(RECORDED_SLICE.task, repo, buildGraph(repo));
+    const graph = buildGraph(repo);
+    const result = locate(RECORDED_SLICE.task, repo, graph);
+    const inSlice = new Set(result.slice.map(({ path }) => path));
 
     expect(RECORDED_SLICE.files).toEqual(Object.keys(repo.files).sort());
-    expect(RECORDED_SLICE.slice).toEqual(result.slice.map(({ path, dist }) => ({ path, dist })));
-    expect(RECORDED_SLICE.anchors).toEqual(result.anchorPaths);
-    expect(RECORDED_SLICE.sliceTokens).toBe(result.sliceTokens);
-    expect(RECORDED_SLICE.totalTokens).toBe(result.totalTokens);
-    expect(RECORDED_SLICE.widened).toBe(result.widened);
+    expect(RECORDED_RESULT).toEqual({
+      ...result,
+      excluded: [...result.excluded].sort(),
+      excludedPaths: [...result.excludedPaths].sort(),
+    });
+    expect(RECORDED_SLICE.edges).toEqual(
+      graph.edges.filter(({ from, to }) => inSlice.has(from) && inSlice.has(to)).map(({ from, to }) => [from, to]),
+    );
   });
 
   it("places every file in exactly one aperture column", () => {

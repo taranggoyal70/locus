@@ -3,6 +3,8 @@ import Link from "next/link";
 
 import { admissionSentence } from "@/lib/admission-copy";
 import { REPO_URL } from "@/lib/config";
+import { Rails } from "@/components/Datasheet";
+import { ScrollThread } from "@/components/ScrollThread";
 
 const navLink =
   "rounded-chip px-2.5 py-2 text-ink-2 transition-colors duration-150 hover:bg-surface-2 hover:text-ink sm:px-3";
@@ -46,8 +48,12 @@ export function MarketingShell({
             </Link>
           </nav>
         </div>
+        <ScrollThread />
       </header>
-      {children}
+      <div className="relative">
+        <Rails />
+        {children}
+      </div>
       <footer className="border-t border-line bg-surface">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm sm:grid-cols-[1fr_auto] sm:px-8">
           <div>

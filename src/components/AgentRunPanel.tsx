@@ -58,11 +58,11 @@ export function AgentRunTimeline({
             <li key={phase.label} className="min-w-0">
               <div
                 className={`h-1.5 rounded-full ${
-                  complete ? "bg-accent" : current ? "bg-recent" : "bg-excluded"
+                  complete ? "bg-included" : current ? "bg-ink" : "bg-excluded"
                 }`}
               />
-              <p className={`mt-2 truncate font-mono text-[9px] uppercase tracking-[0.12em] ${
-                current ? "text-recent" : complete ? "text-ink" : "text-muted"
+              <p className={`mt-2 truncate font-mono text-[11px] uppercase tracking-[0.08em] ${
+                current ? "text-ink" : complete ? "text-ink-2" : "text-muted"
               }`}>
                 {phase.label}{current ? " · Working" : ""}
               </p>
@@ -74,10 +74,10 @@ export function AgentRunTimeline({
         {steps.map((step) => (
           <div
             key={step.id}
-            className="flex items-center justify-between gap-3 border-l-2 border-line-strong py-1 pl-3"
+            className="flex items-center justify-between gap-3 border-l-2 border-line-2 py-1 pl-3"
           >
             <span className="text-xs text-ink">{step.title}</span>
-            <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
+            <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
               {step.status === "running" ? "Working" : step.status}
             </span>
           </div>
@@ -282,18 +282,18 @@ export function AgentRunPanel({
   ) ?? false;
 
   return (
-    <section className="overflow-hidden rounded-[22px] border border-line-strong bg-surface">
+    <section className="overflow-hidden rounded-card border border-line-2 bg-surface">
       <div className="border-b border-line px-5 py-4">
         <div className="flex items-start justify-between gap-5">
           <div>
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
               Agent Run
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-ink">
               Turn the Slice into a review-ready proposal.
             </h2>
           </div>
-          <span className="rounded-full border border-line-strong px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-muted">
+          <span className="rounded-full border border-line-2 px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
             external writes off
           </span>
         </div>
@@ -302,26 +302,26 @@ export function AgentRunPanel({
       <div className="p-5">
         {!snapshot ? (
           <>
-            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line">
+            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-card border border-line bg-line">
               {[
                 ["Context", `${sliceCount} in`],
                 ["Outside", `${excludedCount} out`],
                 ["Ledger", `${sliceCount + excludedCount} files`],
               ].map(([label, value]) => (
                 <div key={label} className="bg-canvas px-3 py-3">
-                  <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">{label}</p>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{label}</p>
                   <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
                 </div>
               ))}
             </div>
             {canConfigureRun && (
-              <fieldset className="mt-4 rounded-xl border border-line p-3">
-                <legend className="px-1 font-mono text-[9px] font-semibold uppercase tracking-[0.13em] text-muted">
+              <fieldset className="mt-4 rounded-card border border-line p-3">
+                <legend className="px-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                   Choose capacity
                 </legend>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <label className={`cursor-pointer rounded-lg border p-3 transition ${
-                    executionMode === "shared" ? "border-accent bg-accent/[0.07]" : "border-line"
+                  <label className={`cursor-pointer rounded-chip border p-3 transition ${
+                    executionMode === "shared" ? "border-included bg-included/[0.07]" : "border-line"
                   }`}>
                     <span className="flex items-center gap-2 text-xs font-semibold text-ink">
                       <input
@@ -334,12 +334,12 @@ export function AgentRunPanel({
                       />
                       Use the shared beta Run
                     </span>
-                    <span className="mt-1 block pl-5 text-[10px] leading-4 text-muted">
+                    <span className="mt-1 block pl-5 text-[11px] leading-4 text-muted">
                       Free. One substantial Run per UTC day across Locus. Availability is confirmed when you start.
                     </span>
                   </label>
-                  <label className={`cursor-pointer rounded-lg border p-3 transition ${
-                    executionMode === "byok" ? "border-accent bg-accent/[0.07]" : "border-line"
+                  <label className={`cursor-pointer rounded-chip border p-3 transition ${
+                    executionMode === "byok" ? "border-included bg-included/[0.07]" : "border-line"
                   }`}>
                     <span className="flex items-center gap-2 text-xs font-semibold text-ink">
                       <input
@@ -352,7 +352,7 @@ export function AgentRunPanel({
                       />
                       Use my Cloudflare account
                     </span>
-                    <span className="mt-1 block pl-5 text-[10px] leading-4 text-muted">
+                    <span className="mt-1 block pl-5 text-[11px] leading-4 text-muted">
                       {byokConfigured
                         ? "Connected. This Run uses capacity from your account."
                         : "Not connected yet. Setup takes about two minutes."}
@@ -360,14 +360,14 @@ export function AgentRunPanel({
                   </label>
                 </div>
                 {executionMode === "byok" && byokConfigured !== true && (
-                  <Link href="/settings" className="mt-3 inline-block text-[11px] font-semibold text-accent hover:underline">
+                  <Link href="/settings" className="mt-3 inline-block text-[11px] font-semibold text-included hover:underline">
                     Connect Cloudflare in Settings →
                   </Link>
                 )}
               </fieldset>
             )}
             {canConfigureRun && (
-              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-line px-3 py-3 text-[11px] leading-5 text-muted-light">
+              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-card border border-line px-3 py-3 text-[11px] leading-5 text-ink-2">
                 <input
                   type="checkbox"
                   checked={dataPolicyAccepted}
@@ -382,7 +382,7 @@ export function AgentRunPanel({
               </label>
             )}
             {allowanceSpent ? (
-              <p className="mt-4 flex w-full items-center justify-between rounded-xl border border-line-strong px-4 py-3.5 text-sm font-semibold text-muted">
+              <p className="mt-4 flex w-full items-center justify-between rounded-card border border-line-2 px-4 py-3.5 text-sm font-semibold text-muted">
                 <span>{accessCopy.action}</span>
               </p>
             ) : !canStartRun && accessCopy.href ? (
@@ -391,7 +391,7 @@ export function AgentRunPanel({
               // wearing the costume of a next step.
               <a
                 href={accessCopy.href}
-                className="mt-4 flex w-full items-center justify-between rounded-xl border border-line-strong px-4 py-3.5 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent"
+                className="mt-4 flex w-full items-center justify-between rounded-card border border-line-2 px-4 py-3.5 text-sm font-semibold text-ink transition hover:border-ink/40 hover:text-ink"
               >
                 <span>{accessCopy.action}</span>
                 <span aria-hidden>→</span>
@@ -401,7 +401,7 @@ export function AgentRunPanel({
                 type="button"
                 onClick={launch}
                 disabled={!canLaunch || launching}
-                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-canvas transition hover:bg-accent-dim disabled:cursor-not-allowed disabled:opacity-40"
+                className="mt-4 flex w-full items-center justify-between rounded-card bg-ink px-4 py-3.5 text-sm font-semibold text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span>{launching ? "Starting durable run…" : accessCopy.action}</span>
                 <span aria-hidden>→</span>
@@ -414,11 +414,11 @@ export function AgentRunPanel({
         ) : (
           <>
             <AgentRunTimeline status={snapshot.run.status} steps={snapshot.steps} />
-            <div className="mt-5 flex items-center justify-between rounded-xl bg-canvas px-3 py-3">
-              <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
+            <div className="mt-5 flex items-center justify-between rounded-card bg-canvas px-3 py-3">
+              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
                 {snapshot.run.status.replaceAll("_", " ")}
               </span>
-              <span className="font-mono text-xs font-semibold text-accent">
+              <span className="font-mono text-xs font-semibold text-included">
                 {snapshot.tokens.totalTokens.toLocaleString("en-US")} tokens used
               </span>
             </div>
@@ -432,33 +432,33 @@ export function AgentRunPanel({
             {repositoryTruncated && (
               <p
                 role="alert"
-                className="mt-4 rounded-xl border border-recent/40 bg-recent/10 px-3 py-3 text-xs leading-5 text-recent"
+                className="mt-4 rounded-card border border-failed/40 bg-failed/10 px-3 py-3 text-xs leading-5 text-failed"
               >
                 The repository scan reached the early-access file cap. Some files are outside both
                 the included and excluded lists; review the diff carefully or start a narrower run.
               </p>
             )}
-            {summary?.content && <p className="mt-4 text-sm leading-6 text-muted-light">{summary.content}</p>}
+            {summary?.content && <p className="mt-4 text-sm leading-6 text-ink-2">{summary.content}</p>}
             {diff?.content && (
-              <details className="mt-4 rounded-xl border border-line">
+              <details className="mt-4 rounded-card border border-line">
                 <summary className="cursor-pointer px-3 py-3 text-xs font-medium text-ink">
                   Review proposed diff
                 </summary>
-                <pre className="max-h-80 overflow-auto border-t border-line p-3 font-mono text-[10px] leading-5 text-muted-light">
+                <pre className="max-h-80 overflow-auto border-t border-line p-3 font-mono text-[11px] leading-5 text-ink-2">
                   {diff.content}
                 </pre>
               </details>
             )}
             {snapshot.run.status === "awaiting_approval" && (
-              <fieldset className="mt-4 rounded-xl border border-line-strong bg-canvas p-4">
+              <fieldset className="mt-4 rounded-card border border-line-2 bg-canvas p-4">
                 <legend className="px-1 text-xs font-semibold text-ink">Review frozen acceptance criteria</legend>
-                <p className="mt-1 break-all font-mono text-[9px] text-muted">
+                <p className="mt-1 break-all font-mono text-[11px] text-muted">
                   Proposal {snapshot.run.proposal_hash}
                 </p>
                 <div className="mt-3 space-y-3">
                   {reviewCriteria.map((criterion, index) => (
-                    <div key={criterion.criterion} className="rounded-lg border border-line px-3 py-2.5">
-                      <label className="flex items-start gap-2 text-xs leading-5 text-muted-light">
+                    <div key={criterion.criterion} className="rounded-chip border border-line px-3 py-2.5">
+                      <label className="flex items-start gap-2 text-xs leading-5 text-ink-2">
                         <input
                           type="checkbox"
                           checked={criterion.satisfied}
@@ -482,7 +482,7 @@ export function AgentRunPanel({
                         maxLength={2_000}
                         aria-label={`Evidence for ${criterion.criterion}`}
                         placeholder="Evidence or reason"
-                        className="mt-2 w-full rounded-md border border-line bg-surface px-2.5 py-2 text-xs text-ink placeholder:text-muted"
+                        className="mt-2 w-full rounded-chip border border-line bg-surface px-2.5 py-2 text-xs text-ink placeholder:text-muted"
                       />
                     </div>
                   ))}
@@ -492,7 +492,7 @@ export function AgentRunPanel({
                     type="button"
                     onClick={() => submitReview("rejected")}
                     disabled={!reviewAvailability.canReject || reviewing !== null}
-                    className="rounded-lg border border-recent/40 px-3 py-2.5 text-xs font-semibold text-recent disabled:opacity-40"
+                    className="rounded-chip border border-failed/40 px-3 py-2.5 text-xs font-semibold text-failed disabled:opacity-40"
                   >
                     {reviewing === "rejected" ? "Recording…" : "Reject proposal"}
                   </button>
@@ -500,18 +500,18 @@ export function AgentRunPanel({
                     type="button"
                     onClick={() => submitReview("accepted")}
                     disabled={!reviewAvailability.canAccept || reviewing !== null}
-                    className="rounded-lg bg-accent px-3 py-2.5 text-xs font-semibold text-canvas disabled:opacity-40"
+                    className="rounded-chip bg-ink px-3 py-2.5 text-xs font-semibold text-canvas disabled:opacity-40"
                   >
                     {reviewing === "accepted" ? "Recording…" : "Accept criteria"}
                   </button>
                 </div>
-                <p className="mt-3 text-[10px] leading-4 text-muted">
+                <p className="mt-3 text-[11px] leading-4 text-muted">
                   The decision is bound to this immutable proposal. External GitHub writes remain off.
                 </p>
               </fieldset>
             )}
             {review && (
-              <p className="mt-4 rounded-xl border border-line-strong bg-canvas px-4 py-3 text-xs leading-5 text-muted-light">
+              <p className="mt-4 rounded-card border border-line-2 bg-canvas px-4 py-3 text-xs leading-5 text-ink-2">
                 Proposal {review.decision} with criterion-level review evidence.
               </p>
             )}
@@ -520,18 +520,18 @@ export function AgentRunPanel({
                 href={pullRequest.url}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 flex w-full items-center justify-between rounded-xl bg-accent px-4 py-3.5 text-sm font-semibold text-canvas"
+                className="mt-4 flex w-full items-center justify-between rounded-card bg-ink px-4 py-3.5 text-sm font-semibold text-canvas"
               >
                 <span>{pullRequest.label}</span>
                 <span aria-hidden>↗</span>
               </a>
             )}
             {snapshot.run.error && (
-              <p role="alert" className="mt-4 text-xs leading-5 text-recent">{snapshot.run.error}</p>
+              <p role="alert" className="mt-4 text-xs leading-5 text-failed">{snapshot.run.error}</p>
             )}
           </>
         )}
-        {error && <p role="alert" className="mt-3 text-xs text-recent">{error}</p>}
+        {error && <p role="alert" className="mt-3 text-xs text-failed">{error}</p>}
       </div>
     </section>
   );

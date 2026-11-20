@@ -93,13 +93,13 @@ export function DependencyGraph({
     const repositoryTerms = refinement?.repositoryTerms ?? [];
 
     return (
-      <section className="min-w-0 overflow-hidden rounded-[22px] border border-line-strong bg-surface">
+      <section className="min-w-0 overflow-hidden rounded-card border border-line-2 bg-surface">
         <div className="border-b border-line px-6 py-5">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Context trace</p>
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Context trace</p>
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-ink">
             {result?.widened ? "Locus needs one more detail" : "Describe a task to build the trace"}
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-2">
             {result?.widened
               ? unmatched.length > 0
                 ? `I couldn’t find ${unmatched.map((term) => `“${term}”`).join(" or ")} in the loaded source. Every file remains included so nothing is silently missed.`
@@ -110,10 +110,10 @@ export function DependencyGraph({
         {result?.widened ? (
           <div className="grid gap-px bg-line lg:grid-cols-2">
             <div className="bg-canvas/70 p-5">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                 Make the task specific
               </p>
-              <p className="mt-3 text-sm leading-6 text-muted-light">
+              <p className="mt-3 text-sm leading-6 text-ink-2">
                 Add a filename, component, route, function, error message, or stack trace. Locus will recalculate as you type.
               </p>
               {repositoryTerms.length > 0 && (
@@ -124,7 +124,7 @@ export function DependencyGraph({
                       <button
                         key={term}
                         onClick={() => onRefineTask(term)}
-                        className="rounded-full border border-line-strong px-2.5 py-1 font-mono text-[10px] text-muted-light transition hover:border-accent/40 hover:text-accent"
+                        className="rounded-full border border-line-2 px-2.5 py-1 font-mono text-[11px] text-ink-2 transition hover:border-ink/40 hover:text-ink"
                       >
                         + {term}
                       </button>
@@ -134,7 +134,7 @@ export function DependencyGraph({
               )}
             </div>
             <div className="bg-canvas/70 p-5">
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                 {candidates.length > 0 ? "Possible starting files" : "No supported match yet"}
               </p>
               {candidates.length > 0 ? (
@@ -143,14 +143,14 @@ export function DependencyGraph({
                     <button
                       key={file}
                       onClick={() => onSelect(file)}
-                      className="block w-full rounded-xl border border-line bg-surface/70 px-3 py-2.5 text-left font-mono text-[11px] text-ink transition hover:border-accent/40"
+                      className="block w-full rounded-card border border-line bg-surface/70 px-3 py-2.5 text-left font-mono text-[11px] text-ink transition hover:border-ink/40"
                     >
                       {file}
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="mt-3 text-sm leading-6 text-muted-light">
+                <p className="mt-3 text-sm leading-6 text-ink-2">
                   The current task language does not appear in a supported source file. Refine the task before copying context.
                 </p>
               )}
@@ -161,8 +161,8 @@ export function DependencyGraph({
             {["Task matches", "Imported dependencies", "Nearby integration"].map((title, index) => (
               <div key={title} className="min-h-44 bg-canvas/70 p-5">
                 <span className="font-mono text-xs text-muted">0{index + 1}</span>
-                <p className="mt-8 text-sm font-medium text-muted-light">{title}</p>
-                <div className="mt-4 h-px bg-line-strong" />
+                <p className="mt-8 text-sm font-medium text-ink-2">{title}</p>
+                <div className="mt-4 h-px bg-line-2" />
               </div>
             ))}
           </div>
@@ -174,20 +174,20 @@ export function DependencyGraph({
   const hiddenSelected = Math.max(0, result.slice.length - trace.shown);
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-[22px] border border-line-strong bg-surface shadow-[0_30px_100px_rgba(0,0,0,0.2)]">
+    <section className="min-w-0 overflow-hidden rounded-card border border-line-2 bg-surface shadow-panel">
       <div className="flex flex-col gap-4 border-b border-line px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Context trace</p>
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Context trace</p>
           <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-ink">How Locus built this context</h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted-light">
+          <p className="mt-1 max-w-2xl text-sm text-ink-2">
             Follow the selection from task evidence to the supporting files sent to the agent.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2 text-xs">
-          <span className="rounded-full border border-accent/25 bg-accent/[0.08] px-3 py-1.5 font-mono text-accent">
+          <span className="rounded-full border border-included/25 bg-included/[0.08] px-3 py-1.5 font-mono text-included">
             {result.slice.length} selected
           </span>
-          <span className="rounded-full border border-line-strong px-3 py-1.5 font-mono text-muted-light">
+          <span className="rounded-full border border-line-2 px-3 py-1.5 font-mono text-ink-2">
             {result.excluded.length} excluded
           </span>
         </div>
@@ -198,10 +198,10 @@ export function DependencyGraph({
           <div key={stage.step} className="min-w-0 bg-canvas/[0.72] p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-xs font-semibold text-accent">{stage.step}</p>
+                <p className="font-mono text-xs font-semibold text-included">{stage.step}</p>
                 <h3 className="mt-2 text-sm font-semibold text-ink">{stage.title}</h3>
               </div>
-              <span className="rounded-full border border-line px-2 py-1 font-mono text-[10px] text-muted">
+              <span className="rounded-full border border-line px-2 py-1 font-mono text-[11px] text-muted">
                 {stage.files.length} files
               </span>
             </div>
@@ -215,15 +215,15 @@ export function DependencyGraph({
                   <button
                     key={file.rel}
                     onClick={() => onSelect(file.rel)}
-                    className={`group w-full rounded-xl border p-3 text-left transition ${
+                    className={`group w-full rounded-card border p-3 text-left transition ${
                       isSelected
-                        ? "border-accent bg-accent/10"
-                        : "border-line bg-surface/70 hover:border-line-strong hover:bg-surface-raised"
+                        ? "border-included bg-included/10"
+                        : "border-line bg-surface/70 hover:border-line-2 hover:bg-surface-2"
                     }`}
                   >
                     <span className="block break-all font-mono text-[11px] leading-5 text-ink">{file.rel}</span>
-                    <span className="mt-2 flex items-center justify-between gap-3 text-[10px]">
-                      <span className={isAnchor ? "text-accent" : file.recent ? "text-recent" : "text-muted"}>
+                    <span className="mt-2 flex items-center justify-between gap-3 text-[11px]">
+                      <span className={isAnchor ? "text-included" : file.recent ? "text-ink" : "text-muted"}>
                         {isAnchor ? "task match" : file.recent ? "recently changed" : `distance ${file.dist}`}
                       </span>
                       <span className="font-mono text-muted">{file.tokens.toLocaleString()} tokens</span>
@@ -231,7 +231,7 @@ export function DependencyGraph({
                   </button>
                 );
               }) : (
-                <div className="rounded-xl border border-dashed border-line-strong px-3 py-6 text-center text-xs text-muted">
+                <div className="rounded-card border border-dashed border-line-2 px-3 py-6 text-center text-xs text-muted">
                   No additional files needed at this stage.
                 </div>
               )}
@@ -241,7 +241,7 @@ export function DependencyGraph({
       </div>
 
       <div className="flex flex-col gap-2 border-t border-line px-6 py-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-        <span>Only direct, explainable stages are shown—no connector wall.</span>
+        <span>Only direct, explainable stages are shown, with no connector wall.</span>
         {hiddenSelected > 0 && <span>{hiddenSelected} additional selected files remain in the ranked list.</span>}
       </div>
     </section>

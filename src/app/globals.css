@@ -7,9 +7,9 @@
  */
 :root {
   /* surfaces */
-  --canvas: #f3f5f2;
-  --surface: #fbfcfa;
-  --surface-2: #e8ede9;
+  --canvas: #f4f3ef;
+  --surface: #fbfaf7;
+  --surface-2: #ebe9e3;
   --line: rgba(20, 35, 59, 0.1);
   --line-2: rgba(20, 35, 59, 0.18);
 
@@ -21,9 +21,9 @@
   /* state */
   --included: #087864;
   --widened: #925c0e;
-  /* Deliberately faint (1.5:1 on --canvas). An Excluded mark never carries
+  /* Deliberately faint (about 1.4:1 on --canvas). An Excluded mark never carries
      meaning alone: it always sits beside an --ink label. */
-  --excluded: #c3ccc6;
+  --excluded: #d3d0c8;
   --failed: #b03a2e;
 
   /* shape */
@@ -52,6 +52,8 @@
   --ink-2: #b4c1ce;
   --muted: #91a4b6;
   --included: #3fbf9f;
+  --widened: #e0a53c;
+  --failed: #f08f80;
 }
 
 @theme inline {
@@ -67,16 +69,6 @@
   --color-widened: var(--widened);
   --color-excluded: var(--excluded);
   --color-failed: var(--failed);
-
-  /* Pre-datasheet names, kept until every component reads the roles above
-     (rollout step 6 in the design brief removes them). */
-  --color-surface-raised: var(--surface-2);
-  --color-line-strong: var(--line-2);
-  --color-muted-light: var(--ink-2);
-  --color-accent: var(--included);
-  --color-accent-dim: #065a4b;
-  --color-accent-on-dark: #3fbf9f;
-  --color-recent: var(--failed);
 
   /* rounded-chip, rounded-card, shadow-panel. Own names, so Tailwind's
      rounded-sm and ease-out keep their stock meaning. */
@@ -100,7 +92,8 @@ html {
 
 body {
   min-height: 100vh;
-  background-color: var(--canvas);
+  /* No background of its own: html paints the canvas, so the margin rails
+     (z-index -1) can sit behind every section background but above the page. */
   color: var(--ink);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
@@ -123,7 +116,7 @@ summary:focus-visible {
 .cl-footerActionLink,
 .cl-formFieldAction,
 .cl-identityPreviewEditButton {
-  color: var(--included);
+  color: var(--ink);
 }
 
 .tabular {
@@ -141,85 +134,123 @@ summary:focus-visible {
   background-clip: padding-box;
 }
 
-.context-lens {
-  --lens-x: 0px;
-  --lens-y: 0px;
-  isolation: isolate;
+/* Fig. 2, the mechanism (components/Mechanism.tsx). The server renders every
+   beat class (b1 to b5), so the finished figure is the default; armMechanism
+   removes them and the sequence adds them back one at a time. */
+.mech-task {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1100ms steps(var(--chars));
 }
 
-.context-lens::before {
+.mech:not(.b1) .mech-task {
+  clip-path: inset(0 100% 0 0);
+  transition: none;
+}
+
+.mech-term {
+  padding: 0 1px;
+  border-radius: 2px;
+  color: inherit;
+  background: transparent;
+  box-shadow: inset 0 -1px 0 transparent;
+  transition: background-color 400ms var(--ease-out), box-shadow 400ms var(--ease-out);
+}
+
+.mech.b2 .mech-term {
+  background: var(--surface-2);
+  box-shadow: inset 0 -1px 0 var(--ink);
+}
+
+.mech-node {
+  transition:
+    opacity 400ms var(--ease-out) calc(var(--i) * 50ms),
+    transform 400ms var(--ease-out) calc(var(--i) * 50ms);
+}
+
+.mech:not(.b2) .mech-col[data-hop="0"] .mech-node,
+.mech:not(.b3) .mech-col[data-hop="1"] .mech-node,
+.mech:not(.b4) .mech-col[data-hop="2"] .mech-node {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: none;
+}
+
+.mech-edge {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: .28;
+  stroke-width: 1;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 600ms var(--ease-out) calc(var(--i) * 40ms);
+}
+
+.mech:not(.b3) .mech-edge[data-hop="1"],
+.mech:not(.b4) .mech-edge[data-hop="2"] {
+  stroke-dashoffset: 1;
+  transition: none;
+}
+
+.mech-bar {
+  background: var(--included);
+  transform: scaleX(var(--share));
+  transition: transform 900ms var(--ease-out), background-color 400ms var(--ease-out);
+}
+
+.mech:not(.b5) .mech-bar {
+  background: var(--ink-2);
+  transform: scaleX(1);
+  transition: none;
+}
+
+.mech-outside {
+  transition: opacity 400ms var(--ease-out) 600ms;
+}
+
+.mech:not(.b5) .mech-outside {
+  opacity: 0;
+  transition: none;
+}
+
+/* A crosshair where a section rule meets a margin rail (components/Datasheet.tsx). */
+.crosshair {
   position: absolute;
-  inset: -30%;
-  z-index: 0;
-  content: "";
-  background: radial-gradient(circle at 60% 48%, rgba(142, 240, 192, 0.22), transparent 25%);
-  transform: translate(var(--lens-x), var(--lens-y));
-  transition: transform 500ms cubic-bezier(.2,.8,.2,1);
+  top: -5px;
+  width: 9px;
+  height: 9px;
+  background:
+    linear-gradient(var(--line-2), var(--line-2)) center / 1px 100% no-repeat,
+    linear-gradient(var(--line-2), var(--line-2)) center / 100% 1px no-repeat;
 }
 
-.context-lens__grid {
-  opacity: .32;
-  background-image:
-    linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: linear-gradient(to bottom, black, rgba(0, 0, 0, .5) 78%, transparent);
+/* Headings that rise word by word (components/Reveal.tsx). The mask is padded
+   so descenders are not clipped while a word is in flight. */
+.rise-w {
+  display: inline-block;
+  overflow: hidden;
+  padding-bottom: .1em;
+  margin-bottom: -.1em;
+  vertical-align: top;
 }
 
-.context-lens__scene {
-  transform: translate(var(--lens-x), var(--lens-y)) scale(1.025);
-  transition: transform 550ms cubic-bezier(.2,.8,.2,1);
+.rise-w > span {
+  display: inline-block;
+  transition: transform 800ms var(--ease-out) calc(var(--i) * 45ms);
 }
 
-.context-lens__readout {
-  text-shadow: 0 4px 24px rgba(0, 0, 0, .35);
-  transform: translate(calc(var(--lens-x) * -.45), calc(var(--lens-y) * -.45));
-  transition: transform 550ms cubic-bezier(.2,.8,.2,1);
+.rise.is-armed .rise-w > span {
+  transform: translateY(110%);
+  transition: none;
 }
 
-.context-node {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: context-drift 9s ease-in-out infinite;
+.rise-load .rise-w > span {
+  animation: rise-in 900ms var(--ease-out) calc(120ms + var(--i) * 60ms) both;
 }
 
-.context-node--excluded {
-  animation-duration: 12s;
+@keyframes rise-in {
+  from { transform: translateY(110%); }
 }
 
-.locus-shell {
-  color: #13243c;
-  background-color: #b9c7d3;
-  background-image:
-    linear-gradient(rgba(20, 35, 59, .08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(20, 35, 59, .08) 1px, transparent 1px),
-    radial-gradient(circle at 18% 8%, rgba(240, 246, 247, .76), transparent 28%);
-  background-size: 32px 32px, 32px 32px, 100% 100%;
-}
-
-.locus-rail {
-  background: rgba(239, 245, 246, .9);
-  box-shadow: 12px 0 40px rgba(20, 35, 59, .08);
-  backdrop-filter: blur(18px);
-}
-
-.locus-stage {
-  box-shadow: 0 32px 90px rgba(20, 35, 59, .18);
-}
-
-.aperture-rule {
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgba(20, 35, 59, .28) 0,
-    rgba(20, 35, 59, .28) 1px,
-    transparent 1px,
-    transparent 14px
-  );
-}
-
-/* The Slice aperture (components/Aperture.tsx). Every mark wears a neutral
-   cover while the figure is open; closing fades the covers to reveal each
-   file's state, then the Slice settles in. Transform and opacity only. */
 .aperture-mark {
   position: relative;
   aspect-ratio: 1;
@@ -259,8 +290,18 @@ summary:focus-visible {
   animation: aperture-admit var(--dur-panel) var(--ease-out) 700ms both;
 }
 
-.aperture-count {
-  transition: opacity var(--dur-panel) var(--ease-out) 700ms;
+/* The numbers never overlap: the Repo count leaves before the Slice count lands.
+   Reopening is instant, so a new run starts from the whole Repo at once. */
+.aperture-count--repo {
+  transition: opacity 120ms var(--ease-out) 600ms;
+}
+
+.aperture-count--slice {
+  transition: opacity 180ms var(--ease-out) 720ms;
+}
+
+.aperture.is-open .aperture-count {
+  transition: none;
 }
 
 .aperture-count--slice,
@@ -273,83 +314,60 @@ summary:focus-visible {
   opacity: 0;
 }
 
+/* While localizing runs, the covers breathe in a wave across the field; the
+   loop ends the moment the work does. */
+.aperture.is-scanning .aperture-mark::after {
+  animation: aperture-scan 1.6s var(--ease-in-out) calc(var(--i, 0) * -6ms) infinite;
+}
+
 @keyframes aperture-admit {
   from { transform: scale(.6); }
   to { transform: scale(1); }
 }
 
-.migration-demo {
-  color: white;
-  background-color: #14233b;
-  background-image:
-    radial-gradient(circle at 68% 8%, rgba(142, 240, 192, .13), transparent 28rem),
-    radial-gradient(circle at 4% 48%, rgba(82, 129, 181, .17), transparent 26rem),
-    linear-gradient(180deg, #14233b 0%, #0a1627 100%);
+@keyframes aperture-scan {
+  0%, 100% { opacity: .85; }
+  50% { opacity: .3; }
 }
 
-.migration-console {
-  backdrop-filter: blur(18px);
-}
-
+/* The /demo story (components/MigrationDemo.tsx), on the dark token band. */
 .migration-demo__grid {
-  opacity: .32;
+  opacity: .5;
   background-image:
-    linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 26px 26px;
-  mask-image: radial-gradient(circle at center, black 18%, rgba(0,0,0,.72) 54%, transparent 82%);
-}
-
-.migration-aperture__halo {
-  border: 1px solid rgba(142, 240, 192, .16);
-  background: radial-gradient(circle, rgba(142, 240, 192, .16), transparent 58%);
-  box-shadow: inset 0 0 70px rgba(142, 240, 192, .08);
-  transition: transform 900ms cubic-bezier(.16, 1, .3, 1), opacity 900ms ease;
-}
-
-.migration-aperture__orbit {
-  transform-origin: center;
-  animation: migration-orbit 18s linear infinite;
+  mask-image: radial-gradient(circle at center, black 18%, rgba(0, 0, 0, .72) 54%, transparent 82%);
 }
 
 .migration-graph-node {
   transform-box: fill-box;
   transform-origin: center;
-  transition: transform 900ms cubic-bezier(.16, 1, .3, 1), opacity 700ms ease, filter 700ms ease;
+  transition: transform 900ms var(--ease-out), opacity 700ms var(--ease-out);
 }
 
 .migration-aperture__core,
 .migration-aperture__count {
-  transition: transform 800ms cubic-bezier(.16, 1, .3, 1), color 600ms ease, box-shadow 600ms ease;
+  transition: transform 800ms var(--ease-out), color 600ms var(--ease-out);
 }
 
 .migration-demo[data-stage="2"] .migration-graph-node--excluded,
 .migration-demo[data-stage="3"] .migration-graph-node--excluded,
 .migration-demo[data-stage="4"] .migration-graph-node--excluded {
-  opacity: .12;
-  filter: blur(1.5px);
-  transform: scale(.35);
+  opacity: .2;
+  transform: scale(.6);
 }
 
 .migration-demo[data-stage="2"] .migration-graph-node--included,
 .migration-demo[data-stage="3"] .migration-graph-node--included,
 .migration-demo[data-stage="4"] .migration-graph-node--included {
-  transform: scale(1.8);
-  filter: drop-shadow(0 0 7px rgba(142,240,192,.8));
-}
-
-.migration-demo[data-stage="2"] .migration-aperture__halo,
-.migration-demo[data-stage="3"] .migration-aperture__halo,
-.migration-demo[data-stage="4"] .migration-aperture__halo {
-  transform: scale(.7);
-  opacity: .74;
+  transform: scale(1.3);
 }
 
 .migration-demo[data-stage="2"] .migration-aperture__core,
 .migration-demo[data-stage="3"] .migration-aperture__core,
 .migration-demo[data-stage="4"] .migration-aperture__core {
   transform: scale(.94);
-  box-shadow: 0 0 90px rgba(142,240,192,.24);
 }
 
 .migration-diff {
@@ -368,7 +386,7 @@ summary:focus-visible {
   visibility: visible;
   margin-top: 1.5rem !important;
   opacity: 1;
-  border-color: rgba(255,255,255,.1);
+  border-color: var(--line);
   transform: translateY(0);
   transition-delay: 0s;
 }
@@ -384,9 +402,9 @@ summary:focus-visible {
   transform: translateX(0);
 }
 
-.migration-diff__line--context { color: #9eafbf; }
-.migration-diff__line--remove { color: #ffb7aa; background: rgba(243, 141, 124, .08); }
-.migration-diff__line--add { color: #a9f5d0; background: rgba(142, 240, 192, .07); }
+.migration-diff__line--context { color: var(--ink-2); }
+.migration-diff__line--remove { color: var(--failed); background: color-mix(in srgb, var(--failed) 9%, transparent); }
+.migration-diff__line--add { color: var(--included); background: color-mix(in srgb, var(--included) 9%, transparent); }
 
 .migration-check,
 .migration-review-stamp {
@@ -431,26 +449,7 @@ summary:focus-visible {
 }
 
 .migration-progress {
-  box-shadow: 0 0 16px rgba(142, 240, 192, .8);
-  transition: width 650ms cubic-bezier(.16, 1, .3, 1);
-}
-
-.migration-demo[data-playing="true"] .migration-aperture__core {
-  animation: migration-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes migration-orbit {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes migration-pulse {
-  0%, 100% { box-shadow: 0 0 50px rgba(142,240,192,.12); }
-  50% { box-shadow: 0 0 105px rgba(142,240,192,.3); }
-}
-
-@keyframes context-drift {
-  0%, 100% { transform: translateY(-1px); opacity: .76; }
-  50% { transform: translateY(1.5px); opacity: 1; }
+  transition: width 650ms var(--ease-out);
 }
 
 @media (max-width: 640px) {
@@ -474,6 +473,7 @@ summary:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .aperture-mark,
+  .rise-w > span,
   .aperture-mark::after,
   .aperture-count {
     animation: none !important;

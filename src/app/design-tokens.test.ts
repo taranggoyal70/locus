@@ -38,7 +38,7 @@ describe("public color tokens", () => {
     },
   );
 
-  it.each(["ink", "ink-2", "muted", "included"])(
+  it.each(["ink", "ink-2", "muted", "included", "widened", "failed"])(
     "keeps --%s above WCAG AA contrast inside a dark band",
     (role) => {
       expect(contrast(dark[role], dark.canvas)).toBeGreaterThanOrEqual(4.5);

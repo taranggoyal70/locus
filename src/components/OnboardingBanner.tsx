@@ -29,16 +29,16 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-5 pt-4 sm:px-8">
-      <div className="relative overflow-hidden rounded-[18px] border border-accent/20 bg-accent/[0.04] px-5 py-4 sm:px-6">
+      <div className="relative overflow-hidden rounded-card border border-included/20 bg-included/[0.04] px-5 py-4 sm:px-6">
         <button
           type="button"
           onClick={onDismiss}
-          className="absolute right-3 top-3 rounded-md px-2 py-1 text-xs text-muted transition hover:text-ink"
+          className="absolute right-3 top-3 rounded-chip px-2 py-1 text-xs text-muted transition hover:text-ink"
           aria-label="Dismiss"
         >
           Dismiss
         </button>
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
           Getting started
         </p>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-ink">
@@ -50,7 +50,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
             (step) => (
               <span
                 key={step}
-                className="rounded-full border border-line-strong px-3 py-1.5 text-muted-light"
+                className="rounded-full border border-line-2 px-3 py-1.5 text-ink-2"
               >
                 {step}
               </span>
@@ -58,7 +58,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
           )}
           <Link
             href="/docs"
-            className="rounded-full border border-accent/30 px-3 py-1.5 text-accent transition hover:bg-accent/10"
+            className="rounded-full border border-included/30 px-3 py-1.5 text-included transition hover:bg-included/10"
           >
             Read the API docs
           </Link>

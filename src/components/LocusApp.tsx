@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AgentRunPanel } from "@/components/AgentRunPanel";
-import { ContextLens } from "@/components/ContextLens";
+import { WorkspaceField } from "@/components/WorkspaceField";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
@@ -129,37 +129,37 @@ export function LocusApp({
     : 0;
 
   return (
-    <div className="locus-shell min-h-screen lg:grid lg:grid-cols-[92px_minmax(0,1fr)]">
-      <header className="locus-rail sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#14233b]/15 px-4 lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:px-0 lg:py-5">
-          <Link href="/workspace" aria-label="Locus workspace" className="flex items-center gap-2.5 text-[#14233b] lg:flex-col">
-            <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#14233b] shadow-[0_8px_20px_rgba(20,35,59,.18)]">
+    <div className="min-h-screen bg-canvas text-ink lg:grid lg:grid-cols-[92px_minmax(0,1fr)]">
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-surface px-4 lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:px-0 lg:py-5">
+          <Link href="/workspace" aria-label="Locus workspace" className="flex items-center gap-2.5 text-ink lg:flex-col">
+            <span className="grid h-10 w-10 place-items-center rounded-card bg-ink">
               <Image src="/locus-mark.svg" width={22} height={22} alt="" priority />
             </span>
             <span className="text-sm font-bold tracking-[-0.04em] lg:text-[11px]">LOCUS</span>
           </Link>
 
-          <nav className="flex items-center gap-1 text-[10px] font-semibold text-[#52647a] lg:flex-col lg:gap-2">
-            <Link href="/workspace" className="rounded-xl bg-[#14233b] px-3 py-2.5 text-white lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+          <nav className="flex items-center gap-1 text-[11px] font-semibold text-muted lg:flex-col lg:gap-2">
+            <Link href="/workspace" className="rounded-card bg-ink px-3 py-2.5 text-canvas lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
               Map
             </Link>
-            <Link href="/projects" className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+            <Link href="/projects" className="hidden rounded-card px-3 py-2.5 hover:bg-surface-2 hover:text-ink sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
               Runs
             </Link>
-            <Link href="/settings" className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+            <Link href="/settings" className="hidden rounded-card px-3 py-2.5 hover:bg-surface-2 hover:text-ink sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
               Setup
             </Link>
-            <a href={REPO_URL} className="hidden rounded-xl px-3 py-2.5 hover:bg-white/50 hover:text-[#14233b] md:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+            <a href={REPO_URL} className="hidden rounded-card px-3 py-2.5 hover:bg-surface-2 hover:text-ink md:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
               Code
             </a>
           </nav>
 
           <div className="flex items-center gap-2 lg:flex-col">
-            {accountName && <span className="hidden max-w-16 truncate text-[9px] font-medium text-[#52647a] lg:block">{accountName}</span>}
+            {accountName && <span className="hidden max-w-16 truncate text-[11px] font-medium text-muted lg:block">{accountName}</span>}
             <UserButton
               appearance={{
                 elements: {
-                  avatarBox: "h-8 w-8 border border-[#14233b]/20",
-                  userButtonPopoverCard: "border border-line-strong bg-surface text-ink shadow-2xl",
+                  avatarBox: "h-8 w-8 border border-line-2",
+                  userButtonPopoverCard: "border border-line-2 bg-surface text-ink shadow-2xl",
                 },
               }}
             />
@@ -172,53 +172,55 @@ export function LocusApp({
         <section className="grid gap-7 py-8 lg:grid-cols-[minmax(360px,0.72fr)_minmax(560px,1.28fr)] lg:items-center lg:gap-9 lg:py-10">
           <div className="relative py-2">
             <div className="mb-5 flex flex-wrap items-center gap-3">
-              <span className="rounded-full bg-[#14233b] px-3 py-1.5 font-mono text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8ef0c0]">
+              <span className="rounded-chip border border-line-2 bg-surface px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-2">
                 {isWorkspace ? "Mission workspace" : "Public early access"}
               </span>
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#52647a]">
+              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                 Slice → Run → Evidence
               </span>
             </div>
-            <h1 className="max-w-2xl text-5xl font-bold leading-[0.9] tracking-[-0.04em] text-[#14233b] sm:text-6xl lg:text-[72px]">
+            <h1 className="max-w-2xl font-display text-5xl font-semibold leading-[0.95] tracking-[-0.04em] text-ink sm:text-6xl lg:text-[72px]">
               Map less.
-              <span className="block text-[#314fd1]">Ship the task.</span>
+              <span className="block text-muted">Ship the task.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-base font-medium leading-7 text-[#40546b]">
+            <p className="mt-6 max-w-xl text-base leading-7 text-ink-2">
               Locus admits a focused Slice, keeps every excluded file visible, then produces a
               check-passing proposal in an isolated Run for you to review.
             </p>
-            <div className="mt-7 flex max-w-xl items-center gap-4 border-t border-[#14233b]/20 pt-4">
-              <span className="h-2.5 w-2.5 rounded-sm bg-[#314fd1]" />
-              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.13em] text-[#52647a]">
+            <div className="mt-7 flex max-w-xl items-center gap-4 border-t border-line-2 pt-4">
+              <span className="h-2.5 w-2.5 rounded-sm bg-ink" />
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                 Included is a decision. Excluded is evidence.
               </p>
             </div>
           </div>
 
-          <ContextLens
-            included={includedCount}
-            excluded={excludedCount}
+          <WorkspaceField
+            files={repo ? Object.keys(repo.files) : null}
+            slicePaths={result?.slice.map(({ path }) => path) ?? []}
+            anchorPaths={result?.anchorPaths ?? []}
+            loading={loading}
+            repoName={repo?.name ?? null}
             includedShare={includedShare}
-            active={Boolean(result)}
           />
         </section>
 
-        <section className="locus-stage overflow-hidden rounded-[30px] border border-white/20 bg-[#14233b] p-3 sm:p-4">
+        <section className="overflow-hidden rounded-card border border-line-2 bg-surface-2 p-3 sm:p-4">
           <div className="flex flex-col gap-2 px-2 pb-4 pt-1 sm:flex-row sm:items-center sm:justify-between sm:px-3">
             <div>
-              <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.18em] text-accent">Active mission</p>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Active mission</p>
               <p className="mt-1 text-sm font-semibold text-ink">{repo?.name ?? "Repository standby"}</p>
             </div>
-            <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.12em] text-muted-light">
-              <span className="h-2 w-2 rounded-sm bg-accent" />
+            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-2">
+              <span className="h-2 w-2 rounded-sm bg-included" />
               Context engine online
             </div>
           </div>
           <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
           <aside className="self-start lg:sticky lg:top-23">
-            <div className="overflow-hidden rounded-[20px] border border-line-strong bg-surface/95">
+            <div className="overflow-hidden rounded-card border border-line-2 bg-surface/95">
               <div className="border-b border-line px-5 py-4">
-                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                   Task brief
                 </p>
                 <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-ink">
@@ -230,7 +232,7 @@ export function LocusApp({
                 <div>
                   <label htmlFor="repo-input" className="flex items-center justify-between text-xs font-medium text-ink">
                     <span>GitHub repository</span>
-                    <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">01</span>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">01</span>
                   </label>
                   <div className="mt-2 flex gap-2">
                     <input
@@ -239,18 +241,18 @@ export function LocusApp({
                       onChange={(event) => setGhUrl(event.target.value)}
                       onKeyDown={(event) => event.key === "Enter" && !loading && loadGithub()}
                       placeholder="owner/repository"
-                      className="min-w-0 flex-1 rounded-xl border border-line-strong bg-canvas px-3 py-3 text-sm text-ink placeholder:text-muted focus:border-accent focus:outline-none"
+                      className="min-w-0 flex-1 rounded-card border border-line-2 bg-canvas px-3 py-3 text-sm text-ink placeholder:text-muted focus:border-included focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => loadGithub()}
                       disabled={loading || !ghUrl.trim()}
-                      className="rounded-xl bg-ink px-3.5 py-3 text-xs font-semibold text-canvas transition hover:bg-accent hover:text-canvas disabled:cursor-not-allowed disabled:opacity-35"
+                      className="rounded-card bg-ink px-3.5 py-3 text-xs font-semibold text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-35"
                     >
                       {loading ? "…" : "Load"}
                     </button>
                   </div>
-                  <p className="mt-2 text-[10px] leading-4 text-muted">
+                  <p className="mt-2 text-[11px] leading-4 text-muted">
                     Public GitHub Repos only during early access. Failed loads keep your current Slice open.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-1.5">
@@ -259,10 +261,10 @@ export function LocusApp({
                         type="button"
                         key={source.slug}
                         onClick={() => pickBundled(source.slug)}
-                        className={`rounded-full border px-2.5 py-1 text-[10px] transition ${
+                        className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
                           repo?.slug === source.slug
-                            ? "border-accent bg-accent text-canvas"
-                            : "border-line-strong text-muted hover:text-ink"
+                            ? "border-ink bg-ink text-canvas"
+                            : "border-line-2 text-muted hover:text-ink"
                         }`}
                       >
                         {source.name}
@@ -272,8 +274,8 @@ export function LocusApp({
                   {recentRepos.length > 0 && (
                     <div className="mt-3 border-t border-line pt-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">Recent</span>
-                        <button type="button" onClick={clearRecents} className="text-[10px] text-muted hover:text-ink">
+                        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">Recent</span>
+                        <button type="button" onClick={clearRecents} className="text-[11px] text-muted hover:text-ink">
                           Clear
                         </button>
                       </div>
@@ -283,7 +285,7 @@ export function LocusApp({
                             type="button"
                             key={identifier}
                             onClick={() => loadRecent(identifier)}
-                            className="block w-full truncate text-left font-mono text-[10px] text-muted-light hover:text-accent"
+                            className="block w-full truncate text-left font-mono text-[11px] text-ink-2 hover:text-ink"
                           >
                             {identifier}
                           </button>
@@ -296,7 +298,7 @@ export function LocusApp({
                 <div>
                   <label htmlFor="task-input" className="flex items-center justify-between text-xs font-medium text-ink">
                     <span>Engineering task</span>
-                    <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">02 · ⌘K</span>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">02 · ⌘K</span>
                   </label>
                   <textarea
                     ref={taskInputRef}
@@ -306,13 +308,13 @@ export function LocusApp({
                     maxLength={5_000}
                     rows={5}
                     placeholder="Describe the bug, desired behavior, and what proves it is fixed."
-                    className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-canvas px-3 py-3 text-sm leading-6 text-ink placeholder:text-muted focus:border-accent focus:outline-none"
+                    className="mt-2 w-full resize-y rounded-card border border-line-2 bg-canvas px-3 py-3 text-sm leading-6 text-ink placeholder:text-muted focus:border-included focus:outline-none"
                   />
                   {examples.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setTask(examples[0])}
-                      className="mt-2 text-left text-[10px] leading-4 text-muted transition hover:text-accent"
+                      className="mt-2 text-left text-[11px] leading-4 text-muted transition hover:text-ink"
                     >
                       Try: “{examples[0]}”
                     </button>
@@ -323,7 +325,7 @@ export function LocusApp({
                 <div>
                   <label htmlFor="definition-of-done" className="flex items-center justify-between text-xs font-medium text-ink">
                     <span>Definition of done</span>
-                    <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-muted">03</span>
+                    <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">03</span>
                   </label>
                   <textarea
                     id="definition-of-done"
@@ -332,9 +334,9 @@ export function LocusApp({
                     maxLength={2_000}
                     rows={3}
                     placeholder="One verifiable outcome per line."
-                    className="mt-2 w-full resize-y rounded-xl border border-line-strong bg-canvas px-3 py-3 text-sm leading-6 text-ink placeholder:text-muted focus:border-accent focus:outline-none"
+                    className="mt-2 w-full resize-y rounded-card border border-line-2 bg-canvas px-3 py-3 text-sm leading-6 text-ink placeholder:text-muted focus:border-included focus:outline-none"
                   />
-                  <p className="mt-2 text-[10px] leading-4 text-muted">These are proof requirements for review. A passing command does not by itself prove the requested behavior.</p>
+                  <p className="mt-2 text-[11px] leading-4 text-muted">These are proof requirements for review. A passing command does not by itself prove the requested behavior.</p>
                 </div>
               </div>
 
@@ -348,7 +350,7 @@ export function LocusApp({
               ) : note ? (
                 <div
                   role="status"
-                  className="border-t border-line px-5 py-3 text-xs leading-5 text-muted-light"
+                  className="border-t border-line px-5 py-3 text-xs leading-5 text-ink-2"
                 >
                   {note}
                 </div>
@@ -359,10 +361,10 @@ export function LocusApp({
           <div className="min-w-0 space-y-6">
             {graph && result ? (
               <>
-                <section className="overflow-hidden rounded-[22px] border border-line-strong bg-surface">
+                <section className="overflow-hidden rounded-card border border-line-2 bg-surface">
                   <div className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+                      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                         Slice aperture
                       </p>
                       <p className="mt-1 truncate text-sm font-semibold text-ink">{repo?.name}</p>
@@ -373,14 +375,14 @@ export function LocusApp({
                           type="button"
                           onClick={saveAnalysis}
                           disabled={saveStatus === "saving"}
-                          className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-ink disabled:opacity-40"
+                          className="rounded-chip border border-line-2 px-3 py-2 text-[11px] text-ink-2 hover:border-ink/40 hover:text-ink disabled:opacity-40"
                         >
                           {saveStatus === "idle" ? "Save analysis" : saveStatus}
                         </button>
                         <button
                           type="button"
                           onClick={copyShareView}
-                          className="rounded-lg border border-line-strong px-3 py-2 text-[11px] text-muted-light hover:border-accent hover:text-ink"
+                          className="rounded-chip border border-line-2 px-3 py-2 text-[11px] text-ink-2 hover:border-ink/40 hover:text-ink"
                         >
                           {shareStatus === "idle" ? "Share view" : shareStatus}
                         </button>
@@ -427,9 +429,9 @@ export function LocusApp({
                 </div>
               </>
             ) : (
-              <div className="grid min-h-[520px] place-items-center rounded-[22px] border border-dashed border-line-strong bg-surface p-10 text-center">
+              <div className="grid min-h-[520px] place-items-center rounded-card border border-dashed border-line-2 bg-surface p-10 text-center">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted">Waiting for a repository</p>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">Waiting for a repository</p>
                   <p className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-ink">
                     {loading ? "Reading the code graph…" : "Load a repository to open the Slice ledger."}
                   </p>
@@ -441,13 +443,13 @@ export function LocusApp({
         </section>
       </main>
 
-      <footer className="border-t border-[#14233b]/15">
-        <div className="mx-auto flex max-w-[1580px] flex-col gap-3 px-4 py-6 text-xs font-medium text-[#52647a] sm:flex-row sm:items-center sm:justify-between sm:px-9">
+      <footer className="border-t border-line">
+        <div className="mx-auto flex max-w-[1580px] flex-col gap-3 px-4 py-6 text-xs font-medium text-muted sm:flex-row sm:items-center sm:justify-between sm:px-9">
           <span>Locus · Slice context, complete work</span>
           <nav className="flex gap-4">
-            <Link href="/docs" className="hover:text-[#14233b]">Docs</Link>
-            <Link href="/privacy" className="hover:text-[#14233b]">Privacy</Link>
-            <Link href="/terms" className="hover:text-[#14233b]">Terms</Link>
+            <Link href="/docs" className="hover:text-ink">Docs</Link>
+            <Link href="/privacy" className="hover:text-ink">Privacy</Link>
+            <Link href="/terms" className="hover:text-ink">Terms</Link>
           </nav>
         </div>
       </footer>

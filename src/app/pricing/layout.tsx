@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Early access — Locus",
+  title: "Early access · Locus",
   description: "Try public-Repo localization and review-ready Agent Runs on a public JavaScript or TypeScript repository.",
 };
 

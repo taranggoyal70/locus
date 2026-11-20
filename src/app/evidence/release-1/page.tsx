@@ -5,9 +5,10 @@ import report from "../../../../benchmarks/release1/public-report.json";
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
 import { REPO_URL } from "@/lib/config";
+import { RiseWords } from "@/components/Reveal";
 
 export const metadata: Metadata = {
-  title: "Release 1 evidence — Locus",
+  title: "Release 1 evidence · Locus",
   description: "The frozen, fail-closed protocol and current evidence state for Locus Release 1.",
 };
 
@@ -43,38 +44,36 @@ export default function Release1EvidencePage() {
       <main className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">
               Release 1 / public evidence
             </p>
-            <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-ink sm:text-6xl">
-              The claim stays locked until the evidence is complete.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-muted-light">
+            <RiseWords as="h1" onLoad lines={["The claim stays locked until the evidence is complete."]} className="mt-4 font-display text-4xl font-semibold tracking-[-0.04em] text-ink sm:text-6xl" />
+            <p className="mt-5 max-w-2xl text-base leading-7 text-ink-2">
               Twenty historical engineering tasks, two context arms, one frozen protocol. Human
               reviewers decide correctness without seeing which arm produced the proposal. Missing,
               rejected, duplicated, or mismatched evidence cannot pass the gate.
             </p>
           </div>
-          <div className="w-full rounded-2xl border border-line-strong bg-surface p-5 shadow-[0_20px_55px_rgba(20,35,59,0.08)] lg:max-w-xs">
+          <div className="w-full rounded-card border border-line-2 bg-surface p-5 shadow-panel lg:max-w-xs">
             <div className="flex items-center justify-between gap-4">
-              <span className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+              <span className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                 Gate status
               </span>
-              <span className="rounded-full border border-recent/30 bg-recent/10 px-3 py-1 text-xs font-semibold text-recent">
+              <span className="rounded-full border border-widened/30 bg-widened/10 px-3 py-1 text-xs font-semibold text-widened">
                 {evidence.gatePassed ? "Passed" : "Locked"}
               </span>
             </div>
             <p className="mt-5 tabular text-4xl font-semibold tracking-[-0.04em] text-ink">
               {evidence.progress.validResults}<span className="text-xl text-muted">/{evidence.progress.expectedResults}</span>
             </p>
-            <p className="mt-1 text-sm text-muted-light">valid reviewed arm results</p>
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-surface-raised" aria-label={`${percent(completion)} complete`}>
-              <div className="h-full rounded-full bg-accent" style={{ width: percent(completion) }} />
+            <p className="mt-1 text-sm text-ink-2">valid reviewed arm results</p>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-surface-2" aria-label={`${percent(completion)} complete`}>
+              <div className="h-full rounded-full bg-included" style={{ width: percent(completion) }} />
             </div>
           </div>
         </div>
 
-        <div className="aperture-rule mt-10 h-px" />
+        <div className="mt-10 border-t border-line" />
 
         <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Study summary">
           {[
@@ -83,8 +82,8 @@ export default function Release1EvidencePage() {
             ["Complete pairs", `${evidence.progress.completePairs}/${evidence.progress.expectedPairs}`],
             ["Review", evidence.study.blindedReview ? "Arm-blinded" : "Not blinded"],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-2xl border border-line-strong bg-surface/75 p-5">
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">{label}</p>
+            <div key={label} className="rounded-card border border-line-2 bg-surface/75 p-5">
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</p>
               <p className="mt-3 text-xl font-semibold tracking-[-0.03em] text-ink">{value}</p>
             </div>
           ))}
@@ -92,7 +91,7 @@ export default function Release1EvidencePage() {
 
         <section className="mt-14 grid gap-8 lg:grid-cols-[1.05fr_.95fr]">
           <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">Protocol</p>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">Protocol</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-ink">Same task. Same limits. Different context.</h2>
             <ol className="mt-7 space-y-4">
               {[
@@ -101,19 +100,19 @@ export default function Release1EvidencePage() {
                 ["03", "Blind review", "Criterion-level human review happens before the arm and token usage are revealed."],
                 ["04", "Fail closed", "Only complete, accepted pairs contribute a token reduction. Critical regressions fail the study."],
               ].map(([number, title, description]) => (
-                <li key={number} className="grid grid-cols-[2.5rem_1fr] gap-3 rounded-2xl border border-line bg-surface/55 p-4">
-                  <span className="font-mono text-xs font-semibold text-accent">{number}</span>
+                <li key={number} className="grid grid-cols-[2.5rem_1fr] gap-3 rounded-card border border-line bg-surface/55 p-4">
+                  <span className="font-mono text-xs font-semibold text-included">{number}</span>
                   <div>
                     <h3 className="font-semibold text-ink">{title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-muted-light">{description}</p>
+                    <p className="mt-1 text-sm leading-6 text-ink-2">{description}</p>
                   </div>
                 </li>
               ))}
             </ol>
           </div>
 
-          <div className="rounded-[26px] border border-line-strong bg-ink p-6 text-canvas sm:p-8">
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent-on-dark">Promotion thresholds</p>
+          <div className="rounded-card border border-line-2 bg-ink p-6 text-canvas sm:p-8">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-included">Promotion thresholds</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-white">All gates must pass together.</h2>
             <dl className="mt-7 divide-y divide-white/10">
               {[
@@ -130,11 +129,11 @@ export default function Release1EvidencePage() {
               ))}
             </dl>
             {evidence.metrics ? (
-              <p className="mt-6 rounded-xl border border-accent/40 bg-accent/10 p-4 text-sm leading-6 text-canvas">
+              <p className="mt-6 rounded-card border border-included/40 bg-included/10 p-4 text-sm leading-6 text-canvas">
                 Complete evidence: median total-token reduction {percent(evidence.metrics.medianTotalTokenReduction)}.
               </p>
             ) : (
-              <p className="mt-6 rounded-xl border border-white/15 bg-white/5 p-4 text-sm leading-6 text-canvas/75">
+              <p className="mt-6 rounded-card border border-white/15 bg-white/5 p-4 text-sm leading-6 text-canvas/75">
                 Outcome metrics are withheld while evidence is incomplete. Zero is not being presented as a measured result.
               </p>
             )}
@@ -144,16 +143,16 @@ export default function Release1EvidencePage() {
         <section className="mt-16">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">Frozen case ledger</p>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">Frozen case ledger</p>
               <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-ink">Every task is inspectable.</h2>
             </div>
             <div className="flex flex-wrap gap-3 text-sm">
-              <a className="font-semibold text-accent hover:underline" href={`${evidenceBase}/contract.json`}>Contract</a>
-              <a className="font-semibold text-accent hover:underline" href={`${evidenceBase}/results.json`}>Raw results</a>
-              <a className="font-semibold text-accent hover:underline" href={`${evidenceBase}/public-report.json`}>Public report</a>
+              <a className="font-semibold text-included hover:underline" href={`${evidenceBase}/contract.json`}>Contract</a>
+              <a className="font-semibold text-included hover:underline" href={`${evidenceBase}/results.json`}>Raw results</a>
+              <a className="font-semibold text-included hover:underline" href={`${evidenceBase}/public-report.json`}>Public report</a>
             </div>
           </div>
-          <div className="mt-7 overflow-hidden rounded-2xl border border-line-strong bg-surface/75">
+          <div className="mt-7 overflow-hidden rounded-card border border-line-2 bg-surface/75">
             <ul className="divide-y divide-line">
               {contract.cases.map((testCase, index) => (
                 <li key={testCase.id} className="grid gap-3 p-4 sm:grid-cols-[2.5rem_1fr_auto] sm:items-center sm:px-5">
@@ -162,7 +161,7 @@ export default function Release1EvidencePage() {
                     <p className="text-sm font-semibold text-ink">{testCase.task}</p>
                     <p className="mt-1 font-mono text-[11px] text-muted">{repoName(testCase.repository)} · {testCase.snapshotSha.slice(0, 10)}</p>
                   </div>
-                  <span className="w-fit rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-muted">
+                  <span className="w-fit rounded-full border border-line-2 px-2.5 py-1 text-[11px] font-semibold text-muted">
                     Frozen
                   </span>
                 </li>

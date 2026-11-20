@@ -4,9 +4,10 @@ import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
 import { supportAvailability } from "@/lib/admission-copy";
 import { REPO_URL, SITE_URL } from "@/lib/config";
+import { RiseWords } from "@/components/Reveal";
 
 export const metadata: Metadata = {
-  title: "Support and service status — Locus",
+  title: "Support and service status · Locus",
   description: "How to report a Locus problem, security issue, or data request.",
 };
 
@@ -17,9 +18,9 @@ export default function SupportPage() {
   return (
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-4xl px-5 py-12">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Operations</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Support and service status</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-light">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">Operations</p>
+        <RiseWords as="h1" onLoad lines={["Support and service status"]} className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink" />
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-ink-2">
           {supportAvailability(selfServeOpen())}
           {" "}Shared Agent Run capacity resets daily at 00:00 UTC; connected Cloudflare accounts
           use their own limits. These are response targets, not guarantees, and external repository
@@ -27,29 +28,29 @@ export default function SupportPage() {
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <section className="rounded-2xl border border-line-strong bg-surface p-5">
+          <section className="rounded-card border border-line-2 bg-surface p-5">
             <h2 className="text-lg font-semibold text-ink">Service status</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-light">
+            <p className="mt-2 text-sm leading-6 text-ink-2">
               Check the live revision and application readiness before reporting an outage.
             </p>
-            <a href={`${SITE_URL}/api/health`} className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">
+            <a href={`${SITE_URL}/api/health`} className="mt-4 inline-block text-sm font-semibold text-included hover:underline">
               Open live health endpoint →
             </a>
           </section>
-          <section className="rounded-2xl border border-line-strong bg-surface p-5">
+          <section className="rounded-card border border-line-2 bg-surface p-5">
             <h2 className="text-lg font-semibold text-ink">Product support</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-light">
+            <p className="mt-2 text-sm leading-6 text-ink-2">
               Report a reproducible bug without source code, credentials, personal data, or private task text.
             </p>
-            <a href={issueUrl} className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">
+            <a href={issueUrl} className="mt-4 inline-block text-sm font-semibold text-included hover:underline">
               Open a support issue →
             </a>
           </section>
         </div>
 
-        <section className="mt-6 rounded-2xl border border-line-strong bg-surface p-5">
+        <section className="mt-6 rounded-card border border-line-2 bg-surface p-5">
           <h2 className="text-lg font-semibold text-ink">Incident severity</h2>
-          <div className="mt-4 grid gap-3 text-sm leading-6 text-muted-light sm:grid-cols-3">
+          <div className="mt-4 grid gap-3 text-sm leading-6 text-ink-2 sm:grid-cols-3">
             <div><strong className="block text-ink">Critical · 4 hours</strong>Confirmed data exposure, destructive behavior, or total service loss.</div>
             <div><strong className="block text-ink">High · 1 business day</strong>Agent Runs broadly fail or review evidence is unavailable.</div>
             <div><strong className="block text-ink">Normal · 3 business days</strong>Isolated defects, questions, and product feedback.</div>
@@ -57,21 +58,21 @@ export default function SupportPage() {
         </section>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <section className="rounded-2xl border border-line-strong bg-surface p-5">
+          <section className="rounded-card border border-line-2 bg-surface p-5">
             <h2 className="text-lg font-semibold text-ink">Security reports</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-light">
+            <p className="mt-2 text-sm leading-6 text-ink-2">
               Do not open a public issue for a vulnerability. Use a private GitHub Security Advisory.
             </p>
-            <a href={securityUrl} className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">
+            <a href={securityUrl} className="mt-4 inline-block text-sm font-semibold text-included hover:underline">
               Start a private advisory →
             </a>
           </section>
-          <section className="rounded-2xl border border-line-strong bg-surface p-5">
+          <section className="rounded-card border border-line-2 bg-surface p-5">
             <h2 className="text-lg font-semibold text-ink">Data deletion</h2>
-            <p className="mt-2 text-sm leading-6 text-muted-light">
+            <p className="mt-2 text-sm leading-6 text-ink-2">
               Request early deletion with your account identifier only. Never paste source, task evidence, or credentials.
             </p>
-            <a href={issueUrl} className="mt-4 inline-block text-sm font-semibold text-accent hover:underline">
+            <a href={issueUrl} className="mt-4 inline-block text-sm font-semibold text-included hover:underline">
               Request deletion →
             </a>
           </section>

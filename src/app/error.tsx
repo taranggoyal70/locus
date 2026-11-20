@@ -13,19 +13,19 @@ export default function GlobalError({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-5 text-center">
       <Image src="/locus-mark.svg" width={48} height={48} alt="" className="opacity-40" />
-      <p className="mt-6 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-recent">Run interrupted</p>
+      <p className="mt-6 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-failed">Run interrupted</p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-[-0.04em] text-ink">Something went wrong</h1>
-      <p className="mt-2 max-w-md text-sm text-muted-light">{error.message || "An unexpected error occurred."}</p>
+      <p className="mt-2 max-w-md text-sm text-ink-2">{error.message || "An unexpected error occurred."}</p>
       <div className="mt-8 flex gap-3">
         <button
           onClick={reset}
-          className="rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-canvas transition hover:bg-accent-dim"
+          className="rounded-card bg-ink px-5 py-3 text-sm font-semibold text-canvas transition hover:bg-ink/90"
         >
           Try again
         </button>
         <Link
           href="/"
-          className="rounded-xl border border-line-strong px-5 py-3 text-sm font-medium text-ink transition hover:border-accent/40"
+          className="rounded-card border border-line-2 px-5 py-3 text-sm font-medium text-ink transition hover:border-ink/40"
         >
           Go home
         </Link>

@@ -1,3 +1,5 @@
+import type { LocateResult } from "@/lib/types";
+
 /**
  * The Slice the landing page's aperture draws: a real localization, recorded.
  *
@@ -140,26 +142,73 @@ export const RECORDED_SLICE = {
     "types/next-auth.d.ts",
   ],
   slice: [
-    { path: "app/(editor)/editor/[postId]/not-found.tsx", dist: 0 },
-    { path: "app/(editor)/editor/[postId]/page.tsx", dist: 0 },
-    { path: "components/editor.tsx", dist: 0 },
-    { path: "lib/auth.ts", dist: 1 },
-    { path: "lib/utils.ts", dist: 1 },
-    { path: "components/empty-placeholder.tsx", dist: 1 },
-    { path: "components/icons.tsx", dist: 1 },
-    { path: "components/ui/button.tsx", dist: 1 },
-    { path: "components/ui/use-toast.ts", dist: 1 },
-    { path: "lib/db.ts", dist: 1 },
-    { path: "lib/session.ts", dist: 1 },
-    { path: "lib/validations/post.ts", dist: 1 },
-    { path: "components/ui/toast.tsx", dist: 2 },
-    { path: "config/site.ts", dist: 2 },
+    { path: "app/(editor)/editor/[postId]/not-found.tsx", dist: 0, tokens: 164, recent: false },
+    { path: "app/(editor)/editor/[postId]/page.tsx", dist: 0, tokens: 238, recent: false },
+    { path: "components/editor.tsx", dist: 0, tokens: 1230, recent: false },
+    { path: "lib/auth.ts", dist: 1, tokens: 696, recent: true },
+    { path: "lib/utils.ts", dist: 1, tokens: 123, recent: true },
+    { path: "components/empty-placeholder.tsx", dist: 1, tokens: 466, recent: false },
+    { path: "components/icons.tsx", dist: 1, tokens: 622, recent: false },
+    { path: "components/ui/button.tsx", dist: 1, tokens: 412, recent: false },
+    { path: "components/ui/use-toast.ts", dist: 1, tokens: 984, recent: false },
+    { path: "lib/db.ts", dist: 1, tokens: 96, recent: false },
+    { path: "lib/session.ts", dist: 1, tokens: 54, recent: false },
+    { path: "lib/validations/post.ts", dist: 1, tokens: 52, recent: false },
+    { path: "components/ui/toast.tsx", dist: 2, tokens: 1208, recent: false },
+    { path: "config/site.ts", dist: 2, tokens: 103, recent: false },
   ],
   anchors: ["app/(editor)/editor/[postId]/page.tsx", "app/(editor)/editor/[postId]/not-found.tsx", "components/editor.tsx"],
+  /** Import edges between Slice files, importer first. */
+  edges: [
+    ["app/(editor)/editor/[postId]/not-found.tsx", "components/ui/button.tsx"],
+    ["app/(editor)/editor/[postId]/not-found.tsx", "components/empty-placeholder.tsx"],
+    ["app/(editor)/editor/[postId]/page.tsx", "lib/auth.ts"],
+    ["app/(editor)/editor/[postId]/page.tsx", "lib/db.ts"],
+    ["app/(editor)/editor/[postId]/page.tsx", "lib/session.ts"],
+    ["app/(editor)/editor/[postId]/page.tsx", "components/editor.tsx"],
+    ["components/editor.tsx", "lib/utils.ts"],
+    ["components/editor.tsx", "lib/validations/post.ts"],
+    ["components/editor.tsx", "components/ui/button.tsx"],
+    ["components/editor.tsx", "components/ui/use-toast.ts"],
+    ["components/editor.tsx", "components/icons.tsx"],
+    ["components/empty-placeholder.tsx", "lib/utils.ts"],
+    ["components/empty-placeholder.tsx", "components/icons.tsx"],
+    ["components/ui/button.tsx", "lib/utils.ts"],
+    ["components/ui/toast.tsx", "lib/utils.ts"],
+    ["components/ui/use-toast.ts", "components/ui/toast.tsx"],
+    ["lib/auth.ts", "config/site.ts"],
+    ["lib/auth.ts", "lib/db.ts"],
+    ["lib/session.ts", "lib/auth.ts"],
+  ],
   sliceTokens: 6448,
   totalTokens: 56404,
   widened: false,
+  reason: "matched app/(editor)/editor/[postId]/page.tsx, app/(editor)/editor/[postId]/not-found.tsx, components/editor.tsx",
+  savedPct: 89,
+  edgeDensity: 1.984,
+  sparse: false,
 } as const;
+
+/**
+ * The record in the shape the product's own panels take, so the page can show
+ * the real FilePanel from the first paint, before the engine has loaded.
+ */
+export const RECORDED_RESULT: LocateResult = {
+  task: RECORDED_SLICE.task,
+  widened: RECORDED_SLICE.widened,
+  reason: RECORDED_SLICE.reason,
+  anchors: [...RECORDED_SLICE.anchors],
+  anchorPaths: [...RECORDED_SLICE.anchors],
+  slice: RECORDED_SLICE.slice.map((file) => ({ ...file, rel: file.path })),
+  excluded: RECORDED_SLICE.files.filter((file) => !RECORDED_SLICE.slice.some(({ path }) => path === file)),
+  excludedPaths: RECORDED_SLICE.files.filter((file) => !RECORDED_SLICE.slice.some(({ path }) => path === file)),
+  sliceTokens: RECORDED_SLICE.sliceTokens,
+  totalTokens: RECORDED_SLICE.totalTokens,
+  savedPct: RECORDED_SLICE.savedPct,
+  refinement: null,
+  edgeDensity: RECORDED_SLICE.edgeDensity,
+  sparse: RECORDED_SLICE.sparse,
+};
 
 export type ApertureColumn = {
   label: string;

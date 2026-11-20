@@ -16,7 +16,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/[0.86] backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/[0.86]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-8">
           <Link href="/workspace" className="flex items-center gap-3 text-ink">
             <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
@@ -30,7 +30,7 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
                 className={`rounded-full px-3 py-2 transition ${
                   pathname === item.href
                     ? "bg-ink text-canvas font-medium"
-                    : "text-muted-light hover:text-ink"
+                    : "text-ink-2 hover:text-ink"
                 }`}
               >
                 {item.label}
@@ -39,8 +39,8 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
             <UserButton
               appearance={{
                 elements: {
-                  avatarBox: "h-9 w-9 border border-line-strong",
-                  userButtonPopoverCard: "border border-line-strong bg-surface text-ink shadow-2xl",
+                  avatarBox: "h-9 w-9 border border-line-2",
+                  userButtonPopoverCard: "border border-line-2 bg-surface text-ink shadow-2xl",
                 },
               }}
             />

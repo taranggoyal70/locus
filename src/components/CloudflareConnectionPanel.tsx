@@ -68,41 +68,41 @@ export function CloudflareConnectionPanel() {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-line-strong bg-surface">
+    <div className="overflow-hidden rounded-card border border-line-2 bg-surface">
       <div className="border-b border-line px-5 py-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
               Optional · Bring your own capacity
             </p>
             <h3 className="mt-1 text-base font-semibold text-ink">Connect Cloudflare Workers AI</h3>
           </div>
-          <span className={`rounded-full border px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] ${
+          <span className={`rounded-full border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] ${
             status?.configured
-              ? "border-accent/35 bg-accent/10 text-accent"
-              : "border-line-strong text-muted"
+              ? "border-included/35 bg-included/10 text-muted"
+              : "border-line-2 text-muted"
           }`}>
             {status?.configured ? "Connected" : "Not connected"}
           </span>
         </div>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-light">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-ink-2">
           When your account has Agent access, Locus offers one shared Agent Run per day across the
           beta. Connect your own Cloudflare account to avoid waiting for that shared slot.
         </p>
       </div>
 
       <div className="space-y-5 p-5">
-        <ol className="grid gap-3 text-xs leading-5 text-muted-light sm:grid-cols-3">
-          <li className="rounded-xl border border-line p-3"><strong className="block text-ink">1. Open Cloudflare</strong>Go to Workers AI and choose “Use REST API.”</li>
-          <li className="rounded-xl border border-line p-3"><strong className="block text-ink">2. Copy two values</strong>Create an API token and copy your Account ID.</li>
-          <li className="rounded-xl border border-line p-3"><strong className="block text-ink">3. Connect once</strong>Paste both below. The token is never shown again.</li>
+        <ol className="grid gap-3 text-xs leading-5 text-ink-2 sm:grid-cols-3">
+          <li className="rounded-card border border-line p-3"><strong className="block text-ink">1. Open Cloudflare</strong>Go to Workers AI and choose “Use REST API.”</li>
+          <li className="rounded-card border border-line p-3"><strong className="block text-ink">2. Copy two values</strong>Create an API token and copy your Account ID.</li>
+          <li className="rounded-card border border-line p-3"><strong className="block text-ink">3. Connect once</strong>Paste both below. The token is never shown again.</li>
         </ol>
 
         <a
           href="https://dash.cloudflare.com/?to=/:account/ai/workers-ai"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-accent hover:underline"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-included hover:underline"
         >
           Open Cloudflare Workers AI <span aria-hidden>↗</span>
         </a>
@@ -116,7 +116,7 @@ export function CloudflareConnectionPanel() {
               autoComplete="off"
               spellCheck={false}
               placeholder="32-character Account ID"
-              className="mt-2 w-full rounded-xl border border-line-strong bg-canvas px-3 py-3 font-mono text-xs text-ink placeholder:text-muted focus:border-accent focus:outline-none"
+              className="mt-2 w-full rounded-card border border-line-2 bg-canvas px-3 py-3 font-mono text-xs text-ink placeholder:text-muted focus:border-included focus:outline-none"
             />
           </label>
           <label className="text-xs font-medium text-ink">
@@ -127,7 +127,7 @@ export function CloudflareConnectionPanel() {
               onChange={(event) => setApiToken(event.target.value)}
               autoComplete="new-password"
               placeholder="Paste token once"
-              className="mt-2 w-full rounded-xl border border-line-strong bg-canvas px-3 py-3 font-mono text-xs text-ink placeholder:text-muted focus:border-accent focus:outline-none"
+              className="mt-2 w-full rounded-card border border-line-2 bg-canvas px-3 py-3 font-mono text-xs text-ink placeholder:text-muted focus:border-included focus:outline-none"
             />
           </label>
         </div>
@@ -137,7 +137,7 @@ export function CloudflareConnectionPanel() {
             type="button"
             onClick={saveConnection}
             disabled={saving || !accountId.trim() || !apiToken.trim()}
-            className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-canvas disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-card bg-ink px-4 py-2.5 text-sm font-semibold text-canvas disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? "Saving…" : status?.configured ? "Replace connection" : "Connect Cloudflare"}
           </button>
@@ -146,16 +146,16 @@ export function CloudflareConnectionPanel() {
               type="button"
               onClick={removeConnection}
               disabled={saving}
-              className="rounded-xl border border-recent/35 px-4 py-2.5 text-sm font-semibold text-recent disabled:opacity-40"
+              className="rounded-card border border-failed/35 px-4 py-2.5 text-sm font-semibold text-failed disabled:opacity-40"
             >
               Remove connection
             </button>
           )}
-          <p className="text-[10px] leading-4 text-muted">
+          <p className="text-[11px] leading-4 text-muted">
             Encrypted before storage. Used only for your Agent Runs. Remove it anytime.
           </p>
         </div>
-        {error && <p role="alert" className="text-xs text-recent">{error}</p>}
+        {error && <p role="alert" className="text-xs text-failed">{error}</p>}
       </div>
     </div>
   );

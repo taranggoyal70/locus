@@ -14,20 +14,20 @@ export function RepoLoadFeedback({
   onUseDemo,
 }: RepoLoadFeedbackProps) {
   return (
-    <div role="alert" className="border-t border-recent/25 bg-recent/5 px-5 py-4 text-xs leading-5 text-recent">
+    <div role="alert" className="border-t border-failed/25 bg-failed/5 px-5 py-4 text-xs leading-5 text-failed">
       <p className="font-medium">{issue.message}</p>
       {activeRepoName && (
-        <p className="mt-1 text-muted-light">{activeRepoName} is still open, so your current Slice was not interrupted.</p>
+        <p className="mt-1 text-ink-2">{activeRepoName} is still open, so your current Slice was not interrupted.</p>
       )}
       {issue.code === "unavailable" && (
-        <p className="mt-1 text-muted-light">Public GitHub Repos only during early access.</p>
+        <p className="mt-1 text-ink-2">Public GitHub Repos only during early access.</p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         {issue.retryable && (
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-lg bg-ink px-3 py-1.5 text-[11px] font-semibold text-canvas transition hover:bg-accent"
+            className="rounded-chip bg-ink px-3 py-1.5 text-[11px] font-semibold text-canvas transition hover:bg-ink/90"
           >
             Retry
           </button>
@@ -35,7 +35,7 @@ export function RepoLoadFeedback({
         <button
           type="button"
           onClick={onUseDemo}
-          className="rounded-lg border border-line-strong px-3 py-1.5 text-[11px] text-muted-light transition hover:border-accent hover:text-ink"
+          className="rounded-chip border border-line-2 px-3 py-1.5 text-[11px] text-ink-2 transition hover:border-ink/40 hover:text-ink"
         >
           Open demo Repo
         </button>

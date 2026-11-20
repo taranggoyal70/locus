@@ -3,9 +3,10 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
 import { REPO_URL } from "@/lib/config";
+import { RiseWords } from "@/components/Reveal";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Locus",
+  title: "Privacy Policy · Locus",
   description: "How Locus handles your data.",
 };
 
@@ -13,12 +14,12 @@ export default function PrivacyPage() {
   return (
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-3xl px-5 py-12">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Trust</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Privacy Policy</h1>
-        <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 30, 2026 · What Locus processes, keeps, and shares.</p>
-        <div className="aperture-rule mt-8" />
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">Trust</p>
+        <RiseWords as="h1" onLoad lines={["Privacy Policy"]} className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink" />
+        <p className="mt-3 text-sm leading-7 text-ink-2">Effective August 30, 2026 · What Locus processes, keeps, and shares.</p>
+        <div className="mt-8 border-t border-line" />
 
-        <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
+        <div className="mt-8 space-y-6 text-sm leading-7 text-ink-2">
           <section>
             <h2 className="text-lg font-semibold text-ink">What we collect</h2>
             <p>
@@ -98,7 +99,7 @@ export default function PrivacyPage() {
             <p>
               Questions or a request deletion? Open a private-data request without including source
               code, task text, or credentials in the{" "}
-              <a href={`${REPO_URL}/issues/new`} className="text-accent hover:underline">
+              <a href={`${REPO_URL}/issues/new`} className="text-included hover:underline">
                 Locus issue tracker
               </a>.
             </p>

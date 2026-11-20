@@ -83,9 +83,9 @@ components onto them. Each token is also a Tailwind colour of the same name
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--canvas` | `#F3F5F2` | Page background |
-| `--surface` | `#FBFCFA` | Cards, panels, inputs |
-| `--surface-2` | `#E8EDE9` | Wells, table headers, skeletons |
+| `--canvas` | `#F4F3EF` | Page background (neutral paper) |
+| `--surface` | `#FBFAF7` | Cards, panels, inputs |
+| `--surface-2` | `#EBE9E3` | Wells, table headers, skeletons |
 | `--line` | `rgba(20, 35, 59, 0.10)` | Default hairline |
 | `--line-2` | `rgba(20, 35, 59, 0.18)` | Emphasised hairline, input borders |
 | `--ink` | `#14233B` | Headlines, body, primary button |
@@ -93,7 +93,7 @@ components onto them. Each token is also a Tailwind colour of the same name
 | `--muted` | `#5C6A78` | Captions, metadata |
 | `--included` | `#087864` | Included files, passing Checks, focus ring |
 | `--widened` | `#925C0E` | Widen, attention needed |
-| `--excluded` | `#C3CCC6` | Excluded files (always paired with a label) |
+| `--excluded` | `#D3D0C8` | Excluded files (always paired with a label) |
 | `--failed` | `#B03A2E` | Failed Checks and errors only |
 
 The dark band (the demo, the closing call to action) uses the same roles on
@@ -158,10 +158,37 @@ where a Widen attempt asks to read one more file; the landing never shows it.
   the copy of shadcn-ui/taxonomy bundled in `public/repos/` (`src/lib/landing-slice.ts`,
   labelled "Recorded run"). `landing-slice.test.ts` re-runs the localizer and
   fails if the record drifts. In the app it renders the user's actual Slice.
-- It appears in three places: the landing hero, the loading state while
-  localizing, and the header of a Run receipt. Nowhere else.
+- It appears in three places: the landing page's Fig. 1, the loading state
+  while localizing, and the header of a Run receipt. Nowhere else.
 - `src/components/Aperture.tsx`: HTML and CSS, no new dependency. The app's
   `ContextLens` is a hand-placed illustration and moves onto it in step 4.
+
+## The mechanism (Fig. 2)
+
+The story of how the Slice in Fig. 1 was built, played once when it scrolls
+into view, from the same record. The task types itself out; the task words
+found in the Anchor paths highlight; the Anchors appear; real import lines draw
+out to the files one hop away, then two; the context meter runs down from the
+whole Repo's tokens to the Slice's, and the count of files held outside
+appears. Every path, line and number is recorded output. Narrow screens stack
+the three columns and skip the lines; the sequence still plays.
+`src/components/Mechanism.tsx`.
+
+## Print grammar
+
+The page reads as a technical sheet, not a stack of cards.
+
+- **Margin rails:** hairlines down both edges of the content column.
+- **Rules:** a full-width hairline between sections, with a small crosshair
+  where it crosses each rail.
+- **Section labels:** `01  THE SLICE`: a number in ink and a mono label that
+  decodes from glyph noise once, the first time it scrolls into view.
+- **Section headings:** two short lines, the second in `--muted`
+  ("One task." / "14 of 125 files.").
+- **Figures:** every figure has a caption, `Fig. 1  What it shows, and where
+  its numbers come from.`
+
+`src/components/Datasheet.tsx`.
 
 ## Motion
 
@@ -182,9 +209,16 @@ where a Widen attempt asks to read one more file; the landing never shows it.
 - Loops are allowed only while real work is running (localizing, a Run in
   progress), and stop the moment it finishes. Remove `context-drift`,
   `migration-orbit` and the idle `migration-pulse`.
-- Sections reveal once with a 12px rise and fade over 280ms, staggered 40ms.
-  No scroll hijacking, no parallax, no cursor-following effects.
-- Animate only `transform` and `opacity`. Pause offscreen.
+- Motion pieces (`src/components/Reveal.tsx`): headings rise word by word out
+  of a mask; mono labels decode from glyph noise; numbers count up to their
+  printed value; a hairline under the header fills with scroll progress. The
+  hero headline rises on first paint with CSS alone.
+- **The rule that keeps it honest:** the server renders the final state, and an
+  element only animates if it was offscreen at load and later scrolls into
+  view. Nothing already on screen ever flashes from shown to hidden.
+- No scroll hijacking, no parallax, no cursor-following effects.
+- Animate `transform` and `opacity`; `clip-path` and `stroke-dashoffset` only to
+  type or draw; colour only when a state changes.
 - Reduced motion: show the final state immediately. Every state is readable
   without animation.
 
@@ -288,3 +322,95 @@ Run for every step, and record the result at the bottom of this file.
   jsdom test, not by browser emulation.
 - Screenshots: `landing-before-1440.jpg` (the live site),
   `landing-after-1440.jpg`, `landing-after-390.jpg`.
+
+### Step 2b: motion and print grammar (November 3, 2026)
+
+Prompted by a closer study of Continuity's frontend: its feel comes from
+mechanism animations driven by real output, one signature visual, small motion
+pieces that play once, a print layout, and colour restraint.
+
+- Canvas moved from a cool green-grey to neutral paper (`#F4F3EF`); navy ink
+  and the state colours stay. The contrast test still holds AA everywhere.
+- Landing recomposed as a numbered sheet: a full-width headline that rises on
+  load, then 01 The Slice (Fig. 1, the aperture, now full width with the field
+  beside the file list), 02 Mechanism (Fig. 2), 03 Evidence (numbers count up),
+  04 Agent Runs, and the closing band. Margin rails, crosshair rules and
+  figure captions throughout.
+- Fig. 2 plays the recorded run's 12 one-hop imports; `landing-slice.ts` now
+  records the Slice's import edges and its test checks them against the graph.
+- Not done, on purpose: a hero headline built from particles. That is
+  Continuity's signature; Locus's is the file-mark field.
+- `pnpm lint`, `pnpm typecheck`, `pnpm check:alpha-claims` pass. `pnpm test`:
+  975 passed, 9 skipped. New: `Reveal.test.tsx`, `Mechanism.test.tsx`.
+- Browser at 1440, 1024, 390 and 320px: no sideways scroll; Fig. 2 lines land on
+  their files at 1024 and up and stack below; every beat completes. Fixed on the
+  way: counts overshot their start for a frame (negative progress), and a long
+  Anchor path overflowed its card on phones.
+- Screenshots: `landing-v2-hero-1440.jpg`, `landing-v2-fig2-1440.jpg`,
+  `landing-v2-fig2-390.jpg`.
+
+### Steps 3 to 6: the rest of the site (November 3, 2026)
+
+- **Demo (step 3):** `MigrationDemo` runs on the dark token band. Its 40-odd
+  hex colours, the orbiting ring, the pulsing core and every glow are gone; the
+  play button is the ink primary; the dark band gained readable `--widened` and
+  `--failed` values, and the contrast test covers them.
+- **Public pages (step 5):** headings rise on load; the margin rails moved into
+  `MarketingShell` so every public page has them, behind section backgrounds;
+  the dotted rulers became hairlines; page titles and visible copy lost their
+  em dashes (API strings and code comments left as they are).
+- **App (step 4):** the hand-drawn `ContextLens` is replaced by
+  `WorkspaceField`, the same file field as Fig. 1 drawn from the user's own Repo
+  and Slice. It scans only while work is running, and a Repo over 600 files
+  draws one mark per group of files. The workspace stage is no longer a navy
+  frame; on `main` its Repo name was navy text on that navy frame, so it was
+  invisible.
+- **Shape and type, site-wide:** 107 card radii and 30 chip radii collapsed to
+  `rounded-card` and `rounded-chip`; 73 uses of 8 to 10px text raised to 11px;
+  57 label trackings unified; custom shadows became `shadow-panel`; blurs and
+  hover lifts removed.
+- **Aliases retired (step 6):** `accent`, `recent`, `line-strong`,
+  `muted-light` and `surface-raised` are gone. Each use was mapped by meaning:
+  buttons to the ink primary, states to `included`, the Widened ledger to
+  `widened`, errors to `failed`, the Recent signal to ink.
+- No hex colour remains in a component except Clerk's appearance config and the
+  social image, which need literal values and mirror the tokens.
+- Checks: `pnpm lint`, `pnpm typecheck`, `pnpm check:alpha-claims` pass;
+  `pnpm test` 984 passed, 9 skipped. Browser: every public page at 1440, and
+  no sideways scroll at 390 and 320. Not checked in a browser: the signed-in
+  workspace, which needs a Clerk login; `WorkspaceField.test.tsx` covers it.
+
+### The live Slice (November 3, 2026)
+
+Fig. 1 stopped being a picture of a run and became the product. Continuity's and
+PigeonBox's demos look live but take no input; this one takes any task.
+
+- `Aperture` runs the real localizer in the visitor's tab on the bundled copy
+  of shadcn-ui/taxonomy, with the real `FilePanel` (In and Out lists, real
+  source). No sign-in, no server call.
+- It plays by itself once (types a task, localizes it, then a second one) and
+  then hands over. Touching the figure or scrolling away ends the self-play for
+  good. The server renders the recorded run, so it is complete without
+  JavaScript. Reduced motion skips the self-play.
+- A task with no confident match Widens to all 125 files and says so, naming the
+  words it could not find and offering words the Repo does use.
+- Access: `/repos` stays behind sign-in, unchanged. `lib/landing-engine.ts`
+  imports only taxonomy as a code chunk (45 KB gzipped, loaded after the page),
+  which makes this one public Repo downloadable by signed-out visitors.
+- Measured on a production build, driven as a visitor with real clicks and keys:
+  14 files at 3.1 s, 6 at 9.0 s, hand-over at 11.6 s; zero fetch, XHR, beacon or
+  resource requests while typing and submitting a task with a unique marker
+  word, and the word appears in no captured traffic; zero CSP violations; figure
+  height stable at 709 px at 1440; no sideways scroll at 1440, 1024, 390, 320.
+  HTML, script tags, regex characters and Unicode are handled safely.
+- Fixed from that test: the page jumped as the Slice size changed (list height is
+  now fixed); the Repo and Slice counts overlapped mid-crossfade; the old task had
+  to be cleared by hand (clicking in now selects it); the engine pulled in the
+  list of other bundled Repos; "tsx" was offered as a word to refine with.
+- `pnpm lint`, `pnpm typecheck`, `pnpm check:alpha-claims` pass. `pnpm test`: 991
+  passed, 9 skipped. `Aperture.test.tsx` locks in the no-network promise.
+- Not checked: reduced motion in a real browser (jsdom only); a phone's soft
+  keyboard; a real Vercel deployment, where Analytics and Speed Insights also
+  run. They load on their own and do not read the input, but only localhost was
+  measured. The Run chapter is not built: it needs a recorded real Run.
+- Screenshot: `landing-live-1440.jpg`.

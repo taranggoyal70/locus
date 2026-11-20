@@ -28,17 +28,17 @@ export default async function AccountSettingsPage() {
 
   return (
     <SettingsShell>
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+      <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">
         Account
       </p>
       <h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">
         Your account
       </h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-2">
         Email addresses, password, and connected accounts. A verified email address
         is required to start Agent Runs.
       </p>
-      <div className="aperture-rule mt-7" />
+      <div className="mt-7 border-t border-line" />
       <div className="mt-8">
         <UserProfile
           path="/settings/account"

@@ -9,19 +9,19 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Locus — evidence-first code localization",
+  title: "Locus · Evidence-first code localization",
   description:
     "Localize a public JavaScript, TypeScript, or Python Repo into a task-sized Slice with every Included, Excluded, and Widened file visible.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://locus-five-iota.vercel.app"),
   openGraph: {
-    title: "Locus — evidence-first code localization",
+    title: "Locus · Evidence-first code localization",
     description: "Ship the task, not the repository. Build a task-sized Slice with visible context evidence.",
     siteName: "Locus",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Locus — evidence-first code localization",
+    title: "Locus · Evidence-first code localization",
     description: "Ship the task, not the repository. Build a task-sized Slice with visible context evidence.",
   },
   keywords: [

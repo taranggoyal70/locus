@@ -16,13 +16,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return (
         <div className="mx-auto max-w-xl px-5 py-20 text-center">
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-recent">
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-failed">
             Something went wrong
           </p>
-          <p className="mt-4 text-sm text-muted-light">{this.state.error.message}</p>
+          <p className="mt-4 text-sm text-ink-2">{this.state.error.message}</p>
           <button
             onClick={() => this.setState({ error: null })}
-            className="mt-6 rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-canvas transition hover:bg-accent-dim"
+            className="mt-6 rounded-card bg-ink px-5 py-3 text-sm font-semibold text-canvas transition hover:bg-ink/90"
           >
             Try again
           </button>

@@ -51,14 +51,14 @@ export function ProjectsList() {
   if (loading) {
     return (
       <div className="space-y-3">
-        {[0, 1, 2].map((i) => <div key={i} className="skeleton h-20 w-full rounded-xl" />)}
+        {[0, 1, 2].map((i) => <div key={i} className="skeleton h-20 w-full rounded-card" />)}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border border-recent/30 bg-recent/5 px-4 py-3 text-xs text-recent">
+      <div className="rounded-chip border border-failed/30 bg-failed/5 px-4 py-3 text-xs text-failed">
         {error}
       </div>
     );
@@ -66,14 +66,14 @@ export function ProjectsList() {
 
   if (projects.length === 0) {
     return (
-      <div className="rounded-[22px] border border-line bg-surface p-12 text-center">
+      <div className="rounded-card border border-line bg-surface p-12 text-center">
         <p className="text-sm text-muted">No saved analyses yet.</p>
-        <p className="mt-2 text-xs text-muted-light">
+        <p className="mt-2 text-xs text-ink-2">
           Use the &quot;Save analysis&quot; button in the workspace to keep results here.
         </p>
         <Link
           href="/workspace"
-          className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-canvas transition hover:bg-[#b5f34a]"
+          className="mt-4 inline-block rounded-card bg-ink px-4 py-2 text-sm font-semibold text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/90 active:scale-[0.97]"
         >
           Go to workspace
         </Link>
@@ -82,15 +82,15 @@ export function ProjectsList() {
   }
 
   return (
-    <div className="divide-y divide-line overflow-hidden rounded-xl border border-line-strong">
+    <div className="divide-y divide-line overflow-hidden rounded-card border border-line-2">
       {projects.map((project) => (
         <div key={project.id} className="flex items-start justify-between gap-4 px-5 py-4">
           <Link
             href={`/workspace?repo=${encodeURIComponent(project.repo_url)}&task=${encodeURIComponent(project.task)}`}
             className="min-w-0 group"
           >
-            <p className="truncate text-sm font-medium text-ink group-hover:text-accent transition">{project.name}</p>
-            <p className="mt-0.5 truncate text-xs text-muted-light">{project.task}</p>
+            <p className="truncate text-sm font-medium text-ink group-hover:text-ink transition">{project.name}</p>
+            <p className="mt-0.5 truncate text-xs text-ink-2">{project.task}</p>
             <div className="mt-1 flex items-center gap-3 text-xs text-muted">
               <span>{project.slice_files}/{project.total_files} files</span>
               <span>{project.total_files > 0 ? Math.round((project.slice_files / project.total_files) * 100) : 0}% included</span>
@@ -99,7 +99,7 @@ export function ProjectsList() {
           </Link>
           <button
             onClick={() => deleteProject(project.id)}
-            className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs text-muted transition hover:bg-recent/10 hover:text-recent"
+            className="shrink-0 rounded-chip px-2.5 py-1.5 text-xs text-muted transition hover:bg-failed/10 hover:text-failed"
           >
             Delete
           </button>

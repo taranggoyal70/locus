@@ -4,9 +4,10 @@ import Link from "next/link";
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
 import { SITE_URL } from "@/lib/config";
+import { RiseWords } from "@/components/Reveal";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Locus",
+  title: "Terms of Service · Locus",
   description: "Terms governing use of Locus.",
 };
 
@@ -14,12 +15,12 @@ export default function TermsPage() {
   return (
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main className="mx-auto max-w-3xl px-5 py-12">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Terms</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Terms of Service</h1>
-        <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 30, 2026 · Terms for Locus public early access.</p>
-        <div className="aperture-rule mt-8" />
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">Terms</p>
+        <RiseWords as="h1" onLoad lines={["Terms of Service"]} className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink" />
+        <p className="mt-3 text-sm leading-7 text-ink-2">Effective August 30, 2026 · Terms for Locus public early access.</p>
+        <div className="mt-8 border-t border-line" />
 
-        <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
+        <div className="mt-8 space-y-6 text-sm leading-7 text-ink-2">
           <section>
             <h2 className="text-lg font-semibold text-ink">Service</h2>
             <p>
@@ -59,7 +60,7 @@ export default function TermsPage() {
             <p>
               Repository source is processed by Locus and its execution providers. Durable task,
               run, evidence, and approval records are stored for product operation. See our{" "}
-              <Link href="/privacy" className="text-accent hover:underline">Privacy Policy</Link>{" "}
+              <Link href="/privacy" className="text-included hover:underline">Privacy Policy</Link>{" "}
               for complete details on data handling.
             </p>
           </section>
@@ -98,7 +99,7 @@ export default function TermsPage() {
               can be submitted through the{" "}
               <a
                 href="https://github.com/taranggoyal70/locus/issues/new"
-                className="text-accent hover:underline"
+                className="text-included hover:underline"
               >
                 Locus issue tracker
               </a>.

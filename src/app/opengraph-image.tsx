@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "nodejs";
-export const alt = "Locus — evidence-first code localization";
+export const alt = "Locus · Evidence-first code localization";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -16,7 +16,7 @@ export default function OgImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          background: "#edf1ee",
+          background: "#f4f3ef",
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -25,19 +25,19 @@ export default function OgImage() {
             style={{
               width: 48,
               height: 48,
-              borderRadius: "12px",
+              borderRadius: "10px",
               background: "#14233b",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: "24px",
               fontWeight: 800,
-              color: "#8ef0c0",
+              color: "#f4f3ef",
             }}
           >
             L
           </div>
-          <span style={{ fontSize: "28px", color: "#111d2b", fontWeight: 600, letterSpacing: "-0.02em" }}>
+          <span style={{ fontSize: "28px", color: "#14233b", fontWeight: 600, letterSpacing: "-0.02em" }}>
             Locus
           </span>
         </div>
@@ -45,8 +45,8 @@ export default function OgImage() {
           style={{
             marginTop: "32px",
             fontSize: "64px",
-            fontWeight: 700,
-            color: "#111d2b",
+            fontWeight: 600,
+            color: "#14233b",
             lineHeight: 1.05,
             letterSpacing: "-0.04em",
             maxWidth: "800px",
@@ -58,7 +58,7 @@ export default function OgImage() {
           style={{
             marginTop: "24px",
             fontSize: "24px",
-            color: "#48525e",
+            color: "#5c6a78",
             maxWidth: "700px",
             lineHeight: 1.4,
           }}
@@ -77,9 +77,9 @@ export default function OgImage() {
               key={label}
               style={{
                 padding: "8px 20px",
-                borderRadius: "8px",
+                borderRadius: "6px",
                 border: "1px solid rgba(20, 35, 59, 0.2)",
-                color: "#48525e",
+                color: "#5c6a78",
                 fontSize: "14px",
                 fontWeight: 500,
                 textTransform: "uppercase",
