@@ -169,7 +169,7 @@ server; a [parity test](tests/localizer-parity.test.mjs) keeps the two identical
 | Layer | Used for |
 | :--- | :--- |
 | **Web app** | Next.js 16 App Router, React 19, Tailwind CSS v4, Vercel Analytics and Speed Insights |
-| **Identity and data** | Clerk sessions and email verification; Supabase Postgres, 22 migrations, row-level security |
+| **Identity and data** | Clerk sessions and email verification; Neon Postgres through Kysely, 23 migrations, a tenant guard on every per-user query |
 | **Agent Runs** | Vercel Workflow for durable Runs, Vercel Sandbox for isolated execution, AI SDK against Cloudflare Workers AI |
 | **Task evidence** | `unpdf`, `mammoth` and `tesseract.js` extract text from PDFs, DOCX files and screenshots |
 | **CLI, MCP and Guard** | Zero-dependency Node ESM; stdio JSON-RPC for MCP; `node:crypto` Ed25519; Seatbelt and Bubblewrap |
@@ -204,18 +204,16 @@ Excluded: 219 files
 | MCP server | `node bin/locus.mjs mcp` | A stdio server exposing `locate` to Claude Code, Codex or Cursor. |
 | Guard a Run | `node bin/locus.mjs guard init "<task>"`, then `guard run` and `guard verify` | Scope manifest, sandboxed agent, path gate and signed receipt. [Pilot guide](docs/operations/locus-guard-pilot.md) |
 | Hosted API | `curl -X POST https://locus-five-iota.vercel.app/api/v1/locate` | Localization of a public GitHub repository with an API key from Settings. |
-| Web app | `pnpm dev` | The full product on `localhost:3000`. Needs Clerk and Supabase keys; see [Configuration](#configuration). |
+| Web app | `pnpm dev` | The full product on `localhost:3000`. Needs Clerk keys and a Postgres URL; see [Configuration](#configuration). |
 
-For a local database, the committed Supabase config replays every migration:
+Any PostgreSQL 15 or newer works as the database: a Neon branch, or a local server. Put its URL in
+`DATABASE_URL` in `.env.local`, then apply the migrations:
 
 ```bash
-pnpm dlx supabase@2.111.0 start
-pnpm dlx supabase@2.111.0 db reset
-pnpm dlx supabase@2.111.0 status   # copy the URL and keys into .env.local
+pnpm db:migrate   # applies what is new, records each file and its checksum, refuses an edited one
 ```
 
-Hosted databases use the history-aware procedure in
-[`docs/operations`](docs/operations/release-1-readiness-rollout.md), never a shell loop over migration files.
+The same command migrates production; see the [database runbook](docs/operations/neon-database.md).
 
 ## Use it from an agent
 
@@ -270,7 +268,8 @@ Copy [`.env.example`](.env.example) to `.env.local`. The web app reports which o
 | Variable | Required | Purpose |
 | :--- | :---: | :--- |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Yes | Clerk sign-in, sessions and email verification |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Yes | Tasks, Runs, evidence, API keys and usage; the service key stays server-side |
+| `DATABASE_URL` | Yes | Postgres for Tasks, Runs, evidence, API keys and usage; on Neon, the pooled connection string |
+| `DATABASE_URL_UNPOOLED` | No | A direct connection for `pnpm db:migrate`; falls back to `DATABASE_URL` |
 | `LOCUS_AGENT_MODEL` | Yes | Must be the reviewed `@cf/qwen/qwen3.8-27b`; any other value fails closed |
 | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` | Yes | The shared Workers AI pool for Agent Runs |
 | `LOCUS_CREDENTIAL_ENCRYPTION_KEY` | Yes | Base64 32-byte key that encrypts users' own Cloudflare tokens |
@@ -323,8 +322,9 @@ CI runs everything above except the two benchmarks, plus a production build, an 
 high severity, CodeQL and a full-history secret scan. A scheduled workflow probes the production
 `/api/health` contract every five minutes.
 
-Most tests replace the Supabase transport. To check the schema itself, replay the migrations into a local
-database and run the opt-in suite: `LOCUS_LIVE_DB=1 pnpm test admission-live`.
+Database tests need no setup. Each one gets its own in-process PostgreSQL (PGlite) with every migration
+applied, so routes, SQL functions and constraints are tested against the real schema on every run.
+`pnpm db:types` regenerates the query types from the migrations, and CI fails when they are stale.
 
 ```text
 src/lib/localizer.ts        Graph construction, anchor scoring, closure and Widen
@@ -334,7 +334,8 @@ src/workflows/agent-run.ts  The durable Workflow behind each Agent Run
 src/app/                    Product pages, workspace and every API route
 bin/                        Source CLI, MCP server and Locus Guard (core.mjs mirrors the localizer)
 cli/                        The thin API client package, not published
-supabase/migrations/        22 migrations with row-level security
+db/migrations/              23 append-only migrations, applied by db/migrate.mjs
+src/lib/db/                 Postgres client, tenant guard and types generated from the migrations
 benchmarks/                 Historical gate, held-out benchmark and the frozen Release 1 study
 scripts/                    Benchmarks, release evidence, launch probes and README graphics
 docs/adr/, CONTEXT.md       Architecture decisions and the domain language

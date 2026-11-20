@@ -1,55 +1,40 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { setupTestDatabase } from "@/test/database";
 
 /**
- * Every other Admission test mocks the layer beneath it: the store mocks the
- * tenant client, the server mocks the store, the routes mock the server. Each is
- * right on its own and none of them proves the stack agrees with itself.
+ * Every other Admission test checks one layer: the store against the database,
+ * the server against the store, the routes against the server. Each is right on
+ * its own and none of them proves the stack agrees with itself.
  *
- * This one substitutes only the Supabase transport - the last thing before the
- * network - and runs the real store, the real tenant guard, the real resolver,
- * and the real tier tables. What it is checking is that a row written by an
- * operator reaches a decision at the top, which is the claim the whole feature
- * rests on and the one no unit test can make.
+ * This one runs the real store, the real tenant guard, the real resolver, the
+ * real tier tables and a real migrated database. What it is checking is that a
+ * row written by an operator reaches a decision at the top, which is the claim
+ * the whole feature rests on and the one no unit test can make.
  */
-
-type Table = "account_admissions" | "subscriptions";
-
-const rows: { admission: Record<string, unknown> | null; subscription: Record<string, unknown> | null } = {
-  admission: null,
-  subscription: null,
-};
-
-const seenFilters: Array<{ table: string; column: string; value: unknown }> = [];
-
-function builder(table: Table) {
-  const chain = {
-    select: () => chain,
-    eq(column: string, value: unknown) {
-      seenFilters.push({ table, column, value });
-      return chain;
-    },
-    maybeSingle: async () => ({
-      data: table === "account_admissions" ? rows.admission : rows.subscription,
-      error: null,
-    }),
-  };
-  return chain;
-}
 
 vi.mock("@/lib/account-identity", () => ({
   primaryEmailVerified: async () => true,
 }));
 
-vi.mock("@/lib/supabase", () => ({
-  serviceClient: () => ({ from: (table: Table) => builder(table) }),
-}));
-
 const { admissionForAccount } = await import("@/lib/admission-server");
 
+const database = setupTestDatabase();
+
+async function grant(userId: string, tier: string) {
+  await database().insertInto("account_admissions").values({ user_id: userId, tier, source: "operator" }).execute();
+}
+
+async function subscribe(userId: string, status: string) {
+  await database().insertInto("subscriptions").values({
+    user_id: userId,
+    stripe_customer_id: `cus_${userId}`,
+    stripe_subscription_id: `sub_${userId}`,
+    status,
+  }).execute();
+}
+
 beforeEach(() => {
-  rows.admission = null;
-  rows.subscription = null;
-  seenFilters.length = 0;
   vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "");
   vi.stubEnv("LOCUS_SELF_SERVE", "");
 });
@@ -60,7 +45,7 @@ afterEach(() => {
 
 describe("Admission end to end", () => {
   it("turns an operator pro grant into pro capabilities and the pro quota", async () => {
-    rows.admission = { tier: "pro", source: "operator" };
+    await grant("user_customer", "pro");
 
     const admission = await admissionForAccount("user_customer");
 
@@ -77,8 +62,8 @@ describe("Admission end to end", () => {
     // The account most worth suspending is the one every other rule would admit.
     vi.stubEnv("ALPHA_ALLOWED_USER_IDS", "user_abuser");
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
-    rows.admission = { tier: "visitor", source: "operator" };
-    rows.subscription = { status: "active" };
+    await grant("user_abuser", "visitor");
+    await subscribe("user_abuser", "active");
 
     const admission = await admissionForAccount("user_abuser");
 
@@ -89,7 +74,7 @@ describe("Admission end to end", () => {
   });
 
   it("promotes a live subscription to pro without an operator row", async () => {
-    rows.subscription = { status: "active" };
+    await subscribe("user_customer", "active");
 
     const admission = await admissionForAccount("user_customer");
 
@@ -98,7 +83,7 @@ describe("Admission end to end", () => {
 
   it("does not promote a cancelled subscription", async () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
-    rows.subscription = { status: "cancelled" };
+    await subscribe("user_lapsed", "cancelled");
 
     const admission = await admissionForAccount("user_lapsed");
 
@@ -106,18 +91,16 @@ describe("Admission end to end", () => {
     expect(admission.runQuota).toEqual({ maxActiveRuns: 1, maxRunsPerRolling24Hours: 2 });
   });
 
-  it("scopes both reads to the authenticated account", async () => {
-    // The service role bypasses RLS, so the tenant guard is the only thing
-    // standing between an admission lookup and every account's tier. Asserting
-    // the filters reached the client proves the guard ran rather than that it
-    // exists.
-    await admissionForAccount("user_customer");
+  it("reads only the authenticated account's rows", async () => {
+    // Another account's operator grant and live subscription sit in the same
+    // tables. The tenant guard is what keeps a lookup for one account from
+    // resolving against the other's rows.
+    await grant("user_other", "pro");
+    await subscribe("user_other", "active");
 
-    expect(seenFilters).toEqual(
-      expect.arrayContaining([
-        { table: "account_admissions", column: "user_id", value: "user_customer" },
-        { table: "subscriptions", column: "user_id", value: "user_customer" },
-      ]),
-    );
+    const admission = await admissionForAccount("user_customer");
+
+    expect(admission.tier).not.toBe("pro");
+    expect(admission.reason).not.toBe("operator_grant");
   });
 });

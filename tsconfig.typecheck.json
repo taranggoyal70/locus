@@ -17,7 +17,7 @@
   // means anything.
   "extends": "./tsconfig.json",
   // The same globs as the base config, minus the two generated directories.
-  // Narrowing to src/ would also drop next.config.ts and vitest.config.ts, which
+  // Narrowing to src/ would also drop next.config.ts and vitest.config.mts, which
   // were being checked before and should stay checked.
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.mts"],
   "exclude": ["node_modules", ".next"]

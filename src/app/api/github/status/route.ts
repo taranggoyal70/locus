@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { accountCan } from "@/lib/admission-server";
 import { sameOriginMutation } from "@/lib/request-security";
-import { tenantClient } from "@/lib/supabase-tenant";
+import { tenantDb } from "@/lib/db";
 
 export async function GET() {
   const { userId } = await auth();
@@ -15,12 +15,14 @@ export async function GET() {
     );
   }
 
-  const db = tenantClient(userId);
-  const { data } = await db
-    .from("github_connections")
-    .select("github_username, scopes, created_at")
-    .eq("user_id", userId)
-    .single();
+  // As before, an unreadable connection reads as not connected: the page then
+  // offers to connect, which is harmless, rather than failing to render.
+  const data = await tenantDb(userId)
+    .selectFrom("github_connections")
+    .select(["github_username", "scopes", "created_at"])
+    .where("user_id", "=", userId)
+    .executeTakeFirst()
+    .catch(() => undefined);
 
   if (!data) return NextResponse.json({ connected: false });
 
@@ -39,7 +41,11 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Cross-site requests are not allowed." }, { status: 403 });
   }
 
-  const db = tenantClient(userId);
-  await db.from("github_connections").delete().eq("user_id", userId);
+  try {
+    await tenantDb(userId).deleteFrom("github_connections").where("user_id", "=", userId).execute();
+  } catch {
+    // Reporting success here would leave a token the user believes is gone.
+    return NextResponse.json({ error: "Failed to disconnect GitHub." }, { status: 500 });
+  }
   return NextResponse.json({ disconnected: true });
 }

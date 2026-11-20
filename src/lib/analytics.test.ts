@@ -1,44 +1,39 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { sql } from "kysely";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const warnMock = vi.fn();
+import { setupTestDatabase } from "@/test/database";
+
+const warnMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/logger", () => ({
   logger: { warn: warnMock },
 }));
 
-describe("analytics delivery visibility", () => {
+const { track } = await import("@/lib/analytics");
+const database = setupTestDatabase();
+
+describe("analytics delivery", () => {
   beforeEach(() => {
-    vi.resetModules();
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co");
-    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key");
     warnMock.mockReset();
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
+  it("records the event, its owner and its properties", async () => {
+    await track({ event: "agent_run_started", userId: "user_1", properties: { workflowCorrelated: true } });
+
+    const rows = await database().selectFrom("events").select(["event", "user_id", "properties"]).execute();
+    expect(rows).toEqual([{ event: "agent_run_started", user_id: "user_1", properties: { workflowCorrelated: true } }]);
+    expect(warnMock).not.toHaveBeenCalled();
   });
 
-  it("logs a structured warning when the analytics sink rejects an insert", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 503 }));
-    vi.stubGlobal("fetch", fetchMock);
-    const { track } = await import("@/lib/analytics");
+  it("records an event that precedes any account", async () => {
+    await track({ event: "alpha_access_requested", properties: { result: "new" } });
 
-    await track({
-      event: "alpha_access_requested",
-      properties: { result: "new" },
-    });
-
-    expect(warnMock).toHaveBeenCalledWith("analytics_insert_failed", {
-      event: "alpha_access_requested",
-      status: 503,
-    });
-    expect(fetchMock.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+    const rows = await database().selectFrom("events").select(["event", "user_id"]).execute();
+    expect(rows).toEqual([{ event: "alpha_access_requested", user_id: null }]);
   });
 
-  it("keeps analytics non-blocking while exposing network failures", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
-    const { track } = await import("@/lib/analytics");
+  it("stays non-blocking and logs a structured warning when the insert fails", async () => {
+    await sql`drop table public.events cascade`.execute(database());
 
     await expect(track({
       event: "alpha_access_requested",
@@ -46,7 +41,7 @@ describe("analytics delivery visibility", () => {
     })).resolves.toBeUndefined();
     expect(warnMock).toHaveBeenCalledWith("analytics_insert_failed", {
       event: "alpha_access_requested",
-      status: "network_error",
+      status: "database_error",
     });
   });
 });

@@ -30,10 +30,10 @@ import { controlledAlphaTokenView } from "@/lib/agent/run-view";
 import { admissionForAccount } from "@/lib/admission-server";
 import { runStartRefusal } from "@/lib/admission-copy";
 import { track } from "@/lib/analytics";
+import { globalDb, rpc, tenantDb } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
-import { tenantClient } from "@/lib/supabase-tenant";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
 const MAX_BODY_BYTES = 12_000;
@@ -50,28 +50,34 @@ export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
-  const db = tenantClient(userId);
-  const { data, error } = await db
-    .from("agent_runs")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(20);
-  if (error) {
+  const db = tenantDb(userId);
+  let data;
+  try {
+    data = await db
+      .selectFrom("agent_runs")
+      .selectAll()
+      .where("user_id", "=", userId)
+      .orderBy("created_at", "desc")
+      .limit(20)
+      .execute();
+  } catch {
     return NextResponse.json({ error: "Could not load agent runs." }, { status: 500 });
   }
   const taskIds = [...new Set(data.map((run) => run.task_id))];
-  const { data: tasks, error: taskError } = taskIds.length > 0
-    ? await db
-      .from("agent_tasks")
-      .select("id,repo_url,base_ref,task,acceptance_criteria")
-      .eq("user_id", userId)
-      .in("id", taskIds)
-    : { data: [], error: null };
-  if (taskError) {
-    return NextResponse.json({ error: "Could not load Agent Tasks." }, { status: 500 });
+  let tasks: { id: string; repo_url: string; base_ref: string; task: string; acceptance_criteria: string[] }[] = [];
+  if (taskIds.length > 0) {
+    try {
+      tasks = await db
+        .selectFrom("agent_tasks")
+        .select(["id", "repo_url", "base_ref", "task", "acceptance_criteria"])
+        .where("user_id", "=", userId)
+        .where("id", "in", taskIds)
+        .execute();
+    } catch {
+      return NextResponse.json({ error: "Could not load Agent Tasks." }, { status: 500 });
+    }
   }
-  const tasksById = new Map((tasks ?? []).map((task) => [task.id, task]));
+  const tasksById = new Map(tasks.map((task) => [task.id, task]));
   const runs = data.map((run) => {
     const ledger = calculateTokenLedger({
       baselineContextTokens: run.baseline_tokens,
@@ -182,7 +188,7 @@ export async function POST(request: Request) {
       { status: 429, headers: { "Retry-After": String(startRate.retryAfterSeconds) } },
     );
   }
-  const db = tenantClient(userId);
+  const db = tenantDb(userId);
   let usage;
   try {
     usage = await readRunUsage(userId);
@@ -201,18 +207,19 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: task, error: taskError } = await db
-    .from("agent_tasks")
-    .insert({
+  const task = await db
+    .insertInto("agent_tasks")
+    .values({
       user_id: userId,
       repo_url: input.repository,
       base_ref: input.baseRef,
       task: input.task,
       acceptance_criteria: input.acceptanceCriteria,
     })
-    .select("id")
-    .single();
-  if (taskError || !task) {
+    .returning("id")
+    .executeTakeFirst()
+    .catch(() => undefined);
+  if (!task) {
     return NextResponse.json(
       { error: "Agent runs are not available yet. Check the database rollout." },
       { status: 503 },
@@ -224,7 +231,17 @@ export async function POST(request: Request) {
   // all pass — measured at six concurrent requests creating six Runs against a
   // limit of two. `claim_agent_run_slot` holds a per-user advisory lock across
   // both, so this is the decision that actually binds.
-  const { data: claimData, error: claimError } = await db.rpc("claim_agent_run_slot", {
+  // The task was created in anticipation of a Run; when no Run follows, it is
+  // removed rather than left as an orphan no flow will ever reach. Best effort,
+  // as before: the refusal is the answer the caller needs.
+  const removeTask = () => db
+    .deleteFrom("agent_tasks")
+    .where("id", "=", task.id)
+    .where("user_id", "=", userId)
+    .execute()
+    .catch(() => undefined);
+
+  const claim = await rpc(db, "claim_agent_run_slot", {
     p_user_id: userId,
     p_task_id: task.id,
     p_model: model,
@@ -239,16 +256,13 @@ export async function POST(request: Request) {
     p_max_daily: admission.runQuota.maxRunsPerRolling24Hours,
     p_provider: CLOUDFLARE_PROVIDER,
     p_execution_mode: input.executionMode,
-  });
-  const claim = claimData?.[0];
-  if (claimError || !claim) {
-    // The task was created in anticipation of a Run that will not exist, so it is
-    // removed rather than left as an orphan no flow will ever reach.
-    await db.from("agent_tasks").delete().eq("id", task.id).eq("user_id", userId);
+  }).then((rows) => rows[0], () => undefined);
+  if (!claim) {
+    await removeTask();
     return NextResponse.json({ error: "Could not create the agent run." }, { status: 503 });
   }
   if (!claim.allowed) {
-    await db.from("agent_tasks").delete().eq("id", task.id).eq("user_id", userId);
+    await removeTask();
     const reason = quotaReasonFromClaim(claim.reason) ?? "active";
     return NextResponse.json(
       { error: quotaDenialMessage(reason, admission.runQuota) },
@@ -263,27 +277,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not create the agent run." }, { status: 500 });
   }
 
-  const { data: run, error: runError } = await db
-    .from("agent_runs")
-    .select("*")
-    .eq("id", claim.run_id)
-    .eq("user_id", userId)
-    .single();
-  if (runError || !run) {
+  const run = await db
+    .selectFrom("agent_runs")
+    .selectAll()
+    .where("id", "=", claim.run_id)
+    .where("user_id", "=", userId)
+    .executeTakeFirst()
+    .catch(() => undefined);
+  if (!run) {
     return NextResponse.json({ error: "Could not create the agent run." }, { status: 500 });
   }
 
-  const { data: leaseData, error: leaseError } = await db.rpc(
-    "acquire_agent_provider_lease",
-    {
-      p_run_id: run.id,
-      p_model: providerCapacityKey({ executionMode: input.executionMode, userId }),
-      p_max_concurrent: 1,
-      p_lease_seconds: 3_600,
-    },
-  );
-  const lease = leaseData?.[0];
-  if (leaseError || !lease) {
+  // Provider capacity is shared across accounts; the lease is keyed by Run.
+  const capacity = globalDb("provider capacity leases span accounts");
+  const lease = await rpc(capacity, "acquire_agent_provider_lease", {
+    p_run_id: run.id,
+    p_model: providerCapacityKey({ executionMode: input.executionMode, userId }),
+    p_max_concurrent: 1,
+    p_lease_seconds: 3_600,
+  }).then((rows) => rows[0], () => undefined);
+  if (!lease) {
     await transitionRun({
       runId: run.id,
       userId,
@@ -322,16 +335,12 @@ export async function POST(request: Request) {
   }
 
   if (input.executionMode === "shared") {
-    const { data: dailyData, error: dailyError } = await db.rpc(
-      "claim_agent_provider_daily_slot",
-      {
-        p_run_id: run.id,
-        p_provider: CLOUDFLARE_PROVIDER,
-        p_max_daily: SHARED_DAILY_RUN_LIMIT,
-      },
-    );
-    const daily = dailyData?.[0];
-    if (dailyError || !daily) {
+    const daily = await rpc(capacity, "claim_agent_provider_daily_slot", {
+      p_run_id: run.id,
+      p_provider: CLOUDFLARE_PROVIDER,
+      p_max_daily: SHARED_DAILY_RUN_LIMIT,
+    }).then((rows) => rows[0], () => undefined);
+    if (!daily) {
       await releaseProviderCapacity(run.id);
       await transitionRun({
         runId: run.id,
@@ -440,24 +449,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error: updateError } = await db
-    .from("agent_runs")
-    .update({ workflow_run_id: workflowRun.runId })
-    .eq("id", run.id)
-    .eq("user_id", userId);
-  if (updateError) {
+  const correlated = await db
+    .updateTable("agent_runs")
+    .set({ workflow_run_id: workflowRun.runId })
+    .where("id", "=", run.id)
+    .where("user_id", "=", userId)
+    .execute()
+    .then(() => true, () => false);
+  if (!correlated) {
     logger.error("agent.workflow.correlation_failed", {}, run.id);
   }
 
   await track({
     event: "agent_run_started",
     userId,
-    properties: { workflowCorrelated: !updateError },
+    properties: { workflowCorrelated: correlated },
   });
 
   return NextResponse.json(
     {
-      run: { ...run, workflow_run_id: updateError ? null : workflowRun.runId },
+      run: { ...run, workflow_run_id: correlated ? workflowRun.runId : null },
       statusUrl: `/api/agent/runs/${run.id}`,
     },
     { status: 202 },
