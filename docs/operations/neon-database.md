@@ -9,7 +9,7 @@ cannot be pulled back out of Vercel. See ADR 0005 for why.
 ## Apply migrations
 
 Migrations are not applied by a deploy. Apply them before merging a change that
-needs them, so the running build never sees a schema it does not know:
+needs them, so the running build never sees a schema it does not know.
 
 Copy the direct (unpooled) connection string from the Neon console (**Open in
 Neon** on the `locus-db` page in Vercel, then **Connect**) and pass it for this
