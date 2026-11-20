@@ -1,10 +1,10 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { ThemedUserButton } from "@/components/ClerkThemed";
 import { AgentRunPanel } from "@/components/AgentRunPanel";
 import { WorkspaceField } from "@/components/WorkspaceField";
 import { DependencyGraph } from "@/components/DependencyGraph";
@@ -131,38 +131,30 @@ export function LocusApp({
   return (
     <div className="min-h-screen bg-canvas text-ink lg:grid lg:grid-cols-[92px_minmax(0,1fr)]">
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-surface px-4 lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:px-0 lg:py-5">
-          <Link href="/workspace" aria-label="Locus workspace" className="flex items-center gap-2.5 text-ink lg:flex-col">
-            <span className="grid h-10 w-10 place-items-center rounded-card bg-ink">
-              <Image src="/locus-mark.svg" width={22} height={22} alt="" priority />
-            </span>
-            <span className="text-sm font-bold tracking-[-0.04em] lg:text-[11px]">LOCUS</span>
+          <Link href="/workspace" aria-label="Locus workspace" className="flex items-center gap-2.5 text-ink lg:flex-col lg:gap-2">
+            {/* The mark carries its own navy tile, so it needs no backing here. */}
+            <Image src="/locus-mark.svg" width={32} height={32} alt="" priority className="mark" />
+            <span className="font-display text-[20px] leading-none tracking-[-0.02em] lg:text-[15px]">Locus</span>
           </Link>
 
-          <nav className="flex items-center gap-1 text-[11px] font-semibold text-muted lg:flex-col lg:gap-2">
-            <Link href="/workspace" className="rounded-card bg-ink px-3 py-2.5 text-canvas lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+          <nav className="flex items-center gap-1 text-[12px] font-medium text-muted lg:flex-col lg:gap-1.5" aria-label="App navigation">
+            <Link href="/workspace" aria-current="page" className="rounded-chip bg-surface-2 px-3 py-2.5 text-ink lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
               Map
             </Link>
-            <Link href="/projects" className="hidden rounded-card px-3 py-2.5 hover:bg-surface-2 hover:text-ink sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+            <Link href="/projects" className="hidden rounded-chip px-3 py-2.5 transition-colors duration-150 hover:text-ink sm:block lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
               Runs
             </Link>
-            <Link href="/settings" className="hidden rounded-card px-3 py-2.5 hover:bg-surface-2 hover:text-ink sm:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+            <Link href="/settings" className="hidden rounded-chip px-3 py-2.5 transition-colors duration-150 hover:text-ink sm:block lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
               Setup
             </Link>
-            <a href={REPO_URL} className="hidden rounded-card px-3 py-2.5 hover:bg-surface-2 hover:text-ink md:block lg:grid lg:h-14 lg:w-16 lg:place-items-center lg:px-0">
+            <a href={REPO_URL} className="hidden rounded-chip px-3 py-2.5 transition-colors duration-150 hover:text-ink md:block lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
               Code
             </a>
           </nav>
 
           <div className="flex items-center gap-2 lg:flex-col">
             {accountName && <span className="hidden max-w-16 truncate text-[11px] font-medium text-muted lg:block">{accountName}</span>}
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "h-8 w-8 border border-line-2",
-                  userButtonPopoverCard: "border border-line-2 bg-surface text-ink shadow-2xl",
-                },
-              }}
-            />
+            <ThemedUserButton />
           </div>
       </header>
 
@@ -179,7 +171,7 @@ export function LocusApp({
                 Slice → Run → Evidence
               </span>
             </div>
-            <h1 className="max-w-2xl font-display text-5xl font-semibold leading-[0.95] tracking-[-0.04em] text-ink sm:text-6xl lg:text-[72px]">
+            <h1 className="max-w-2xl font-display text-5xl font-normal leading-[0.95] tracking-[-0.02em] text-ink sm:text-6xl lg:text-[72px]">
               Map less.
               <span className="block text-muted">Ship the task.</span>
             </h1>
@@ -223,7 +215,7 @@ export function LocusApp({
                 <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                   Task brief
                 </p>
-                <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-ink">
+                <h2 className="mt-1.5 font-display text-[24px] font-normal leading-tight tracking-[-0.015em] text-ink">
                   What should the agent change?
                 </h2>
               </div>
@@ -432,7 +424,7 @@ export function LocusApp({
               <div className="grid min-h-[520px] place-items-center rounded-card border border-dashed border-line-2 bg-surface p-10 text-center">
                 <div>
                   <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">Waiting for a repository</p>
-                  <p className="mt-3 text-2xl font-semibold tracking-[-0.035em] text-ink">
+                  <p className="mt-3 font-display text-[30px] font-normal leading-tight tracking-[-0.02em] text-ink">
                     {loading ? "Reading the code graph…" : "Load a repository to open the Slice ledger."}
                   </p>
                 </div>

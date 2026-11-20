@@ -1,17 +1,21 @@
 @import "tailwindcss";
 
 /*
- * Evidence datasheet: daylight paper, navy ink, hairline rules, mono for data.
- * Teal, amber, grey and red describe a file's or Check's state and nothing
- * else. Reference: docs/design/locus-design-brief.md.
+ * Evidence datasheet: warm paper, navy ink, hairline rules, a serif for display
+ * and mono for data. Teal, amber, grey and red describe a file's or Check's
+ * state and nothing else. Every role has a light value, a dark-theme value and
+ * a dark-band value. Reference: docs/design/locus-design-brief.md.
  */
 :root {
+  color-scheme: light;
+
   /* surfaces */
-  --canvas: #f4f3ef;
-  --surface: #fbfaf7;
-  --surface-2: #ebe9e3;
-  --line: rgba(20, 35, 59, 0.1);
-  --line-2: rgba(20, 35, 59, 0.18);
+  --canvas: #f3f1ea;
+  --canvas-2: #ebe8df;
+  --surface: #fbfaf6;
+  --surface-2: #e9e6dd;
+  --line: rgba(20, 35, 59, 0.11);
+  --line-2: rgba(20, 35, 59, 0.2);
 
   /* ink */
   --ink: #14233b;
@@ -23,13 +27,14 @@
   --widened: #925c0e;
   /* Deliberately faint (about 1.4:1 on --canvas). An Excluded mark never carries
      meaning alone: it always sits beside an --ink label. */
-  --excluded: #d3d0c8;
+  --excluded: #d6d1c5;
   --failed: #b03a2e;
 
   /* shape */
-  --r-sm: 6px;
-  --r: 10px;
-  --shadow: 0 1px 0 rgba(20, 35, 59, 0.04), 0 12px 32px -18px rgba(20, 35, 59, 0.22);
+  --r-sm: 4px;
+  --r: 8px;
+  --shadow: 0 1px 0 rgba(20, 35, 59, 0.04), 0 12px 32px -18px rgba(20, 35, 59, 0.24);
+  --frame-shadow: 0 32px 64px -36px rgba(20, 35, 59, 0.45);
 
   /* motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -40,24 +45,86 @@
   --dur-story: 900ms;
 }
 
-/* The same roles on navy, for the demo and closing call-to-action bands.
-   #087864 on navy is 2.9:1, so --included lightens to stay above 4.5:1. */
+/* The same roles on navy, for the demo and the footer. In the light theme a
+   band is the only dark ground on the page. #087864 on navy is 2.9:1, so
+   --included lightens to stay above 4.5:1. */
 [data-band="dark"] {
+  color-scheme: dark;
   --canvas: #0f1b2e;
+  --canvas-2: #0b1524;
   --surface: #16263d;
   --surface-2: #1d3049;
-  --line: rgba(238, 242, 240, 0.08);
-  --line-2: rgba(238, 242, 240, 0.15);
-  --ink: #eef2f0;
+  --line: rgba(236, 232, 223, 0.09);
+  --line-2: rgba(236, 232, 223, 0.17);
+  --ink: #ece8df;
   --ink-2: #b4c1ce;
   --muted: #91a4b6;
   --included: #3fbf9f;
   --widened: #e0a53c;
+  --excluded: #2b3a52;
   --failed: #f08f80;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 36px -16px rgba(0, 0, 0, 0.6);
+  --frame-shadow: 0 32px 64px -30px rgba(0, 0, 0, 0.7);
+}
+
+/* The dark theme: the band promoted to the whole page, one step darker. It
+   applies when pinned, or by default when the system asks for dark. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #0d1420;
+  --canvas-2: #0a101a;
+  --surface: #142033;
+  --surface-2: #1b2a40;
+  --line: rgba(236, 232, 223, 0.09);
+  --line-2: rgba(236, 232, 223, 0.17);
+  --ink: #ece8df;
+  --ink-2: #b8c2cd;
+  --muted: #8f9fb0;
+  --included: #45c4a3;
+  --widened: #e0a53c;
+  --excluded: #2a3749;
+  --failed: #f08f80;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 36px -16px rgba(0, 0, 0, 0.6);
+  --frame-shadow: 0 32px 64px -30px rgba(0, 0, 0, 0.75);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --canvas: #0d1420;
+    --canvas-2: #0a101a;
+    --surface: #142033;
+    --surface-2: #1b2a40;
+    --line: rgba(236, 232, 223, 0.09);
+    --line-2: rgba(236, 232, 223, 0.17);
+    --ink: #ece8df;
+    --ink-2: #b8c2cd;
+    --muted: #8f9fb0;
+    --included: #45c4a3;
+    --widened: #e0a53c;
+    --excluded: #2a3749;
+    --failed: #f08f80;
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 16px 36px -16px rgba(0, 0, 0, 0.6);
+    --frame-shadow: 0 32px 64px -30px rgba(0, 0, 0, 0.75);
+  }
+
+  :root:not([data-theme="light"]) [data-band="dark"] {
+    --canvas: #080e18;
+    --canvas-2: #060b13;
+    --surface: #0f1828;
+  }
+}
+
+/* On a dark page a band sits one step deeper, so it still reads as a band. */
+:root[data-theme="dark"] [data-band="dark"] {
+  --canvas: #080e18;
+  --canvas-2: #060b13;
+  --surface: #0f1828;
 }
 
 @theme inline {
   --color-canvas: var(--canvas);
+  --color-canvas-2: var(--canvas-2);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-line: var(--line);
@@ -70,14 +137,15 @@
   --color-excluded: var(--excluded);
   --color-failed: var(--failed);
 
-  /* rounded-chip, rounded-card, shadow-panel. Own names, so Tailwind's
-     rounded-sm and ease-out keep their stock meaning. */
+  /* rounded-chip, rounded-card, shadow-panel, shadow-frame. Own names, so
+     Tailwind's rounded-sm and ease-out keep their stock meaning. */
   --radius-chip: var(--r-sm);
   --radius-card: var(--r);
   --shadow-panel: var(--shadow);
+  --shadow-frame: var(--frame-shadow);
 
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
-  --font-display: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-display: var(--font-newsreader, ui-serif, "Iowan Old Style", Charter, Georgia, serif);
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
 }
 
@@ -87,7 +155,7 @@
 
 html {
   background: var(--canvas);
-  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -101,17 +169,185 @@ body {
 
 ::selection {
   background: var(--included);
-  color: white;
+  color: var(--canvas);
 }
 
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
-summary:focus-visible {
+select:focus-visible,
+summary:focus-visible,
+[role="radio"]:focus-visible {
   outline: 2px solid var(--included);
   outline-offset: 2px;
 }
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+/* The display serif sets at regular weight with optical sizing on, so large
+   headlines get the fine display cut and small ones the sturdier text cut. */
+.font-display {
+  font-optical-sizing: auto;
+  text-wrap: balance;
+}
+
+/* A keyboard key, also printed beside each navigation item as its shortcut.
+   In the components layer so state utilities (the current page, hover) can
+   override it. */
+@layer components {
+  .keycap {
+    display: inline-grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 1px solid var(--line-2);
+    border-radius: 3px;
+    background: var(--surface);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--muted);
+    transition:
+      border-color var(--dur-quick) var(--ease-out),
+      background-color var(--dur-quick) var(--ease-out),
+      color var(--dur-quick) var(--ease-out);
+  }
+}
+
+/* The brand mark is a navy tile; on a dark page it needs an edge. */
+.mark {
+  border-radius: 22%;
+  box-shadow: 0 0 0 1px var(--line-2);
+}
+
+/* Menus and popovers grow out of their trigger's corner. */
+.menu-pop {
+  transform-origin: top right;
+  transition: opacity var(--dur-quick) var(--ease-out), transform var(--dur-quick) var(--ease-out);
+}
+@starting-style {
+  .menu-pop { opacity: 0; transform: scale(0.96) translateY(-4px); }
+}
+
+/* The closing ticket: a perforation with two notches cut into its border. */
+.ticket-stub {
+  position: relative;
+}
+.ticket-stub::before,
+.ticket-stub::after {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--canvas-2);
+  content: "";
+}
+.ticket-stub::before { top: -11px; left: -11px; }
+.ticket-stub::after { top: -11px; right: -11px; }
+@media (min-width: 1024px) {
+  .ticket-stub::after { top: auto; right: auto; bottom: -11px; left: -11px; }
+}
+
+/* Long-form reference pages (docs, legal): sections open on an ink rule. */
+.doc {
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.doc-section { scroll-margin-top: 88px; margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--ink); }
+.doc-section:first-child { margin-top: 0; }
+.doc h3 { margin-top: 32px; font-size: 15px; font-weight: 600; color: var(--ink); }
+.doc h3 + * { margin-top: 10px; }
+.doc p + p { margin-top: 14px; }
+.doc code:not(pre code) {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+}
+.doc-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-2);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-quick) var(--ease-out);
+}
+.doc-link:hover { text-decoration-color: var(--ink); }
+.doc-code {
+  overflow-x: auto;
+  padding: 18px 20px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+.doc-table {
+  overflow-x: auto;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+.doc-table table { width: 100%; font-size: 14px; line-height: 1.55; border-collapse: collapse; }
+.doc-table th {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line-2);
+  background: var(--canvas-2);
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.doc-table td { padding: 11px 16px; vertical-align: top; color: var(--ink-2); }
+.doc-table td:first-child { white-space: nowrap; font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); }
+.doc-table tr + tr td { border-top: 1px solid var(--line); }
+.doc-note {
+  margin-top: 20px;
+  padding: 14px 18px;
+  border-left: 2px solid var(--ink);
+  background: var(--surface);
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+.legal { counter-reset: legal; }
+.legal > section { counter-increment: legal; padding-top: 24px; border-top: 1px solid var(--line-2); }
+.legal > section + section { margin-top: 40px; }
+.legal > section > h2 {
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.legal > section > h2::before {
+  display: block;
+  margin-bottom: 10px;
+  content: counter(legal, decimal-leading-zero);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.legal > section > p + p,
+.legal > section > ul { margin-top: 12px; }
 
 .cl-footerActionLink,
 .cl-formFieldAction,
@@ -130,7 +366,7 @@ summary:focus-visible {
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: rgba(20, 35, 59, 0.2);
+  background: var(--line-2);
   background-clip: padding-box;
 }
 
@@ -450,10 +686,6 @@ summary:focus-visible {
 
 .migration-progress {
   transition: width 650ms var(--ease-out);
-}
-
-@media (max-width: 640px) {
-  .tabular { font-size: 0.75rem; }
 }
 
 @keyframes shimmer {

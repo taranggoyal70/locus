@@ -10,10 +10,11 @@ Locus sells one idea: an agent should see the task, not the Repo, and you should
 be able to check what it saw. The page has to make that visible in a few seconds
 and then hold up under a skeptical engineer's second look.
 
-The look is a technical datasheet. Daylight paper, navy ink, hairline rules,
-mono for data, and colour that only ever means a Slice state. The signature is
-the **aperture**: a Repo drawn as a field of files that closes onto the Slice.
-It is the only illustration Locus needs.
+The look is a technical datasheet, set like a well-printed form. Warm paper,
+navy ink, a regular-weight serif for display headings, hairline rules, mono for
+data, and colour that only ever means a Slice state. It follows the system into
+a full dark theme. The signature is the **aperture**: a Repo drawn as a field of
+files that closes onto the Slice. It is the only illustration Locus needs.
 
 ## Where the current UI falls short (audit, November 3, 2026)
 
@@ -51,12 +52,23 @@ Principles to adapt, not layouts or assets to copy.
   match in spirit. A whole system in one short token block: two surfaces, two
   line weights, four ink weights, one signal colour plus a "check passed" green,
   one ease, two radii (6px and 10px). Adopt the datasheet discipline and the
-  rule that colour means "something changed." Avoid its warm paper and orange,
-  which are its identity, not ours.
+  rule that colour means "something changed." Avoid its orange, which is its
+  identity, not ours. (Its warm paper was on this avoid list until November 20,
+  2026; the PigeonBox entry below says why it came off.)
 - [PigeonBox design docs](https://github.com/aiden-guan/pigeonbox/tree/main/docs/design):
   the process this brief follows. Dated references with adopt and avoid notes, a
   six-role palette table, motion in exact milliseconds, an explicit avoid list,
   and browser verification at real widths.
+- [PigeonBox](https://usepigeonbox.com), the site itself (November 19, 2026; full
+  study in [`pigeonbox-study.md`](pigeonbox-study.md)): the main visual
+  reference since November 20, 2026. Adopt the regular-weight serif headline
+  with a muted second line, warm paper, two border weights (a hairline
+  separates, a 1px ink border marks one object), 4px and 8px radii, numbered key
+  caps in the nav, ruled lists, a ticket-style closing panel, a dark footer band
+  and its motion timings. Avoid its copper accent, its halftone drawings and
+  mascot, its copy, and its decorative loops. Do better where it falls short:
+  a dark theme on the public pages too, labels no smaller than 11px, and a
+  loaded serif instead of an OS-dependent `ui-serif`.
 - [Amp](https://ampcode.com/): one warm accent used only on the primary action,
   and real task strings floating in the hero instead of abstract shapes. Adopt
   real task text as imagery. Avoid the dark atmospheric gradient.
@@ -65,8 +77,8 @@ Principles to adapt, not layouts or assets to copy.
   Avoid all-mono body text, which is tiring past one screen.
 - [Linear](https://linear.app/) and [Graphite](https://graphite.com/): a quiet
   nav with one solid button and nothing competing with it. Adopt the single
-  primary action per view. Both are dark-first; Locus stays daylight, which also
-  sets it apart from most agent tools.
+  primary action per view. Both are dark-first. Locus is daylight first, which
+  sets it apart from most agent tools, and follows the system into dark.
 - [shadcn/ui](https://ui.shadcn.com/) and
   [Emil Kowalski's animation tips](https://emilkowal.ski/ui/7-practical-animation-tips):
   predictable controls, quiet borders, immediate press feedback, short ease-out,
@@ -83,39 +95,76 @@ components onto them. Each token is also a Tailwind colour of the same name
 
 | Token | Value | Use |
 | --- | --- | --- |
-| `--canvas` | `#F4F3EF` | Page background (neutral paper) |
-| `--surface` | `#FBFAF7` | Cards, panels, inputs |
-| `--surface-2` | `#EBE9E3` | Wells, table headers, skeletons |
-| `--line` | `rgba(20, 35, 59, 0.10)` | Default hairline |
-| `--line-2` | `rgba(20, 35, 59, 0.18)` | Emphasised hairline, input borders |
-| `--ink` | `#14233B` | Headlines, body, primary button |
+| `--canvas` | `#F3F1EA` | Page background (warm paper) |
+| `--canvas-2` | `#EBE8DF` | Recessed band (the closing ticket section, table heads) |
+| `--surface` | `#FBFAF6` | Cards, panels, inputs |
+| `--surface-2` | `#E9E6DD` | Wells, active nav items, skeletons |
+| `--line` | `rgba(20, 35, 59, 0.11)` | Default hairline |
+| `--line-2` | `rgba(20, 35, 59, 0.20)` | Emphasised hairline, input borders |
+| `--ink` | `#14233B` | Headlines, body, primary button, object borders |
 | `--ink-2` | `#3E4F63` | Supporting text |
-| `--muted` | `#5C6A78` | Captions, metadata |
+| `--muted` | `#5C6A78` | Captions, metadata, the second headline line |
 | `--included` | `#087864` | Included files, passing Checks, focus ring |
 | `--widened` | `#925C0E` | Widen, attention needed |
-| `--excluded` | `#D3D0C8` | Excluded files (always paired with a label) |
+| `--excluded` | `#D6D1C5` | Excluded files (always paired with a label) |
 | `--failed` | `#B03A2E` | Failed Checks and errors only |
 
-The dark band (the demo, the closing call to action) uses the same roles on
-navy: `--canvas` `#0F1B2E`, `--surface` `#16263D`, `--surface-2` `#1D3049`,
-`--ink` `#EEF2F0`, `--ink-2` `#B4C1CE`, `--muted` `#91A4B6`, `--included`
-`#3FBF9F`. Same tokens, swapped values, under a `data-band="dark"` attribute.
-No separate demo palette.
+The same roles have two dark sets. Each is the same tokens with swapped values,
+so components never branch on the theme.
+
+| Token | Dark band | Dark theme |
+| --- | --- | --- |
+| `--canvas` | `#0F1B2E` | `#0D1420` |
+| `--canvas-2` | `#0B1524` | `#0A101A` |
+| `--surface` | `#16263D` | `#142033` |
+| `--surface-2` | `#1D3049` | `#1B2A40` |
+| `--ink` | `#ECE8DF` | `#ECE8DF` |
+| `--ink-2` | `#B4C1CE` | `#B8C2CD` |
+| `--muted` | `#91A4B6` | `#8F9FB0` |
+| `--included` | `#3FBF9F` | `#45C4A3` |
+| `--widened` | `#E0A53C` | `#E0A53C` |
+| `--excluded` | `#2B3A52` | `#2A3749` |
+| `--failed` | `#F08F80` | `#F08F80` |
+
+- **Dark band** (`data-band="dark"`): the demo, the pricing contract half, the
+  evidence thresholds and the footer. In the light theme it is the only dark
+  ground on the page. Inside the dark theme it sits one step deeper (`--canvas`
+  `#080E18`, `--surface` `#0F1828`) so it still reads as a band.
+- **Dark theme**: the band promoted to the whole page. It follows
+  `prefers-color-scheme` unless the reader pins Light or Dark with the switch in
+  the footer, the auth pages or Settings (stored in `localStorage` as
+  `locus-theme`). A blocking script in `<head>` sets `data-theme` before first
+  paint, so a pinned theme never flashes the other one; it carries the CSP nonce.
+- Hairlines on navy are the warm ink at 9% and 17%, not white, so they stay in
+  the same family as the text.
+- Clerk's widgets take literal colours, so `src/lib/clerk-palette.ts` mirrors the
+  surface, canvas, ink, ink-2, failed and included values for each theme, and
+  the components pick a palette from the resolved theme.
 
 `src/app/design-tokens.test.ts` holds every text and state colour above 4.5:1
-on its canvas and surface, in both the light page and the dark band.
+on its canvas and surface in all four grounds (light page, dark band, dark
+theme, band inside the dark theme), checks that the system-setting copy of the
+dark theme matches the pinned one, and checks the Clerk palette against the
+tokens.
 
 **Colour rule:** teal, amber and grey describe a file's or Check's state. They
 are never decoration. If a teal element does not mean Included or passing,
-make it ink.
+make it ink. That includes navigation (the current page's key cap is filled
+with ink) and links (ink with a hairline underline that darkens on hover).
 
 ### Type
 
-- **Geist** for everything readable, **Geist Mono** for data only: file paths,
-  counts, hashes, statuses, commands. Mono is not a decoration for labels.
-- Retire Bricolage Grotesque. One sans family keeps the datasheet calm.
-- Display weight 600, tracking no tighter than `-0.04em`, line-height 1.0.
-  Hero `clamp(44px, 7vw, 96px)`; section heads `clamp(32px, 4.4vw, 56px)`.
+- **Newsreader** for display only: page and section headings, phase names,
+  large figures. Regular weight (400), tracking `-0.02em`, line-height about
+  0.98. Loaded with `next/font` with its optical-size axis, so large headings
+  get the fine display cut, small ones the sturdier text cut, and every OS
+  renders the same face. Hero `clamp(46px, 9.4vw, 136px)`; page titles
+  `clamp(40px, 6vw, 80px)`; section heads `clamp(32px, 4.4vw, 56px)`.
+- Headings are two short lines, the second in `--muted`: a statement, then its
+  consequence ("Ship the task." / "Not the repo.").
+- **Geist** for everything readable, **Geist Mono** for data and for the label
+  voice: file paths, counts, hashes, statuses, commands, section labels and key
+  caps. Bricolage stays retired.
 - Text scale: 12, 13, 15, 17, 20. Body 15 or 17. **Nothing below 11px**, and
   mono labels are 11px minimum.
 - Uppercase eyebrows: at most one per section, `0.08em` tracking, and only when
@@ -124,11 +173,15 @@ make it ink.
 
 ### Shape and surface
 
-- Three radii: `6px` (`rounded-chip`: chips, inputs, file rows), `10px`
-  (`rounded-card`: buttons, cards, panels), `999px` (`rounded-full`: status
-  dots only). The shadow below is `shadow-panel`.
-- Borders do the work. One shadow token for raised panels:
-  `0 1px 0 rgba(20,35,59,.04), 0 12px 32px -18px rgba(20,35,59,.22)`.
+- Three radii: `4px` (`rounded-chip`: buttons, chips, inputs, key caps, file
+  rows), `8px` (`rounded-card`: cards, panels, the ticket), `999px`
+  (`rounded-full`: status dots only).
+- **Two border weights.** A hairline (`--line`, `--line-2`) separates. A 1px ink
+  border marks one object you should treat as a unit: the ticket, the pricing
+  panel, the gate card, the auth card, and the top rule of a ruled list.
+- Borders do the work. `shadow-panel` for raised panels
+  (`0 1px 0 rgba(20,35,59,.04), 0 12px 32px -18px rgba(20,35,59,.24)`);
+  `shadow-frame` only for a dialog.
 - No full-page grid, no radial glows, no blurred halos, no glass. The grid
   belongs inside the aperture figure, where it means "the Repo."
 
@@ -138,6 +191,15 @@ make it ink.
   desktop, 64px phone.
 - One primary action per view. Secondary actions are text links or a single
   outlined button.
+- **Header:** 60px, solid canvas, hairline below. The serif wordmark, then nav
+  items each with a numbered key cap (1 Demo, 2 Evidence, 3 Docs, 4 Agent
+  access). The numbers are real shortcuts: pressing one follows its link unless
+  focus is in a field. Then Source and Sign in as text, and one solid ink "Try
+  Locus" button. Under 1024px the nav moves into a menu that grows from its
+  button.
+- **Footer:** a full-width dark band with the file field drawn across it, link
+  columns (three across on phones too), the admission sentence and the theme
+  switch.
 - Product evidence is the hero image, at a size where the file names are
   readable. On phones, show the Slice list, not a shrunken desktop panel.
 
@@ -187,6 +249,17 @@ The page reads as a technical sheet, not a stack of cards.
   ("One task." / "14 of 125 files.").
 - **Figures:** every figure has a caption, `Fig. 1  What it shows, and where
   its numbers come from.`
+- **Ruled lists:** numbered rows under an ink top rule: a mono number, a serif
+  title, a sans description, an optional action. Used for the Run phases,
+  support channels, the protocol and the case ledger instead of cards.
+- **Ticket:** the closing panel is a single ink-bordered card with a perforated
+  stub (a dashed rule with notches cut into the edge) that lists the terms like
+  a boarding pass, stamped with a postmark drawn from the Slice.
+- **Reference pages** (docs, legal): sections open on an ink rule with a mono
+  number; docs get a sticky "On this page" rail at desktop widths.
+- `PageHeader` (`src/components/PageHeader.tsx`) opens every secondary public
+  page the same way: mono label, two-line serif title, lead paragraph, and an
+  optional aside that steps the title down a size.
 
 `src/components/Datasheet.tsx`.
 
@@ -235,11 +308,28 @@ The page reads as a technical sheet, not a stack of cards.
 
 ## Avoid
 
-Display serif or italic headings, gradient text, mint glow, glassmorphism,
-floating icon confetti, a row of three identical feature cards, numbered
-feature lists used as decoration, fake trust logos, testimonial carousels,
-endless background animation, more than one accent colour on a screen, and any
-mono uppercase text under 11px.
+Italic headings, a serif in bold or semibold, serif body text, gradient text,
+mint glow, glassmorphism, floating icon confetti, a row of three identical
+feature cards, numbered feature lists used as decoration, fake trust logos,
+testimonial carousels, endless background animation, more than one accent
+colour on a screen, copper or orange anywhere, and any mono uppercase text
+under 11px.
+
+**Changed November 20, 2026.** This list ruled out a display serif, and the
+Continuity note ruled out warm paper. Both came off when PigeonBox became the
+main visual reference. The reasoning:
+
+- A serif headline on warm paper is what makes a page read as a printed form
+  rather than a SaaS template. That is the datasheet idea taken one step
+  further, not a different idea, and it sets Locus apart from the dark, sans,
+  gradient look most agent tools share.
+- The original worries were a serif that looks different on every OS and a
+  warm page that borrows someone else's identity. The first is handled by
+  loading Newsreader instead of relying on `ui-serif`. The second is handled
+  by keeping everything that is Locus's own: navy ink, teal as the only colour
+  and only for state, the file field as the only illustration, and no copper.
+- Only at regular weight, and only for display. A bold serif turns an editorial
+  page into a magazine cover, and a serif in dense UI text costs legibility.
 
 ## Rollout order
 
@@ -414,3 +504,47 @@ PigeonBox's demos look live but take no input; this one takes any task.
   run. They load on their own and do not read the input, but only localhost was
   measured. The Run chapter is not built: it needs a recorded real Run.
 - Screenshot: `landing-live-1440.jpg`.
+
+### The PigeonBox layer (November 20, 2026)
+
+PigeonBox became the main visual reference (study: `pigeonbox-study.md`). The
+datasheet stays; its type, canvas and object grammar changed.
+
+- **Type:** display headings moved to Newsreader at regular weight with a muted
+  second line, site-wide (25 headings rewritten from 600 weight and tight
+  tracking to 400 at `-0.02em`). Geist and Geist Mono are unchanged.
+- **Palette:** a warmer paper (`#F3F1EA`), a new `--canvas-2` for recessed
+  bands, and a full dark theme that follows the system, with a Light, Dark and
+  System switch in the footer, on the auth pages and in Settings. Radii went to
+  4px and 8px.
+- **Shell:** a 60px header with numbered key caps that work as shortcuts, a
+  phone menu, and a dark footer band with the file field and link columns.
+- **Pages:** the landing closes on a ticket with a postmark; pricing is one
+  ink-bordered panel split into paper and band; support, evidence and the
+  protocol use ruled lists; docs and legal pages share reference styles and a
+  `PageHeader`; the 404 and error pages, the access dialog, the auth shell, the
+  settings shell and the workspace rail follow the same grammar. Clerk's
+  widgets take the theme's palette.
+- **Checks:** `pnpm lint`, `pnpm typecheck`, `pnpm check:merge-markers`,
+  `pnpm check:alpha-claims`, `pnpm evidence:release1` and `pnpm check-sync`
+  pass. `pnpm test`: 1016 passed, 9 skipped; the token test grew from 12 cases
+  to 27 (dark theme, band inside the dark theme, the two dark-theme copies
+  agreeing, and the Clerk palette).
+- **Browser (Chromium):** every public page at 1440 and 390 in light and dark;
+  no sideways scroll at 1440, 1024, 390 and 320 on any public page, the 404 or
+  the auth pages. The access dialog, the settings shell and the workspace were
+  checked in both themes through a temporary unauthenticated route, removed
+  before commit.
+- **Fixed on the way:** Settings rendered the Cloudflare panel twice (also on
+  `main`); the key cap's style sat outside Tailwind's layers, so the current
+  page's key never changed; the frame shadow's theme variable pointed at
+  itself; numbers shrank on phones through a leftover `.tabular` rule.
+- **Not checked:** signed-in pages with a real Clerk session, so Clerk's own
+  account menu and profile were not seen in dark; Safari and Firefox. Clerk's
+  development-mode widget logs a CSP warning for a `data:` image, on the base
+  branch too.
+- Screenshots, before and after side by side: `pigeonbox-landing-1440-light.jpg`,
+  `pigeonbox-landing-1440-dark.jpg`, `pigeonbox-landing-390-light.jpg`,
+  `pigeonbox-landing-close-1440-light.jpg`, `pigeonbox-pricing-1440-light.jpg`,
+  `pigeonbox-docs-1440-light.jpg`, `pigeonbox-evidence-1440-light.jpg`,
+  `pigeonbox-support-1440-dark.jpg`, `pigeonbox-sign-in-1440-dark.jpg`.

@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
+import { CLERK_PALETTE } from "@/lib/clerk-palette";
+
 function luminance(hex: string): number {
   const channels = hex.match(/[a-f\d]{2}/gi)?.map((value) => Number.parseInt(value, 16) / 255) ?? [];
   const [red, green, blue] = channels.map((value) => (
@@ -45,4 +47,62 @@ describe("public color tokens", () => {
       expect(contrast(dark[role], dark.surface)).toBeGreaterThanOrEqual(4.5);
     },
   );
+});
+
+describe("dark theme tokens", () => {
+  const light = tokens(":root");
+  const theme = { ...light, ...tokens(':root[data-theme="dark"]') };
+  // A band element matches the band rule (its own ink values) and the deeper
+  // grounds the dark theme gives a band, in that order.
+  const band = {
+    ...light,
+    ...tokens('[data-band="dark"]'),
+    ...tokens(':root[data-theme="dark"] [data-band="dark"]'),
+  };
+
+  it.each(["ink", "ink-2", "muted", "included", "widened", "failed"])(
+    "keeps --%s above WCAG AA contrast on the dark canvas and surfaces",
+    (role) => {
+      expect(contrast(theme[role], theme.canvas)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(theme[role], theme.surface)).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  it.each(["ink", "ink-2", "muted", "included", "widened", "failed"])(
+    "keeps --%s above WCAG AA contrast in a band inside the dark theme",
+    (role) => {
+      expect(contrast(band[role], band.canvas)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(band[role], band.surface)).toBeGreaterThanOrEqual(4.5);
+    },
+  );
+
+  // The dark theme is declared twice: once for an explicit choice and once for
+  // the system setting. A value changed in one and not the other would make the
+  // theme depend on how it was chosen.
+  it("declares the same values for the system and the explicit dark theme", () => {
+    expect(tokens(':root:not([data-theme="light"])')).toEqual(tokens(':root[data-theme="dark"]'));
+    expect(tokens(':root:not([data-theme="light"]) [data-band="dark"]'))
+      .toEqual(tokens(':root[data-theme="dark"] [data-band="dark"]'));
+    expect(Object.keys(tokens(':root[data-theme="dark"]')).length).toBeGreaterThan(8);
+  });
+});
+
+describe("Clerk palette", () => {
+  const light = tokens(":root");
+  const dark = { ...light, ...tokens(':root[data-theme="dark"]') };
+
+  it.each([
+    ["light", light],
+    ["dark", dark],
+  ] as const)("matches the %s theme tokens", (name, palette) => {
+    const clerk = CLERK_PALETTE[name];
+    expect(clerk.colorBackground).toBe(palette.surface);
+    expect(clerk.colorInputBackground).toBe(palette.canvas);
+    expect(clerk.colorText).toBe(palette.ink);
+    expect(clerk.colorPrimary).toBe(palette.ink);
+    expect(clerk.colorTextOnPrimaryBackground).toBe(palette.canvas);
+    expect(clerk.colorTextSecondary).toBe(palette["ink-2"]);
+    expect(clerk.colorDanger).toBe(palette.failed);
+    expect(clerk.colorSuccess).toBe(palette.included);
+  });
 });

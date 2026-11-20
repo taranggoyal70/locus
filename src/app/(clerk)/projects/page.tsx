@@ -11,7 +11,7 @@ export default async function ProjectsPage() {
   return (
     <SettingsShell>
       <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">Evidence ledger</p>
-      <h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Agent Runs</h1>
+      <h1 className="mt-2 font-display text-4xl font-normal tracking-[-0.02em] text-ink">Agent Runs</h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-2">
         Resume active work and inspect factual Slice, Step, check, failure, and token evidence.
       </p>

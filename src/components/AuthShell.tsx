@@ -1,6 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+
+import { MiniField } from "@/components/MiniField";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { Wordmark } from "@/components/Wordmark";
 
 type AuthShellProps = {
   children: ReactNode;
@@ -9,68 +12,56 @@ type AuthShellProps = {
   description: string;
 };
 
-// Clerk takes literal colours, not CSS variables, so these mirror the tokens in
-// globals.css: --ink for the primary action, --surface, --canvas, --ink-2.
-export const AUTH_APPEARANCE = {
-  variables: {
-    colorPrimary: "#14233b",
-    colorBackground: "#fbfaf7",
-    colorInputBackground: "#f4f3ef",
-    colorInputText: "#14233b",
-    colorText: "#14233b",
-    colorTextSecondary: "#3e4f63",
-    borderRadius: "0.625rem",
-  },
-  elements: {
-    rootBox: "w-full",
-    cardBox: "w-full shadow-none",
-    card: "w-full border border-line-2 bg-surface shadow-panel",
-    headerTitle: "text-ink",
-    headerSubtitle: "text-ink-2",
-    socialButtonsBlockButton: "border-line-2 bg-canvas text-ink hover:bg-surface-2",
-    formFieldInput: "border-line-2 bg-canvas text-ink",
-    formButtonPrimary: "bg-ink text-white hover:bg-ink/90",
-    footerActionLink: "text-ink underline decoration-line-2 underline-offset-2 hover:decoration-ink",
-    dividerLine: "bg-line-2",
-    dividerText: "text-muted",
-  },
-} as const;
+const BOUNDARIES = [
+  ["Slice", "Visible"],
+  ["Excluded", "Visible"],
+  ["External writes", "Disabled"],
+] as const;
+
+const monoLabel = "font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted";
 
 export function AuthShell({ children, eyebrow, title, description }: AuthShellProps) {
   return (
-    <main className="relative min-h-screen overflow-x-hidden px-5 py-6 sm:px-8 sm:py-8">
-      <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col">
-        <header className="flex items-center">
-          <Link href="/" className="flex items-center gap-3 text-ink">
-            <Image src="/locus-mark.svg" width={28} height={28} alt="" priority />
-            <span className="font-semibold tracking-[-0.02em]">Locus</span>
+    <main className="relative min-h-screen overflow-x-hidden">
+      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-5 sm:px-8">
+        <header className="flex h-[60px] items-center justify-between border-b border-line">
+          <Link href="/" aria-label="Locus home" className="flex items-center gap-2.5 text-ink">
+            <Wordmark />
+          </Link>
+          <Link href="/" className="text-[14px] text-ink-2 transition-colors hover:text-ink">
+            <span aria-hidden="true">←</span> Back to site
           </Link>
         </header>
 
-        <div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-8 py-10 sm:gap-12 sm:py-14 lg:grid-cols-[minmax(0,1fr)_440px]">
+        <div className="grid min-w-0 flex-1 grid-cols-1 items-center gap-12 py-12 sm:py-16 lg:grid-cols-[minmax(0,1fr)_440px] lg:gap-20">
           <section className="min-w-0 max-w-xl">
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">{eyebrow}</p>
-            <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.02] tracking-[-0.04em] text-ink sm:mt-5 sm:text-6xl sm:leading-[0.94]">{title}</h1>
-            <p className="mt-4 max-w-lg text-base leading-7 text-ink-2 sm:mt-6 sm:text-lg">{description}</p>
+            <p className={monoLabel}>{eyebrow}</p>
+            <h1 className="mt-5 font-display text-[clamp(2.6rem,5vw,4.4rem)] font-normal leading-[1.0] tracking-[-0.02em] text-ink">
+              {title}
+            </h1>
+            <p className="mt-6 max-w-lg text-[17px] leading-[1.65] text-ink-2">{description}</p>
 
-            <div className="mt-10 hidden overflow-hidden rounded-card border border-line-2 bg-surface/70 sm:block">
-              <div className="grid grid-cols-3 gap-px bg-line-2">
-                {[["Slice", "Visible"], ["Excluded", "Visible"], ["External writes", "Disabled"]].map(([label, value]) => (
-                  <div key={label} className="bg-surface px-4 py-3">
-                    <span className="font-mono text-[11px] uppercase text-muted">{label}</span>
-                    <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
+            <div className="mt-12 hidden sm:block">
+              <dl className="grid grid-cols-3 border-t border-ink">
+                {BOUNDARIES.map(([name, value], index) => (
+                  <div key={name} className={`py-4 ${index > 0 ? "border-l border-line pl-4" : ""}`}>
+                    <dt className={monoLabel}>{name}</dt>
+                    <dd className="mt-1.5 text-[15px] font-medium text-ink">{value}</dd>
                   </div>
                 ))}
+              </dl>
+              <div className="mt-8">
+                <MiniField columns={16} rows={3} slice={[5, 6, 21, 22, 23, 38]} />
               </div>
             </div>
           </section>
 
-          <section className="flex min-w-0 w-full justify-center lg:justify-end">{children}</section>
+          <section className="flex w-full min-w-0 justify-center lg:justify-end">{children}</section>
         </div>
 
-        <footer className="flex flex-col gap-2 border-t border-line-2 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
-          <span>Public early access</span>
-          <span>Public Repos · Secure authentication by Clerk</span>
+        <footer className="flex flex-col gap-3 border-t border-line py-5 sm:flex-row sm:items-center sm:justify-between">
+          <span className={monoLabel}>Public early access · Public Repos · Secure authentication by Clerk</span>
+          <ThemeSwitch />
         </footer>
       </div>
     </main>
@@ -79,11 +70,17 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
 
 export function AuthLoading({ label }: { label: string }) {
   return (
-    <div className="flex min-h-80 w-full items-center justify-center rounded-card border border-line-2 bg-surface px-8 text-center shadow-panel" role="status" aria-live="polite">
+    <div
+      className="flex min-h-80 w-full items-center justify-center rounded-card border border-ink bg-surface px-8 text-center"
+      role="status"
+      aria-live="polite"
+    >
       <div>
-        <Image src="/locus-mark.svg" width={32} height={32} alt="" className="mx-auto" />
-        <p className="mt-5 text-sm font-medium text-ink">{label}</p>
-        <p className="mt-2 text-xs text-muted">Connecting securely…</p>
+        <div className="mx-auto w-fit">
+          <MiniField columns={5} rows={3} slice={[6, 7, 8]} />
+        </div>
+        <p className="mt-6 text-[15px] font-medium text-ink">{label}</p>
+        <p className="mt-1.5 text-[13px] text-muted">Connecting securely…</p>
       </div>
     </div>
   );

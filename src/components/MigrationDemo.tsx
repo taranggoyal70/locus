@@ -100,7 +100,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
         <header className="grid gap-7 py-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end lg:py-14">
           <div>
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-included">{plainLanguage ? "One task. 1,842 files." : "Locus Guard pilot"}</p>
-            <h1 className="mt-4 max-w-5xl font-display text-[clamp(3.2rem,7vw,7.2rem)] font-semibold leading-[.84] tracking-[-0.04em] text-ink">
+            <h1 className="mt-4 max-w-5xl font-display text-[clamp(3.2rem,7vw,7.2rem)] font-normal leading-[0.98] tracking-[-0.02em] text-ink">
               {plainLanguage ? "Your AI changed the code." : "Let agents code."}
               <span className="mt-2 block text-ink-2">{plainLanguage ? "Locus proves what it touched." : "Gate what can merge."}</span>
             </h1>
@@ -132,7 +132,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{plainLanguage ? "An AI receives a coding task" : "Agent Task"}</p>
                 <span className="rounded-chip border border-widened/30 bg-widened/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-widened">{plainLanguage ? "Needs boundaries" : "Scope required"}</span>
               </div>
-              <h2 id="agent-task-title" className="mt-7 font-display text-3xl font-semibold tracking-[-0.04em] text-ink">Duplicate invoice retries</h2>
+              <h2 id="agent-task-title" className="mt-7 font-display text-3xl font-normal tracking-[-0.02em] text-ink">Duplicate invoice retries</h2>
               <p className="mt-2 text-sm leading-6 text-ink-2">{plainLanguage ? "Illustrative bug in a fictional billing system" : "BILL-142 · base 3a42… · synthetic task"}</p>
 
               <div className="mt-7 rounded-card border border-line bg-surface p-4">
@@ -154,11 +154,11 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 <p className="mt-2 text-sm font-semibold text-ink">{plainLanguage ? "Northstar Checkout" : "northstar/checkout"}</p>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-card border border-line p-3">
-                    <p className="font-display text-2xl font-semibold text-ink">1,842</p>
+                    <p className="font-display text-2xl font-normal text-ink">1,842</p>
                     <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{plainLanguage ? "Files checked" : "Repo files"}</p>
                   </div>
                   <div className="rounded-card border border-line p-3">
-                    <p className="font-display text-2xl font-semibold text-ink">1</p>
+                    <p className="font-display text-2xl font-normal text-ink">1</p>
                     <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{plainLanguage ? "Requested fix" : "Agent Task"}</p>
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                 </svg>
                 <div className="migration-aperture__core absolute inset-[28%] grid place-items-center rounded-card border border-included/35 bg-surface text-center">
                   <div>
-                    <p className="migration-aperture__count font-display text-5xl font-semibold tracking-[-0.04em] text-ink">{stage >= 2 ? "7" : "1,842"}</p>
+                    <p className="migration-aperture__count font-display text-5xl font-normal tracking-[-0.02em] text-ink">{stage >= 2 ? "7" : "1,842"}</p>
                     <p className="mt-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-included">{stage >= 2 ? plainLanguage ? "files needed" : "files admitted" : plainLanguage ? "files checked" : "files observed"}</p>
                   </div>
                 </div>
@@ -205,7 +205,7 @@ export function MigrationDemo({ selfServeOpen }: { selfServeOpen: boolean }) {
                   {stage >= 4 ? plainLanguage ? "Ready for review" : "Signature verified" : "Waiting"}
                 </span>
               </div>
-              <h2 id="proposal-title" className="mt-7 font-display text-3xl font-semibold tracking-[-0.04em] text-ink">{plainLanguage ? "Proof receipt" : "Guard receipt"}</h2>
+              <h2 id="proposal-title" className="mt-7 font-display text-3xl font-normal tracking-[-0.02em] text-ink">{plainLanguage ? "Proof receipt" : "Guard receipt"}</h2>
               <p className="mt-2 text-sm leading-6 text-ink-2">{plainLanguage ? "The exact fix, approved files, automated checks, and AI-provider usage reports stay connected." : "Manifest hash, working-tree content hash, Check output digests, provider-reported usage, and Review state, not task correctness."}</p>
 
               <div aria-hidden={stage < 3} className={`migration-diff mt-6 overflow-hidden rounded-card border border-line bg-canvas transition ${stage >= 3 ? "migration-diff--visible" : ""}`}>
