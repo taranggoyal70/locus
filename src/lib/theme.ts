@@ -14,8 +14,13 @@ export function parseThemePreference(value: unknown): ThemePreference {
  * Runs before first paint so a pinned theme never flashes the other one.
  * Storage can throw (private windows, blocked site data); the page then simply
  * follows the system theme.
+ *
+ * A fixed string, with the storage key written in as a literal: nothing is
+ * spliced into inline script, where JSON.stringify would not escape a closing
+ * script tag. theme.test.ts runs it against the key the theme switch writes,
+ * so the two cannot drift apart.
  */
-export const THEME_BOOT_SCRIPT = `(function(){try{var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}})();`;
+export const THEME_BOOT_SCRIPT = `(function(){try{var t=localStorage.getItem("locus-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}})();`;
 
 export function applyThemePreference(preference: ThemePreference): void {
   const root = document.documentElement;
