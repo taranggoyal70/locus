@@ -16,7 +16,10 @@
     "test": "vitest run",
     "check:merge-markers": "node scripts/check-merge-markers.mjs",
     "check:alpha-claims": "node scripts/check-alpha-claims.mjs",
+    "check:public-launch": "node scripts/verify-public-launch.mjs",
     "benchmark": "node scripts/benchmark.mjs --write",
+    "benchmark:heldout": "node scripts/benchmark-heldout.mjs --write",
+    "readme:assets": "node scripts/readme-assets.mjs",
     "eval:release1": "node scripts/release1-eval.mjs",
     "evidence:release1": "node scripts/release1-public-report.mjs",
     "evidence:release1:write": "node scripts/release1-public-report.mjs --write",
@@ -32,14 +35,14 @@
     "@vercel/speed-insights": "2.0.0",
     "ai": "7.0.42",
     "mammoth": "1.12.0",
-    "next": "16.3.4",
+    "next": "16.4.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "stripe": "22.3.1",
     "tesseract.js": "7.0.0",
     "unpdf": "1.6.2",
-    "workflow": "4.8.0",
-    "zod": "4.4.3"
+    "workflow": "4.8.16",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -49,10 +52,10 @@
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.4.6",
     "jsdom": "^30.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   }
 }

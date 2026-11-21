@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
-import { SITE_URL } from "@/lib/config";
+import { SITE_URL, SUPPORT_URL } from "@/lib/config";
 import { frame, Rule } from "@/components/Datasheet";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -29,7 +29,7 @@ export default function TermsPage() {
           <section>
             <h2>Service</h2>
             <p>
-              Locus is an experimental, open-source agent workspace operated by Tarang Goyal. It
+              Locus is an experimental, proprietary agent workspace operated by Tarang Goyal. It
               localizes tasks for public JavaScript, TypeScript, and Python repositories for every signed-in
               user. During the limited free beta, signed-in users can request a shared Agent Run or
               connect their own Cloudflare Workers AI account, continue in an isolated Sandbox,
@@ -89,11 +89,13 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>Open source</h2>
+            <h2>Intellectual property</h2>
             <p>
-              Locus is licensed under the MIT License. You may self-host, modify, and distribute
-              the software in accordance with the license terms. CLI and MCP source runtimes can be
-              executed from a repository checkout; no npm distribution is currently published.
+              Copyright © 2026 Tarang Goyal. All rights reserved. The Locus implementation is
+              proprietary and is not published as part of the service. Access to Locus does not grant
+              a right to copy, modify, distribute, sublicense, sell, reverse engineer, or create a
+              competing service from its protected software except where applicable law does not
+              permit that restriction or you have separate written permission.
             </p>
           </section>
 
@@ -103,10 +105,10 @@ export default function TermsPage() {
               We may update these terms as the service evolves. Questions and early-access support requests
               can be submitted through the{" "}
               <a
-                href="https://github.com/taranggoyal70/locus/issues/new"
+                href={`${SUPPORT_URL}/issues/new`}
                 className="doc-link"
               >
-                Locus issue tracker
+                public Locus support tracker
               </a>.
             </p>
           </section>

@@ -69,7 +69,7 @@ function runRequest(executionMode: "shared" | "byok" = "shared") {
 
 function queryResult(result: Record<string, unknown>) {
   const builder: Record<string, unknown> = {};
-  for (const method of ["select", "eq", "in", "gte", "insert", "update", "delete"]) {
+  for (const method of ["select", "eq", "in", "gte", "or", "insert", "update", "delete"]) {
     builder[method] = vi.fn(() => builder);
   }
   builder.single = vi.fn(async () => result);

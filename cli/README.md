@@ -241,4 +241,4 @@ server-side limit, so it holds even if the client is compromised.
 
 Hosted version and the reproducible benchmark: https://locus-five-iota.vercel.app
 
-MIT © Tarang Goyal
+Copyright © 2026 Tarang Goyal. All rights reserved. See [LICENSE](LICENSE).

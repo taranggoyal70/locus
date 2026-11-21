@@ -4,9 +4,8 @@ import contract from "../../../../benchmarks/release1/contract.json";
 import report from "../../../../benchmarks/release1/public-report.json";
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
-import { REPO_URL } from "@/lib/config";
 import { frame, Rule, SectionLabel } from "@/components/Datasheet";
-import { inkLink, monoLabel, PageHeader } from "@/components/PageHeader";
+import { monoLabel, PageHeader } from "@/components/PageHeader";
 
 export const metadata: Metadata = {
   title: "Release 1 evidence · Locus",
@@ -25,7 +24,6 @@ type AggregateMetrics = {
 type PublicReport = Omit<typeof report, "metrics"> & { metrics: AggregateMetrics | null };
 
 const evidence = report as PublicReport;
-const evidenceBase = `${REPO_URL}/blob/main/benchmarks/release1`;
 
 const sectionGrid = "grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10";
 const sectionHeading = "font-display text-[clamp(32px,3.6vw,48px)] font-normal leading-[1.02] tracking-[-0.02em] text-ink";
@@ -174,11 +172,10 @@ export default function Release1EvidencePage() {
             <div>
               <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                 <h2 className={sectionHeading}>Every task is inspectable.</h2>
-                <div className="flex flex-wrap gap-x-5 gap-y-2 text-[14px]">
-                  <a className={inkLink} href={`${evidenceBase}/contract.json`}>Contract</a>
-                  <a className={inkLink} href={`${evidenceBase}/results.json`}>Raw results</a>
-                  <a className={inkLink} href={`${evidenceBase}/public-report.json`}>Public report</a>
-                </div>
+                <p className="max-w-sm text-[14px] leading-6 text-ink-2">
+                  The frozen protocol, completion state, thresholds, and case ledger are published on
+                  this page without exposing the private implementation or internal evaluation corpus.
+                </p>
               </div>
               <ul className="mt-8 border-t border-ink">
                 {contract.cases.map((testCase, index) => (

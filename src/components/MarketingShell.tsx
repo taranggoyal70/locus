@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { admissionSentence } from "@/lib/admission-copy";
-import { REPO_URL } from "@/lib/config";
 import { CommandPalette } from "@/components/CommandPalette";
 import { frame, Rails } from "@/components/Datasheet";
 import { FooterField } from "@/components/FooterField";
@@ -34,7 +33,6 @@ const FOOTER_COLUMNS = [
     links: [
       { href: "/docs", label: "API" },
       { href: "/evidence/release-1", label: "Evidence" },
-      { href: REPO_URL, label: "GitHub ↗", external: true },
     ],
   },
   {
@@ -80,9 +78,6 @@ export function MarketingShell({
                   {item.label}
                 </MarketingNavLink>
               ))}
-              <a href={REPO_URL} className="inline-flex h-9 items-center rounded-chip px-2.5 text-[14px] text-ink-2 transition-colors duration-150 hover:text-ink">
-                Source
-              </a>
             </div>
             <CommandPalette />
             <Link href="/sign-in" className="inline-flex h-9 items-center rounded-chip px-2.5 text-[14px] text-ink-2 transition-colors duration-150 hover:text-ink">Sign in</Link>
@@ -115,11 +110,7 @@ export function MarketingShell({
                 <ul className="mt-4 space-y-1">
                   {column.links.map((link) => (
                     <li key={link.href}>
-                      {"external" in link ? (
-                        <a href={link.href} className="inline-block py-1 text-[15px] text-ink-2 transition-colors duration-150 hover:text-ink">{link.label}</a>
-                      ) : (
-                        <Link href={link.href} className="inline-block py-1 text-[15px] text-ink-2 transition-colors duration-150 hover:text-ink">{link.label}</Link>
-                      )}
+                      <Link href={link.href} className="inline-block py-1 text-[15px] text-ink-2 transition-colors duration-150 hover:text-ink">{link.label}</Link>
                     </li>
                   ))}
                 </ul>

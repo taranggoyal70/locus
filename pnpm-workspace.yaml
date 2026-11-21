@@ -18,15 +18,15 @@ onlyBuiltDependencies:
   - sharp
   - unrs-resolver
 overrides:
-  'brace-expansion@>=5.0.0 <5.0.9': 5.0.9
+  'brace-expansion@>=4.0.0 <5.0.13': 5.0.13
   postcss: 8.5.23
-  sharp: 0.35.4
-  'undici@>=7.0.0 <7.29.0': 7.29.0
+  sharp: 0.35.5
+  'undici@>=7.0.0 <7.30.2': 7.30.2
   # R8: transitive advisories that `pnpm audit --prod` previously hid. Each
   # override is scoped to the vulnerable range only, so unaffected major lines
   # already in the tree resolve normally.
   # GHSA-28wg-ghj8-5hjv
-  'brace-expansion@<1.1.18': ^1.1.18
+  'brace-expansion@<1.1.22': ^1.1.22
   # js-yaml prototype pollution and merge-key CPU exhaustion
   'js-yaml@>=4.0.0 <4.3.2': ^4.3.2
   # GHSA-2v37-7h3g-55p8 — nanoid infinite loop on zero size
@@ -46,3 +46,14 @@ overrides:
   # GHSA-6gmq-8vp8-gcm6 — invalid XML entity names could be serialized without
   # well-formedness checks in the DOCX parsing dependency chain.
   '@xmldom/xmldom@>=0.7.0 <=0.8.14': ^0.8.15
+  # November 2026 audit: denial-of-service and parsing advisories in transitive
+  # build, test, and workflow tooling. Each is pinned to a patched
+  # release inside its current major line.
+  'brace-expansion@>=2.0.0 <2.1.8': ^2.1.8
+  'undici@>=8.0.0 <8.12.4': ^8.12.4
+  'devalue@<5.9.4': ^5.9.4
+  'zod@<4.6.7': ^4.6.7
+  'vite@>=8.0.0 <8.3.8': 8.3.8
+  'proxy-addr@<2.0.8': ^2.0.8
+  'body-parser@>=2.0.0 <2.4.0': ^2.4.0
+  'source-map-js@<1.2.2': 1.2.2

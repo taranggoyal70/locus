@@ -176,6 +176,30 @@ describe("Stripe subscription webhook", () => {
     expect(response.status).toBe(200);
   });
 
+  it.each([
+    ["checkout.session.completed", { metadata: { userId: "user_paying" }, subscription: "sub_123", customer: "cus_123" }],
+    ["customer.subscription.updated", { id: "sub_123", status: "active" }],
+    ["customer.subscription.deleted", { id: "sub_123" }],
+  ])("asks Stripe to retry %s when the database write fails", async (type, object) => {
+    // A failed write is not a refusal. Acknowledging it would tell Stripe the
+    // event was handled, so a paid checkout would never be granted and a
+    // cancellation would never be applied. Every write is idempotent on the
+    // event ID, so a retry is safe.
+    rpcMock.mockResolvedValue({ data: null, error: { message: "connection refused" } });
+    constructEventMock.mockReturnValue({
+      id: "evt_unwritten",
+      created: EVENT_CREATED_SECONDS,
+      type,
+      data: { object },
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await POST(webhookRequest());
+
+    expect(response.status).toBe(500);
+    errorSpy.mockRestore();
+  });
+
   it("ignores a checkout session with no user to attribute it to", async () => {
     constructEventMock.mockReturnValue({
       id: "evt_anon",

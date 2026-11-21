@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
 import { supportAvailability } from "@/lib/admission-copy";
-import { REPO_URL, SITE_URL } from "@/lib/config";
+import { SITE_URL, SUPPORT_URL } from "@/lib/config";
 import { frame, Rule, SectionLabel } from "@/components/Datasheet";
 import { inkLink, monoLabel, PageHeader } from "@/components/PageHeader";
 
@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 
 const sectionGrid = "grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10";
 
-const issueUrl = `${REPO_URL}/issues/new`;
-const securityUrl = `${REPO_URL}/security/advisories/new`;
+const issueUrl = `${SUPPORT_URL}/issues/new`;
+const securityUrl = `${SUPPORT_URL}/security/advisories/new`;
 
 const CHANNELS = [
   {

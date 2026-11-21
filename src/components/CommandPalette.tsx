@@ -13,7 +13,6 @@ import {
 } from "react";
 
 import { chooseTheme } from "@/components/ThemeSwitch";
-import { REPO_URL } from "@/lib/config";
 import type { ThemePreference } from "@/lib/theme";
 
 type Answer = { title: string; body: string; href: string; linkLabel: string };
@@ -30,7 +29,6 @@ type Command = {
   keywords?: string;
   /** The number key that opens this page anywhere on the site (NavShortcuts). */
   shortcut?: string;
-  external?: boolean;
   action: Action;
 };
 
@@ -43,19 +41,18 @@ const go = (href: string): Action => ({ kind: "go", href });
 const COMMANDS: Command[] = [
   { group: "Go to", label: "Home", action: go("/") },
   { group: "Go to", label: "Try a task, no sign-in", keywords: "slice figure aperture localize", action: go("/#try") },
-  { group: "Go to", label: "Benchmark cases", keywords: "evidence recall results suite", action: go("/#evidence") },
+  { group: "Go to", label: "Benchmark cases", keywords: "evidence recall results held-out heldout", action: go("/#evidence") },
   { group: "Go to", label: "Demo", shortcut: "1", keywords: "migration video", action: go("/demo") },
   { group: "Go to", label: "Evidence", shortcut: "2", keywords: "release study protocol gate", action: go("/evidence/release-1") },
   { group: "Go to", label: "Docs", shortcut: "3", keywords: "api reference", action: go("/docs") },
   { group: "Go to", label: "Agent access", shortcut: "4", keywords: "agent runs request invite plans", action: go("/pricing") },
   { group: "Go to", label: "Workspace", keywords: "app localize repo", action: go("/workspace") },
   { group: "Go to", label: "Sign in", keywords: "account log in", action: go("/sign-in") },
-  { group: "Go to", label: "Source on GitHub", keywords: "code repository open source", external: true, action: go(REPO_URL) },
   { group: "Docs", label: "Authentication", keywords: "api key bearer token", action: go("/docs#authentication") },
   { group: "Docs", label: "POST /api/v1/locate", keywords: "endpoint request response example curl", action: go("/docs#locate") },
   { group: "Docs", label: "Rate limits", keywords: "quota", action: go("/docs#rate-limits") },
   { group: "Docs", label: "Error codes", keywords: "status", action: go("/docs#errors") },
-  { group: "Docs", label: "Source runtimes", keywords: "cli mcp local", action: go("/docs#runtimes") },
+  { group: "Docs", label: "Public availability", keywords: "cli mcp npm package download", action: go("/docs#availability") },
   {
     group: "Ask Locus",
     label: "Does Locus write to my repository?",
@@ -337,20 +334,14 @@ export function CommandPalette() {
                           <span aria-hidden="true" className="w-3 shrink-0 text-center font-mono text-[12px] text-muted">{GLYPH[command.group]}</span>
                           <span className="truncate">{command.label}</span>
                         </span>
-                        {command.shortcut ? (
-                          <span aria-hidden="true" className="keycap">{command.shortcut}</span>
-                        ) : command.external ? (
-                          <span aria-hidden="true" className="text-[13px] text-muted">↗</span>
-                        ) : null}
+                        {command.shortcut && <span aria-hidden="true" className="keycap">{command.shortcut}</span>}
                       </>
                     );
                     if (action.kind !== "go") {
                       return <div key={command.label} {...option} onClick={() => run(command)}>{content}</div>;
                     }
                     // Options are reached through the input (aria-activedescendant), never by Tab.
-                    return command.external ? (
-                      <a key={command.label} {...option} href={action.href} tabIndex={-1} onClick={close}>{content}</a>
-                    ) : (
+                    return (
                       <Link key={command.label} {...option} href={action.href} tabIndex={-1} onClick={(event) => follow(event, action.href)}>
                         {content}
                       </Link>

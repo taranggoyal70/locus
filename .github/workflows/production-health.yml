@@ -27,37 +27,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
-      PRODUCTION_HEALTH_URL: https://locus-five-iota.vercel.app/api/health
+      PRODUCTION_BASE_URL: https://locus-five-iota.vercel.app
     steps:
-      - name: Verify health and deployed revision
+      - name: Check out the launch verifier
+        uses: actions/checkout@v4
+
+      - name: Verify the public launch contract
         env:
           EXPECTED_REVISION: ${{ inputs.expected_revision }}
         run: |
-          response_file="$(mktemp)"
           for attempt in {1..6}; do
-            if curl --silent --show-error --fail-with-body \
-              --connect-timeout 10 --max-time 20 \
-              --output "$response_file" "$PRODUCTION_HEALTH_URL" \
-              && node - "$response_file" "${EXPECTED_REVISION:0:7}" <<'NODE'
-          const fs = require("node:fs");
-          const health = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
-          const expectedRevision = process.argv[3];
-          if (
-            health.status !== "ok"
-            || (expectedRevision && health.revision !== expectedRevision)
-            || health.readiness?.missing?.length !== 0
-            || !["webhook", "external_health_check"].includes(health.readiness?.alerting)
-          ) {
-            console.error("Production health did not satisfy the public-launch contract.");
-            process.exit(1);
-          }
-          console.log(`Production ${health.revision} is healthy with ${health.readiness.alerting}.`);
-          NODE
-            then
+            if node scripts/verify-public-launch.mjs; then
               exit 0
             fi
             if [ "$attempt" -lt 6 ]; then
-              echo "Health contract not ready (attempt $attempt/6); retrying in 10 seconds."
+              echo "Public launch contract not ready (attempt $attempt/6); retrying in 10 seconds."
               sleep 10
             fi
           done

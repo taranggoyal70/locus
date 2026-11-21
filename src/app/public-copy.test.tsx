@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SupportPage from "@/app/support/page";
+import { PricingContent } from "@/components/PricingContent";
 import { runQuotaForTier } from "@/lib/admission";
 
 afterEach(() => {
@@ -27,6 +28,15 @@ describe("public copy follows the admission door", () => {
     const html = renderToStaticMarkup(<SupportPage />);
     expect(html).not.toContain("invited design partners");
     expect(html).toContain("shared daily slot");
+  });
+
+  it("turns the pricing page into a direct self-serve path when open", () => {
+    const html = renderToStaticMarkup(<PricingContent selfServeOpen />);
+
+    expect(html).toContain("Two Runs per rolling 24 hours");
+    expect(html).toContain('href="/workspace"');
+    expect(html).not.toContain("Access is manually approved");
+    expect(html).not.toContain("Request Agent Run access");
   });
 
   it("does not advertise the per-account allowance as guaranteed capacity", () => {

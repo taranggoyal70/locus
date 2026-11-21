@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { frame } from "@/components/Datasheet";
@@ -17,6 +18,9 @@ const alphaBoundaries = [
   "No billing, private-Repo access, or external GitHub writes",
 ];
 
+const cta =
+  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-chip bg-ink px-5 text-[15px] font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/88 active:scale-[0.97] sm:w-auto";
+
 export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
   const [showAccessForm, setShowAccessForm] = useState(false);
   const [headline, ...rest] = admissionHeadline(selfServeOpen).split(/(?<=\.)\s+/);
@@ -27,7 +31,9 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
         <PageHeader label="Public early access" title={headline ?? ""} subtitle={rest.join(" ") || undefined}>
           {admissionGateNote(selfServeOpen)}{" "}
           Create a free account to inspect a task-sized Slice for any supported public Repo.
-          We are inviting a smaller group to test complete Agent Runs before introducing paid plans.
+          {selfServeOpen
+            ? " Every verified account can start up to two Agent Runs in a rolling 24-hour window."
+            : " We are inviting a smaller group to test complete Agent Runs before introducing paid plans."}
         </PageHeader>
 
         <section className={`${frame} pb-20 sm:pb-28`}>
@@ -52,7 +58,7 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
 
             <div data-band="dark" className="@container flex flex-col bg-canvas p-7 text-ink sm:p-10">
               <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <p className={monoLabel}>Design-partner access</p>
+                <p className={monoLabel}>{selfServeOpen ? "Self-serve Agent Runs" : "Design-partner access"}</p>
                 <span className="rounded-chip border border-line-2 px-2 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-ink-2">
                   $0 during early access
                 </span>
@@ -60,26 +66,36 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
               {/* Capped by the card's own width (11cqi): side by side at 768, the second line
                   only just fit in the serif and wrapped in the stand-in until it loaded. */}
               <h2 className="mt-8 font-display text-[length:min(clamp(32px,3.4vw,44px),11cqi)] font-normal leading-[1.04] tracking-[-0.02em] text-ink">
-                One honest
-                <span className="block text-muted">early-access contract.</span>
+                {selfServeOpen ? (
+                  "Two Runs per rolling 24 hours."
+                ) : (
+                  <>
+                    One honest
+                    <span className="block text-muted">early-access contract.</span>
+                  </>
+                )}
               </h2>
               <p className="mt-5 max-w-md text-[15px] leading-6 text-ink-2">
-                Access is manually approved. No payment information is requested.
+                {selfServeOpen
+                  ? "Verified email required. Shared capacity is limited, and no payment information is requested."
+                  : "Access is manually approved. No payment information is requested."}
               </p>
               <div className="mt-auto pt-10">
-                <button
-                  type="button"
-                  onClick={() => setShowAccessForm(true)}
-                  className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-chip bg-ink px-5 text-[15px] font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/88 active:scale-[0.97] sm:w-auto"
-                >
-                  Request Agent Run access <span aria-hidden="true">→</span>
-                </button>
+                {selfServeOpen ? (
+                  <Link href="/workspace" className={cta}>
+                    Open the workspace <span aria-hidden="true">→</span>
+                  </Link>
+                ) : (
+                  <button type="button" onClick={() => setShowAccessForm(true)} className={cta}>
+                    Request Agent Run access <span aria-hidden="true">→</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </section>
       </main>
-      {showAccessForm && <WaitlistForm onClose={() => setShowAccessForm(false)} />}
+      {!selfServeOpen && showAccessForm && <WaitlistForm onClose={() => setShowAccessForm(false)} />}
     </MarketingShell>
   );
 }

@@ -1,0 +1,795 @@
+{
+  "note": "One case from benchmarks/heldout, re-run by scripts/readme-assets.mjs --capture. The hero animates exactly this result.",
+  "repo": "pmndrs/jotai",
+  "commit": "bc273fd",
+  "snapshot": "d8ed488",
+  "subject": "fix(vanilla): subscriber not notified after nested store.set and sub/unsub inside a write (#3354)",
+  "task": "vanilla subscriber not notified after nested store.set and sub/unsub inside a write",
+  "files": [
+    {
+      "path": "babel.config.mjs",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/atom-creation.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/computed-read.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/derived-chain.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/diamond.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/read-write.ts",
+      "role": "anchor",
+      "dist": 0,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/run-all.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/select-atom.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/subscription.ts",
+      "role": "anchor",
+      "dist": 0,
+      "fixed": false
+    },
+    {
+      "path": "benchmarks/wide-fan-out.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "eslint.config.mjs",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/hacker_news/src/App.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/hacker_news/src/index.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/hacker_news/src/vite-env.d.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/hacker_news/vite.config.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/hello/src/App.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/hello/src/index.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/hello/src/vite-env.d.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/hello/vite.config.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/mega-form/src/App.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/mega-form/src/index.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/mega-form/src/initialValue.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/mega-form/src/useAtomSlice.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/mega-form/src/vite-env.d.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/mega-form/vite.config.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/starter/src/index.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/starter/src/vite-env.d.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/starter/vite.config.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/text_length/src/App.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/text_length/src/index.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/text_length/src/react-app-env.d.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/text_length/vite.config.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/todos/src/App.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/todos/src/index.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/todos/src/vite-env.d.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/todos/vite.config.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/todos_with_atomFamily/src/App.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/todos_with_atomFamily/src/index.tsx",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/todos_with_atomFamily/src/vite-env.d.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "examples/todos_with_atomFamily/vite.config.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "rollup.config.mjs",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/babel/plugin-debug-label.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/babel/plugin-react-refresh.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/babel/preset.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/babel/utils.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/index.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react/Provider.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react/useAtom.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react/useAtomValue.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "src/react/useSetAtom.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react/utils.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react/utils/useAtomCallback.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react/utils/useHydrateAtoms.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react/utils/useReducerAtom.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/react/utils/useResetAtom.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/types.d.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/utils.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/atom.ts",
+      "role": "anchor",
+      "dist": 0,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/internals.ts",
+      "role": "anchor",
+      "dist": 0,
+      "fixed": true
+    },
+    {
+      "path": "src/vanilla/store.ts",
+      "role": "anchor",
+      "dist": 0,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/typeUtils.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/atomFamily.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/atomWithDefault.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/atomWithLazy.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/atomWithObservable.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/atomWithReducer.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/atomWithRefresh.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/atomWithReset.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/atomWithStorage.ts",
+      "role": "anchor",
+      "dist": 0,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/constants.ts",
+      "role": "closure",
+      "dist": 1,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/freezeAtom.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/loadable.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/selectAtom.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/splitAtom.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "src/vanilla/utils/unwrap.ts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "vitest.config.mts",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/api/contact.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/gatsby-browser.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/gatsby-config.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/gatsby-node.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/gatsby-shared.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/gatsby-ssr.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/postcss.config.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/reach-router.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/api/contact.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/atoms/index.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/button.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/client-only.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/code-sandbox.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/code.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/core-demo.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/credits.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/docs.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/extensions-demo.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/external-link.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/footer.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/headline.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/icon.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/inline-code.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/intro.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/jotai.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/layout.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/logo-cloud.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/logo.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/main.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/mdx.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/menu.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/meta.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/modal.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/search-button.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/search-modal.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/shelf.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/sidebar.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/stackblitz.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/support-modal.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/support.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/tabs.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/toc.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/toggle.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/utilities-demo.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/components/wrapper.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/hooks/index.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/pages/404.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/pages/docs/{Mdx.slug}.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/pages/index.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/src/utils/index.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    },
+    {
+      "path": "website/tailwind.config.js",
+      "role": "excluded",
+      "dist": null,
+      "fixed": false
+    }
+  ],
+  "sliceFiles": 17,
+  "repositoryFiles": 130,
+  "sliceTokens": 17689,
+  "repositoryTokens": 62393,
+  "reductionPct": 72
+}

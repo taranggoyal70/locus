@@ -10,7 +10,6 @@ import { Mechanism } from "@/components/Mechanism";
 import { Postmark } from "@/components/Postmark";
 import { CountUp, RiseWords } from "@/components/Reveal";
 import { BENCHMARK_CASES, BENCHMARK_SUMMARY } from "@/lib/benchmark-cases";
-import { REPO_URL } from "@/lib/config";
 import { RECORDED_SLICE } from "@/lib/landing-slice";
 
 const runPhases = [
@@ -140,11 +139,8 @@ export function LandingPage() {
             <FigCaption n={3}>
               Every case in the suite, one row per historical fix and one mark per source file in its Repo, on one scale.
               Hover, focus, or tap a row to inspect it. Reduction compares estimated tokens, one per four characters,
-              in the Slice and the whole Repo. From{" "}
-              <a href={`${REPO_URL}/blob/main/benchmarks/README.md`} className="text-ink-2 underline decoration-line-2 underline-offset-2 hover:decoration-ink">
-                benchmarks/results.json
-              </a>
-              , generated {benchmarkDate}. It does not measure agent completion.
+              in the Slice and the whole Repo. From benchmarks/results.json, generated {benchmarkDate}. It does not
+              measure agent completion.
             </FigCaption>
           </figure>
         </section>
@@ -158,10 +154,12 @@ export function LandingPage() {
               <div>
                 <RiseWords lines={["A Run you can leave,", { text: "and trust when you come back.", className: "text-muted" }]} className={sectionHeading} />
                 <p className="mt-5 max-w-md text-[15px] leading-6 text-ink-2">
-                  From an explained Slice, an Agent Run continues into an isolated Sandbox and stops at a
-                  review-ready, check-passing proposal.
+                  {open ? "Any verified account" : "Invited design partners"} can continue from an explained Slice into an
+                  isolated Sandbox and a review-ready, check-passing proposal.
                 </p>
-                <Link href="/pricing" className={`${secondaryAction} mt-6`}>Request Agent Run access</Link>
+                <Link href={open ? "/workspace" : "/pricing"} className={`${secondaryAction} mt-6`}>
+                  {open ? "Start an Agent Run" : "Request Agent Run access"}
+                </Link>
                 <p className="mt-4 font-mono text-[11px] text-muted">{admissionTag(open)}</p>
               </div>
               <ol className="border-t border-ink">

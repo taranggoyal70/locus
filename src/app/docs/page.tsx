@@ -17,7 +17,7 @@ const SECTIONS = [
   ["locate", "POST /api/v1/locate"],
   ["rate-limits", "Rate limits"],
   ["errors", "Error codes"],
-  ["runtimes", "Source runtimes"],
+  ["availability", "Public availability"],
 ] as const;
 
 export default function DocsPage() {
@@ -25,10 +25,11 @@ export default function DocsPage() {
     <MarketingShell selfServeOpen={selfServeOpen()}>
       <main>
         <PageHeader label="Experimental localization API" title="Localize before" subtitle="you spend.">
-          Invite-only Agent Runs localize a public Repo, work in an isolated Sandbox, run
-          allowlisted checks, and stop at a review-ready proposal. The API below exposes only the
-          deterministic localization engine for experimental use. Authenticate with an API key
-          from your <Link href="/settings" className="doc-link">settings page</Link>.
+          Any verified account can start an Agent Run for a public Repo. Each Run works in an
+          isolated Sandbox, records allowlisted checks, and stops at a review-ready proposal.
+          Locus provides one shared Run per UTC day across the beta, or you can connect your own
+          Cloudflare Workers AI account in <Link href="/settings" className="doc-link">Settings</Link>.
+          The API below exposes the deterministic localization engine for experimental use.
         </PageHeader>
 
         <Rule />
@@ -176,8 +177,9 @@ export default function DocsPage() {
             <code> matchedFiles</code>. Everything else in the response then
             describes the analyzed portion only: <code>excluded</code> omits
             files that were never fetched, and <code>tokens.total</code> is the
-            analyzed total the reduction is measured against. Analyze a large repository with the
-            source CLI, which has no file cap.
+            analyzed total the reduction is measured against.{" "}
+            <Link href="/support" className="doc-link">Contact Locus support</Link> when a repository
+            exceeds the public API limit.
           </p>
           <p className="doc-note">
             Token counts report only the context included by this localization response and the
@@ -216,13 +218,13 @@ export default function DocsPage() {
           </div>
         </section>
 
-        <section id="runtimes" className="doc-section">
+        <section id="availability" className="doc-section">
           <p className={monoLabel}>05</p>
-          <h2 className="mt-3 font-display text-[clamp(28px,3vw,38px)] font-normal leading-[1.08] tracking-[-0.02em] text-ink">Source runtimes</h2>
+          <h2 className="mt-3 font-display text-[clamp(28px,3vw,38px)] font-normal leading-[1.08] tracking-[-0.02em] text-ink">Public availability</h2>
           <p className="mt-4">
-            CLI and MCP implementations exist in the open-source repository for development and
-            automated testing. The <code>locus-context</code> package is not
-            published to npm, so no package-manager installation is currently advertised or supported.
+            The hosted API and signed-in Agent Run workspace are the supported public interfaces during
+            early access. Locus does not currently publish a CLI, MCP server, npm package, or product
+            implementation for download.
           </p>
         </section>
           </div>
