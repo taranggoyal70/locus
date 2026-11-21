@@ -52,7 +52,7 @@ const COMMANDS: Command[] = [
   { group: "Docs", label: "POST /api/v1/locate", keywords: "endpoint request response example curl", action: go("/docs#locate") },
   { group: "Docs", label: "Rate limits", keywords: "quota", action: go("/docs#rate-limits") },
   { group: "Docs", label: "Error codes", keywords: "status", action: go("/docs#errors") },
-  { group: "Docs", label: "Public availability", keywords: "cli mcp npm package download", action: go("/docs#availability") },
+  { group: "Docs", label: "Public availability", keywords: "cli mcp npm package download source code github", action: go("/docs#availability") },
   {
     group: "Ask Locus",
     label: "Does Locus write to my repository?",
@@ -116,8 +116,8 @@ const COMMANDS: Command[] = [
     action: {
       kind: "answer",
       answer: {
-        title: "Against real fixes.",
-        body: "Locus runs on each fix's parent commit, and the Slice has to contain the files the fix went on to change. It does not measure agent completion.",
+        title: "Against held-out fixes.",
+        body: "Locus runs on each fix's parent commit in third-party Repos it was never tuned on, and the Slice has to contain the files the fix went on to change. It does not measure agent completion.",
         href: "/#evidence",
         linkLabel: "See every case",
       },

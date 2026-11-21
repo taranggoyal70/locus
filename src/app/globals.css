@@ -499,43 +499,55 @@ textarea::placeholder {
   transition: none;
 }
 
-/* Fig. 3, the case board (components/CaseBoard.tsx): one mark per source file,
-   every row on the same scale (--scale, the largest Repo), so Repos compare by
-   length. A row draws its marks from at most four runs, each a repeating tile,
-   rather than ~60 elements: the board has ~700 marks, and parsing and hydrating
-   one element per mark delayed a phone's first paint.
+/* Fig. 3, the case board (components/CaseBoard.tsx): one mark per percent of
+   the Repo's source files (--scale, 100), so a 36-file Repo and a 1,208-file
+   one draw rows of the same length and compare by share. A row draws its marks
+   from at most four runs, each a repeating tile, rather than one element per
+   mark: parsing and hydrating that many delayed a phone's first paint.
 
    The cell (mark plus gap) is sized from the list's width and rounded down to a
    whole pixel, so every mark is crisp and the same size. --inset is what a row
-   spends before its marks: its padding, the case number, and the gap after it. */
+   spends besides its marks: its padding, and from 640px the case number and
+   the gap after it, where the marks line up under the task. */
 .case-list {
   container-type: inline-size;
-  --inset: 76px;
-  --cell: 4px;
-  --gap: 1px;
+  --inset: 40px;
 }
 
 @media (min-width: 640px) {
   .case-list { --inset: 84px; }
 }
 
+.case-strip {
+  --cell: 3px;
+  --gap: 1px;
+  display: flex;
+  height: calc(var(--cell) - var(--gap));
+}
+
 @supports (width: round(down, 10px, 1px)) {
-  .case-list {
+  .case-strip {
     --cell: max(3px, round(down, calc((100cqw - var(--inset)) / var(--scale)), 1px));
     /* A quarter of the cell, one or two pixels. */
     --gap: clamp(1px, round(down, calc(var(--cell) / 4), 1px), 2px);
   }
 }
 
-.case-strip {
-  display: flex;
-  height: calc(var(--cell) - var(--gap));
-}
-
 .case-run {
   flex: none;
   width: calc(var(--n) * var(--cell));
   background: linear-gradient(to right, var(--k) 0 calc(var(--cell) - var(--gap)), transparent 0) 0 0 / var(--cell) 100% repeat-x;
+}
+
+/* Too narrow for a hundred whole-pixel marks: each run becomes a solid bar of
+   the same length instead. It must follow the rule above, which it overrides. */
+@container (max-width: 339px) {
+  .case-strip {
+    --cell: calc((100cqw - var(--inset)) / var(--scale));
+    --gap: 0px;
+    height: 3px;
+  }
+  .case-run { background: var(--k); }
 }
 
 /* The legend's and the details' single marks. */

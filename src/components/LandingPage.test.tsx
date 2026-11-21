@@ -20,15 +20,17 @@ describe("public early-access landing contract", () => {
     expect(html).toContain("Every Slice here is a recorded run of the real");
     expect(html).toContain('href="/demo"');
     expect(html).toContain("Request Agent Run access");
-    // The tag dropped a redundant "access required" — it already says invite-gated.
+    // The tag dropped a redundant "access required": it already says invite-gated.
     expect(html).toContain("invite-gated");
     expect(html).toContain("review-ready, check-passing proposal");
     // The hero figure is a recorded localization, never an invented one.
     expect(html).toContain("Recorded run on");
     expect(html).toContain("shadcn-ui/taxonomy");
     expect(html).not.toContain("Illustrative example");
-    expect(html).toContain("recall on the cases in our suite");
-    expect(html).toContain("15 fixes across 3 repositories we own; the suite gates on full recall");
+    expect(html).toContain("fix-file recall on held-out Repos");
+    expect(html).toContain("60 fixes across 6 third-party Repos, every one scored");
+    expect(html).toContain("on the 57 cases Locus localized; 3 Widened to the whole Repo");
+    expect(html).not.toContain("repositories we own");
     expect(html).toContain("does not measure agent completion");
     expect(html).not.toContain("Public beta");
     expect(html).not.toContain("Start a verified Run");

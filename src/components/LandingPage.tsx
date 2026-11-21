@@ -9,7 +9,7 @@ import { MarketingShell } from "@/components/MarketingShell";
 import { Mechanism } from "@/components/Mechanism";
 import { Postmark } from "@/components/Postmark";
 import { CountUp, RiseWords } from "@/components/Reveal";
-import { BENCHMARK_CASES, BENCHMARK_SUMMARY } from "@/lib/benchmark-cases";
+import { BENCHMARK_CASES, BENCHMARK_SUMMARY, FEATURED_COMMIT } from "@/lib/benchmark-cases";
 import { RECORDED_SLICE } from "@/lib/landing-slice";
 
 const runPhases = [
@@ -19,12 +19,21 @@ const runPhases = [
   ["Review", "Inspect the complete proposal. External GitHub writes stay disabled in early access."],
 ];
 
-// Read from benchmarks/results.json, so a new benchmark run updates the page.
-const { cases, repositories, fixFileRecallPct, medianContextReductionPct, generatedAt } = BENCHMARK_SUMMARY;
+// Read from benchmarks/heldout/results.json, so a new benchmark run updates the page.
+const {
+  cases,
+  repositories,
+  fixFileRecallPct,
+  localizedCases,
+  widenedCases,
+  medianContextReductionPct,
+  chanceRecallPct,
+  generatedAt,
+} = BENCHMARK_SUMMARY;
 const evidence = [
-  { value: fixFileRecallPct, suffix: "%", label: "recall on the cases in our suite", note: `${cases} fixes across ${repositories} repositories we own; the suite gates on full recall` },
-  { value: medianContextReductionPct, suffix: "%", label: "median estimated context reduction", note: "initial admitted context versus whole-Repo context" },
-  { value: cases, suffix: "", label: "historical cases", note: "localization replay only; does not measure agent completion" },
+  { value: fixFileRecallPct, suffix: "%", label: "fix-file recall on held-out Repos", note: `${cases} fixes across ${repositories} third-party Repos, every one scored` },
+  { value: medianContextReductionPct, suffix: "%", label: "median estimated context reduction", note: `on the ${localizedCases} cases Locus localized; ${widenedCases} Widened to the whole Repo` },
+  { value: chanceRecallPct, suffix: "%", label: "recall of a random Slice", note: "the same number of files on those cases, picked blindly" },
 ];
 const benchmarkDate = new Date(generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 
@@ -120,8 +129,9 @@ export function LandingPage() {
                 className={sectionHeading}
               />
               <p className="mt-5 max-w-xl text-[15px] leading-6 text-ink-2">
-                A regression suite of real fixes from Repos we own. Locus ran on each fix&rsquo;s parent commit and had to
-                admit the files the fix went on to change. Every case is below, Widened ones included.
+                {cases} fixes from {repositories} third-party Repos that Locus was never developed or tuned against, chosen by
+                a written rule rather than by hand. Locus ran on each fix&rsquo;s parent commit and had to admit the files the
+                maintainer went on to change. Every case is below, Widened ones included.
               </p>
               <div className="mt-10 grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                 {evidence.map(({ value, suffix, label, note }) => (
@@ -135,12 +145,12 @@ export function LandingPage() {
             </div>
           </div>
           <figure className="mt-10 sm:mt-14">
-            <CaseBoard cases={BENCHMARK_CASES} />
+            <CaseBoard cases={BENCHMARK_CASES} featured={FEATURED_COMMIT} />
             <FigCaption n={3}>
-              Every case in the suite, one row per historical fix and one mark per source file in its Repo, on one scale.
-              Hover, focus, or tap a row to inspect it. Reduction compares estimated tokens, one per four characters,
-              in the Slice and the whole Repo. From benchmarks/results.json, generated {benchmarkDate}. It does not
-              measure agent completion.
+              Every held-out case, a tab per Repo and a row per fix, drawn as one mark per percent of the Repo&rsquo;s
+              source files; a fix file always takes a mark. Hover, focus, or tap a row to inspect it. Reduction compares
+              estimated tokens, one per four characters, in the Slice and the whole Repo. From
+              benchmarks/heldout/results.json, generated {benchmarkDate}. It does not measure agent completion.
             </FigCaption>
           </figure>
         </section>
