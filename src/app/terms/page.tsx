@@ -4,24 +4,30 @@ import Link from "next/link";
 import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
 import { SITE_URL, SUPPORT_URL } from "@/lib/config";
+import { frame, Rule } from "@/components/Datasheet";
+import { PageHeader } from "@/components/PageHeader";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Locus",
+  title: "Terms of Service · Locus",
   description: "Terms governing use of Locus.",
 };
 
 export default function TermsPage() {
   return (
     <MarketingShell selfServeOpen={selfServeOpen()}>
-      <main className="mx-auto max-w-3xl px-5 py-12">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Terms</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper">Terms of Service</h1>
-        <p className="mt-3 text-sm leading-7 text-muted-light">Effective August 30, 2026 · Terms for Locus public early access.</p>
-        <div className="aperture-rule mt-8" />
+      <main>
+        <PageHeader label="Terms" title="Terms of Service">
+          <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-muted">Effective August 30, 2026</p>
+          <p className="mt-3">Terms for Locus public early access.</p>
+        </PageHeader>
 
-        <div className="mt-8 space-y-6 text-sm leading-7 text-muted-light">
+        <Rule />
+
+        <div className={`${frame} grid gap-6 py-14 sm:py-20 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10`}>
+          <p aria-hidden="true" className="hidden font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted lg:block">Terms</p>
+        <div className="doc legal max-w-[720px]">
           <section>
-            <h2 className="text-lg font-semibold text-paper">Service</h2>
+            <h2>Service</h2>
             <p>
               Locus is an experimental, proprietary agent workspace operated by Tarang Goyal. It
               localizes tasks for public JavaScript, TypeScript, and Python repositories for every signed-in
@@ -35,7 +41,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Acceptable use</h2>
+            <h2>Acceptable use</h2>
             <p>
               You may use Locus for any lawful purpose. Do not use the service to circumvent
               GitHub&apos;s terms of service, abuse rate limits, or analyze repositories you do not
@@ -45,7 +51,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Accounts</h2>
+            <h2>Accounts</h2>
             <p>
               Authentication is handled by Clerk. You are responsible for maintaining the security
               of your account credentials and any provider token you connect. You authorize Locus to
@@ -55,17 +61,17 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Data handling</h2>
+            <h2>Data handling</h2>
             <p>
               Repository source is processed by Locus and its execution providers. Durable task,
               run, evidence, and approval records are stored for product operation. See our{" "}
-              <Link href="/privacy" className="text-accent hover:underline">Privacy Policy</Link>{" "}
+              <Link href="/privacy" className="doc-link">Privacy Policy</Link>{" "}
               for complete details on data handling.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Agent output</h2>
+            <h2>Agent output</h2>
             <p>
               Generated code, commands, summaries, and Check evidence may be incomplete, unsafe, or
               incorrect. A successful command does not prove that acceptance criteria are satisfied.
@@ -74,7 +80,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Limitation of liability</h2>
+            <h2>Limitation of liability</h2>
             <p>
               Locus is provided &ldquo;as is&rdquo; without warranties of any kind. We are not
               liable for any damages arising from the use or inability to use the service,
@@ -83,7 +89,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Intellectual property</h2>
+            <h2>Intellectual property</h2>
             <p>
               Copyright © 2026 Tarang Goyal. All rights reserved. The Locus implementation is
               proprietary and is not published as part of the service. Access to Locus does not grant
@@ -94,18 +100,19 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-paper">Changes</h2>
+            <h2>Changes</h2>
             <p>
               We may update these terms as the service evolves. Questions and early-access support requests
               can be submitted through the{" "}
               <a
                 href={`${SUPPORT_URL}/issues/new`}
-                className="text-accent hover:underline"
+                className="doc-link"
               >
                 public Locus support tracker
               </a>.
             </p>
           </section>
+        </div>
         </div>
       </main>
     </MarketingShell>

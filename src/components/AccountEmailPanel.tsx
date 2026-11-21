@@ -19,17 +19,17 @@ type AccountEmailPanelProps = {
 export function AccountEmailPanel({ email, verified }: AccountEmailPanelProps) {
   if (verified) {
     return (
-      <section className="rounded-2xl border border-line p-5">
+      <section className="rounded-card border border-line p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Email</h2>
-            <p className="mt-1 text-sm text-muted-light">
+            <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">Email</h2>
+            <p className="mt-1 text-sm text-ink-2">
               {email ?? "Your address"} is verified. Agent Run access is not limited by it.
             </p>
           </div>
           <Link
             href="/settings/account"
-            className="rounded-xl border border-line-strong px-4 py-2.5 text-sm font-semibold text-paper transition hover:border-accent hover:text-accent"
+            className="rounded-chip border border-line-2 px-4 py-2.5 text-sm font-medium text-ink transition hover:border-ink/40 hover:text-ink"
           >
             Manage account
           </Link>
@@ -39,14 +39,14 @@ export function AccountEmailPanel({ email, verified }: AccountEmailPanelProps) {
   }
 
   return (
-    <section className="rounded-2xl border border-accent/35 bg-accent/[0.06] p-5">
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+    <section className="rounded-card border border-included/35 bg-included/[0.06] p-5">
+      <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">
         Action needed
       </p>
-      <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-paper">
+      <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-ink">
         Verify your email to start Agent Runs
       </h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-light">
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-2">
         {email
           ? `We sent a confirmation to ${email}.`
           : "Your account has no verified email address yet."}{" "}
@@ -55,7 +55,7 @@ export function AccountEmailPanel({ email, verified }: AccountEmailPanelProps) {
       </p>
       <Link
         href="/settings/account"
-        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-accent-dim"
+        className="mt-5 inline-flex items-center gap-2 rounded-chip bg-ink px-4 py-2.5 text-sm font-medium text-canvas transition hover:bg-ink/90"
       >
         Verify email
         <span aria-hidden>→</span>

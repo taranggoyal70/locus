@@ -4,6 +4,9 @@ export default function ClerkLayout({ children }: Readonly<{ children: React.Rea
   return (
     <ClerkProvider
       dynamic
+      // Clerk's styles go into a CSS layer below Tailwind's utilities (declared
+      // in layers.css), so the theme classes in ClerkThemed.tsx win over them.
+      appearance={{ cssLayerName: "clerk" }}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       afterSignOutUrl="/"

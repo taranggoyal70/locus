@@ -1,7 +1,51 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { admissionSentence } from "@/lib/admission-copy";
+import { CommandPalette } from "@/components/CommandPalette";
+import { frame, Rails } from "@/components/Datasheet";
+import { FooterField } from "@/components/FooterField";
+import { MarketingNavLink } from "@/components/MarketingNavLink";
+import { MobileMenu } from "@/components/MobileMenu";
+import { NavShortcuts } from "@/components/NavShortcuts";
+import { ScrollThread } from "@/components/ScrollThread";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
+import { Wordmark } from "@/components/Wordmark";
+
+/** Header navigation. Each number is a real shortcut, printed on its keycap. */
+const NAV = [
+  { href: "/demo", label: "Demo", shortcut: "1" },
+  { href: "/evidence/release-1", label: "Evidence", shortcut: "2" },
+  { href: "/docs", label: "Docs", shortcut: "3" },
+  { href: "/pricing", label: "Agent access", shortcut: "4" },
+] as const;
+
+const FOOTER_COLUMNS = [
+  {
+    title: "Product",
+    links: [
+      { href: "/workspace", label: "Workspace" },
+      { href: "/demo", label: "Demo" },
+      { href: "/pricing", label: "Agent access" },
+    ],
+  },
+  {
+    title: "Developers",
+    links: [
+      { href: "/docs", label: "API" },
+      { href: "/evidence/release-1", label: "Evidence" },
+    ],
+  },
+  {
+    title: "Trust",
+    links: [
+      { href: "/privacy", label: "Privacy" },
+      { href: "/terms", label: "Terms" },
+      { href: "/support", label: "Support" },
+    ],
+  },
+] as const;
+
+const label = "font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted";
 
 /**
  * `selfServeOpen` is a required prop rather than an environment read.
@@ -20,41 +64,65 @@ export function MarketingShell({
   selfServeOpen: boolean;
 }) {
   return (
-    <div className="site-noise min-h-screen overflow-x-clip">
-      <header className="sticky top-0 z-40 border-b border-line-strong bg-ink/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 sm:px-8">
-          <Link href="/" aria-label="Locus home" className="flex items-center gap-3 text-paper">
-            <Image src="/locus-mark.svg" width={30} height={30} alt="" priority />
-            <span className="hidden font-display text-[17px] font-semibold tracking-[-0.03em] sm:inline">Locus</span>
+    <div className="min-h-screen overflow-x-clip">
+      <NavShortcuts />
+      <header className="sticky top-0 z-40 border-b border-line bg-canvas">
+        <div className={`${frame} flex h-[60px] items-center justify-between gap-4`}>
+          {/* Sign in stays at every width, since phones once had no way in. To
+              keep the row on one line with room to spare, the arrow goes below
+              390px and the name below 360px; the mark and the link's label remain. */}
+          <Link href="/" aria-label="Locus home" className="text-ink">
+            <Wordmark nameClassName="max-[360px]:hidden" />
           </Link>
-          <nav className="flex items-center gap-1 text-xs font-medium sm:gap-2 sm:text-sm" aria-label="Main navigation">
-            <Link href="/demo" className="rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:px-3">Demo</Link>
-            <Link href="/evidence/release-1" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Evidence</Link>
-            <Link href="/docs" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:block sm:px-3">Docs</Link>
-            <Link href="/pricing" className="hidden rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper md:block md:px-3">Agent access</Link>
-            <Link href="/sign-in" className="rounded-lg px-2.5 py-2 text-muted-light transition hover:bg-surface hover:text-paper sm:px-3">Sign in</Link>
-            <Link href="/workspace" className="ml-1 rounded-lg bg-paper px-3 py-2 text-white transition hover:bg-paper/90 sm:px-4">Try Locus</Link>
+          <nav className="flex items-center gap-1" aria-label="Main navigation">
+            <div className="hidden items-center gap-0.5 lg:flex">
+              {NAV.map((item) => (
+                <MarketingNavLink key={item.href} href={item.href} shortcut={item.shortcut}>
+                  {item.label}
+                </MarketingNavLink>
+              ))}
+            </div>
+            <CommandPalette />
+            <Link href="/sign-in" className="inline-flex h-9 items-center whitespace-nowrap rounded-chip px-2.5 text-[14px] text-ink-2 transition-colors duration-150 hover:text-ink">Sign in</Link>
+            <Link
+              href="/workspace"
+              className="ml-1 inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-chip bg-ink px-3.5 text-[14px] font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/88 active:scale-[0.97]"
+            >
+              Try Locus <span aria-hidden="true" className="max-[390px]:hidden">↗</span>
+            </Link>
+            <MobileMenu items={NAV} />
           </nav>
         </div>
+        <ScrollThread />
       </header>
-      {children}
-      <footer className="border-t border-line-strong bg-surface/65">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm sm:grid-cols-[1fr_auto] sm:px-8">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <Image src="/locus-mark.svg" width={24} height={24} alt="" />
-              <span className="font-display font-semibold text-paper">Locus</span>
+      <div className="relative">
+        <Rails />
+        {children}
+      </div>
+      <footer data-band="dark" className="bg-canvas text-ink">
+        <div className={frame}>
+          <FooterField className="pt-14" />
+          <div className="grid grid-cols-3 gap-x-6 gap-y-10 border-t border-line py-12 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
+            <div className="col-span-3 md:col-span-1">
+              <Wordmark size={26} />
+              <p className="mt-4 max-w-xs text-[14px] leading-6 text-ink-2">{admissionSentence(open)}</p>
             </div>
-            <p className="mt-3 max-w-md text-xs leading-5 text-muted-light">{admissionSentence(open)}</p>
+            {FOOTER_COLUMNS.map((column) => (
+              <div key={column.title}>
+                <p className={label}>{column.title}</p>
+                <ul className="mt-4 space-y-1">
+                  {column.links.map((link) => (
+                    <li key={link.href}>
+                      <Link href={link.href} className="inline-block py-1 text-[15px] text-ink-2 transition-colors duration-150 hover:text-ink">{link.label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-light sm:justify-end">
-            <Link href="/demo" className="hover:text-paper">Demo</Link>
-            <Link href="/docs" className="hover:text-paper">API</Link>
-            <Link href="/evidence/release-1" className="hover:text-paper">Evidence</Link>
-            <Link href="/pricing" className="hover:text-paper">Agent access</Link>
-            <Link href="/privacy" className="hover:text-paper">Privacy</Link>
-            <Link href="/terms" className="hover:text-paper">Terms</Link>
-            <Link href="/support" className="hover:text-paper">Support</Link>
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line py-6">
+            <p className={label}>Locus · Public early access</p>
+            <ThemeSwitch />
           </div>
         </div>
       </footer>

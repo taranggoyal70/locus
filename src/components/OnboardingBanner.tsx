@@ -28,20 +28,20 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
   const runStep = tier === "visitor" ? "3. Request Agent Run access" : "3. Start an Agent Run";
 
   return (
-    <div className="mx-auto max-w-7xl px-5 pt-4 sm:px-8">
-      <div className="relative overflow-hidden rounded-[18px] border border-accent/20 bg-accent/[0.04] px-5 py-4 sm:px-6">
+    <section aria-label="Getting started" className="mx-auto max-w-7xl px-5 pt-4 sm:px-8">
+      <div className="relative overflow-hidden rounded-card border border-line-2 bg-surface px-5 py-4 sm:px-6">
         <button
           type="button"
           onClick={onDismiss}
-          className="absolute right-3 top-3 rounded-md px-2 py-1 text-xs text-muted transition hover:text-paper"
+          className="absolute right-3 top-3 rounded-chip px-2 py-1 text-xs text-muted transition hover:text-ink"
           aria-label="Dismiss"
         >
           Dismiss
         </button>
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
           Getting started
         </p>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-paper">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink">
           Load a public Repo, describe one concrete engineering outcome, and inspect the Included
           and Excluded evidence before starting a Run.
         </p>
@@ -50,7 +50,7 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
             (step) => (
               <span
                 key={step}
-                className="rounded-full border border-line-strong px-3 py-1.5 text-muted-light"
+                className="rounded-chip border border-line-2 px-3 py-1.5 text-ink-2"
               >
                 {step}
               </span>
@@ -58,13 +58,13 @@ export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
           )}
           <Link
             href="/docs"
-            className="rounded-full border border-accent/30 px-3 py-1.5 text-accent transition hover:bg-accent/10"
+            className="rounded-chip border border-ink px-3 py-1.5 text-ink transition-colors hover:bg-surface-2"
           >
             Read the API docs
           </Link>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 

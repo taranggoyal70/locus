@@ -4,86 +4,113 @@ import { MarketingShell } from "@/components/MarketingShell";
 import { selfServeOpen } from "@/lib/admission";
 import { SITE_URL } from "@/lib/config";
 import Link from "next/link";
+import { frame, Rule } from "@/components/Datasheet";
+import { monoLabel, PageHeader } from "@/components/PageHeader";
 
 export const metadata: Metadata = {
-  title: "Experimental API Reference — Locus",
+  title: "Experimental API Reference · Locus",
   description: "Use the experimental Locus API to localize public JavaScript, TypeScript, and Python repositories.",
 };
+
+const SECTIONS = [
+  ["authentication", "Authentication"],
+  ["locate", "POST /api/v1/locate"],
+  ["rate-limits", "Rate limits"],
+  ["errors", "Error codes"],
+  ["availability", "Public availability"],
+] as const;
 
 export default function DocsPage() {
   return (
     <MarketingShell selfServeOpen={selfServeOpen()}>
-      <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">Experimental localization API</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-5xl">Localize before you spend.</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-light">
+      <main>
+        <PageHeader label="Experimental localization API" title="Localize before" subtitle="you spend.">
           Any verified account can start an Agent Run for a public Repo. Each Run works in an
           isolated Sandbox, records allowlisted checks, and stops at a review-ready proposal.
           Locus provides one shared Run per UTC day across the beta, or you can connect your own
-          Cloudflare Workers AI account in <Link href="/settings" className="text-accent hover:underline">Settings</Link>.
+          Cloudflare Workers AI account in <Link href="/settings" className="doc-link">Settings</Link>.
           The API below exposes the deterministic localization engine for experimental use.
-        </p>
+        </PageHeader>
 
-        <div className="aperture-rule mt-8" />
+        <Rule />
 
-        <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Authentication</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-light">
-            All API requests require a Bearer token. Generate keys in <Link href="/settings" className="text-accent hover:underline">Settings</Link>.
+        <div className={`${frame} grid gap-12 py-14 sm:py-20 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10`}>
+          <nav aria-label="On this page" className="hidden lg:block">
+            <div className="sticky top-24">
+              <p className={monoLabel}>On this page</p>
+              <ol className="mt-4 border-t border-line-2">
+                {SECTIONS.map(([id, title], index) => (
+                  <li key={id}>
+                    <a href={`#${id}`} className="flex items-baseline gap-3 border-b border-line py-2.5 text-[14px] text-ink-2 transition-colors duration-150 hover:text-ink">
+                      <span className="font-mono text-[11px] text-muted tabular-nums">0{index + 1}</span>
+                      {title}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </nav>
+          <div className="doc min-w-0 max-w-[780px]">
+        <section id="authentication" className="doc-section">
+          <p className={monoLabel}>01</p>
+          <h2 className="mt-3 font-display text-[clamp(28px,3vw,38px)] font-normal leading-[1.08] tracking-[-0.02em] text-ink">Authentication</h2>
+          <p className="mt-4">
+            All API requests require a Bearer token. Generate keys in <Link href="/settings" className="doc-link">Settings</Link>.
           </p>
-          <pre className="mt-3 overflow-x-auto rounded-xl border border-line-strong bg-surface p-4 font-mono text-xs leading-5 text-muted-light">
+          <pre className="doc-code mt-4" tabIndex={0}>
 {`Authorization: Bearer lk_your_key_here`}
           </pre>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">POST /api/v1/locate</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-light">
+        <section id="locate" className="doc-section">
+          <p className={monoLabel}>02</p>
+          <h2 className="mt-3 font-display text-[clamp(28px,3vw,38px)] font-normal leading-[1.08] tracking-[-0.02em] text-ink">POST /api/v1/locate</h2>
+          <p className="mt-4">
             Analyze a repository for a given task and return the focused file slice with packed context.
           </p>
 
-          <h3 className="mt-6 text-sm font-semibold text-paper">Request body</h3>
-          <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
-            <table className="w-full min-w-[680px] text-sm">
+          <h3>Request body</h3>
+          <div className="doc-table" role="region" aria-label="Request body" tabIndex={0}>
+            <table className="min-w-[640px]">
               <thead>
-                <tr className="border-b border-line bg-surface/50">
-                  <th className="px-4 py-2 text-left font-medium text-paper">Field</th>
-                  <th className="px-4 py-2 text-left font-medium text-paper">Type</th>
-                  <th className="px-4 py-2 text-left font-medium text-paper">Required</th>
-                  <th className="px-4 py-2 text-left font-medium text-paper">Description</th>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Required</th>
+                  <th>Description</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line text-muted-light">
+              <tbody>
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs text-paper">repo</td>
-                  <td className="px-4 py-2">string</td>
-                  <td className="px-4 py-2">Yes</td>
-                  <td className="px-4 py-2">GitHub repo as <code className="text-accent">owner/repo</code>, <code className="text-accent">owner/repo@ref</code>, or a full GitHub URL</td>
+                  <td>repo</td>
+                  <td>string</td>
+                  <td>Yes</td>
+                  <td>GitHub repo as <code>owner/repo</code>, <code>owner/repo@ref</code>, or a full GitHub URL</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs text-paper">task</td>
-                  <td className="px-4 py-2">string</td>
-                  <td className="px-4 py-2">Yes</td>
-                  <td className="px-4 py-2">Natural language description of the engineering task</td>
+                  <td>task</td>
+                  <td>string</td>
+                  <td>Yes</td>
+                  <td>Natural language description of the engineering task</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs text-paper">evidence</td>
-                  <td className="px-4 py-2">string</td>
-                  <td className="px-4 py-2">No</td>
-                  <td className="px-4 py-2">Additional context (error logs, screenshots text, etc.)</td>
+                  <td>evidence</td>
+                  <td>string</td>
+                  <td>No</td>
+                  <td>Additional context (error logs, screenshots text, etc.)</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-2 font-mono text-xs text-paper">budget</td>
-                  <td className="px-4 py-2">number</td>
-                  <td className="px-4 py-2">No</td>
-                  <td className="px-4 py-2">Max tokens for the packed context (default: 40,000, capped at 200,000)</td>
+                  <td>budget</td>
+                  <td>number</td>
+                  <td>No</td>
+                  <td>Max tokens for the packed context (default: 40,000, capped at 200,000)</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <h3 className="mt-6 text-sm font-semibold text-paper">Example request</h3>
-          <pre className="mt-2 overflow-x-auto rounded-xl border border-line-strong bg-surface p-4 font-mono text-xs leading-5 text-muted-light">
+          <h3>Example request</h3>
+          <pre className="doc-code mt-4" tabIndex={0}>
 {`curl -X POST ${SITE_URL}/api/v1/locate \\
   -H "Authorization: Bearer lk_your_key_here" \\
   -H "Content-Type: application/json" \\
@@ -93,8 +120,8 @@ export default function DocsPage() {
   }'`}
           </pre>
 
-          <h3 className="mt-6 text-sm font-semibold text-paper">Response</h3>
-          <pre className="mt-2 overflow-x-auto rounded-xl border border-line-strong bg-surface p-4 font-mono text-xs leading-5 text-muted-light">
+          <h3>Response</h3>
+          <pre className="doc-code mt-4" tabIndex={0}>
 {`{
   "task": "fix the middleware redirect loop",
   "widened": false,
@@ -123,79 +150,85 @@ export default function DocsPage() {
   "context": "===== middleware.ts =====\\n..."
 }`}
           </pre>
-          <p className="mt-3 text-sm leading-6 text-muted-light">
+          <p className="mt-4">
             Every path in the response is relative to the repository root, so it opens directly in a
-            checkout of <code className="text-accent">repo</code>. That applies to
-            <code className="text-accent"> anchors</code>, <code className="text-accent">excluded</code>,
-            each <code className="text-accent">slice[].path</code>, the file headers inside
-            <code className="text-accent"> context</code>, and the starting files in
-            <code className="text-accent"> refinement</code>. A repository whose source lives under a
-            prefix such as <code className="text-accent">src/</code> keeps that prefix.
+            checkout of <code>repo</code>. That applies to
+            <code> anchors</code>, <code>excluded</code>,
+            each <code>slice[].path</code>, the file headers inside
+            <code> context</code>, and the starting files in
+            <code> refinement</code>. A repository whose source lives under a
+            prefix such as <code>src/</code> keeps that prefix.
           </p>
-          <p className="mt-3 text-sm leading-6 text-muted-light">
-            When <code className="text-accent">widened</code> is true, the full Repo is retained and
-            <code className="text-accent"> refinement</code> contains unmatched task terms, possible
+          <p className="mt-4">
+            When <code>widened</code> is true, the full Repo is retained and
+            <code> refinement</code> contains unmatched task terms, possible
             starting files, and repository terms the caller can use to make the task more specific.
           </p>
-          <p className="mt-3 text-sm leading-6 text-muted-light">
-            When <code className="text-accent">graph.sparse</code> is true on a non-widened response,
+          <p className="mt-4">
+            When <code>graph.sparse</code> is true on a non-widened response,
             few internal imports resolved. The response still includes the best Slice, but the packed
-            <code className="text-accent"> context</code> starts with a warning because the token
+            <code> context</code> starts with a warning because the token
             reduction may be an unresolved-import artifact.
           </p>
-          <p className="mt-3 text-sm leading-6 text-muted-light">
-            When <code className="text-accent">coverage.truncated</code> is true, the repository had
+          <p className="mt-4">
+            When <code>coverage.truncated</code> is true, the repository had
             more supported source files than the API analyzes in one request, so
-            <code className="text-accent"> analyzedFiles</code> is below
-            <code className="text-accent"> matchedFiles</code>. Everything else in the response then
-            describes the analyzed portion only: <code className="text-accent">excluded</code> omits
-            files that were never fetched, and <code className="text-accent">tokens.total</code> is the
-            analyzed total the reduction is measured against. Contact Locus support when a repository
+            <code> analyzedFiles</code> is below
+            <code> matchedFiles</code>. Everything else in the response then
+            describes the analyzed portion only: <code>excluded</code> omits
+            files that were never fetched, and <code>tokens.total</code> is the
+            analyzed total the reduction is measured against.{" "}
+            <Link href="/support" className="doc-link">Contact Locus support</Link> when a repository
             exceeds the public API limit.
           </p>
-          <p className="mt-3 rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm leading-6 text-muted-light">
+          <p className="doc-note">
             Token counts report only the context included by this localization response and the
             repository total measured by the same estimator. They do not claim whole-Run savings,
             task completion, or correctness.
           </p>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Rate limits</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-light">
-            API requests are limited to 30 per minute per user. Exceeding the limit returns <code className="text-accent">429 Too Many Requests</code> with a <code className="text-accent">Retry-After</code> header.
+        <section id="rate-limits" className="doc-section">
+          <p className={monoLabel}>03</p>
+          <h2 className="mt-3 font-display text-[clamp(28px,3vw,38px)] font-normal leading-[1.08] tracking-[-0.02em] text-ink">Rate limits</h2>
+          <p className="mt-4">
+            API requests are limited to 30 per minute per user. Exceeding the limit returns <code>429 Too Many Requests</code> with a <code>Retry-After</code> header.
           </p>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Error codes</h2>
-          <div className="mt-2 overflow-x-auto rounded-xl border border-line-strong">
-            <table className="w-full min-w-[420px] text-sm">
+        <section id="errors" className="doc-section">
+          <p className={monoLabel}>04</p>
+          <h2 className="mt-3 font-display text-[clamp(28px,3vw,38px)] font-normal leading-[1.08] tracking-[-0.02em] text-ink">Error codes</h2>
+          <div className="doc-table" role="region" aria-label="Error codes" tabIndex={0}>
+            <table className="min-w-[420px]">
               <thead>
-                <tr className="border-b border-line bg-surface/50">
-                  <th className="px-4 py-2 text-left font-medium text-paper">Status</th>
-                  <th className="px-4 py-2 text-left font-medium text-paper">Meaning</th>
+                <tr>
+                  <th>Status</th>
+                  <th>Meaning</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line text-muted-light">
-                <tr><td className="px-4 py-2 font-mono text-xs">400</td><td className="px-4 py-2">Bad request — missing or invalid fields</td></tr>
-                <tr><td className="px-4 py-2 font-mono text-xs">401</td><td className="px-4 py-2">Invalid or missing API key</td></tr>
-                <tr><td className="px-4 py-2 font-mono text-xs">403</td><td className="px-4 py-2">Repository is not public - this API supports public repositories only</td></tr>
-                <tr><td className="px-4 py-2 font-mono text-xs">422</td><td className="px-4 py-2">Analysis failed — repo not found, no source files, etc.</td></tr>
-                <tr><td className="px-4 py-2 font-mono text-xs">429</td><td className="px-4 py-2">Rate limit exceeded</td></tr>
+              <tbody>
+                <tr><td>400</td><td>Bad request: missing or invalid fields</td></tr>
+                <tr><td>401</td><td>Invalid or missing API key</td></tr>
+                <tr><td>403</td><td>Repository is not public - this API supports public repositories only</td></tr>
+                <tr><td>422</td><td>Analysis failed: repo not found, no source files, etc.</td></tr>
+                <tr><td>429</td><td>Rate limit exceeded</td></tr>
               </tbody>
             </table>
           </div>
         </section>
 
-        <section className="mt-10">
-          <h2 className="text-lg font-semibold tracking-[-0.02em] text-paper">Public availability</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-light">
+        <section id="availability" className="doc-section">
+          <p className={monoLabel}>05</p>
+          <h2 className="mt-3 font-display text-[clamp(28px,3vw,38px)] font-normal leading-[1.08] tracking-[-0.02em] text-ink">Public availability</h2>
+          <p className="mt-4">
             The hosted API and signed-in Agent Run workspace are the supported public interfaces during
             early access. Locus does not currently publish a CLI, MCP server, npm package, or product
             implementation for download.
           </p>
         </section>
+          </div>
+        </div>
       </main>
     </MarketingShell>
   );

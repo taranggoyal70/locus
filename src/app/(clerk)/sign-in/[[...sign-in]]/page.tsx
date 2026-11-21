@@ -1,7 +1,7 @@
-import { SignIn } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
-import { AUTH_APPEARANCE, AuthLoading, AuthShell } from "@/components/AuthShell";
+import { AuthLoading, AuthShell } from "@/components/AuthShell";
+import { ThemedSignIn } from "@/components/ClerkThemed";
 import { selfServeOpen } from "@/lib/admission";
 import { signInDescription } from "@/lib/admission-copy";
 
@@ -19,11 +19,9 @@ export default function SignInPage() {
       title="Pick up with less noise."
       description={description}
     >
-      <SignIn
-        appearance={AUTH_APPEARANCE}
+      <ThemedSignIn
         fallback={<AuthLoading label="Loading your account" />}
         path="/sign-in"
-        routing="path"
         signUpUrl="/sign-up"
         fallbackRedirectUrl="/workspace"
       />
