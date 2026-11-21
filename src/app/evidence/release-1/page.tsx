@@ -107,8 +107,11 @@ export default function Release1EvidencePage() {
             <SectionLabel n="01" label="Protocol" />
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
               <div>
+                {/* One sentence per line: as one line, the first two sat on the edge of the
+                    column and wrapped differently once the serif loaded, moving the page. */}
                 <h2 className={sectionHeading}>
-                  Same task. Same limits.
+                  <span className="block">Same task.</span>
+                  <span className="block">Same limits.</span>
                   <span className="block text-muted">Different context.</span>
                 </h2>
                 <ol className="mt-8 border-t border-ink">
@@ -132,7 +135,8 @@ export default function Release1EvidencePage() {
               <div data-band="dark" className="h-fit rounded-card bg-canvas p-7 text-ink sm:p-9">
                 <p className={monoLabel}>Promotion thresholds</p>
                 <h2 className="mt-4 font-display text-[32px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
-                  All gates must pass together.
+                  <span className="block">All gates must</span>
+                  <span className="block">pass together.</span>
                 </h2>
                 <dl className="mt-7 border-t border-line-2">
                   {[

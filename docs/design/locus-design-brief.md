@@ -171,10 +171,13 @@ hairline underline that darkens on hover). Text in the signal uses
 
 - **Newsreader** for display only: page and section headings, phase names,
   large figures. Regular weight (400), tracking `-0.02em`, line-height about
-  0.98. Loaded with `next/font` with its optical-size axis, so large headings
-  get the fine display cut, small ones the sturdier text cut, and every OS
-  renders the same face. Hero `clamp(46px, 9.4vw, 136px)`; page titles
-  `clamp(40px, 6vw, 80px)`; section heads `clamp(32px, 4.4vw, 56px)`.
+  0.98. Self-hosted through `next/font/local` with its optical-size axis, so
+  large headings get the fine display cut, small ones the sturdier text cut,
+  and every OS renders the same face. The file is Google's Latin subset with
+  the weight axis fixed at 400 (57 KB, against 132 KB for every weight), so a
+  heavier serif needs a new file, not a class. Hero
+  `clamp(46px, 9.4vw, 136px)`; page titles `clamp(40px, 6vw, 80px)`; section
+  heads `clamp(32px, 4.4vw, 56px)`.
 - Headings are two short lines, the second in `--muted`: a statement, then its
   consequence ("Ship the task." / "Not the repo.").
 - **Geist** for everything readable, **Geist Mono** for data and for the label

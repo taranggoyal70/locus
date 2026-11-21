@@ -1,20 +1,33 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { headers } from "next/headers";
 import { connection } from "next/server";
 
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 // layers.css first: it fixes the cascade layer order for everything after it.
 import "./layers.css";
+import "./fonts.css";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 // The display serif. Its optical-size axis gives large headlines the fine
-// display cut and small headings the sturdier text cut from one file.
-const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], axes: ["opsz"] });
+// display cut and small headings the sturdier text cut from one file. The site
+// sets it only at regular weight, so this is Google's Latin file with the
+// weight axis fixed at 400: 57 KB instead of 132 KB, preloaded on every page.
+// See src/assets/fonts/OFL.txt. Its stand-in while loading is defined in
+// fonts.css, so headings keep their line breaks when the font swaps in.
+const newsreader = localFont({
+  src: "../assets/fonts/Newsreader-Regular-opsz.woff2",
+  variable: "--font-newsreader",
+  weight: "400",
+  style: "normal",
+  adjustFontFallback: false,
+  fallback: ["Newsreader Fallback", "ui-serif", "Georgia", "serif"],
+});
 
 export const metadata: Metadata = {
   title: "Locus · Evidence-first code localization",

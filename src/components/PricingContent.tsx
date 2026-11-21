@@ -50,14 +50,16 @@ export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
               </ul>
             </div>
 
-            <div data-band="dark" className="flex flex-col bg-canvas p-7 text-ink sm:p-10">
+            <div data-band="dark" className="@container flex flex-col bg-canvas p-7 text-ink sm:p-10">
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <p className={monoLabel}>Design-partner access</p>
                 <span className="rounded-chip border border-line-2 px-2 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-ink-2">
                   $0 during early access
                 </span>
               </div>
-              <h2 className="mt-8 font-display text-[clamp(32px,3.4vw,44px)] font-normal leading-[1.04] tracking-[-0.02em] text-ink">
+              {/* Capped by the card's own width (11cqi): side by side at 768, the second line
+                  only just fit in the serif and wrapped in the stand-in until it loaded. */}
+              <h2 className="mt-8 font-display text-[length:min(clamp(32px,3.4vw,44px),11cqi)] font-normal leading-[1.04] tracking-[-0.02em] text-ink">
                 One honest
                 <span className="block text-muted">early-access contract.</span>
               </h2>

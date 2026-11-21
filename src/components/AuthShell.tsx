@@ -68,10 +68,15 @@ export function AuthShell({ children, eyebrow, title, description }: AuthShellPr
   );
 }
 
+/**
+ * Holds Clerk's place while its script loads. It is about as tall as the
+ * production card (Google, email and password: 541 to 549px), so the card
+ * replaces it without moving the page.
+ */
 export function AuthLoading({ label }: { label: string }) {
   return (
     <div
-      className="flex min-h-80 w-full items-center justify-center rounded-card border border-ink bg-surface px-8 text-center"
+      className="flex min-h-[545px] w-full items-center justify-center rounded-card border border-ink bg-surface px-8 text-center"
       role="status"
       aria-live="polite"
     >
