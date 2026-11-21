@@ -280,7 +280,7 @@ export function Aperture() {
             <Link
               href={buildWorkspacePath({ repositorySpecifier: LANDING_REPO, task: handoff })}
               prefetch={false}
-              className="mt-2 inline-flex items-center gap-1.5 font-medium text-ink underline decoration-line-2 underline-offset-[5px] transition-colors hover:decoration-ink"
+              className="mt-2 inline-block font-medium text-ink underline decoration-line-2 underline-offset-[5px] transition-colors hover:decoration-ink"
             >
               Localize it in the workspace <span aria-hidden="true">↗</span>
             </Link>
