@@ -678,12 +678,12 @@ and this branch's design.
   offers and the six refinements it suggests, and writes the eleven Slices to
   `src/lib/landing-runs.json` (68 KB, its own chunk, loaded after the page). A
   typed task is looked up there, ignoring case and spacing; a task with no
-  record opens in the workspace on the same Repo, with a free account, and a
-  signed-out visitor keeps the task through sign-in. `landing-runs.test.ts`
-  re-runs the localizer and fails if a record drifts; `Aperture.test.tsx` fails
-  if anything the figure imports reaches the localizer. In the production build
-  only the workspace's client manifest lists the localizer's chunk, and the
-  landing never requests it.
+  record opens in the workspace on the same Repo, with a free account; a
+  signed-out visitor goes to sign-in with the task in its redirect.
+  `landing-runs.test.ts` re-runs the localizer and fails if a record drifts;
+  `Aperture.test.tsx` fails if anything the figure imports reaches the
+  localizer. In the production build only the workspace's client manifest
+  lists the localizer's chunk, and the landing never requests it.
 - **Fig. 3 reads the held-out benchmark** (`benchmarks/heldout/results.json`):
   60 fixes from six third-party Repos, the ten most recent qualifying fixes in
   each, chosen by a written rule and all scored. The 15 it drew before came from
