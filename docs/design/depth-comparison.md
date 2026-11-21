@@ -49,7 +49,7 @@ get their depth and what Locus took from them; for their visual language see
 
 | Gap | Reference | Locus now |
 |---|---|---|
-| Results you can inspect case by case | Continuity's benchmark spec tables | Fig. 3, the case board: all 15 fixes, one mark per source file on one scale, details on hover, focus or tap, each case linked to its fix and snapshot commits. Read from `benchmarks/results.json`, so the page cannot drift from the data. The evidence numbers above it now come from the same file. |
+| Results you can inspect case by case | Continuity's benchmark spec tables | Fig. 3, the case board: every held-out fix, 60 from six third-party Repos, a tab per Repo and one mark per percent of its files, details on hover, focus or tap, each case linked to its fix and snapshot commits. Read from `benchmarks/heldout/results.json`, so the page cannot drift from the data. The evidence numbers above it come from the same file. |
 | A figure you can play again | Continuity's mechanism Replay | Replay on Fig. 2. It cancels any beats still pending, so a replay mid-play starts clean. Hidden under reduced motion, where the figure never animates. |
 | A site-wide command layer | PigeonBox's ⌘K palette | ⌘K (Ctrl+K) or the header's Search: pages, doc sections, short answers shown in place, and the theme. A native modal dialog. Every answer restates copy the site already publishes. |
 
@@ -62,3 +62,10 @@ get their depth and what Locus took from them; for their visual language see
   reader drive it.
 - **A walkthrough of an Agent Run.** It needs a real recorded Run to stay honest. It is a follow-up, not
   something to stage.
+
+## Since the merge with main
+
+Locus's core is now private, so Fig. 1 no longer runs the localizer in the visitor's tab. It replays recorded
+runs of it, one per task it offers and per refinement it suggests, much as Continuity's relay replays recorded
+engine output; a task of the reader's own opens in the workspace. The case board moved from 15 fixes in our own
+Repos to the 60 held-out ones above. Details: [locus-design-brief.md](./locus-design-brief.md), "Main merged in".

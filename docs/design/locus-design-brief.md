@@ -234,10 +234,14 @@ If a localization Widens, Locus returns the whole Repo, so every mark stays
 `--included` and the count says so. Ochre `--widened` belongs to Agent Runs,
 where a Widen attempt asks to read one more file; the landing never shows it.
 
-- **Data, not decoration.** The landing page renders a recorded localization of
-  the copy of shadcn-ui/taxonomy bundled in `public/repos/` (`src/lib/landing-slice.ts`,
-  labelled "Recorded run"). `landing-slice.test.ts` re-runs the localizer and
-  fails if the record drifts. In the app it renders the user's actual Slice.
+- **Data, not decoration.** The landing page replays recorded localizations of
+  the copy of shadcn-ui/taxonomy bundled in `public/repos/`: the first in
+  `src/lib/landing-slice.ts`, and every task Fig. 1 offers in
+  `src/lib/landing-runs.json` (written by `pnpm landing:record`), all labelled
+  "Recorded run". `landing-slice.test.ts` and `landing-runs.test.ts` re-run the
+  localizer and fail if a record drifts. The localizer itself never reaches the
+  landing page; a task with no record opens in the workspace. In the app it
+  renders the user's actual Slice.
 - It appears in three places: the landing page's Fig. 1, the loading state
   while localizing, and the header of a Run receipt. Nowhere else.
 - `src/components/Aperture.tsx`: HTML and CSS, no new dependency. The app's
@@ -658,3 +662,70 @@ lacked, read from their source rather than their screenshots
   that was not seen rendered.
 - Screenshots: the nine `pigeonbox-*.jpg` sheets above, retaken on this build,
   and `depth-case-board-1440-light.jpg`, `depth-command-menu-1440-light.jpg`.
+
+### Main merged in (November 20, 2026)
+
+`main` moved on while this branch was open: Locus's core became private
+(`docs/security/ip-protection.md`), a held-out benchmark replaced the one drawn
+from our own Repos, Agent Runs opened to every verified account behind
+`LOCUS_SELF_SERVE`, public support moved to its own tracker, and the source
+links came off the site. The merge (`aac3824`) kept main's behaviour and copy
+and this branch's design.
+
+- **Fig. 1 replays recorded runs.** It ran the localizer in the visitor's tab,
+  which shipped the implementation the policy keeps private.
+  `pnpm landing:record` now runs the real localizer on the five tasks the figure
+  offers and the six refinements it suggests, and writes the eleven Slices to
+  `src/lib/landing-runs.json` (68 KB, its own chunk, loaded after the page). A
+  typed task is looked up there, ignoring case and spacing; a task with no
+  record opens in the workspace on the same Repo, with a free account, and a
+  signed-out visitor keeps the task through sign-in. `landing-runs.test.ts`
+  re-runs the localizer and fails if a record drifts; `Aperture.test.tsx` fails
+  if anything the figure imports reaches the localizer. In the production build
+  only the workspace's client manifest lists the localizer's chunk, and the
+  landing never requests it.
+- **Fig. 3 reads the held-out benchmark** (`benchmarks/heldout/results.json`):
+  60 fixes from six third-party Repos, the ten most recent qualifying fixes in
+  each, chosen by a written rule and all scored. The 15 it drew before came from
+  three of our own Repos, six from Locus itself. The Repos run from 36 to 1,208
+  files, so one mark per file no longer fits one scale: the board has a tab per
+  Repo and draws one mark per percent of the Repo's files, and a fix file always
+  takes a mark. Each case adds its commit subject, what a random Slice of the
+  same size would hold, and the case run again without its conventional-commit
+  scope word. The numbers above the board come from the same file: 100%
+  fix-file recall, a 72% median context reduction on the 57 cases Locus
+  localized (3 Widened), and 27% for a random Slice of the same size.
+- **Copy and links:** pricing, docs (Public availability replaces the install
+  section), terms, privacy, support and the evidence page carry main's wording
+  in this branch's layout. The header's Source link, the footer's GitHub links,
+  the workspace rail's Code link and the command menu's "Source on GitHub" are
+  gone, as on main.
+- **Fixed on the way:**
+  - The marketing header wrapped "Sign in" and "Try Locus" onto two lines below
+    373px, which includes 360, a common Android width. Sign in stays at every
+    width (phones once had no way to sign in, `511255a`); the arrow on Try Locus
+    goes below 390px and the name beside the mark below 360px.
+  - Below 340px of list the board's marks were meant to become solid bars, but
+    the override came before the rule it overrides and lost. It now follows it.
+  - Fig. 1's workspace link drew its underline in two pieces. It draws one now,
+    like the case links.
+- **A build quirk:** with a warm Turbopack cache, the first `next build` after an
+  edit to `globals.css` shipped the previous stylesheet and the second shipped
+  the edit, with or without a dev server running (Next 16.4.6). CI caches only
+  the pnpm store, so its builds start cold. To check a CSS change locally, build
+  twice or look for it in `.next/static`.
+- **Checks:** `pnpm lint`, `pnpm typecheck`, `pnpm check:merge-markers`,
+  `pnpm check:alpha-claims`, `pnpm evidence:release1`, `pnpm check-sync` and
+  `pnpm build` pass. `pnpm test`: 1078 passed, 9 skipped.
+- **Browsers,** on a production build, in Chromium and WebKit: the header at
+  320, 360, 375, 390 and 430 (one line, the frame's 20px margin, Sign in shown);
+  the case board at 1440, 390 and 360 (crisp, even marks or solid bars in every
+  row, tabs by click and arrow keys, rows by hover, tap and keys); Fig. 1
+  replaying a recorded task with no request but code chunks, and handing an
+  unrecorded one to the workspace; the command menu; Replay on Fig. 2. In
+  Chromium also: pricing and section 04 with self-serve open and closed, and
+  the board and pricing in both themes.
+- **Not checked:** Firefox; Safari on a real phone; signed-in pages since the
+  merge, including arriving at the workspace from the hand-off after sign-in; a
+  real Vercel deployment.
+- Screenshot: `heldout-case-board-1440-light.jpg`.
