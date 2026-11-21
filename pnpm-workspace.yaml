@@ -42,7 +42,11 @@ overrides:
   'browserslist@<4.28.7': ^4.28.7
   # GHSA-x5fp-wj9c-mxmx and GHSA-4mjr-xmp4-gh2g — resource exhaustion and
   # exception handling defects in the query parser used by workflow's server.
-  'qs@>=2.2.5 <6.16.0': ^6.16.0
+  # GHSA-6pq8-jhm2-2vcw: qs.stringify with arrayFormat 'comma' throws an
+  # uncaught TypeError (DoS) up to and including 6.16.0. It arrives through
+  # workflow > @workflow/web > express, and even express 5.3.0 still accepts
+  # 6.16.0, so the floor is raised here rather than through a parent bump.
+  'qs@>=2.2.5 <6.16.1': ^6.16.1
   # GHSA-6gmq-8vp8-gcm6 — invalid XML entity names could be serialized without
   # well-formedness checks in the DOCX parsing dependency chain.
   '@xmldom/xmldom@>=0.7.0 <=0.8.14': ^0.8.15
@@ -57,3 +61,14 @@ overrides:
   'proxy-addr@<2.0.8': ^2.0.8
   'body-parser@>=2.0.0 <2.4.0': ^2.4.0
   'source-map-js@<1.2.2': 1.2.2
+  # GHSA-g3hv-75wg-m249: minimatch denial of service via globparts
+  # amplification. 7.0.0 through 11.0.0 are affected with no 9.x or 10.x
+  # backport, so unlike the entries above this one crosses a major line. The
+  # 9.x and 10.x copies come from @swc/cli, @oclif/core and @vercel/queue under
+  # workflow, which no parent bump fixes (workflow 4.x pins @oclif/core 4.11.4
+  # and @vercel/queue 0.3.1, and the latest @swc/cli and @vercel/queue still
+  # use 9.x and 10.x), and from @typescript-eslint/typescript-estree under
+  # eslint-config-next. Each calls only minimatch(path, pattern, options),
+  # which 11.x keeps; 11.0 removed makeRe, Minimatch#regexp, AST and debug,
+  # none of which they use. The 3.x and 5.x copies are outside the range.
+  'minimatch@>=7.0.0 <11.0.1': ^11.0.1
