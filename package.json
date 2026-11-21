@@ -19,6 +19,7 @@
     "check:public-launch": "node scripts/verify-public-launch.mjs",
     "benchmark": "node scripts/benchmark.mjs --write",
     "benchmark:heldout": "node scripts/benchmark-heldout.mjs --write",
+    "landing:record": "node --no-warnings=MODULE_TYPELESS_PACKAGE_JSON scripts/record-landing-runs.mjs",
     "readme:assets": "node scripts/readme-assets.mjs",
     "eval:release1": "node scripts/release1-eval.mjs",
     "evidence:release1": "node scripts/release1-public-report.mjs",

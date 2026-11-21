@@ -1,33 +1,31 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import { FileField, markColumns } from "@/components/FileField";
 import { FilePanel } from "@/components/FilePanel";
-import { loadLandingEngine } from "@/lib/landing-engine";
+import { loadLandingRepo } from "@/lib/landing-repo";
+import { loadRecordedRuns } from "@/lib/landing-runs";
 import { apertureColumns, RECORDED_RESULT, RECORDED_SLICE } from "@/lib/landing-slice";
+import { LANDING_REPO, MAX_TASK_LENGTH, refinedTask, refinementTerms, SELF_PLAY, TRY_TASKS } from "@/lib/landing-tasks";
+import { buildWorkspacePath } from "@/lib/share";
 import type { RepoData } from "@/lib/types";
 
 const FOLDERS = apertureColumns(RECORDED_SLICE.files);
 const FILE_COUNT = RECORDED_SLICE.files.length;
-const MAX_TASK_LENGTH = 1000; // the same limit as POST /api/v1/locate
-
-/** What the figure plays by itself before handing over: two tasks, two Slices. */
-const SELF_PLAY = [RECORDED_SLICE.task, "update the marketing pricing page"];
-const TRY_TASKS = ["the stripe webhook drops events", "fix the dashboard billing", "kubernetes helm chart rollback"];
-
-// The Repo's commonest words include file extensions, which refine nothing.
-const FILE_EXTENSIONS = new Set(["ts", "tsx", "js", "jsx", "mjs", "cjs", "py", "css", "json", "md", "mdx"]);
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * The Slice aperture, live: the real localizer and the real FilePanel on the
- * bundled copy of shadcn-ui/taxonomy, running in the visitor's own tab.
+ * The Slice aperture: recorded runs of the real localizer on the bundled copy
+ * of shadcn-ui/taxonomy, replayed in the real FilePanel. The localizer itself
+ * stays off the page (landing-tasks.ts): a task outside the record is handed
+ * to the workspace, which localizes it on the live Repo.
  *
- * The server renders the recorded run, so the figure is complete without
+ * The server renders the first recorded run, so the figure is complete without
  * JavaScript. The first time it comes into view it plays by itself: it types a
- * task and localizes it, for real, then a second one. Touching the figure, or
+ * task and replays its Slice, then a second one. Touching the figure, or
  * scrolling away, ends the self-play for good and it is the visitor's. With
  * reduced motion there is no self-play: the recorded Slice shows at once and
  * the input is ready.
@@ -40,30 +38,36 @@ export function Aperture() {
   const [task, setTask] = useState<string>(RECORDED_SLICE.task);
   const [result, setResult] = useState(RECORDED_RESULT);
   const [repo, setRepo] = useState<RepoData | null>(null);
-  const [isLive, setIsLive] = useState(false);
+  const [hasReplayed, setHasReplayed] = useState(false);
+  const [handoff, setHandoff] = useState<string | null>(null);
   const [isClosed, setIsClosed] = useState(false);
   const [isVisitors, setIsVisitors] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const localize = useCallback(async (text: string) => {
-    // Only the newest run may land: a visitor can submit while the self-play's
-    // run is still between its awaits.
+  const show = useCallback(async (text: string) => {
+    // Only the newest request may land: a visitor can submit while the
+    // self-play's replay is still between its awaits.
     const run = ++latestRun.current;
     setError(null);
+    setHandoff(null);
     setSelected(null);
-    setIsClosed(false);
     try {
-      const engine = await loadLandingEngine();
+      const recorded = (await loadRecordedRuns())(text);
+      if (run !== latestRun.current) return;
+      if (!recorded) {
+        setHandoff(text);
+        return;
+      }
+      setIsClosed(false);
       await sleep(60); // let the covers paint before they lift again
       if (run !== latestRun.current) return;
-      setRepo(engine.repo);
-      setResult(engine.run(text));
-      setIsLive(true);
+      setResult(recorded);
+      setHasReplayed(true);
     } catch {
       if (run !== latestRun.current) return;
-      setError("The Repo did not load, so this is still the recorded run. Reload the page to try again.");
+      setError("The recorded runs did not load, so this is still the first one. Reload the page to try again.");
     }
     setIsClosed(true);
   }, []);
@@ -97,7 +101,7 @@ export function Aperture() {
         setIsPressed(true);
         await sleep(120);
         setIsPressed(false);
-        await localize(text);
+        await show(text);
         settledTask = text;
         await sleep(index === 0 ? 3400 : 2600);
         if (hasEnded) return;
@@ -108,7 +112,8 @@ export function Aperture() {
     const preload = new IntersectionObserver(([entry]) => {
       if (!entry?.isIntersecting) return;
       preload.disconnect();
-      loadLandingEngine().then((engine) => setRepo(engine.repo), () => {});
+      loadRecordedRuns().catch(() => {});
+      loadLandingRepo().then(setRepo, () => {});
     }, { rootMargin: "600px" });
     preload.observe(figure);
 
@@ -141,7 +146,7 @@ export function Aperture() {
       preload.disconnect();
       inView.disconnect();
     };
-  }, [localize]);
+  }, [show]);
 
   const columns = useMemo(
     () => markColumns(FOLDERS, new Set(result.slice.map(({ path }) => path)), new Set(result.anchorPaths)),
@@ -157,7 +162,7 @@ export function Aperture() {
   const submit = (text: string) => {
     takeOver();
     setTask(text);
-    void localize(text);
+    void show(text);
   };
 
   const onSubmit = (event: FormEvent) => {
@@ -168,8 +173,8 @@ export function Aperture() {
 
   const onSelect = (rel: string | null) => {
     setSelected(rel);
-    // Opening a file before the engine arrives still has to show its source.
-    if (rel && !repo) loadLandingEngine().then((engine) => setRepo(engine.repo), () => {});
+    // Opening a file before the Repo arrives still has to show its source.
+    if (rel && !repo) loadLandingRepo().then(setRepo, () => {});
   };
 
   const stats = [
@@ -187,7 +192,7 @@ export function Aperture() {
       onPointerDownCapture={takeOver}
       onFocusCapture={takeOver}
       className={`aperture ${isClosed ? "" : "is-open"} overflow-hidden rounded-card border border-line-2 bg-surface shadow-panel`}
-      aria-label={`${isLive ? "Running in your browser on" : "Recorded run on"} ${RECORDED_SLICE.repo}: ${summary}`}
+      aria-label={`Recorded run on ${RECORDED_SLICE.repo}: ${summary}`}
     >
       <noscript>
         <style>{".aperture.is-open .aperture-mark::after,.aperture.is-open .aperture-count--repo{opacity:0}.aperture.is-open .aperture-count--slice{opacity:1}"}</style>
@@ -196,7 +201,7 @@ export function Aperture() {
       <div className="border-b border-line px-5 py-4">
         <div className="flex items-start justify-between gap-6">
           <p className="min-w-0 font-mono text-[11px] leading-5 text-muted">
-            {isLive ? "Running in your browser on" : "Recorded run on"}{" "}
+            Recorded run on{" "}
             <a href={RECORDED_SLICE.repoUrl} className="whitespace-nowrap text-ink-2 underline decoration-line-2 underline-offset-2 hover:decoration-ink">
               {RECORDED_SLICE.repo}
             </a>
@@ -226,7 +231,10 @@ export function Aperture() {
               maxLength={MAX_TASK_LENGTH}
               autoComplete="off"
               spellCheck={false}
-              onChange={(event) => setTask(event.target.value)}
+              onChange={(event) => {
+                setTask(event.target.value);
+                setHandoff(null);
+              }}
               // The box usually holds the last task: clicking in selects it, so typing
               // replaces it. The mouse-up would otherwise collapse the selection.
               onFocus={(event) => {
@@ -263,6 +271,21 @@ export function Aperture() {
           ))}
         </div>
 
+        {handoff && (
+          <div className="mt-3 rounded-chip border border-line-2 bg-surface-2 px-3 py-2.5 text-[13px] leading-5 text-ink-2">
+            <p>
+              <span className="font-semibold text-ink">This figure replays recorded runs.</span> The workspace
+              localizes a task of your own on the live Repo, with a free account.
+            </p>
+            <Link
+              href={buildWorkspacePath({ repositorySpecifier: LANDING_REPO, task: handoff })}
+              prefetch={false}
+              className="mt-2 inline-flex items-center gap-1.5 font-medium text-ink underline decoration-line-2 underline-offset-[5px] transition-colors hover:decoration-ink"
+            >
+              Localize it in the workspace <span aria-hidden="true">↗</span>
+            </Link>
+          </div>
+        )}
         {error && <p role="alert" className="mt-3 text-[13px] text-failed">{error}</p>}
         {result.widened && (
           <div className="mt-3 rounded-chip border border-line-2 bg-surface-2 px-3 py-2.5 text-[13px] leading-5 text-ink-2">
@@ -276,11 +299,11 @@ export function Aperture() {
             {result.refinement && result.refinement.repositoryTerms.length > 0 && (
               <p className="mt-2 flex flex-wrap items-center gap-1.5">
                 <span>Words this Repo uses:</span>
-                {result.refinement.repositoryTerms.filter((term) => !FILE_EXTENSIONS.has(term)).slice(0, 6).map((term) => (
+                {refinementTerms(result.refinement.repositoryTerms).map((term) => (
                   <button
                     key={term}
                     type="button"
-                    onClick={() => submit(`${result.task} ${term}`.trim().slice(0, MAX_TASK_LENGTH))}
+                    onClick={() => submit(refinedTask(result.task, term))}
                     className="rounded-chip border border-line-2 bg-surface px-1.5 py-0.5 font-mono text-xs text-ink hover:border-ink/40"
                   >
                     {term}
@@ -290,7 +313,9 @@ export function Aperture() {
             )}
           </div>
         )}
-        <p role="status" className="sr-only">{isLive ? summary : ""}</p>
+        <p role="status" className="sr-only">
+          {handoff ? "This task is not recorded. The workspace can localize it." : hasReplayed ? summary : ""}
+        </p>
       </div>
 
       <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">

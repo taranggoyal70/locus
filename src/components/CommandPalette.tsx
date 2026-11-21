@@ -40,7 +40,7 @@ const go = (href: string): Action => ({ kind: "go", href });
  */
 const COMMANDS: Command[] = [
   { group: "Go to", label: "Home", action: go("/") },
-  { group: "Go to", label: "Try a task, no sign-in", keywords: "slice figure aperture localize", action: go("/#try") },
+  { group: "Go to", label: "See a Slice, no sign-in", keywords: "try task figure aperture localize", action: go("/#try") },
   { group: "Go to", label: "Benchmark cases", keywords: "evidence recall results held-out heldout", action: go("/#evidence") },
   { group: "Go to", label: "Demo", shortcut: "1", keywords: "migration video", action: go("/demo") },
   { group: "Go to", label: "Evidence", shortcut: "2", keywords: "release study protocol gate", action: go("/evidence/release-1") },
@@ -97,13 +97,13 @@ const COMMANDS: Command[] = [
   },
   {
     group: "Ask Locus",
-    label: "Is the task on the home page sent anywhere?",
-    keywords: "privacy browser figure",
+    label: "Is Fig. 1 a real run?",
+    keywords: "recorded figure aperture demo home page",
     action: {
       kind: "answer",
       answer: {
-        title: "No.",
-        body: "Fig. 1 runs the real localizer in your tab, on a bundled copy of shadcn-ui/taxonomy.",
+        title: "Yes, recorded.",
+        body: "Every Slice in Fig. 1 is a recorded run of the real localizer on shadcn-ui/taxonomy. A task of your own opens in the workspace.",
         href: "/#try",
         linkLabel: "Open Fig. 1",
       },
