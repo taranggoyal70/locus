@@ -587,3 +587,74 @@ datasheet stays; its type, canvas and object grammar changed.
   `pigeonbox-landing-close-1440-light.jpg`, `pigeonbox-pricing-1440-light.jpg`,
   `pigeonbox-docs-1440-light.jpg`, `pigeonbox-evidence-1440-light.jpg`,
   `pigeonbox-support-1440-dark.jpg`, `pigeonbox-sign-in-1440-dark.jpg`.
+
+### The launch pass (November 20, 2026)
+
+Launch readiness, then the depth PigeonBox and Continuity have and Locus
+lacked, read from their source rather than their screenshots
+(`depth-comparison.md`).
+
+- **Palette:** Continuity's, recorded under Palette above: warm paper and ink,
+  a graphite dark theme, and one orange signal for the Slice. The mark,
+  favicon, Apple icon and social card follow it.
+- **Fonts:** Newsreader is self-hosted at a fixed 400 weight with its
+  optical-size axis, 57 KB instead of 132 KB. Fonts weigh 108.7 KB on every
+  page, down from 181.5 KB. While the serif loads, a stand-in sized with the
+  overrides `next/font/google` derives keeps every heading's line breaks;
+  sized from the file itself, as `next/font/local` does by default, it
+  re-wrapped the evidence header on phones as the serif arrived (layout shift
+  0.14).
+- **Nothing moves while a page loads.** On a production build in Chromium, on
+  desktop and on a phone profile (150 ms RTT, 1.6 Mbps, 4x CPU), cumulative
+  layout shift is at most 0.0027 on every public page and sign-in. All 164
+  serif headings keep their height when the font swaps in, at 390, 768, 1024
+  and 1440. Two needed help: the evidence headings now break by line, and the
+  pricing panel's heading is capped by its card's width (at 768 it had 7px to
+  spare). The sign-in placeholder is as tall as Clerk's card, so the card
+  replaces it in place.
+- **Speed:** largest contentful paint is 192 to 432 ms on desktop and 1.45 to
+  1.54 s on the phone profile. The first case board drew one element per file
+  mark, about 700 of them, and pushed the phone landing from 1.45 s to about
+  1.7 s. Each row now draws its marks from at most four tiled elements on a
+  whole-pixel grid, and the landing measures 1.47 to 1.54 s over four runs,
+  level with pages that have no board.
+- **Accessibility:** axe-core (WCAG 2.2 AA and best practice) on every public
+  page, the workspace and settings, in both themes, on desktop and phone, is
+  clear except Clerk's "Secured by" line, which only development instances
+  draw. Every text role is checked at 4.5:1 on all four grounds.
+- **Depth** (`depth-comparison.md`):
+  - Fig. 3, the case board: all 15 fixes in the benchmark, one mark per source
+    file on one scale, opened by hover, focus or tap, each case linked to its
+    fix and snapshot commits. It reads `benchmarks/results.json`, as now do the
+    numbers above it.
+  - Replay on Fig. 2.
+  - A command menu (⌘K or Ctrl+K, or the header's Search): pages, doc
+    sections, short answers that restate published copy, and the theme.
+- **Signed-in pages,** checked with a real session in the app's browser:
+  Workspace, Agent Runs and Settings have page titles; the context trace's
+  header follows its panel's width, so it no longer cramps beside the ranked
+  list; the Agent Run heading is in the serif, and status chips take the chip
+  radius. The account page's sidebar title stays in Clerk's sans: Clerk gives
+  it no appearance key, and a selector into Clerk's markup made Clerk warn on
+  every page that loads it. Clerk's answer is to pin its UI with `@clerk/ui`,
+  a dependency decision of its own.
+- **Browsers:** Chromium throughout, and WebKit (Playwright's build): every
+  public page, the 404 and the auth pages at 1440 and 390 in both themes (44
+  loads, no sideways scroll; the console errors are the Vercel Analytics and
+  Speed Insights scripts, which exist only on a deployment, and on the auth
+  pages the image Clerk draws only on development instances, which the CSP
+  blocks), and the case board, command menu, Replay and the pricing heading
+  driven by script in both engines. That run caught the command menu's results
+  list collapsing to nothing in WebKit, which resolves a 0% flex basis to zero
+  in a dialog whose height is not set; the list now takes its content's height
+  and scrolls inside the cap.
+- **Checks:** `pnpm lint`, `pnpm typecheck`, `pnpm check:merge-markers`,
+  `pnpm check:alpha-claims`, `pnpm evidence:release1`, `pnpm check-sync` and
+  `pnpm build` pass. `pnpm test`: 1041 passed, 9 skipped, with new suites for
+  the case board and the command menu, and Replay cases for Fig. 2.
+- **Not checked:** Firefox (macOS's sandbox stops Playwright's Firefox from
+  starting here); Safari on a real phone; a real Vercel deployment; Windows
+  forced colours, where the case board's marks switch to system colours by CSS
+  that was not seen rendered.
+- Screenshots: the nine `pigeonbox-*.jpg` sheets above, retaken on this build,
+  and `depth-case-board-1440-light.jpg`, `depth-command-menu-1440-light.jpg`.
