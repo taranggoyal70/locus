@@ -728,4 +728,6 @@ and this branch's design.
 - **Not checked:** Firefox; Safari on a real phone; signed-in pages since the
   merge, including arriving at the workspace from the hand-off after sign-in; a
   real Vercel deployment.
-- Screenshot: `heldout-case-board-1440-light.jpg`.
+- Screenshots: `heldout-case-board-1440-light.jpg`, and
+  `merge-fig1-handoff-390-light.jpg` (a task with no record, handed to the
+  workspace).
