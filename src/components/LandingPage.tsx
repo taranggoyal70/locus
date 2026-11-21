@@ -3,11 +3,14 @@ import Link from "next/link";
 import { selfServeOpen } from "@/lib/admission";
 import { admissionTag } from "@/lib/admission-copy";
 import { Aperture } from "@/components/Aperture";
+import { CaseBoard } from "@/components/CaseBoard";
 import { FigCaption, frame, Rule, SectionLabel } from "@/components/Datasheet";
 import { MarketingShell } from "@/components/MarketingShell";
 import { Mechanism } from "@/components/Mechanism";
 import { Postmark } from "@/components/Postmark";
 import { CountUp, RiseWords } from "@/components/Reveal";
+import { BENCHMARK_CASES, BENCHMARK_SUMMARY } from "@/lib/benchmark-cases";
+import { REPO_URL } from "@/lib/config";
 import { RECORDED_SLICE } from "@/lib/landing-slice";
 
 const runPhases = [
@@ -17,11 +20,14 @@ const runPhases = [
   ["Review", "Inspect the complete proposal. External GitHub writes stay disabled in early access."],
 ];
 
+// Read from benchmarks/results.json, so a new benchmark run updates the page.
+const { cases, repositories, fixFileRecallPct, medianContextReductionPct, generatedAt } = BENCHMARK_SUMMARY;
 const evidence = [
-  { value: 100, suffix: "%", label: "recall on the cases in our suite", note: "15 fixes across 3 repositories we own; the suite gates on full recall" },
-  { value: 53, suffix: "%", label: "median estimated context reduction", note: "initial admitted context versus whole-Repo context" },
-  { value: 15, suffix: "", label: "historical cases", note: "localization replay only; does not measure agent completion" },
+  { value: fixFileRecallPct, suffix: "%", label: "recall on the cases in our suite", note: `${cases} fixes across ${repositories} repositories we own; the suite gates on full recall` },
+  { value: medianContextReductionPct, suffix: "%", label: "median estimated context reduction", note: "initial admitted context versus whole-Repo context" },
+  { value: cases, suffix: "", label: "historical cases", note: "localization replay only; does not measure agent completion" },
 ];
+const benchmarkDate = new Date(generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 
 const primaryAction =
   "inline-flex h-11 items-center justify-center gap-2 rounded-chip bg-ink px-5 text-[15px] font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/88 active:scale-[0.97]";
@@ -104,19 +110,43 @@ export function LandingPage() {
 
         <Rule />
 
-        <section id="evidence" className={`${frame} py-16 sm:py-20`}>
+        <section id="evidence" className={`${frame} scroll-mt-16 py-16 sm:py-20`}>
           <div className={sectionGrid}>
             <SectionLabel n="03" label="Evidence" />
-            <div className="grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-              {evidence.map(({ value, suffix, label, note }) => (
-                <div key={label} className="py-6 first:pt-0 sm:px-7 sm:py-0 sm:first:pl-0 sm:last:pr-0">
-                  <CountUp value={value} suffix={suffix} className="block font-display text-5xl font-normal tracking-[-0.02em] text-ink tabular-nums" />
-                  <p className="mt-3 text-sm font-semibold text-ink">{label}</p>
-                  <p className="mt-1 text-[13px] leading-5 text-muted">{note}</p>
-                </div>
-              ))}
+            <div>
+              <RiseWords
+                lines={fixFileRecallPct === 100
+                  ? ["Every fix file,", { text: "in the Slice.", className: "text-muted" }]
+                  : ["Fix-file recall,", { text: "case by case.", className: "text-muted" }]}
+                className={sectionHeading}
+              />
+              <p className="mt-5 max-w-xl text-[15px] leading-6 text-ink-2">
+                A regression suite of real fixes from Repos we own. Locus ran on each fix&rsquo;s parent commit and had to
+                admit the files the fix went on to change. Every case is below, Widened ones included.
+              </p>
+              <div className="mt-10 grid divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                {evidence.map(({ value, suffix, label, note }) => (
+                  <div key={label} className="py-6 first:pt-0 sm:px-7 sm:py-0 sm:first:pl-0 sm:last:pr-0">
+                    <CountUp value={value} suffix={suffix} className="block font-display text-5xl font-normal tracking-[-0.02em] text-ink tabular-nums" />
+                    <p className="mt-3 text-sm font-semibold text-ink">{label}</p>
+                    <p className="mt-1 text-[13px] leading-5 text-muted">{note}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+          <figure className="mt-10 sm:mt-14">
+            <CaseBoard cases={BENCHMARK_CASES} />
+            <FigCaption n={3}>
+              Every case in the suite, one row per historical fix and one mark per source file in its Repo, on one scale.
+              Hover, focus, or tap a row to inspect it. Reduction compares estimated tokens, one per four characters,
+              in the Slice and the whole Repo. From{" "}
+              <a href={`${REPO_URL}/blob/main/benchmarks/README.md`} className="text-ink-2 underline decoration-line-2 underline-offset-2 hover:decoration-ink">
+                benchmarks/results.json
+              </a>
+              , generated {benchmarkDate}. It does not measure agent completion.
+            </FigCaption>
+          </figure>
         </section>
 
         <Rule />

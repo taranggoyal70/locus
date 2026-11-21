@@ -21,7 +21,8 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-function choose(preference: ThemePreference) {
+/** Sets the theme and tells every switch on the page, so they stay in step. */
+export function chooseTheme(preference: ThemePreference) {
   applyThemePreference(preference);
   listeners.forEach((listener) => listener());
 }
@@ -47,7 +48,7 @@ export function ThemeSwitch({ className = "" }: { className?: string }) {
             role="radio"
             aria-checked={active}
             title={option.label}
-            onClick={() => choose(option.value)}
+            onClick={() => chooseTheme(option.value)}
             className={`inline-flex h-full items-center gap-1.5 rounded-[3px] px-2 font-mono text-[11px] transition-colors duration-150 ${
               active ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"
             }`}

@@ -246,6 +246,47 @@ textarea::placeholder {
   .menu-pop { opacity: 0; transform: scale(0.96) translateY(-4px); }
 }
 
+/* The command menu (components/CommandPalette.tsx), a native modal dialog. */
+.palette {
+  width: min(560px, calc(100vw - 32px));
+  max-width: none;
+  max-height: min(520px, calc(100dvh - 96px));
+  margin: max(10vh, 48px) auto auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow), 0 28px 64px -28px rgba(0, 0, 0, 0.45);
+}
+
+.palette[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The search field holds focus for as long as the menu is open; its caret is
+   the indicator, and a ring would be clipped by the panel's edge. */
+.palette input:focus-visible {
+  outline: none;
+}
+
+/* Static, not a token: a backdrop cannot rely on inheriting custom properties in every browser. */
+.palette::backdrop {
+  background: rgba(10, 10, 9, 0.42);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .palette[open] {
+    animation: palette-in var(--dur-quick) var(--ease-out);
+  }
+}
+
+@keyframes palette-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+}
+
 /* The closing ticket: a perforation with two notches cut into its border. */
 .ticket-stub {
   position: relative;
@@ -456,6 +497,67 @@ textarea::placeholder {
 .mech:not(.b5) .mech-outside {
   opacity: 0;
   transition: none;
+}
+
+/* Fig. 3, the case board (components/CaseBoard.tsx): one mark per source file,
+   every row on the same scale (--scale, the largest Repo), so Repos compare by
+   length. A row draws its marks from at most four runs, each a repeating tile,
+   rather than ~60 elements: the board has ~700 marks, and parsing and hydrating
+   one element per mark delayed a phone's first paint.
+
+   The cell (mark plus gap) is sized from the list's width and rounded down to a
+   whole pixel, so every mark is crisp and the same size. --inset is what a row
+   spends before its marks: its padding, the case number, and the gap after it. */
+.case-list {
+  container-type: inline-size;
+  --inset: 76px;
+  --cell: 4px;
+  --gap: 1px;
+}
+
+@media (min-width: 640px) {
+  .case-list { --inset: 84px; }
+}
+
+@supports (width: round(down, 10px, 1px)) {
+  .case-list {
+    --cell: max(3px, round(down, calc((100cqw - var(--inset)) / var(--scale)), 1px));
+    /* A quarter of the cell, one or two pixels. */
+    --gap: clamp(1px, round(down, calc(var(--cell) / 4), 1px), 2px);
+  }
+}
+
+.case-strip {
+  display: flex;
+  height: calc(var(--cell) - var(--gap));
+}
+
+.case-run {
+  flex: none;
+  width: calc(var(--n) * var(--cell));
+  background: linear-gradient(to right, var(--k) 0 calc(var(--cell) - var(--gap)), transparent 0) 0 0 / var(--cell) 100% repeat-x;
+}
+
+/* The legend's and the details' single marks. */
+.case-mark {
+  display: block;
+  aspect-ratio: 1;
+  background: var(--k);
+}
+
+:is(.case-run, .case-mark)[data-kind="fix"] { --k: var(--ink); }
+:is(.case-run, .case-mark)[data-kind="admitted"] { --k: var(--included); }
+:is(.case-run, .case-mark)[data-kind="missed"] { --k: var(--failed); }
+:is(.case-run, .case-mark)[data-kind="excluded"] { --k: var(--excluded); }
+
+/* Forced colours would drop the tiles and flatten the marks to the page colour. */
+@media (forced-colors: active) {
+  .case-strip,
+  .case-mark { forced-color-adjust: none; }
+  :is(.case-run, .case-mark)[data-kind="fix"] { --k: CanvasText; }
+  :is(.case-run, .case-mark)[data-kind="admitted"] { --k: Highlight; }
+  :is(.case-run, .case-mark)[data-kind="missed"] { --k: LinkText; }
+  :is(.case-run, .case-mark)[data-kind="excluded"] { --k: GrayText; }
 }
 
 /* A crosshair where a section rule meets a margin rail (components/Datasheet.tsx). */

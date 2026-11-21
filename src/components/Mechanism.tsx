@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { useEnterView } from "@/components/Reveal";
 import { RECORDED_SLICE } from "@/lib/landing-slice";
@@ -38,6 +38,13 @@ function formatTokens(value: number) {
   return Math.round(value).toLocaleString("en-US");
 }
 
+/** The pending beats of a figure's current play, and which play is current. */
+const plays = new WeakMap<HTMLElement, { run: number; timers: number[] }>();
+
+function stopMechanism(element: HTMLElement) {
+  plays.get(element)?.timers.forEach((timer) => window.clearTimeout(timer));
+}
+
 function armMechanism(element: HTMLElement) {
   element.classList.remove(...BEATS);
   const count = element.querySelector<HTMLElement>(".mech-count");
@@ -45,20 +52,44 @@ function armMechanism(element: HTMLElement) {
 }
 
 function enterMechanism(element: HTMLElement) {
-  BEATS.forEach((beat, index) => {
-    window.setTimeout(() => element.classList.add(beat), BEAT_AT[index]);
-  });
-  window.setTimeout(() => {
+  stopMechanism(element);
+  const run = (plays.get(element)?.run ?? 0) + 1;
+  const timers = BEATS.map((beat, index) => window.setTimeout(() => element.classList.add(beat), BEAT_AT[index]));
+  timers.push(window.setTimeout(() => {
     const count = element.querySelector<HTMLElement>(".mech-count");
     if (!count) return;
     const start = performance.now();
     const tick = (now: number) => {
+      // A replay started since: its own count takes over.
+      if (plays.get(element)?.run !== run) return;
       const t = Math.min(1, Math.max(0, (now - start) / 900));
       count.textContent = formatTokens(totalTokens - (totalTokens - sliceTokens) * (1 - (1 - t) ** 3));
       if (t < 1) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
-  }, BEAT_AT[4]);
+  }, BEAT_AT[4]));
+  plays.set(element, { run, timers });
+}
+
+/** Plays the figure again from the start. Arming is instant (no transitions), so it never plays backwards. */
+function replayMechanism(element: HTMLElement) {
+  stopMechanism(element);
+  armMechanism(element);
+  void element.offsetWidth; // commit the armed state, so the first beat transitions from it
+  enterMechanism(element);
+}
+
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+function subscribeMotion(onChange: () => void) {
+  const query = window.matchMedia(REDUCED_MOTION);
+  query.addEventListener?.("change", onChange);
+  return () => query.removeEventListener?.("change", onChange);
+}
+
+/** Replay is offered only where the figure animates: never on the server, never with reduced motion. */
+function useCanReplay() {
+  return useSyncExternalStore(subscribeMotion, () => !window.matchMedia(REDUCED_MOTION).matches, () => false);
 }
 
 type Line = { d: string; hop: number };
@@ -103,6 +134,14 @@ export function Mechanism() {
   const graphRef = useRef<HTMLDivElement>(null);
   useEnterView(rootRef, armMechanism, enterMechanism, 0.35);
   const lines = useEdgeLines(graphRef);
+  const canReplay = useCanReplay();
+
+  useEffect(() => {
+    const element = rootRef.current;
+    return () => {
+      if (element) stopMechanism(element);
+    };
+  }, []);
 
   return (
     <div
@@ -110,11 +149,24 @@ export function Mechanism() {
       className={`mech ${BEATS.join(" ")} overflow-hidden rounded-card border border-line-2 bg-surface shadow-panel`}
       style={{ "--share": SHARE } as React.CSSProperties}
     >
-      <div className="border-b border-line px-5 py-5 sm:px-6">
-        <p className="font-mono text-[11px] text-muted">Task</p>
-        <p className="mech-task mt-1.5 font-mono text-[15px] text-ink" style={{ "--chars": task.length } as React.CSSProperties}>
-          <Highlighted text={task} />
-        </p>
+      <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-5 sm:px-6">
+        <div className="min-w-0">
+          <p className="font-mono text-[11px] text-muted">Task</p>
+          <p className="mech-task mt-1.5 font-mono text-[15px] text-ink" style={{ "--chars": task.length } as React.CSSProperties}>
+            <Highlighted text={task} />
+          </p>
+        </div>
+        {canReplay && (
+          <button
+            type="button"
+            aria-label="Replay Fig. 2"
+            onClick={() => rootRef.current && replayMechanism(rootRef.current)}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-chip border border-line-2 px-2.5 font-mono text-[11px] text-ink-2 transition-[border-color,color,transform] duration-150 hover:border-ink hover:text-ink active:scale-[0.97]"
+          >
+            <span aria-hidden="true" className="text-[13px] leading-none">↺</span>
+            Replay
+          </button>
+        )}
       </div>
 
       <div ref={graphRef} className="relative grid gap-8 px-5 py-6 sm:px-6 lg:grid-cols-[auto_auto_auto] lg:justify-between lg:gap-x-16 lg:py-8">
