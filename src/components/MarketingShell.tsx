@@ -68,8 +68,11 @@ export function MarketingShell({
       <NavShortcuts />
       <header className="sticky top-0 z-40 border-b border-line bg-canvas">
         <div className={`${frame} flex h-[60px] items-center justify-between gap-4`}>
+          {/* Sign in stays at every width, since phones once had no way in. To
+              keep the row on one line with room to spare, the arrow goes below
+              390px and the name below 360px; the mark and the link's label remain. */}
           <Link href="/" aria-label="Locus home" className="text-ink">
-            <Wordmark />
+            <Wordmark nameClassName="max-[360px]:hidden" />
           </Link>
           <nav className="flex items-center gap-1" aria-label="Main navigation">
             <div className="hidden items-center gap-0.5 lg:flex">
@@ -80,12 +83,12 @@ export function MarketingShell({
               ))}
             </div>
             <CommandPalette />
-            <Link href="/sign-in" className="inline-flex h-9 items-center rounded-chip px-2.5 text-[14px] text-ink-2 transition-colors duration-150 hover:text-ink">Sign in</Link>
+            <Link href="/sign-in" className="inline-flex h-9 items-center whitespace-nowrap rounded-chip px-2.5 text-[14px] text-ink-2 transition-colors duration-150 hover:text-ink">Sign in</Link>
             <Link
               href="/workspace"
-              className="ml-1 inline-flex h-9 items-center gap-2 rounded-chip bg-ink px-3.5 text-[14px] font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/88 active:scale-[0.97]"
+              className="ml-1 inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-chip bg-ink px-3.5 text-[14px] font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/88 active:scale-[0.97]"
             >
-              Try Locus <span aria-hidden="true">↗</span>
+              Try Locus <span aria-hidden="true" className="max-[390px]:hidden">↗</span>
             </Link>
             <MobileMenu items={NAV} />
           </nav>
