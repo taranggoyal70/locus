@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 
+import { PathText } from "@/components/PathText";
 import type { Graph, LocateResult, SliceFile } from "@/lib/types";
 
 type TraceStage = {
@@ -92,11 +93,13 @@ export function DependencyGraph({
     const candidates = refinement?.candidateFiles ?? [];
     const repositoryTerms = refinement?.repositoryTerms ?? [];
 
+    // Columns follow this panel's own width (container queries), not the
+    // viewport's: in the workspace it sits beside the ranked list.
     return (
-      <section className="min-w-0 overflow-hidden rounded-card border border-line-2 bg-surface">
+      <section className="@container min-w-0 overflow-hidden rounded-card border border-line-2 bg-surface">
         <div className="border-b border-line px-6 py-5">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Context trace</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-ink">
+          <h2 className="mt-1.5 font-display text-[24px] font-normal leading-tight tracking-[-0.015em] text-ink">
             {result?.widened ? "Locus needs one more detail" : "Describe a task to build the trace"}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-2">
@@ -108,7 +111,7 @@ export function DependencyGraph({
           </p>
         </div>
         {result?.widened ? (
-          <div className="grid gap-px bg-line lg:grid-cols-2">
+          <div className="grid gap-px bg-line @xl:grid-cols-2">
             <div className="bg-canvas/70 p-5">
               <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
                 Make the task specific
@@ -124,7 +127,7 @@ export function DependencyGraph({
                       <button
                         key={term}
                         onClick={() => onRefineTask(term)}
-                        className="rounded-full border border-line-2 px-2.5 py-1 font-mono text-[11px] text-ink-2 transition hover:border-ink/40 hover:text-ink"
+                        className="rounded-chip border border-line-2 px-2.5 py-1 font-mono text-[11px] text-ink-2 transition hover:border-ink/40 hover:text-ink"
                       >
                         + {term}
                       </button>
@@ -157,7 +160,7 @@ export function DependencyGraph({
             </div>
           </div>
         ) : (
-          <div className="grid gap-px bg-line md:grid-cols-3">
+          <div className="grid gap-px bg-line @3xl:grid-cols-3">
             {["Task matches", "Imported dependencies", "Nearby integration"].map((title, index) => (
               <div key={title} className="min-h-44 bg-canvas/70 p-5">
                 <span className="font-mono text-xs text-muted">0{index + 1}</span>
@@ -174,11 +177,13 @@ export function DependencyGraph({
   const hiddenSelected = Math.max(0, result.slice.length - trace.shown);
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-card border border-line-2 bg-surface shadow-panel">
-      <div className="flex flex-col gap-4 border-b border-line px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
+    <section className="@container min-w-0 overflow-hidden rounded-card border border-line-2 bg-surface shadow-panel">
+      <div className="flex flex-col gap-4 border-b border-line px-6 py-5 @xl:flex-row @xl:items-end @xl:justify-between">
         <div>
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Context trace</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-ink">How Locus built this context</h2>
+          <h2 className="mt-1.5 font-display text-[24px] font-normal leading-tight tracking-[-0.015em] text-ink">
+            How Locus built this context
+          </h2>
           <p className="mt-1 max-w-2xl text-sm text-ink-2">
             Follow the selection from task evidence to the supporting files sent to the agent.
           </p>
@@ -193,7 +198,7 @@ export function DependencyGraph({
         </div>
       </div>
 
-      <div className="grid gap-px bg-line lg:grid-cols-3">
+      <div className="grid gap-px bg-line @3xl:grid-cols-3">
         {trace.stages.map((stage) => (
           <div key={stage.step} className="min-w-0 bg-canvas/[0.72] p-5">
             <div className="flex items-start justify-between gap-4">
@@ -201,11 +206,11 @@ export function DependencyGraph({
                 <p className="font-mono text-xs font-medium text-included-ink">{stage.step}</p>
                 <h3 className="mt-2 text-sm font-semibold text-ink">{stage.title}</h3>
               </div>
-              <span className="rounded-full border border-line px-2 py-1 font-mono text-[11px] text-muted">
+              <span className="rounded-chip border border-line px-2 py-1 font-mono text-[11px] text-muted">
                 {stage.files.length} files
               </span>
             </div>
-            <p className="mt-2 min-h-10 text-xs leading-5 text-muted">{stage.description}</p>
+            <p className="mt-2 text-xs leading-5 text-muted @3xl:min-h-10">{stage.description}</p>
 
             <div className="mt-5 space-y-2">
               {stage.files.length > 0 ? stage.files.map((file) => {
@@ -221,7 +226,9 @@ export function DependencyGraph({
                         : "border-line bg-surface/70 hover:border-line-2 hover:bg-surface-2"
                     }`}
                   >
-                    <span className="block break-all font-mono text-[11px] leading-5 text-ink">{file.rel}</span>
+                    <span className="block font-mono text-[11px] leading-5 text-ink [overflow-wrap:anywhere]">
+                      <PathText path={file.rel} />
+                    </span>
                     <span className="mt-2 flex items-center justify-between gap-3 text-[11px]">
                       <span className={isAnchor ? "text-included-ink" : file.recent ? "text-ink" : "text-muted"}>
                         {isAnchor ? "task match" : file.recent ? "recently changed" : `distance ${file.dist}`}
@@ -240,7 +247,7 @@ export function DependencyGraph({
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-line px-6 py-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 border-t border-line px-6 py-4 text-xs text-muted @xl:flex-row @xl:items-center @xl:justify-between">
         <span>Only direct, explainable stages are shown, with no connector wall.</span>
         {hiddenSelected > 0 && <span>{hiddenSelected} additional selected files remain in the ranked list.</span>}
       </div>

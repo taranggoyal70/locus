@@ -77,7 +77,7 @@ export function CloudflareConnectionPanel() {
             </p>
             <h3 className="mt-1 text-base font-semibold text-ink">Connect Cloudflare Workers AI</h3>
           </div>
-          <span className={`rounded-full border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] ${
+          <span className={`rounded-chip border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] ${
             status?.configured
               ? "border-passed/35 bg-passed/10 text-passed"
               : "border-line-2 text-muted"

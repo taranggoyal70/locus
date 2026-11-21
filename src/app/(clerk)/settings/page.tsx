@@ -1,4 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AccountEmailPanel } from "@/components/AccountEmailPanel";
@@ -10,6 +11,10 @@ import { SettingsShell } from "@/components/SettingsShell";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { admissionForAccount } from "@/lib/admission-server";
 import { UsageStats } from "@/components/UsageStats";
+
+export const metadata: Metadata = {
+  title: "Settings · Locus",
+};
 
 export default async function SettingsPage() {
   const { userId } = await auth();

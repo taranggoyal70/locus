@@ -1,6 +1,7 @@
 /**
  * A small grid of file marks for empty and error states. `slice` marks are
- * inked teal, `hole` is drawn as a dashed outline: the file that is not there.
+ * filled with the orange signal, `hole` is drawn as a dashed outline: the file
+ * that is not there.
  * Decorative; the text beside it carries the meaning.
  */
 export function MiniField({

@@ -172,7 +172,7 @@ export function AgentRunsList() {
                   <p className="truncate text-sm font-semibold text-ink">{run.task?.task ?? "Agent Task"}</p>
                   <p className="mt-1 truncate font-mono text-[11px] text-muted">{run.task?.repo_url ?? "Unknown Repo"}</p>
                 </div>
-                <span className={`shrink-0 rounded-full border px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] ${statusTone(run.status)}`}>
+                <span className={`shrink-0 rounded-chip border px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] ${statusTone(run.status)}`}>
                   {alphaRunStatusLabel(run.status)}
                 </span>
               </div>

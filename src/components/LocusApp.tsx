@@ -132,7 +132,7 @@ export function LocusApp({
     <div className="min-h-screen bg-canvas text-ink lg:grid lg:grid-cols-[92px_minmax(0,1fr)]">
       <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-surface px-4 lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:px-0 lg:py-5">
           <Link href="/workspace" aria-label="Locus workspace" className="flex items-center gap-2.5 text-ink lg:flex-col lg:gap-2">
-            {/* The mark carries its own navy tile, so it needs no backing here. */}
+            {/* The mark carries its own ink tile, so it needs no backing here. */}
             <Image src="/locus-mark.svg" width={32} height={32} alt="" priority className="mark" />
             <span className="font-display text-[20px] leading-none tracking-[-0.02em] lg:text-[15px]">Locus</span>
           </Link>
@@ -253,7 +253,7 @@ export function LocusApp({
                         type="button"
                         key={source.slug}
                         onClick={() => pickBundled(source.slug)}
-                        className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                        className={`rounded-chip border px-2.5 py-1 text-[11px] transition ${
                           repo?.slug === source.slug
                             ? "border-ink bg-ink text-canvas"
                             : "border-line-2 text-muted hover:text-ink"

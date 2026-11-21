@@ -231,7 +231,7 @@ textarea::placeholder {
   }
 }
 
-/* The brand mark is a navy tile; on a dark page it needs an edge. */
+/* The brand mark is an ink tile; on a dark page it needs an edge. */
 .mark {
   border-radius: 22%;
   box-shadow: 0 0 0 1px var(--line-2);

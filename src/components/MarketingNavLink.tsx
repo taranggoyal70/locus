@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 /**
  * A header link with its keycap. The current page's key is filled with ink:
- * teal is kept for file state, so it never marks navigation.
+ * the orange signal is kept for file state, so it never marks navigation.
  */
 export function MarketingNavLink({
   href,

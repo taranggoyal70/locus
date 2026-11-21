@@ -199,7 +199,7 @@ export function FilePanel({
                 )}
                 <span className="flex-1 truncate font-mono text-[12px] text-ink">{f.rel}</span>
                 {f.recent && (
-                  <span className="shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">
+                  <span className="shrink-0 rounded-chip bg-surface-2 px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">
                     changed
                   </span>
                 )}

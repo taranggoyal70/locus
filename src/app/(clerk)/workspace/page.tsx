@@ -1,4 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -6,6 +7,10 @@ import { LocusApp } from "@/components/LocusApp";
 import { admitOnFirstUse } from "@/lib/admission-server";
 import { readRunUsage } from "@/lib/agent/run-usage";
 import { runAccessFromAdmission } from "@/lib/run-access";
+
+export const metadata: Metadata = {
+  title: "Workspace · Locus",
+};
 
 type WorkspacePageProps = {
   searchParams: Promise<{ run?: string | string[] }>;

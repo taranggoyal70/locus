@@ -1,8 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AgentRunsList } from "@/components/AgentRunsList";
 import { SettingsShell } from "@/components/SettingsShell";
+
+export const metadata: Metadata = {
+  title: "Agent Runs · Locus",
+};
 
 export default async function ProjectsPage() {
   const { userId } = await auth();

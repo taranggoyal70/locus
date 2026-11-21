@@ -1,5 +1,5 @@
 /**
- * The footer's signature: a Repo drawn as file marks with one Slice in teal,
+ * The footer's signature: a Repo drawn as file marks with one Slice in the signal,
  * in the same language as the product's own file field. Decorative, and
  * deterministic, so server and client render the same marks.
  */

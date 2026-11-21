@@ -289,11 +289,11 @@ export function AgentRunPanel({
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
               Agent Run
             </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-ink">
+            <h2 className="mt-1.5 font-display text-[24px] font-normal leading-tight tracking-[-0.015em] text-ink">
               Turn the Slice into a review-ready proposal.
             </h2>
           </div>
-          <span className="rounded-full border border-line-2 px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+          <span className="rounded-chip border border-line-2 px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
             external writes off
           </span>
         </div>
