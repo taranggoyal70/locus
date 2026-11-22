@@ -62,7 +62,7 @@ function fileRange(rows: Array<{ item: BenchmarkCase }>): string {
 }
 
 /**
- * Fig. 3: every case in the held-out benchmark, inspectable. One tab per Repo
+ * Fig. 1 on the Evidence page: every case in the held-out benchmark, inspectable. One tab per Repo
  * holds its fixes, one row each, drawn as one mark per percent of the Repo's
  * source files. Hovering, focusing or tapping a row opens its details: beside
  * the list on wide screens, under the row on narrow ones. Arrow keys step

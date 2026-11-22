@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 
 import contract from "../../../../benchmarks/release1/contract.json";
 import report from "../../../../benchmarks/release1/public-report.json";
+import { CaseBoard } from "@/components/CaseBoard";
 import { MarketingShell } from "@/components/MarketingShell";
+import { Mechanism } from "@/components/Mechanism";
+import { BENCHMARK_CASES, BENCHMARK_SUMMARY, FEATURED_COMMIT } from "@/lib/benchmark-cases";
+import { RECORDED_SLICE } from "@/lib/landing-slice";
 import { selfServeOpen } from "@/lib/admission";
-import { frame, Rule, SectionLabel } from "@/components/Datasheet";
+import { FigCaption, frame, Rule, SectionLabel } from "@/components/Datasheet";
 import { monoLabel, PageHeader } from "@/components/PageHeader";
 
 export const metadata: Metadata = {
@@ -27,6 +31,9 @@ const evidence = report as PublicReport;
 
 const sectionGrid = "grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10";
 const sectionHeading = "font-display text-[clamp(32px,3.6vw,48px)] font-normal leading-[1.02] tracking-[-0.02em] text-ink";
+
+const heldOut = BENCHMARK_SUMMARY;
+const benchmarkDate = new Date(heldOut.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 
 function percent(value: number) {
   return `${Math.round(value * 100)}%`;
@@ -191,6 +198,60 @@ export default function Release1EvidencePage() {
               </ul>
             </div>
           </div>
+        </section>
+        <Rule />
+
+        <section id="cases" className={`${frame} scroll-mt-16 py-14 sm:py-20`}>
+          <div className={sectionGrid}>
+            <SectionLabel n="03" label="Held-out benchmark" />
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <h2 className={sectionHeading}>
+                <span className="block">Every held-out fix,</span>
+                <span className="block text-muted">case by case.</span>
+              </h2>
+              <p className="max-w-sm text-[14px] leading-6 text-ink-2">
+                {heldOut.cases} fixes from {heldOut.repositories} third-party Repos that Locus was never developed or tuned
+                against, chosen by a written rule. Locus ran on each fix&rsquo;s parent commit and had to admit the files the
+                maintainer went on to change. {heldOut.fixFileRecallPct}% fix-file recall; a {heldOut.medianContextReductionPct}%
+                median context reduction on the {heldOut.localizedCases} cases it localized, {heldOut.widenedCases} Widened.
+              </p>
+            </div>
+          </div>
+          <figure className="mt-10 sm:mt-14">
+            <CaseBoard cases={BENCHMARK_CASES} featured={FEATURED_COMMIT} />
+            <FigCaption n={1}>
+              Every held-out case, a tab per Repo and a row per fix, drawn as one mark per percent of the Repo&rsquo;s
+              source files; a fix file always takes a mark. Hover, focus, or tap a row to inspect it. Reduction compares
+              estimated tokens, one per four characters, in the Slice and the whole Repo. From
+              benchmarks/heldout/results.json, generated {benchmarkDate}. It does not measure agent completion.
+            </FigCaption>
+          </figure>
+        </section>
+
+        <Rule />
+
+        <section className={`${frame} py-14 sm:py-20`}>
+          <div className={sectionGrid}>
+            <SectionLabel n="04" label="Mechanism" />
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <h2 className={sectionHeading}>
+                <span className="block">From a sentence</span>
+                <span className="block text-muted">to a Slice.</span>
+              </h2>
+              <p className="max-w-sm text-[14px] leading-6 text-ink-2">
+                Locus matches the task against the Repo to find Anchors, follows their imports out one hop at a time,
+                and stops. When nothing matches with enough evidence, it Widens to the whole Repo instead of guessing.
+              </p>
+            </div>
+          </div>
+          <figure className="mt-10 sm:mt-14">
+            <Mechanism />
+            <FigCaption n={2}>
+              How Locus built the Slice for &ldquo;{RECORDED_SLICE.task}&rdquo;, the recorded run the home page demo
+              plays. Highlighted words are task terms found in the Anchor paths; each line is a real import between
+              Slice files.
+            </FigCaption>
+          </figure>
         </section>
       </main>
     </MarketingShell>
