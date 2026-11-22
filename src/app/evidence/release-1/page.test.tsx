@@ -10,8 +10,9 @@ describe("Release 1 public evidence", () => {
     expect(html).toContain("The claim stays locked until the evidence is complete");
     expect(html).toContain("0<span class=\"text-xl text-muted\">/40");
     expect(html).toContain("Outcome metrics are withheld while evidence is incomplete");
-    expect(html).toContain("without exposing the private implementation");
-    expect(html).not.toContain("github.com/taranggoyal70/locus");
+    expect(html).toContain("case ledger are published on this page.");
+    expect(html).not.toContain("private implementation");
+    expect(html).not.toContain("github.com/taranggoyal70/locus/issues");
     expect(html).not.toContain("locus-origin-cookie");
     expect(html.match(/>Frozen<\/span>/g)).toHaveLength(20);
     expect(html).toContain(">Locked</span>");
