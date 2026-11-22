@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { accountCan } from "@/lib/admission-server";
 import { verifyGitHubOAuthState } from "@/lib/github-oauth-state";
-import { tenantClient } from "@/lib/supabase-tenant";
+import { tenantDb } from "@/lib/db";
 
 export async function GET(request: Request) {
   const { userId } = await auth();
@@ -50,15 +50,22 @@ export async function GET(request: Request) {
   const ghUser = userRes.ok ? await userRes.json() : null;
   const username = ghUser?.login ?? "unknown";
 
-  const db = tenantClient(userId);
-  await db
-    .from("github_connections")
-    .upsert({
-      user_id: userId,
-      github_username: username,
-      access_token: tokenData.access_token,
-      scopes: tokenData.scope ?? "",
-    }, { onConflict: "user_id" });
+  const connection = {
+    github_username: username,
+    access_token: tokenData.access_token,
+    scopes: tokenData.scope ?? "",
+  };
+  try {
+    await tenantDb(userId)
+      .insertInto("github_connections")
+      .values({ user_id: userId, ...connection })
+      .onConflict((conflict) => conflict.column("user_id").doUpdateSet(connection))
+      .execute();
+  } catch {
+    // Redirecting to "connected" after a failed write would show a connection
+    // that does not exist.
+    return NextResponse.redirect(new URL("/settings?error=github_save_failed", request.url));
+  }
 
   return NextResponse.redirect(new URL("/settings?github=connected", request.url));
 }

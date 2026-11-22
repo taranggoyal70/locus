@@ -1,100 +1,27 @@
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
-import { spawn } from "node:child_process";
+
+import { PGlite } from "@electric-sql/pglite";
+import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
 import { describe, it } from "vitest";
 
-const TEST_DATABASE_URL = process.env.STRIPE_SUBSCRIPTION_RPC_TEST_DATABASE_URL;
-const describeDatabase = TEST_DATABASE_URL ? describe : describe.skip;
-
-const migration017 = readFileSync(
-  new URL("../../../../../supabase/migrations/017_stripe_event_ordering.sql", import.meta.url),
-  "utf8",
-);
+import { migrate, readMigrations } from "../../../../../db/migrate.mjs";
 
 function quoteLiteral(value: string) {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
-async function runPsql(sql: string) {
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(
-      "psql",
-      [TEST_DATABASE_URL!, "--no-psqlrc", "--set", "ON_ERROR_STOP=1", "--quiet"],
-      { stdio: ["pipe", "pipe", "pipe"] },
-    );
-    let stdout = "";
-    let stderr = "";
-
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.on("error", reject);
-    child.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
-
-      reject(new Error(`psql exited with ${code}\n${stdout}\n${stderr}`));
-    });
-
-    child.stdin.end(sql);
-  });
-}
-
-describeDatabase("Stripe subscription RPC ordering contract", () => {
+describe("Stripe subscription RPC ordering contract", () => {
   it("executes the guarded subscription writes against Postgres", async () => {
     const suffix = randomUUID().replaceAll("-", "");
+    const database = await PGlite.create({ extensions: { pgcrypto } });
 
-    await runPsql(`
-      begin;
-      set local client_min_messages = warning;
-
-      do $$
-      begin
-        if to_regrole('anon') is null then
-          execute 'create role anon';
-        end if;
-        if to_regrole('authenticated') is null then
-          execute 'create role authenticated';
-        end if;
-        if to_regrole('service_role') is null then
-          execute 'create role service_role';
-        end if;
-      end
-      $$;
-
-      create extension if not exists pgcrypto;
-
-      drop table if exists public.subscriptions cascade;
-      create or replace function public.update_updated_at()
-      returns trigger as $$
-      begin
-        new.updated_at = now();
-        return new;
-      end;
-      $$ language plpgsql;
-
-      create table public.subscriptions (
-        id uuid primary key default gen_random_uuid(),
-        user_id text not null unique,
-        stripe_customer_id text not null,
-        stripe_subscription_id text not null unique,
-        plan text not null default 'free' check (plan in ('free', 'pro', 'enterprise')),
-        status text not null default 'active' check (status in ('active', 'inactive', 'cancelled')),
-        created_at timestamptz not null default now(),
-        updated_at timestamptz not null default now()
-      );
-
-      create trigger subscriptions_updated_at
-        before update on public.subscriptions
-        for each row execute function public.update_updated_at();
-
+    try {
+      // A subscription written before migration 017 existed carries no event
+      // watermark. Replaying the chain up to 016, writing that row, and only
+      // then applying 017 onward is the path production took.
+      const migrations = readMigrations();
+      await migrate(database, { migrations: migrations.filter(({ name }) => name < "017") });
+      await database.exec(`
       insert into public.subscriptions (
         user_id,
         stripe_customer_id,
@@ -113,9 +40,11 @@ describeDatabase("Stripe subscription RPC ordering contract", () => {
         '2025-12-01T12:00:00Z',
         '2026-01-01T12:00:00Z'
       );
+      `);
+      await migrate(database, { migrations });
 
-      ${migration017}
-
+      // Each step raises on a wrong outcome, so a passing block is the assertion.
+      await database.exec(`
       do $$
       declare
         v_applied boolean;
@@ -331,8 +260,9 @@ describeDatabase("Stripe subscription RPC ordering contract", () => {
         end if;
       end
       $$;
-
-      rollback;
-    `);
+      `);
+    } finally {
+      await database.close();
+    }
   });
 });

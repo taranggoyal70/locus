@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const migration = readFileSync(
-  new URL("../../../supabase/migrations/021_agent_widen_events.sql", import.meta.url),
+  new URL("../../../db/migrations/021_agent_widen_events.sql", import.meta.url),
   "utf8",
 ).toLowerCase();
 

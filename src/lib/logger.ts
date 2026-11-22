@@ -35,6 +35,9 @@ const SECRET_VALUE_PATTERNS: ReadonlyArray<{ pattern: RegExp; replacement: strin
   { pattern: /\bgithub_pat_[A-Za-z0-9_]{16,}/g, replacement: "[REDACTED]" },
   // Supabase service and publishable keys.
   { pattern: /\bsb[ps]_[A-Za-z0-9_-]{16,}/g, replacement: "[REDACTED]" },
+  // Database connection strings with credentials. Keep the scheme and host so
+  // the log still says which database it was; drop the user and password.
+  { pattern: /\b(postgres(?:ql)?:\/\/)[^\s:@/]+:[^\s@/]+@/gi, replacement: "$1[REDACTED]@" },
   // AWS access key ids.
   { pattern: /\bAKIA[0-9A-Z]{16}\b/g, replacement: "[REDACTED]" },
   // Any JWT, which covers Supabase anon/service keys and Clerk sessions.

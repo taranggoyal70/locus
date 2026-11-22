@@ -9,7 +9,7 @@ import { createGitHubPullRequest } from "@/lib/agent/github-delivery";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { appendRunStep, transitionRun } from "@/lib/agent/run-store";
 import type { AgentChange } from "@/lib/agent/workspace";
-import { tenantClient } from "@/lib/supabase-tenant";
+import { jsonb, tenantDb } from "@/lib/db";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -72,15 +72,16 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const db = tenantClient(userId);
-  const { data: run, error: runError } = await db
-    .from("agent_runs")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", userId)
-    .eq("status", "awaiting_approval")
-    .single();
-  if (runError || !run) {
+  const db = tenantDb(userId);
+  const run = await db
+    .selectFrom("agent_runs")
+    .selectAll()
+    .where("id", "=", id)
+    .where("user_id", "=", userId)
+    .where("status", "=", "awaiting_approval")
+    .executeTakeFirst()
+    .catch(() => undefined);
+  if (!run) {
     return NextResponse.json({ error: "This run is not awaiting approval." }, { status: 409 });
   }
 
@@ -93,44 +94,46 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const [taskResult, changeSetResult, summaryResult, connectionResult] = await Promise.all([
-    db.from("agent_tasks").select("*").eq("id", run.task_id).eq("user_id", userId).single(),
-    db
-      .from("agent_artifacts")
-      .select("content")
-      .eq("run_id", id)
-      .eq("user_id", userId)
-      .eq("kind", "change_set")
-      .single(),
-    db
-      .from("agent_artifacts")
-      .select("content")
-      .eq("run_id", id)
-      .eq("user_id", userId)
-      .eq("kind", "summary")
-      .single(),
-    db.from("github_connections").select("access_token").eq("user_id", userId).single(),
+  // Each read fails on its own terms, so an unreadable row is treated exactly
+  // like a missing one and the caller gets the specific reason.
+  const artifact = (kind: "change_set" | "summary") => db
+    .selectFrom("agent_artifacts")
+    .select("content")
+    .where("run_id", "=", id)
+    .where("user_id", "=", userId)
+    .where("kind", "=", kind)
+    .executeTakeFirst()
+    .catch(() => undefined);
+  const [task, changeSet, summary, connection] = await Promise.all([
+    db.selectFrom("agent_tasks").selectAll().where("id", "=", run.task_id).where("user_id", "=", userId)
+      .executeTakeFirst().catch(() => undefined),
+    artifact("change_set"),
+    artifact("summary"),
+    db.selectFrom("github_connections").select("access_token").where("user_id", "=", userId)
+      .executeTakeFirst().catch(() => undefined),
   ]);
-  if (connectionResult.error || !connectionResult.data?.access_token) {
+  if (!connection?.access_token) {
     return NextResponse.json(
       { error: "Connect GitHub in Settings before approving delivery." },
       { status: 409 },
     );
   }
-  if (taskResult.error || !taskResult.data || changeSetResult.error || !changeSetResult.data?.content) {
+  if (!task || !changeSet?.content) {
     return NextResponse.json({ error: "The delivery payload is incomplete." }, { status: 409 });
   }
 
-  const { data: approval, error: claimError } = await db
-    .from("agent_approvals")
-    .update({ status: "delivering", decided_at: new Date().toISOString() })
-    .eq("run_id", id)
-    .eq("user_id", userId)
-    .eq("action", "open_pull_request")
-    .in("status", ["pending", "failed"])
-    .select("*")
-    .single();
-  if (claimError || !approval) {
+  // Claiming the approval is the compare-and-swap that makes delivery run once.
+  const approval = await db
+    .updateTable("agent_approvals")
+    .set({ status: "delivering", decided_at: new Date().toISOString() })
+    .where("run_id", "=", id)
+    .where("user_id", "=", userId)
+    .where("action", "=", "open_pull_request")
+    .where("status", "in", ["pending", "failed"])
+    .returningAll()
+    .executeTakeFirst()
+    .catch(() => undefined);
+  if (!approval) {
     return NextResponse.json(
       { error: "Delivery is already running or was previously approved." },
       { status: 409 },
@@ -138,7 +141,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   try {
-    const parsed = JSON.parse(changeSetResult.data.content) as {
+    const parsed = JSON.parse(changeSet.content) as {
       version?: unknown;
       baseCommitSha?: unknown;
       candidateSha256?: unknown;
@@ -166,44 +169,46 @@ export async function POST(request: Request, context: RouteContext) {
       throw new Error("Approved change set no longer matches its frozen candidate digest");
     }
     const delivered = await createGitHubPullRequest({
-      token: connectionResult.data.access_token,
-      repository: taskResult.data.repo_url,
-      baseRef: taskResult.data.base_ref,
+      token: connection.access_token,
+      repository: task.repo_url,
+      baseRef: task.base_ref,
       expectedBaseSha: parsed.baseCommitSha,
       runId: run.id,
-      task: taskResult.data.task,
-      summary: summaryResult.data?.content ?? "Locus completed the requested engineering task.",
+      task: task.task,
+      summary: summary?.content ?? "Locus completed the requested engineering task.",
       changes,
     });
     const completedAt = new Date().toISOString();
 
-    const [approvalUpdate, artifactInsert] = await Promise.all([
-      db
-        .from("agent_approvals")
-        .update({
-          status: "approved",
-          decided_at: completedAt,
-          payload: {
-            ...(typeof approval.payload === "object" && approval.payload && !Array.isArray(approval.payload)
-              ? approval.payload
-              : {}),
-            branch: delivered.branch,
-            pullRequestNumber: delivered.pullRequestNumber,
-            url: delivered.url,
-          },
-        })
-        .eq("id", approval.id)
-        .eq("user_id", userId),
-      db.from("agent_artifacts").insert({
-        run_id: id,
-        user_id: userId,
-        kind: "pull_request",
-        label: `Pull request #${delivered.pullRequestNumber}`,
-        url: delivered.url,
-      }),
-    ]);
-    if (approvalUpdate.error || artifactInsert.error) {
-      throw new Error("GitHub delivery succeeded, but the run ledger could not be finalized");
+    try {
+      await Promise.all([
+        db
+          .updateTable("agent_approvals")
+          .set({
+            status: "approved",
+            decided_at: completedAt,
+            payload: jsonb({
+              ...(typeof approval.payload === "object" && approval.payload && !Array.isArray(approval.payload)
+                ? approval.payload
+                : {}),
+              branch: delivered.branch,
+              pullRequestNumber: delivered.pullRequestNumber,
+              url: delivered.url,
+            }),
+          })
+          .where("id", "=", approval.id)
+          .where("user_id", "=", userId)
+          .execute(),
+        db.insertInto("agent_artifacts").values({
+          run_id: id,
+          user_id: userId,
+          kind: "pull_request",
+          label: `Pull request #${delivered.pullRequestNumber}`,
+          url: delivered.url,
+        }).execute(),
+      ]);
+    } catch (cause) {
+      throw new Error("GitHub delivery succeeded, but the run ledger could not be finalized", { cause });
     }
     await appendRunStep({
       runId: id,
@@ -229,17 +234,21 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ delivery: delivered });
   } catch (error) {
     const message = error instanceof Error ? error.message.slice(0, 1_000) : "GitHub delivery failed";
-    await Promise.all([
+    // Best effort, as before: the delivery failure is the answer the caller
+    // needs, and a ledger write that also fails must not replace it.
+    await Promise.allSettled([
       db
-        .from("agent_approvals")
-        .update({ status: "failed", payload: { error: message } })
-        .eq("id", approval.id)
-        .eq("user_id", userId),
+        .updateTable("agent_approvals")
+        .set({ status: "failed", payload: jsonb({ error: message }) })
+        .where("id", "=", approval.id)
+        .where("user_id", "=", userId)
+        .execute(),
       db
-        .from("agent_runs")
-        .update({ error: `Delivery failed: ${message}` })
-        .eq("id", id)
-        .eq("user_id", userId),
+        .updateTable("agent_runs")
+        .set({ error: `Delivery failed: ${message}` })
+        .where("id", "=", id)
+        .where("user_id", "=", userId)
+        .execute(),
     ]);
     return NextResponse.json({ error: message }, { status: 502 });
   }

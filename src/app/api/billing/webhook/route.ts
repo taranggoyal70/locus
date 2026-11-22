@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { globalDb, rpc } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { readLimitedBody } from "@/lib/request-security";
 import { stripe } from "@/lib/stripe";
-import { globalClient } from "@/lib/supabase-tenant";
 
 // Stripe event payloads are small; the largest realistic ones are well under
 // 64 KB. This is a denial-of-service ceiling, not a schema limit.
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
   }
 
-  const db = globalClient("Stripe webhook has no authenticated user");
+  const db = globalDb("Stripe webhook has no authenticated user");
 
   // Every write now goes through a function that refuses an event older than, or
   // identical to, the one already applied to that row. The comparison and the
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   // means nothing was recorded, so the route must not acknowledge it: Stripe
   // only retries a delivery that received a non-2xx response, and each write is
   // idempotent on the event ID, so the retry is safe.
-  let write: { error: unknown } | null = null;
+  let write: Promise<unknown> | null = null;
 
   switch (event.type) {
     case "checkout.session.completed": {
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       const userId = session.metadata?.userId ?? session.client_reference_id;
       if (!userId || !session.subscription || !session.customer) break;
 
-      write = await db.rpc("upsert_stripe_subscription", {
+      write = rpc(db, "upsert_stripe_subscription", {
         p_user_id: userId,
         p_customer_id: String(session.customer),
         p_subscription_id: String(session.subscription),
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     case "customer.subscription.updated": {
       const sub = event.data.object;
-      write = await db.rpc("apply_stripe_subscription_event", {
+      write = rpc(db, "apply_stripe_subscription_event", {
         p_subscription_id: sub.id,
         p_status: sub.status === "active" ? "active" : "inactive",
         // The plan is not part of this event, so it is left as it is rather than
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
 
     case "customer.subscription.deleted": {
       const sub = event.data.object;
-      write = await db.rpc("apply_stripe_subscription_event", {
+      write = rpc(db, "apply_stripe_subscription_event", {
         p_subscription_id: sub.id,
         p_status: "cancelled",
         p_plan: "free",
@@ -98,7 +98,8 @@ export async function POST(request: Request) {
     }
   }
 
-  if (write?.error) {
+  const failed = write ? await write.then(() => false, () => true) : false;
+  if (failed) {
     logger.error("billing.webhook.write_failed", { eventType: event.type, eventId: event.id });
     return NextResponse.json({ error: "Event not recorded; retry." }, { status: 500 });
   }

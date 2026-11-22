@@ -50,8 +50,9 @@ CI runs the same commands, a production build, a dependency audit and a secret s
   protocol only by adding a new version and saying so in the report.
 - **Capabilities ship in code.** Widening access means editing `CAPABILITY_RELEASE` in
   [`src/lib/admission.ts`](src/lib/admission.ts) in its own reviewed commit.
-- **Migrations are append-only.** Add a new numbered file under `supabase/migrations`, replay the chain locally
-  with `supabase db reset`, and run `LOCUS_LIVE_DB=1 pnpm test admission-live`.
+- **Migrations are append-only.** Add a new numbered file under `db/migrations`, then run `pnpm db:types` and
+  commit the regenerated `src/lib/db/schema.ts`. The test database replays the whole chain, so `pnpm test`
+  exercises the new migration. `pnpm db:migrate` refuses to run if an applied file was edited.
 - **Secrets never enter Git.** Use `.env.local` and the deployment's secret store. If a secret is committed,
   rotate it; deleting the file is not enough.
 - **Commits** use the conventional style already in the history (`fix(billing): ...`, `feat(guard): ...`) and

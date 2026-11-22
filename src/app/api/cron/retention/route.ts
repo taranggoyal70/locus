@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
-import { globalClient } from "@/lib/supabase-tenant";
+import { globalDb, rpc } from "@/lib/db";
 
 function authorized(header: string | null, secret: string): boolean {
   if (!header) return false;
@@ -21,14 +21,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const db = globalClient("retention sweep spans every tenant by design");
-  const { data, error } = await db.rpc("delete_expired_agent_data", {
-    p_retention_days: 30,
-  });
-  if (error || !data?.[0]) {
-    logger.error("retention.cron.failed", { name: error?.message ?? "missing result" });
+  let deleted;
+  try {
+    [deleted] = await rpc(globalDb("retention sweep spans every tenant by design"), "delete_expired_agent_data", {
+      p_retention_days: 30,
+    });
+  } catch (error) {
+    logger.error("retention.cron.failed", { name: error instanceof Error ? error.message : "unknown" });
     return NextResponse.json({ error: "Retention cleanup failed." }, { status: 500 });
   }
-  logger.info("retention.cron.completed", data[0]);
-  return NextResponse.json({ ok: true, deleted: data[0] });
+  if (!deleted) {
+    logger.error("retention.cron.failed", { name: "missing result" });
+    return NextResponse.json({ error: "Retention cleanup failed." }, { status: 500 });
+  }
+  logger.info("retention.cron.completed", deleted);
+  return NextResponse.json({ ok: true, deleted });
 }

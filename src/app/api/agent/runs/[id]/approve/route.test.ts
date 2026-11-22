@@ -4,6 +4,8 @@ const authMock = vi.hoisted(() => vi.fn());
 vi.mock("@clerk/nextjs/server", () => ({ auth: authMock }));
 
 import { POST } from "@/app/api/agent/runs/[id]/approve/route";
+import { setupTestDatabase } from "@/test/database";
+import { seedRun } from "@/test/fixtures";
 
 describe("controlled-alpha Run delivery", () => {
   beforeEach(() => {
@@ -39,11 +41,7 @@ vi.mock("@/lib/admission-server", () => ({
     Promise.resolve(capability === "delivery" ? deliveryAllowedMock() : false),
 }));
 
-const tenantClientMock = vi.hoisted(() => vi.fn());
-vi.mock("@/lib/supabase-tenant", () => ({
-  tenantClient: tenantClientMock,
-  globalClient: vi.fn(),
-}));
+const database = setupTestDatabase();
 
 const RUN_ID = "00000000-0000-4000-8000-000000000001";
 const STORED_HASH = "a".repeat(64);
@@ -64,17 +62,14 @@ function context() {
 }
 
 describe("delivery is bound to the reviewed proposal", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     authMock.mockResolvedValue({ userId: "user_design_partner" });
     deliveryAllowedMock.mockReturnValue(true);
-    // Any query resolves to a Run awaiting approval carrying STORED_HASH.
-    const builder: Record<string, unknown> = {};
-    for (const method of ["select", "eq", "in", "update", "insert", "single"]) {
-      builder[method] = () => builder;
-    }
-    builder.then = (resolve: (value: unknown) => unknown) =>
-      Promise.resolve(resolve({ data: { id: RUN_ID, proposal_hash: STORED_HASH }, error: null }));
-    tenantClientMock.mockReturnValue({ from: () => builder });
+    await seedRun(database(), "user_design_partner", {
+      id: RUN_ID,
+      status: "awaiting_approval",
+      proposal_hash: STORED_HASH,
+    });
   });
 
   it("refuses an approval that names no proposal", async () => {

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { track } from "@/lib/analytics";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
-import { globalClient } from "@/lib/supabase-tenant";
+import { databaseErrorCode, globalDb } from "@/lib/db";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_BODY_BYTES = 2_048;
@@ -53,11 +53,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const db = globalClient("waitlist entries exist before any account does");
-  const { error } = await db.from("waitlist").insert(trimmed);
-
-  if (error) {
-    if (error.code === "23505") {
+  try {
+    await globalDb("waitlist entries exist before any account does").insertInto("waitlist").values(trimmed).execute();
+  } catch (error) {
+    if (databaseErrorCode(error) === "23505") {
       await track({ event: "alpha_access_requested", properties: { result: "existing" } });
       return NextResponse.json({ ok: true, message: "You're already on the waitlist." });
     }

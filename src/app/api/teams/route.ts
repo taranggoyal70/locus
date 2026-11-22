@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { accountCan } from "@/lib/admission-server";
-import { globalClient } from "@/lib/supabase-tenant";
+import { databaseErrorCode, globalDb } from "@/lib/db";
 
 function disabledResponse() {
   return NextResponse.json(
@@ -24,22 +24,27 @@ export async function GET() {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!(await accountCan(userId, "teams"))) return disabledResponse();
 
-  const db = globalClient("team records are owned via team_members, not a user column");
-  const { data: memberships } = await db
-    .from("team_members")
-    .select("team_id, role")
-    .eq("user_id", userId);
+  const db = globalDb("team records are owned via team_members, not a user column");
+  // As before, an unreadable membership list shows as no teams.
+  const memberships = await db
+    .selectFrom("team_members")
+    .select(["team_id", "role"])
+    .where("user_id", "=", userId)
+    .execute()
+    .catch(() => []);
 
-  if (!memberships?.length) return NextResponse.json({ teams: [] });
+  if (!memberships.length) return NextResponse.json({ teams: [] });
 
   const teamIds = memberships.map((m) => m.team_id);
-  const { data: teams } = await db
-    .from("teams")
-    .select("id, name, slug, owner_id, created_at")
-    .in("id", teamIds)
-    .order("created_at", { ascending: false });
+  const teams = await db
+    .selectFrom("teams")
+    .select(["id", "name", "slug", "owner_id", "created_at"])
+    .where("id", "in", teamIds)
+    .orderBy("created_at", "desc")
+    .execute()
+    .catch(() => []);
 
-  const enriched = (teams ?? []).map((t) => ({
+  const enriched = teams.map((t) => ({
     ...t,
     role: memberships.find((m) => m.team_id === t.id)?.role ?? "member",
   }));
@@ -62,33 +67,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Team name must be 2-60 characters." }, { status: 400 });
   }
 
-  const db = globalClient("team records are owned via team_members, not a user column");
+  const db = globalDb("team records are owned via team_members, not a user column");
 
-  const { data: existing } = await db
-    .from("team_members")
-    .select("team_id")
-    .eq("user_id", userId);
-  if ((existing?.length ?? 0) >= 5) {
-    return NextResponse.json({ error: "You can be in at most 5 teams on the free plan." }, { status: 403 });
-  }
+  try {
+    const existing = await db
+      .selectFrom("team_members")
+      .select("team_id")
+      .where("user_id", "=", userId)
+      .execute();
+    if (existing.length >= 5) {
+      return NextResponse.json({ error: "You can be in at most 5 teams on the free plan." }, { status: 403 });
+    }
 
-  const slug = slugify(name.trim()) || "team";
-  const { data: team, error } = await db
-    .from("teams")
-    .insert({ name: name.trim(), slug, owner_id: userId })
-    .select("id, name, slug")
-    .single();
-
-  if (error) {
-    if (error.code === "23505") {
+    const slug = slugify(name.trim()) || "team";
+    // One transaction, so a team never exists without its owner's membership.
+    const team = await db.transaction().execute(async (trx) => {
+      const created = await trx
+        .insertInto("teams")
+        .values({ name: name.trim(), slug, owner_id: userId })
+        .returning(["id", "name", "slug"])
+        .executeTakeFirstOrThrow();
+      await trx.insertInto("team_members").values({ team_id: created.id, user_id: userId, role: "owner" }).execute();
+      return created;
+    });
+    return NextResponse.json({ team }, { status: 201 });
+  } catch (error) {
+    if (databaseErrorCode(error) === "23505") {
       return NextResponse.json({ error: "A team with that name already exists." }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to create team." }, { status: 500 });
   }
-
-  await db.from("team_members").insert({ team_id: team.id, user_id: userId, role: "owner" });
-
-  return NextResponse.json({ team }, { status: 201 });
 }
 
 export async function DELETE(request: Request) {
@@ -100,18 +108,23 @@ export async function DELETE(request: Request) {
   const teamId = url.searchParams.get("id");
   if (!teamId) return NextResponse.json({ error: "Team ID required." }, { status: 400 });
 
-  const db = globalClient("team records are owned via team_members, not a user column");
-  const { data: team } = await db
-    .from("teams")
+  const db = globalDb("team records are owned via team_members, not a user column");
+  const team = await db
+    .selectFrom("teams")
     .select("owner_id")
-    .eq("id", teamId)
-    .single();
+    .where("id", "=", teamId)
+    .executeTakeFirst()
+    .catch(() => undefined);
 
   if (!team) return NextResponse.json({ error: "Team not found." }, { status: 404 });
   if (team.owner_id !== userId) {
     return NextResponse.json({ error: "Only the team owner can delete it." }, { status: 403 });
   }
 
-  await db.from("teams").delete().eq("id", teamId);
+  try {
+    await db.deleteFrom("teams").where("id", "=", teamId).where("owner_id", "=", userId).execute();
+  } catch {
+    return NextResponse.json({ error: "Failed to delete team." }, { status: 500 });
+  }
   return NextResponse.json({ deleted: true });
 }
