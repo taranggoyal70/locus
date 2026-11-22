@@ -234,14 +234,16 @@ If a localization Widens, Locus returns the whole Repo, so every mark stays
 `--included` and the count says so. Ochre `--widened` belongs to Agent Runs,
 where a Widen attempt asks to read one more file; the landing never shows it.
 
-- **Data, not decoration.** The landing page replays recorded localizations of
-  the copy of shadcn-ui/taxonomy bundled in `public/repos/`: the first in
-  `src/lib/landing-slice.ts`, and every task Fig. 1 offers in
-  `src/lib/landing-runs.json` (written by `pnpm landing:record`), all labelled
-  "Recorded run". `landing-slice.test.ts` and `landing-runs.test.ts` re-run the
-  localizer and fail if a record drifts. The localizer itself never reaches the
-  landing page; a task with no record opens in the workspace. In the app it
-  renders the user's actual Slice.
+- **Data, not decoration.** The landing page opens on a recorded localization
+  of the copy of shadcn-ui/taxonomy bundled in `public/repos/`
+  (`src/lib/landing-slice.ts`, labelled "Recorded run"), so the page the server
+  sends is complete before any script runs. Every task after it, typed by the
+  figure or by the visitor, runs the real localizer in the visitor's tab:
+  `src/lib/landing-engine.ts` loads it and the bundled Repo as the figure nears
+  the screen, and the task is not sent anywhere. `landing-slice.test.ts`
+  re-runs the localizer and fails if the record drifts; `landing-engine.test.ts`
+  checks that the tab's engine reproduces it. In the app it renders the user's
+  actual Slice.
 - It appears in three places: the landing page's Fig. 1, the loading state
   while localizing, and the header of a Run receipt. Nowhere else.
 - `src/components/Aperture.tsx`: HTML and CSS, no new dependency. The app's
@@ -731,3 +733,42 @@ and this branch's design.
 - Screenshots: `heldout-case-board-1440-light.jpg`, and
   `merge-fig1-handoff-390-light.jpg` (a task with no record, handed to the
   workspace).
+
+### Public again (November 21, 2026)
+
+The owner decided to keep the repository public, so the private policy the
+last merge followed no longer applies; its rewrite for a public repository is
+its own pull request (#87). This branch takes back what it gave up for that
+policy, and merges `main` again (`2ba26fc`), which brings the move from
+Supabase to Neon (#83).
+
+- **Fig. 1 runs the localizer in the visitor's tab again.** `adc938c` is
+  reverted: `landing-runs.json`, `pnpm landing:record` and the hand-off to the
+  workspace are gone, and any task gets its own Slice, not only the eleven that
+  were recorded, as in "The live Slice" above. The first view is still the
+  recorded run, so the page is whole before the engine loads, and the copy says
+  again that the task is not sent anywhere.
+- **The header's Source link is back** on desktop, where it sat before the last
+  merge. The footer's GitHub links, the workspace rail's Code link and the
+  command menu's "Source on GitHub" stay off; support still goes to
+  `locus-support`.
+- **Copy:** the evidence page no longer says the implementation is kept
+  private; the terms say the source is public to read and evaluate, with every
+  right still reserved; the privacy policy names Neon where it named Supabase.
+  The same wording goes to `main` in #87. Neither page's effective date changed.
+- **Fig. 3 stays on the held-out benchmark.** It moved there because `main`'s
+  benchmark did, not to keep anything private, so that reason still holds.
+- **Checks:** `pnpm lint`, `pnpm typecheck`, `pnpm check:merge-markers`,
+  `pnpm check:alpha-claims`, `pnpm evidence:release1`, `pnpm check-sync`,
+  `pnpm db:types --check` and `pnpm build` pass. `pnpm test`: 1105 passed.
+- **Browsers,** on a production build. In Chromium: the header at 1440 in both
+  themes (Source in line with the links beside it, at their size and colour)
+  and at 320, 360, 375 and 390 (one line, no sideways scroll); Fig. 1 playing
+  its own tasks live at 1440 and 390; a typed task answered in the tab with no
+  request after it; the command menu's answer about the task; the evidence,
+  terms and privacy wording. In WebKit (Playwright's build): the Source link, a
+  typed task answered with no request, and the header at 320 and 390.
+- **Not checked:** Firefox; Safari on a real phone; signed-in pages; a real
+  Vercel deployment.
+- Screenshot: `public-fig1-live-390-light.jpg` (a typed task, localized in the
+  tab).
