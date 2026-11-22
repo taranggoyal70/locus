@@ -24,7 +24,9 @@ export function packContext(repo: RepoData, result: LocateResult, format: Export
   for (const f of result.slice) {
     const content = fileContent(repo, f.rel);
     if (content === undefined) continue;
-    const t = Math.ceil(content.length / 4);
+    // The localizer's own estimate for this file, so the header agrees with
+    // the meter's Slice total instead of drifting by a rounding.
+    const t = f.tokens;
     if (tokens + t > BUDGET) { dropped += 1; continue; }
     // Label with the repo-relative path: this block gets pasted into an agent
     // working on a real checkout, where the source-root-relative spelling does

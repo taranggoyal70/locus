@@ -43,6 +43,15 @@ describe("controlled-alpha context token view", () => {
   });
 });
 
+describe("packed context", () => {
+  it("counts the tokens the meter shows for the same Slice", () => {
+    const packed = packContext(repo, result, "claude");
+
+    expect(packed).toMatchObject({ files: 1, tokens: result.sliceTokens });
+    expect(packed.text).toContain(`<!-- 1 file(s), ~${result.sliceTokens} tokens, localized by Locus -->`);
+  });
+});
+
 describe("web packed context sparse warning", () => {
   const sparseResult: LocateResult = {
     ...result,
