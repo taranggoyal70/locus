@@ -4,7 +4,7 @@ import { admissionSentence } from "@/lib/admission-copy";
 import { REPO_URL } from "@/lib/config";
 import { CommandPalette } from "@/components/CommandPalette";
 import { frame, Rails } from "@/components/Datasheet";
-import { FooterField } from "@/components/FooterField";
+import { FooterScene } from "@/components/FooterScene";
 import { MarketingNavLink } from "@/components/MarketingNavLink";
 import { MobileMenu } from "@/components/MobileMenu";
 import { NavShortcuts } from "@/components/NavShortcuts";
@@ -105,7 +105,7 @@ export function MarketingShell({
       </div>
       <footer data-band="dark" className="bg-canvas text-ink">
         <div className={frame}>
-          <FooterField className="pt-14" />
+          <FooterScene className="pt-10" />
           <div className="grid grid-cols-3 gap-x-6 gap-y-10 border-t border-line py-12 md:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))]">
             <div className="col-span-3 md:col-span-1">
               <Wordmark size={26} />

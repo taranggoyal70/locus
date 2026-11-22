@@ -8,6 +8,16 @@ const ROWS = 7;
 const CELL = 10;
 const GAP = 4;
 
+/** The field's grid, for the footer scene that draws over it. */
+export const FIELD = {
+  columns: COLUMNS,
+  rows: ROWS,
+  cell: CELL,
+  pitch: CELL + GAP,
+  width: COLUMNS * (CELL + GAP) - GAP,
+  height: ROWS * (CELL + GAP) - GAP,
+} as const;
+
 function noise(index: number): number {
   const value = Math.sin(index * 12.9898) * 43758.5453;
   return value - Math.floor(value);
