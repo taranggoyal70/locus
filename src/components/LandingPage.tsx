@@ -68,7 +68,7 @@ export function LandingPage() {
             </div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
               <Link href="/workspace" className={primaryAction}>Localize a public Repo <span aria-hidden="true">↗</span></Link>
-              <a href="#try" className={textLink}>See a Slice here, no sign-in</a>
+              <a href="#try" className={textLink}>Try a task here, no sign-in</a>
               <Link href="/demo" className={textLink}>Watch the migration demo</Link>
             </div>
           </div>
@@ -79,13 +79,13 @@ export function LandingPage() {
         <section id="try" className={`${frame} scroll-mt-16 py-16 sm:py-20`}>
           <div className={sectionGrid}>
             <SectionLabel n="01" label="The Slice" />
-            <RiseWords lines={["Give it a task.", { text: "See what it leaves out.", className: "text-muted" }]} className={sectionHeading} />
+            <RiseWords lines={["Give it a task.", { text: "It runs in this tab.", className: "text-muted" }]} className={sectionHeading} />
           </div>
           <figure className="mt-10 sm:mt-14">
             <Aperture />
             <FigCaption n={1}>
-              One mark per file in a bundled copy of shadcn-ui/taxonomy. Every Slice here is a recorded run of the real
-              localizer; a task of your own opens in the workspace.
+              One mark per file in a bundled copy of shadcn-ui/taxonomy. This is the real localizer, running on this
+              page: your task is not sent anywhere.
             </FigCaption>
           </figure>
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">

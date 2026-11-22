@@ -16,8 +16,8 @@ describe("public early-access landing contract", () => {
     expect(html).toContain("Localize a public Repo");
     expect(html).toContain("Free for JavaScript, TypeScript, and Python Repos. No card. No repository write access.");
     expect(html).toContain("Watch the migration demo");
-    expect(html).toContain("See a Slice here, no sign-in");
-    expect(html).toContain("Every Slice here is a recorded run of the real");
+    expect(html).toContain("Try a task here, no sign-in");
+    expect(html).toContain("your task is not sent anywhere");
     expect(html).toContain('href="/demo"');
     expect(html).toContain("Request Agent Run access");
     // The tag dropped a redundant "access required": it already says invite-gated.
