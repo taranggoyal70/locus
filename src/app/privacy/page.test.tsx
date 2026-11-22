@@ -10,7 +10,8 @@ describe("public early-access privacy policy", () => {
     expect(html).toContain("Effective August 30, 2026");
     expect(html).toContain("public repositories only");
     expect(html).toContain("Durable Run records");
-    expect(html).toContain("Clerk, Supabase, GitHub, and Vercel");
+    expect(html).toContain("Clerk, Neon, GitHub, and Vercel");
+    expect(html).not.toContain("Supabase");
     expect(html).toContain("github.com/taranggoyal70/locus-support");
     expect(html).not.toContain("github.com/taranggoyal70/locus/issues");
     expect(html).toContain("Cloudflare Workers AI");
