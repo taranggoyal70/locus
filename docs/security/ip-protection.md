@@ -1,123 +1,136 @@
 # Locus intellectual-property handling policy
 
 **Owner:** Tarang Goyal<br>
-**Classification:** Confidential — authorized access only<br>
-**Effective:** September 15, 2026
+**Classification:** Public<br>
+**Effective:** November 21, 2026, replacing the version of September 15, 2026
 
-This policy records how Locus protects non-public implementation details and
-commercially valuable know-how. It supplements the repository `LICENSE`; it is
-not a replacement for signed confidentiality and intellectual-property
-assignment agreements or advice from qualified counsel.
+This policy records how Locus protects its intellectual property while its
+source code is public. It supplements the repository `LICENSE`; it is not a
+replacement for signed intellectual-property assignment agreements or advice
+from qualified counsel.
 
-## Repository status and prior exposure
+## Repository status
 
-The production repository is private. Only collaborators who need the source to
-build, operate, secure, or review Locus may be granted access.
+The repository is public on GitHub, and on November 21, 2026 the owner decided
+to keep it public. Locus is source-available, not open source: anyone can read
+the code, but `LICENSE` reserves all rights, and reading the code grants no right
+to use, copy, modify, or distribute it.
 
-The repository was publicly accessible before September 15, 2026. Changing its
-visibility prevents future public access through GitHub, but it cannot recall a
-clone, archive, or screenshot made while it was public. Material that was
-publicly disclosed must not be represented as a trade secret without legal
-review. New and undisclosed implementation details can still be protected when
-they are handled confidentially from creation.
+The September 15, 2026 version of this policy described a private repository
+with a confidential core. Everything committed to this repository, at any point
+in its history, is publicly disclosed. That includes the Localize ranking,
+scoring, Closure construction, Widen logic, and tuning; Agent orchestration,
+prompts, provider policy, containment, and Guard internals; and the benchmark
+corpus and results in `benchmarks/`. None of it may be represented as a trade
+secret. Copyright and the terms of `LICENSE` still apply to all of it.
+
+Material that must stay confidential has to be kept out of this repository from
+the start. Once pushed, it is public, and deleting it later cannot recall a
+clone, fork, archive, or screenshot.
 
 ## Information classes
 
-### Confidential core
+### Public: everything in this repository
 
-Keep these assets in private repositories and private operational systems:
+A push to any branch publishes its commits. Pull requests, review comments,
+issues, release notes, and GitHub Actions logs are public too. Treat each of them
+as published the moment it is created.
 
-- Localize ranking, scoring, Closure construction, Widen logic, and tuning
-- Agent orchestration, prompts, provider policy, containment, and Guard internals
-- The complete benchmark corpus, unpublished results, adversarial cases, and
-  evaluation-generation process
-- Abuse controls, rate-limit strategy, provider credentials, deployment
-  configuration, incident records, and non-public architecture
+### Kept out of the repository
+
+Keep these in private operational systems, never in commits, issues, pull
+requests, or CI logs:
+
+- Credentials and secrets (see below)
+- Production configuration values, deployment settings, abuse-control settings
+  that live outside the code, and incident records
 - Customer source, Task Evidence, Run contents, usage records, and personal data
 - Commercial plans, partner terms, pricing experiments, and the non-public roadmap
-
-### Approved public material
-
-Only deliberately reviewed artifacts may be public. Examples include the
-marketing site, product documentation, selected benchmark methodology and
-results, API schemas, a minimal SDK, and demonstration Repos. A public artifact
-must not contain the private implementation needed to reproduce the hosted
-service.
+- New implementation work that is meant to stay proprietary. Develop it in a
+  separate private repository; it cannot be made confidential after it is
+  pushed here.
 
 ### Secrets
 
 Credentials, signing keys, session material, encryption keys, access tokens,
 webhook secrets, and production connection strings must never be committed.
 Store them in the approved deployment provider or secret manager. If one enters
-Git history, revoke or rotate it immediately; deleting the file is not enough.
+Git history, assume it was copied the moment it was pushed: revoke or rotate it
+immediately. Deleting the file is not enough.
 
 ## Access rules
 
-1. Grant repository and production access only for a current, documented need.
-2. Require multi-factor authentication on every account with access.
-3. Do not fork, mirror, export, or paste confidential source into personal
-   repositories, public issue trackers, unapproved AI services, or shared chats.
-4. Share the minimum code and data required for a contractor or collaborator's
-   task. Remove access promptly when the work ends.
-5. Use encrypted devices and private networks. Do not store production source or
-   customer data on shared or unmanaged machines.
+1. Grant write access to the repository, and access to production systems, only
+   for a current, documented need.
+2. Require multi-factor authentication on every account with that access.
+3. Do not paste customer data, Run contents, credentials, or incident details
+   into commits, issues, pull requests, CI logs, unapproved AI services, or
+   shared chats.
+4. Give a contractor or collaborator only the production access and data their
+   task needs. Remove access promptly when the work ends.
+5. Use encrypted devices. Do not store customer data or credentials on shared or
+   unmanaged machines.
 6. Review collaborators, deploy keys, GitHub Apps, webhooks, CI credentials, and
    deployment access at least once each quarter.
-7. Report suspected disclosure immediately. Preserve evidence and do not contact
-   a suspected copier before legal review.
+7. Report a suspected exposure of a secret or customer data immediately, and
+   preserve the evidence.
 
 ## Contributor and ownership requirements
 
-Before a founder, employee, contractor, advisor, or outside contributor receives
-confidential source access, the company should have a signed agreement covering
-confidentiality, present assignment of relevant intellectual property, invention
-assignment, and any excluded background intellectual property. Payment for work
-alone is not treated as proof that Locus owns the resulting code.
+Before a founder, employee, contractor, or advisor receives write access or is
+paid for work on Locus, the company should have a signed agreement covering
+present assignment of relevant intellectual property, invention assignment,
+confidentiality of the material kept out of the repository, and any excluded
+background intellectual property. Payment for work alone is not treated as proof
+that Locus owns the resulting code.
 
-Do not accept an external contribution until its ownership and license are
-documented. Do not add code copied from another project merely because it is
-visible online; verify its license and preserve required notices.
+Do not accept an outside contribution, including a pull request from a public
+fork, until its ownership and license are documented. Do not add code copied
+from another project merely because it is visible online; verify its license
+and preserve required notices.
 
-## Public-release gate
+## Before pushing
 
-Before publishing any Locus repository, package, image, model artifact, paper, or
-technical post:
+Every push is a publication. Before pushing a commit, opening a pull request, or
+publishing a package, image, paper, or technical post:
 
-1. Create a release artifact from an allowlisted set of files. Do not publish
-   directly from the private core repository.
-2. Review the artifact for implementation details that reproduce the confidential
-   core, unpublished benchmark data, internal comments, customer data, and
-   infrastructure information.
-3. Run the full-history secret scan and inspect the packaged artifact separately.
-4. Assign an explicit license written for the intended public use. Absence of a
-   license is not a release strategy.
-5. Confirm ownership of every bundled dependency, asset, contribution, and data
-   set and preserve third-party notices.
-6. Obtain patent review before publishing a potentially novel technical method.
-   Publication may affect rights outside the United States.
-7. Record the approved commit, exact file list, reviewer, date, and destination.
+1. Check that it contains no credentials, customer data, Run contents, personal
+   data, commercial terms, or incident details, including in fixtures,
+   screenshots, and logs.
+2. Obtain patent review before pushing a potentially novel technical method.
+   Pushing it publishes it, and publication may affect patent rights outside the
+   United States.
+3. Confirm ownership of every bundled dependency, asset, contribution, and data
+   set, and preserve third-party notices.
+4. For a package or image, assign a license written for that use and publish
+   from a reviewed list of files.
 
-The manual npm release workflow does not itself authorize publication. A public
-CLI or SDK should contain only the client contract needed to call the hosted
-service; the hosted implementation remains private.
+The CLI package in `cli/` is marked private so it cannot be published by
+accident, and the manual npm release workflow does not itself authorize
+publication.
 
 ## Detection and response
 
-CI scans Git history for credential patterns on every push and pull request.
-Synthetic credentials used to test Locus's redaction behavior are suppressed by
-exact historical fingerprints so that new findings still fail the scan.
+CI scans the full Git history for credential patterns on every push to `main`
+and every pull request against it. Synthetic credentials used to test Locus's
+redaction behavior are suppressed by exact historical fingerprints so that new
+findings still fail the scan.
 
-For suspected source disclosure:
+For a suspected exposure of a secret or customer data:
 
 1. Restrict or revoke the affected account and preserve access records.
-2. Rotate any credentials that the disclosed material could expose.
-3. Record the repository, commit, URLs, timestamps, screenshots, and a concise
+2. Rotate any credentials that the exposed material could reveal.
+3. Record what was exposed, where, and for how long.
+
+For a suspected copy of Locus's code beyond what `LICENSE` allows:
+
+1. Record the repository, commit, URLs, timestamps, screenshots, and a concise
    comparison without modifying the suspected evidence.
-4. Ask qualified counsel to determine whether the issue is copyright
-   infringement, breach of contract, trade-secret misappropriation, trademark
-   misuse, or lawful independent development.
-5. Send a platform notice or takedown request only when the legal basis and copied
-   material have been verified.
+2. Ask qualified counsel to determine whether the issue is copyright
+   infringement, breach of contract, trademark misuse, or lawful independent
+   development.
+3. Send a platform notice or takedown request only when the legal basis and
+   copied material have been verified.
 
 ## Quarterly review record
 
