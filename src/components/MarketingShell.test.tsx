@@ -11,7 +11,10 @@ describe("public early-access marketing navigation", () => {
     expect(html).toContain("Try Locus");
     expect(html).toContain('href="/demo"');
     expect(html).toContain('href="/evidence/release-1"');
-    expect(html).not.toContain("github.com/taranggoyal70/locus");
+    // The source is public, so the desktop header links to it. Support still
+    // lives in its own tracker, never in the product repository's issues.
+    expect(html).toMatch(/<a href="https:\/\/github\.com\/taranggoyal70\/locus" [^>]*>\s*Source\s*<\/a>/);
+    expect(html).not.toContain("github.com/taranggoyal70/locus/issues");
     const signInLink = html.match(/<a[^>]*href="\/sign-in"[^>]*>Sign in<\/a>/)?.[0];
     expect(signInLink).toBeTruthy();
     expect(signInLink).not.toContain("hidden");

@@ -1,33 +1,61 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { headers } from "next/headers";
 import { connection } from "next/server";
+
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+// layers.css first: it fixes the cascade layer order for everything after it.
+import "./layers.css";
+import "./fonts.css";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
+// The display serif. Its optical-size axis gives large headlines the fine
+// display cut and small headings the sturdier text cut from one file. The site
+// sets it only at regular weight, so this is Google's Latin file with the
+// weight axis fixed at 400: 57 KB instead of 132 KB, preloaded on every page.
+// See src/assets/fonts/OFL.txt. Its stand-in while loading is defined in
+// fonts.css, so headings keep their line breaks when the font swaps in.
+const newsreader = localFont({
+  src: "../assets/fonts/Newsreader-Regular-opsz.woff2",
+  variable: "--font-newsreader",
+  weight: "400",
+  style: "normal",
+  adjustFontFallback: false,
+  fallback: ["Newsreader Fallback", "ui-serif", "Georgia", "serif"],
+});
 
 export const metadata: Metadata = {
-  title: "Locus — evidence-first code localization",
+  title: "Locus · Evidence-first code localization",
   description:
     "Localize a public JavaScript, TypeScript, or Python Repo into a task-sized Slice with every Included, Excluded, and Widened file visible.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://locus-five-iota.vercel.app"),
   openGraph: {
-    title: "Locus — evidence-first code localization",
+    title: "Locus · Evidence-first code localization",
     description: "Ship the task, not the repository. Build a task-sized Slice with visible context evidence.",
     siteName: "Locus",
     type: "website",
   },
   twitter: {
-    card: "summary",
-    title: "Locus — evidence-first code localization",
+    // The 1200 x 630 card from opengraph-image.tsx, shown full width.
+    card: "summary_large_image",
+    title: "Locus · Evidence-first code localization",
     description: "Ship the task, not the repository. Build a task-sized Slice with visible context evidence.",
   },
   keywords: [
     "AI coding agent", "context window", "code context", "public repository",
     "dependency graph", "TypeScript", "developer tools", "Claude", "Cursor", "Codex",
+  ],
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f3f2ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f0f0e" },
   ],
 };
 
@@ -38,9 +66,19 @@ export default async function RootLayout({
   // incoming request lets Next apply that nonce to its framework, Analytics,
   // and Speed Insights scripts instead of serving nonce-less static HTML.
   await connection();
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      // The theme boot script sets data-theme before React hydrates.
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
+    >
+      <head>
+        {/* Runs before first paint so a pinned theme never flashes the other one. */}
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body className="min-h-full">
         {children}
         <Analytics />

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { frame } from "@/components/Datasheet";
 import { MarketingShell } from "@/components/MarketingShell";
+import { monoLabel, PageHeader } from "@/components/PageHeader";
 import { WaitlistForm } from "@/components/WaitlistForm";
 import { admissionGateNote, admissionHeadline } from "@/lib/admission-copy";
 
@@ -16,73 +18,81 @@ const alphaBoundaries = [
   "No billing, private-Repo access, or external GitHub writes",
 ];
 
+const cta =
+  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-chip bg-ink px-5 text-[15px] font-medium text-canvas transition-[background-color,transform] duration-150 hover:bg-ink/88 active:scale-[0.97] sm:w-auto";
+
 export function PricingContent({ selfServeOpen }: { selfServeOpen: boolean }) {
   const [showAccessForm, setShowAccessForm] = useState(false);
+  const [headline, ...rest] = admissionHeadline(selfServeOpen).split(/(?<=\.)\s+/);
 
   return (
     <MarketingShell selfServeOpen={selfServeOpen}>
-      <main className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
-        <div className="text-center">
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            Public early access
-          </p>
-          <h1 className="mt-4 font-display text-4xl font-semibold tracking-[-0.05em] text-paper sm:text-6xl">
-            {admissionHeadline(selfServeOpen)}
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-muted-light sm:text-lg">
-            {admissionGateNote(selfServeOpen)}{" "}
-            Create a free account to inspect a task-sized Slice for any supported public Repo.
-            {selfServeOpen
-              ? " Every verified account can start up to two Agent Runs in a rolling 24-hour window."
-              : " We are inviting a smaller group to test complete Agent Runs before introducing paid plans."}
-          </p>
-        </div>
+      <main>
+        <PageHeader label="Public early access" title={headline ?? ""} subtitle={rest.join(" ") || undefined}>
+          {admissionGateNote(selfServeOpen)}{" "}
+          Create a free account to inspect a task-sized Slice for any supported public Repo.
+          {selfServeOpen
+            ? " Every verified account can start up to two Agent Runs in a rolling 24-hour window."
+            : " We are inviting a smaller group to test complete Agent Runs before introducing paid plans."}
+        </PageHeader>
 
-        <section id="request-access" className="mx-auto mt-8 max-w-3xl scroll-mt-24 rounded-[26px] border border-accent/35 bg-surface p-6 shadow-[0_28px_80px_rgba(20,35,59,0.10)] sm:p-9">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-                {selfServeOpen ? "Self-serve Agent Runs" : "Design-partner access"}
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.035em] text-paper">
-                {selfServeOpen ? "Two Runs per rolling 24 hours" : "One honest early-access contract"}
-              </h2>
+        <section className={`${frame} pb-20 sm:pb-28`}>
+          <div
+            id="request-access"
+            className="grid scroll-mt-24 overflow-hidden rounded-card border border-ink md:grid-cols-2"
+          >
+            <div className="bg-surface p-7 sm:p-10">
+              <div className="flex items-baseline justify-between gap-4">
+                <h2 className="font-display text-[34px] font-normal leading-none tracking-[-0.02em] text-ink">Included</h2>
+                <span className={monoLabel}>Every account</span>
+              </div>
+              <ul className="mt-8 border-t border-line-2">
+                {alphaBoundaries.map((boundary) => (
+                  <li key={boundary} className="flex items-start gap-4 border-b border-line py-3.5 text-[15px] leading-6 text-ink-2">
+                    <span aria-hidden className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-[1px] bg-included" />
+                    {boundary}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <span className="rounded-full border border-line-strong bg-ink px-3 py-1.5 text-xs font-semibold text-paper">
-              $0 during early access
-            </span>
+
+            <div data-band="dark" className="@container flex flex-col bg-canvas p-7 text-ink sm:p-10">
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <p className={monoLabel}>{selfServeOpen ? "Self-serve Agent Runs" : "Design-partner access"}</p>
+                <span className="rounded-chip border border-line-2 px-2 py-1 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-ink-2">
+                  $0 during early access
+                </span>
+              </div>
+              {/* Capped by the card's own width (11cqi): side by side at 768, the second line
+                  only just fit in the serif and wrapped in the stand-in until it loaded. */}
+              <h2 className="mt-8 font-display text-[length:min(clamp(32px,3.4vw,44px),11cqi)] font-normal leading-[1.04] tracking-[-0.02em] text-ink">
+                {selfServeOpen ? (
+                  "Two Runs per rolling 24 hours."
+                ) : (
+                  <>
+                    One honest
+                    <span className="block text-muted">early-access contract.</span>
+                  </>
+                )}
+              </h2>
+              <p className="mt-5 max-w-md text-[15px] leading-6 text-ink-2">
+                {selfServeOpen
+                  ? "Verified email required. Shared capacity is limited, and no payment information is requested."
+                  : "Access is manually approved. No payment information is requested."}
+              </p>
+              <div className="mt-auto pt-10">
+                {selfServeOpen ? (
+                  <Link href="/workspace" className={cta}>
+                    Open the workspace <span aria-hidden="true">→</span>
+                  </Link>
+                ) : (
+                  <button type="button" onClick={() => setShowAccessForm(true)} className={cta}>
+                    Request Agent Run access <span aria-hidden="true">→</span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-
-          <ul className="mt-7 space-y-3">
-            {alphaBoundaries.map((boundary) => (
-              <li key={boundary} className="flex items-start gap-3 text-sm leading-6 text-muted-light">
-                <span aria-hidden className="mt-0.5 text-accent">+</span>
-                {boundary}
-              </li>
-            ))}
-          </ul>
-
-          {selfServeOpen ? (
-            <Link
-              href="/workspace"
-              className="mt-8 block w-full rounded-xl bg-accent px-5 py-3.5 text-center text-sm font-semibold text-ink transition hover:bg-accent-dim"
-            >
-              Open the workspace
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowAccessForm(true)}
-              className="mt-8 w-full rounded-xl bg-accent px-5 py-3.5 text-sm font-semibold text-ink transition hover:bg-accent-dim"
-            >
-              Request Agent Run access
-            </button>
-          )}
-          <p className="mt-3 text-center text-xs leading-5 text-muted">
-            {selfServeOpen
-              ? "Verified email required. Shared capacity is limited, and no payment information is requested."
-              : "Access is manually approved. No payment information is requested."}
-          </p>
         </section>
       </main>
       {!selfServeOpen && showAccessForm && <WaitlistForm onClose={() => setShowAccessForm(false)} />}

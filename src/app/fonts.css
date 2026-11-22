@@ -1,0 +1,18 @@
+/*
+ * Stands in for Newsreader until it loads (layout.tsx names it as the first
+ * fallback), sized so headings wrap the same way in both. These are the
+ * overrides next/font/google derives for Newsreader; next/font/local would
+ * size the stand-in from the file's text cut, which re-wrapped headings on
+ * phones as the font arrived.
+ *
+ * Plain CSS on purpose: the same rule written in globals.css does not survive
+ * Tailwind's pass over that file.
+ */
+@font-face {
+  font-family: "Newsreader Fallback";
+  src: local("Times New Roman");
+  ascent-override: 69.68%;
+  descent-override: 25.12%;
+  line-gap-override: 0%;
+  size-adjust: 105.48%;
+}

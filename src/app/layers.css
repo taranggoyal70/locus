@@ -1,0 +1,22 @@
+/*
+ * Fixes the cascade layer order before any other stylesheet declares a layer.
+ * Clerk renders into `clerk` (cssLayerName in the Clerk layout): above
+ * Tailwind's base, so its own styles beat the reset, and below utilities, so
+ * the classes in ClerkThemed.tsx can restyle its widgets.
+ *
+ * This file is plain CSS that Tailwind leaves alone. The same statement or a
+ * `@layer base` block written in globals.css does not survive Turbopack's CSS
+ * pass: the statement is dropped and the block is unwrapped, which left the
+ * rule below unlayered, where it beat every border-colour utility on the site.
+ */
+@layer properties, theme, base, clerk, components, utilities;
+
+@layer base {
+  /* The default hairline. `:root *` outranks the reset's bare `*`, which sits
+     later in this same layer and would set the colour back to currentColor. */
+  :root *,
+  :root ::before,
+  :root ::after {
+    border-color: var(--line);
+  }
+}

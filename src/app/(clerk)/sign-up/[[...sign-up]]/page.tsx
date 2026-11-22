@@ -1,7 +1,7 @@
-import { SignUp } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
-import { AUTH_APPEARANCE, AuthLoading, AuthShell } from "@/components/AuthShell";
+import { AuthLoading, AuthShell } from "@/components/AuthShell";
+import { ThemedSignUp } from "@/components/ClerkThemed";
 import { selfServeOpen } from "@/lib/admission";
 import { signUpDescription } from "@/lib/admission-copy";
 
@@ -19,11 +19,9 @@ export default function SignUpPage() {
       title="Start with the files that matter."
       description={description}
     >
-      <SignUp
-        appearance={AUTH_APPEARANCE}
+      <ThemedSignUp
         fallback={<AuthLoading label="Preparing account creation" />}
         path="/sign-up"
-        routing="path"
         signInUrl="/sign-in"
         fallbackRedirectUrl="/workspace"
       />
