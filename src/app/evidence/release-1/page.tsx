@@ -174,7 +174,7 @@ export default function Release1EvidencePage() {
                 <h2 className={sectionHeading}>Every task is inspectable.</h2>
                 <p className="max-w-sm text-[14px] leading-6 text-ink-2">
                   The frozen protocol, completion state, thresholds, and case ledger are published on
-                  this page without exposing the private implementation or internal evaluation corpus.
+                  this page.
                 </p>
               </div>
               <ul className="mt-8 border-t border-ink">
