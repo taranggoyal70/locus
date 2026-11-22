@@ -1,7 +1,7 @@
 import type { LocateResult } from "@/lib/types";
 
 /**
- * The Slice the landing page's aperture draws: a real localization, recorded.
+ * The Slice the home page demo plays: a real localization, recorded.
  *
  * Locus ran on the copy of shadcn-ui/taxonomy bundled in
  * public/repos/taxonomy.json with the task below. Recorded rather than run per
@@ -210,7 +210,7 @@ export const RECORDED_RESULT: LocateResult = {
   sparse: RECORDED_SLICE.sparse,
 };
 
-export type ApertureColumn = {
+export type RepoMapColumn = {
   label: string;
   /** Every file in the column, sorted, so a mark's place is stable. */
   files: string[];
@@ -219,11 +219,11 @@ export type ApertureColumn = {
 const COLUMN_PREFIXES = ["app/", "components/", "lib/"] as const;
 
 /**
- * The Repo laid out the way the aperture draws it: one column per large
+ * The Repo laid out the way the demo's Repo map draws it: one column per large
  * top-level folder, and every smaller folder and loose file gathered into
  * "other".
  */
-export function apertureColumns(files: readonly string[]): ApertureColumn[] {
+export function repoMapColumns(files: readonly string[]): RepoMapColumn[] {
   const columns = new Map<string, string[]>();
   for (const file of files) {
     const prefix = COLUMN_PREFIXES.find((candidate) => file.startsWith(candidate));

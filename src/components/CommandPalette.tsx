@@ -98,14 +98,14 @@ const COMMANDS: Command[] = [
   {
     group: "Ask Locus",
     label: "Is the task on the home page sent anywhere?",
-    keywords: "privacy browser figure",
+    keywords: "privacy browser demo figure",
     action: {
       kind: "answer",
       answer: {
         title: "No.",
-        body: "Fig. 1 runs the real localizer in your tab, on a bundled copy of shadcn-ui/taxonomy.",
+        body: "The home page demo runs the real localizer in your tab, on a bundled copy of shadcn-ui/taxonomy.",
         href: "/#try",
-        linkLabel: "Open Fig. 1",
+        linkLabel: "Open the demo",
       },
     },
   },
@@ -118,7 +118,7 @@ const COMMANDS: Command[] = [
       answer: {
         title: "Against held-out fixes.",
         body: "Locus runs on each fix's parent commit in third-party Repos it was never tuned on, and the Slice has to contain the files the fix went on to change. It does not measure agent completion.",
-        href: "/#evidence",
+        href: "/evidence/release-1#cases",
         linkLabel: "See every case",
       },
     },

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { apertureColumns, RECORDED_RESULT, RECORDED_SLICE } from "@/lib/landing-slice";
+import { repoMapColumns, RECORDED_RESULT, RECORDED_SLICE } from "@/lib/landing-slice";
 import { buildGraph, locate } from "@/lib/localizer";
 import type { RepoData } from "@/lib/types";
 
@@ -26,8 +26,8 @@ describe("the landing page's recorded Slice", () => {
     );
   });
 
-  it("places every file in exactly one aperture column", () => {
-    const columns = apertureColumns(RECORDED_SLICE.files);
+  it("places every file in exactly one Repo map column", () => {
+    const columns = repoMapColumns(RECORDED_SLICE.files);
 
     expect(columns.map(({ label }) => label)).toEqual(["app", "components", "lib", "other"]);
     expect(columns.flatMap(({ files }) => files).sort()).toEqual([...RECORDED_SLICE.files]);

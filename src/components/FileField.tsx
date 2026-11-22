@@ -1,8 +1,7 @@
 /**
  * The file field: one square mark per file (or per group of files in a large
- * Repo), in a column per folder. Fig. 1 on the landing page and the workspace
- * both draw it; the surrounding `.aperture` element owns the open, closed and
- * scanning states. Reference: docs/design/locus-design-brief.md.
+ * Repo), in a column per folder. The workspace draws it; the surrounding `.aperture`
+ * element owns the open, closed and scanning states. Reference: docs/design/locus-design-brief.md.
  */
 
 export type MarkKind = "anchor" | "included" | "excluded";

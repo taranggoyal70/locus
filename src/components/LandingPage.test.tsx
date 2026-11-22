@@ -5,6 +5,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LandingPage } from "@/components/LandingPage";
 
+// The localizer reaches the home page only as a chunk of its own, loaded when
+// a reader reaches for the demo (landing-engine.ts): never with the page.
+vi.mock("@/lib/localizer", () => {
+  throw new Error("The landing page imported the localizer");
+});
+
 describe("public early-access landing contract", () => {
   it("states the supported workflow and benchmark limits", () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "");
@@ -23,8 +29,8 @@ describe("public early-access landing contract", () => {
     // The tag dropped a redundant "access required": it already says invite-gated.
     expect(html).toContain("invite-gated");
     expect(html).toContain("review-ready, check-passing proposal");
-    // The hero figure is a recorded localization, never an invented one.
-    expect(html).toContain("Recorded run on");
+    // The hero plays the real localizer's Slice, never an invented one.
+    expect(html).toContain("The real localizer, running in this tab");
     expect(html).toContain("shadcn-ui/taxonomy");
     expect(html).not.toContain("Illustrative example");
     expect(html).toContain("fix-file recall on held-out Repos");
@@ -37,6 +43,19 @@ describe("public early-access landing contract", () => {
     expect(html).not.toContain("Fewer total tokens per verified task");
     expect(html).not.toContain("measuring the whole token loop");
     expect(html).not.toContain("\u2014");
+  });
+
+  it("plays the product first, then sends the deep evidence to its own page", () => {
+    vi.stubEnv("LOCUS_SELF_SERVE", "");
+    const html = renderToStaticMarkup(<LandingPage />);
+
+    expect(html.indexOf('id="try"')).toBeLessThan(html.indexOf('id="evidence"'));
+    for (const chapter of ["Repo", "Task", "Slice", "Hand off"]) expect(html).toContain(chapter);
+    expect(html).toContain('href="/evidence/release-1#cases"');
+    // The mascot is decoration: every one stays out of the accessibility tree.
+    const mascots = html.match(/<svg[^>]*class="mascot[^"]*"[^>]*>/g) ?? [];
+    expect(mascots.length).toBeGreaterThan(0);
+    for (const mascot of mascots) expect(mascot).toContain('aria-hidden="true"');
   });
 
   it("offers Agent Runs directly when self serve is open", () => {
