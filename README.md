@@ -7,16 +7,16 @@
 [Live product](https://locus-five-iota.vercel.app) · [Measured results](#measured-results) · [How it works](#how-it-works) · [Quick start](#quick-start) · [CLI and MCP](#use-it-from-an-agent) · [Status and limits](#status-and-limits)
 
 [![CI](https://github.com/taranggoyal70/locus/actions/workflows/ci.yml/badge.svg)](https://github.com/taranggoyal70/locus/actions/workflows/ci.yml)
-[![Tests: 978 passing](https://img.shields.io/badge/vitest-978%20passing-087864)](#verify-a-checkout)
-[![Held-out recall](https://img.shields.io/badge/held--out%20fix--file%20recall-60%2F60-087864)](benchmarks/heldout/README.md)
-[![License: proprietary](https://img.shields.io/badge/license-proprietary-14233b)](LICENSE)
-[![Demo](https://img.shields.io/badge/demo-locus--five--iota.vercel.app-14233b)](https://locus-five-iota.vercel.app)
+[![Tests: 978 passing](https://img.shields.io/badge/vitest-978%20passing-161513)](#verify-a-checkout)
+[![Held-out recall](https://img.shields.io/badge/held--out%20fix--file%20recall-60%2F60-b0380e)](benchmarks/heldout/README.md)
+[![License: proprietary](https://img.shields.io/badge/license-proprietary-161513)](LICENSE)
+[![Demo](https://img.shields.io/badge/demo-locus--five--iota.vercel.app-161513)](https://locus-five-iota.vercel.app)
 
 <picture>
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/hero-mobile-dark.svg">
   <source media="(max-width: 600px)" srcset="assets/readme/hero-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.svg">
-  <img src="assets/readme/hero-light.svg" width="100%" alt="Animated replay of a real held-out run on pmndrs/jotai. The task 'vanilla subscriber not notified after nested store.set and sub/unsub inside a write' is typed into locus locate. Of 130 source files, 6 anchors and 11 dependency-closure files light up and 113 are excluded: 17 of 130 files, 17.7K of 62.4K estimated tokens, 72% less context. The file the maintainer actually fixed, src/vanilla/internals.ts, is inside the Slice.">
+  <img src="assets/readme/hero-light.svg" width="100%" alt="Animated replay of a real held-out run on pmndrs/jotai, played once. The task 'vanilla subscriber not notified after nested store.set and sub/unsub inside a write' is typed into locus locate. The repository's 130 source files are drawn as marks in a column per top-level folder; 6 anchors and 11 dependency-closure files light up as the Slice and 113 are excluded: 17 of 130 files, 17.7K of 62.4K estimated tokens, 72% less context. The file the maintainer actually fixed, src/vanilla/internals.ts, is inside the Slice.">
 </picture>
 
 </div>
@@ -38,13 +38,13 @@ as an MCP server for Claude Code, Codex and Cursor.
 
 | Localize a public repository | Contain an agent to the Slice |
 | :--- | :--- |
-| [![The Locus landing page on the live deployment: paste a public GitHub project and Locus finds the files an AI coding task needs and shows why.](assets/readme/landing.jpg)](https://locus-five-iota.vercel.app) | [![The Locus Guard demo on the live deployment: a duplicate-invoice task, the safe area of seven approved files out of 1,842, and a proof receipt waiting for the merge decision.](assets/readme/guard-demo.jpg)](https://locus-five-iota.vercel.app/demo) |
+| [![The Locus landing page: Ship the task. Not the repo. Paste a public GitHub project and Locus finds the files an AI coding tool needs and shows why.](assets/readme/landing.jpg)](https://locus-five-iota.vercel.app) | [![The Locus Guard demo at its last step: a duplicate-invoice task, 7 of 1,842 files needed and 1,835 untouched, and a proof receipt ready for review with tests passed, approved files enforced and the receipt signature verified.](assets/readme/guard-demo.jpg)](https://locus-five-iota.vercel.app/demo) |
 | Paste a public GitHub project and a task; the workspace shows the anchors, the closure and every excluded file with its reason. | Guard approves the files a task needs, blocks the rest, and signs one receipt for the exact fix. The demo tells an illustrative story about a fictional billing system. |
 | **Hold the claim until the evidence exists** | **Call it from code** |
-| [![The Release 1 evidence page on the live deployment: the gate is locked at 0 of 40 valid reviewed arm results, with 20 frozen tasks across 5 public repositories and arm-blinded review.](assets/readme/evidence.jpg)](https://locus-five-iota.vercel.app/evidence/release-1) | [![The API documentation on the live deployment: Bearer-token authentication and POST /api/v1/locate.](assets/readme/api-docs.jpg)](https://locus-five-iota.vercel.app/docs) |
+| [![The Release 1 evidence page: the gate is locked at 0 of 40 valid reviewed arm results, with 20 frozen tasks across 5 public repositories and arm-blinded review.](assets/readme/evidence.jpg)](https://locus-five-iota.vercel.app/evidence/release-1) | [![The API documentation: Bearer-token authentication and POST /api/v1/locate with its request body.](assets/readme/api-docs.jpg)](https://locus-five-iota.vercel.app/docs) |
 | The paired agent study is frozen before it runs, and the public page withholds every outcome metric until all 40 results bind to real Runs and blinded reviews. | `POST /api/v1/locate` returns the Slice, anchors, graph statistics, packed context and refinement guidance for a public repository. |
 
-All four images are unedited captures of the live deployment at 1440 px wide, taken on 2026-11-19.
+All four images are unedited captures of a production build at 1440 px wide, taken on 2026-11-22.
 The hero above is generated from a recorded benchmark run; [asset provenance](assets/readme/README.md).
 
 ## Measured results
@@ -57,8 +57,10 @@ The hero above is generated from a recorded benchmark run; [asset provenance](as
 | Does a Slice cut total agent tokens without lowering accepted work? | **Not measured yet.** 0 of 40 arm results are recorded, so the gate stays locked and no outcome is claimed. | Frozen paired study with blinded human review. [Protocol](benchmarks/release1/README.md) |
 
 <picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/heldout-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/heldout-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/heldout-dark.svg">
-  <img src="assets/readme/heldout-light.svg" width="100%" alt="Bar chart of fix-file recall on localized held-out cases. Task as written: Locus Slice 100.0%, random Slice of the same size 27.3%, 72% median context saved over 57 cases. Scope word removed: Locus Slice 93.7%, random Slice 28.2%, 71.5% median context saved over 54 cases.">
+  <img src="assets/readme/heldout-light.svg" width="100%" alt="Bar chart of fix-file recall on localized held-out cases. Task as written: Locus Slice 100.0%, random Slice of the same size 27.3%, over 57 localized cases with 3 widened, 72% median context saved. Scope word removed: Locus Slice 93.7%, random Slice 28.2%, over 54 localized cases with 6 widened, 71.5% median context saved.">
 </picture>
 
 ### How the held-out benchmark is built
