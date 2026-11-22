@@ -86,8 +86,9 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-paper">Intellectual property</h2>
             <p>
               Copyright © 2026 Tarang Goyal. All rights reserved. The Locus implementation is
-              proprietary and is not published as part of the service. Access to Locus does not grant
-              a right to copy, modify, distribute, sublicense, sell, reverse engineer, or create a
+              proprietary. Its source code is public so it can be read and evaluated, but access to
+              Locus or to its source does not grant a right to copy, modify, distribute, sublicense,
+              sell, reverse engineer, or create a
               competing service from its protected software except where applicable law does not
               permit that restriction or you have separate written permission.
             </p>

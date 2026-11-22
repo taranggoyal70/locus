@@ -147,7 +147,7 @@ export default function Release1EvidencePage() {
             </div>
             <p className="max-w-md text-sm leading-6 text-muted-light">
               The frozen protocol, completion state, thresholds, and case ledger are published on
-              this page without exposing the private implementation or internal evaluation corpus.
+              this page.
             </p>
           </div>
           <div className="mt-7 overflow-hidden rounded-2xl border border-line-strong bg-surface/75">
