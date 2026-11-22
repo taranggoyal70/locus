@@ -50,7 +50,7 @@ export default function PrivacyPage() {
             <p>
               To make Agent Runs durable and auditable, Locus stores task metadata, included and
               excluded file paths, Run Steps and status, generated change sets, Check evidence,
-              review events, and token-usage measurements in Supabase. These records
+              review events, and token-usage measurements in Neon. These records
               are associated with your account and support run history, resume, and review.
             </p>
           </section>
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
           <section>
             <h2>Providers and operational data</h2>
             <p>
-              Clerk, Supabase, GitHub, and Vercel process data needed for authentication, persistence,
+              Clerk, Neon, GitHub, and Vercel process data needed for authentication, persistence,
               repository intake, hosting, workflow execution, and Sandbox operation. Cloudflare Workers
               AI processes task instructions, admitted source, and tool results. Cloudflare states that
               Workers AI customer content is not used for model training without explicit consent. Server
@@ -80,7 +80,7 @@ export default function PrivacyPage() {
             <h2>Your Cloudflare connection</h2>
             <p>
               You may optionally connect a Cloudflare Account ID and Workers AI API token so Runs
-              use capacity from your account. Locus encrypts the token before storing it in Supabase,
+              use capacity from your account. Locus encrypts the token before storing it in Neon,
               never returns it after submission, and uses it only for your Agent Runs. Removing the
               connection from Settings deletes the stored encrypted credential. Cloudflare&apos;s terms,
               limits, and data policy also apply to those requests.
