@@ -9,6 +9,7 @@ import { AgentRunPanel } from "@/components/AgentRunPanel";
 import { WorkspaceField } from "@/components/WorkspaceField";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
+import { Mascot } from "@/components/Mascot";
 import { OnboardingBanner } from "@/components/OnboardingBanner";
 import { RepoLoadFeedback } from "@/components/RepoLoadFeedback";
 import { TaskEvidence } from "@/components/TaskEvidence";
@@ -159,279 +160,179 @@ export function LocusApp({
 
       <div className="min-w-0">
       {isWorkspace && <OnboardingBanner tier={runAccess.tier} />}
-      <main className="mx-auto max-w-[1580px] px-4 pb-16 sm:px-7 lg:px-9">
-        <section className="grid gap-7 py-8 lg:grid-cols-[minmax(360px,0.72fr)_minmax(560px,1.28fr)] lg:items-center lg:gap-9 lg:py-10">
-          <div className="relative py-2">
-            <div className="mb-5 flex flex-wrap items-center gap-3">
-              <span className="rounded-chip border border-line-2 bg-surface px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-2">
-                {isWorkspace ? "Mission workspace" : "Public early access"}
-              </span>
-              <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-                Slice → Run → Evidence
-              </span>
-            </div>
-            <h1 className="max-w-2xl font-display text-5xl font-normal leading-[0.95] tracking-[-0.02em] text-ink sm:text-6xl lg:text-[72px]">
-              Map less.
-              <span className="block text-muted">Ship the task.</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-base leading-7 text-ink-2">
-              Locus admits a focused Slice, keeps every excluded file visible, then produces a
-              check-passing proposal in an isolated Run for you to review.
-            </p>
-            <div className="mt-7 flex max-w-xl items-center gap-4 border-t border-line-2 pt-4">
-              <span className="h-2.5 w-2.5 rounded-sm bg-ink" />
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-                Included is a decision. Excluded is evidence.
-              </p>
-            </div>
-          </div>
+      <main className="mx-auto max-w-[1440px] px-4 pb-16 pt-5 sm:px-7 lg:px-9 lg:pt-8">
+        <h1 className="sr-only">Workspace</h1>
 
-          <WorkspaceField
-            files={repo ? Object.keys(repo.files) : null}
-            slicePaths={result?.slice.map(({ path }) => path) ?? []}
-            anchorPaths={result?.anchorPaths ?? []}
-            loading={loading}
-            repoName={repo?.name ?? null}
-            includedShare={includedShare}
-          />
-        </section>
-
-        <section className="overflow-hidden rounded-card border border-line-2 bg-surface-2 p-3 sm:p-4">
-          <div className="flex flex-col gap-2 px-2 pb-4 pt-1 sm:flex-row sm:items-center sm:justify-between sm:px-3">
-            <div>
-              <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Active mission</p>
-              <p className="mt-1 text-sm font-semibold text-ink">{repo?.name ?? "Repository standby"}</p>
-            </div>
-            <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-2">
-              <span className="h-2 w-2 rounded-full bg-passed" />
-              Context engine online
-            </div>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[390px_minmax(0,1fr)]">
-          <aside className="self-start lg:sticky lg:top-23">
-            <div className="overflow-hidden rounded-card border border-line-2 bg-surface/95">
-              <div className="border-b border-line px-5 py-4">
-                <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-                  Task brief
-                </p>
-                <h2 className="mt-1.5 font-display text-[24px] font-normal leading-tight tracking-[-0.015em] text-ink">
-                  What should the agent change?
-                </h2>
-              </div>
-
-              <div className="space-y-6 p-5">
-                <div>
-                  <label htmlFor="repo-input" className="flex items-center justify-between text-xs font-medium text-ink">
-                    <span>GitHub repository</span>
-                    <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">01</span>
-                  </label>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      id="repo-input"
-                      value={ghUrl}
-                      onChange={(event) => setGhUrl(event.target.value)}
-                      onKeyDown={(event) => event.key === "Enter" && !loading && loadGithub()}
-                      placeholder="owner/repository"
-                      className="min-w-0 flex-1 rounded-card border border-line-2 bg-canvas px-3 py-3 text-sm text-ink placeholder:text-muted focus:border-included focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => loadGithub()}
-                      disabled={loading || !ghUrl.trim()}
-                      className="rounded-chip bg-ink px-3.5 py-3 text-xs font-medium text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-35"
-                    >
-                      {loading ? "…" : "Load"}
-                    </button>
-                  </div>
-                  <p className="mt-2 text-[11px] leading-4 text-muted">
-                    Public GitHub Repos only during early access. Failed loads keep your current Slice open.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {bundled.map((source) => (
-                      <button
-                        type="button"
-                        key={source.slug}
-                        onClick={() => pickBundled(source.slug)}
-                        className={`rounded-chip border px-2.5 py-1 text-[11px] transition ${
-                          repo?.slug === source.slug
-                            ? "border-ink bg-ink text-canvas"
-                            : "border-line-2 text-muted hover:text-ink"
-                        }`}
-                      >
-                        {source.name}
-                      </button>
-                    ))}
-                  </div>
-                  {recentRepos.length > 0 && (
-                    <div className="mt-3 border-t border-line pt-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">Recent</span>
-                        <button type="button" onClick={clearRecents} className="text-[11px] text-muted hover:text-ink">
-                          Clear
-                        </button>
-                      </div>
-                      <div className="mt-2 space-y-1">
-                        {recentRepos.slice(0, 3).map((identifier) => (
-                          <button
-                            type="button"
-                            key={identifier}
-                            onClick={() => loadRecent(identifier)}
-                            className="block w-full truncate text-left font-mono text-[11px] text-ink-2 hover:text-ink"
-                          >
-                            {identifier}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="task-input" className="flex items-center justify-between text-xs font-medium text-ink">
-                    <span>Engineering task</span>
-                    <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">02 · ⌘K</span>
-                  </label>
-                  <textarea
-                    ref={taskInputRef}
-                    id="task-input"
-                    value={task}
-                    onChange={(event) => setTask(event.target.value)}
-                    maxLength={5_000}
-                    rows={5}
-                    placeholder="Describe the bug, desired behavior, and what proves it is fixed."
-                    className="mt-2 w-full resize-y rounded-card border border-line-2 bg-canvas px-3 py-3 text-sm leading-6 text-ink placeholder:text-muted focus:border-included focus:outline-none"
-                  />
-                  {examples.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTask(examples[0])}
-                      className="mt-2 text-left text-[11px] leading-4 text-muted transition hover:text-ink"
-                    >
-                      Try: “{examples[0]}”
-                    </button>
-                  )}
-                  <TaskEvidence evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
-                </div>
-
-                <div>
-                  <label htmlFor="definition-of-done" className="flex items-center justify-between text-xs font-medium text-ink">
-                    <span>Definition of done</span>
-                    <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">03</span>
-                  </label>
-                  <textarea
-                    id="definition-of-done"
-                    value={definitionOfDone}
-                    onChange={(event) => setDefinitionOfDone(event.target.value)}
-                    maxLength={2_000}
-                    rows={3}
-                    placeholder="One verifiable outcome per line."
-                    className="mt-2 w-full resize-y rounded-card border border-line-2 bg-canvas px-3 py-3 text-sm leading-6 text-ink placeholder:text-muted focus:border-included focus:outline-none"
-                  />
-                  <p className="mt-2 text-[11px] leading-4 text-muted">These are proof requirements for review. A passing command does not by itself prove the requested behavior.</p>
-                </div>
-              </div>
-
-              {loadIssue ? (
-                <RepoLoadFeedback
-                  issue={loadIssue}
-                  activeRepoName={repo?.name ?? null}
-                  onRetry={() => retryRepoLoad()}
-                  onUseDemo={() => pickBundled(bundled[0].slug)}
+        {/* The command bar: the Repo, then the task. The Slice updates as you type. */}
+        <section aria-label="Repo and task" className="overflow-hidden rounded-card border border-line-2 bg-surface shadow-panel">
+          <div className="flex flex-col gap-3 border-b border-line p-3 lg:flex-row lg:items-center">
+            <div className="flex min-w-0 flex-1 gap-2">
+              <label htmlFor="repo-input" className="ws-field min-w-0 flex-1">
+                <span className="ws-field-label">Repo</span>
+                <span className="sr-only">GitHub repository</span>
+                <input
+                  id="repo-input"
+                  value={ghUrl}
+                  onChange={(event) => setGhUrl(event.target.value)}
+                  onKeyDown={(event) => event.key === "Enter" && !loading && loadGithub()}
+                  placeholder="owner/repository, public on GitHub"
+                  autoComplete="off"
+                  spellCheck={false}
                 />
-              ) : note ? (
-                <div
-                  role="status"
-                  className="border-t border-line px-5 py-3 text-xs leading-5 text-ink-2"
-                >
-                  {note}
-                </div>
-              ) : null}
+              </label>
+              <button
+                type="button"
+                onClick={() => loadGithub()}
+                disabled={loading || !ghUrl.trim()}
+                className="ws-button"
+              >
+                {loading ? "Loading" : "Load"}
+              </button>
             </div>
-          </aside>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 font-mono text-[11px] text-muted">Samples</span>
+              {bundled.map((source) => (
+                <button
+                  type="button"
+                  key={source.slug}
+                  onClick={() => pickBundled(source.slug)}
+                  aria-pressed={repo?.slug === source.slug}
+                  className="ws-chip"
+                >
+                  {source.name}
+                </button>
+              ))}
+              {recentRepos.length > 0 && (
+                <>
+                  <span className="ml-2 mr-1 font-mono text-[11px] text-muted">Recent</span>
+                  {recentRepos.slice(0, 3).map((identifier) => (
+                    <button type="button" key={identifier} onClick={() => loadRecent(identifier)} className="ws-chip max-w-[180px] truncate font-mono">
+                      {identifier}
+                    </button>
+                  ))}
+                  <button type="button" onClick={clearRecents} className="px-1.5 text-[12px] text-muted transition-colors hover:text-ink">
+                    Clear
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
 
-          <div className="min-w-0 space-y-6">
-            {graph && result ? (
-              <>
-                <section className="overflow-hidden rounded-card border border-line-2 bg-surface">
-                  <div className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-                        Slice aperture
-                      </p>
-                      <p className="mt-1 truncate text-sm font-semibold text-ink">{repo?.name}</p>
-                    </div>
-                    {loadedRepositorySpecifier && (
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={saveAnalysis}
-                          disabled={saveStatus === "saving"}
-                          className="rounded-chip border border-line-2 px-3 py-2 text-[11px] text-ink-2 hover:border-ink/40 hover:text-ink disabled:opacity-40"
-                        >
-                          {saveStatus === "idle" ? "Save analysis" : saveStatus}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={copyShareView}
-                          className="rounded-chip border border-line-2 px-3 py-2 text-[11px] text-ink-2 hover:border-ink/40 hover:text-ink"
-                        >
-                          {shareStatus === "idle" ? "Share view" : shareStatus}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid gap-px bg-line xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
-                    <div className="min-w-0 bg-surface p-4 sm:p-5">
-                      <DependencyGraph
-                        graph={graph}
-                        result={result}
-                        selected={selected}
-                        onSelect={setSelected}
-                        onRefineTask={refineTask}
-                      />
-                    </div>
-                    <div className="min-w-0 bg-surface p-4 sm:p-5">
-                      <FilePanel
-                        result={result}
-                        repo={repo}
-                        selected={selected}
-                        onSelect={setSelected}
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
-                  <AgentRunPanel
-                    repository={loadedRepositorySpecifier}
-                    task={task}
-                    sliceCount={includedCount}
-                    excludedCount={excludedCount}
-                    initialRunId={initialRunId}
-                    runAccess={runAccess}
-                    acceptanceCriteria={definitionOfDone.split("\n").map((item) => item.trim()).filter(Boolean)}
-                  />
-                  <TokenMeter
-                    result={result}
-                    repo={repo}
-                    sparse={result.sparse}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="grid min-h-[520px] place-items-center rounded-card border border-dashed border-line-2 bg-surface p-10 text-center">
-                <div>
-                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">Waiting for a repository</p>
-                  <p className="mt-3 font-display text-[30px] font-normal leading-tight tracking-[-0.02em] text-ink">
-                    {loading ? "Reading the code graph…" : "Load a repository to open the Slice ledger."}
-                  </p>
-                </div>
+          <div className="p-3">
+            <label htmlFor="task-input" className="ws-field ws-field--task">
+              <span className="ws-field-label">Task</span>
+              <span className="sr-only">What should the agent change?</span>
+              <textarea
+                ref={taskInputRef}
+                id="task-input"
+                value={task}
+                onChange={(event) => setTask(event.target.value)}
+                maxLength={5_000}
+                rows={2}
+                placeholder="Describe the change, like a bug report: what happens, and what should."
+              />
+              <kbd className="ws-kbd" aria-hidden="true">⌘K</kbd>
+            </label>
+            <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 px-1">
+              <TaskEvidence evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {examples.length > 0 && !task.trim() && (
+                  <button type="button" onClick={() => setTask(examples[0])} className="ws-chip">
+                    Try &ldquo;{examples[0]}&rdquo;
+                  </button>
+                )}
+                {result && loadedRepositorySpecifier && (
+                  <>
+                    <button type="button" onClick={saveAnalysis} disabled={saveStatus === "saving"} className="ws-chip">
+                      {saveStatus === "idle" ? "Save" : saveStatus === "saving" ? "Saving" : saveStatus === "saved" ? "Saved" : saveStatus}
+                    </button>
+                    <button type="button" onClick={copyShareView} disabled={!task.trim()} className="ws-chip">
+                      {shareStatus === "idle" ? "Share link" : shareStatus === "copied" ? "Link copied" : "Copy failed"}
+                    </button>
+                  </>
+                )}
               </div>
-            )}
+            </div>
           </div>
-          </div>
+
+          {loadIssue ? (
+            <RepoLoadFeedback
+              issue={loadIssue}
+              activeRepoName={repo?.name ?? null}
+              onRetry={() => retryRepoLoad()}
+              onUseDemo={() => pickBundled(bundled[0].slug)}
+            />
+          ) : note ? (
+            <div role="status" className="border-t border-line px-4 py-3 text-xs leading-5 text-ink-2">
+              {note}
+            </div>
+          ) : null}
         </section>
+
+        {graph && result ? (
+          <>
+            <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)] lg:items-start">
+              <div className="min-w-0 space-y-6">
+                <WorkspaceField
+                  files={repo ? Object.keys(repo.files) : null}
+                  slicePaths={result.slice.map(({ path }) => path)}
+                  anchorPaths={result.anchorPaths}
+                  loading={loading}
+                  repoName={repo?.name ?? null}
+                  includedShare={includedShare}
+                />
+                <TokenMeter result={result} repo={repo} sparse={result.sparse} />
+              </div>
+              <div className="min-w-0 lg:sticky lg:top-6">
+                <FilePanel result={result} repo={repo} selected={selected} onSelect={setSelected} />
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <DependencyGraph graph={graph} result={result} selected={selected} onSelect={setSelected} onRefineTask={refineTask} />
+            </div>
+
+            <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start">
+              <AgentRunPanel
+                repository={loadedRepositorySpecifier}
+                task={task}
+                sliceCount={includedCount}
+                excludedCount={excludedCount}
+                initialRunId={initialRunId}
+                runAccess={runAccess}
+                acceptanceCriteria={definitionOfDone.split("\n").map((item) => item.trim()).filter(Boolean)}
+              />
+              <section className="rounded-card border border-line-2 bg-surface p-5">
+                <label htmlFor="definition-of-done" className="text-[14px] font-medium text-ink">Definition of done</label>
+                <p className="mt-1 text-[12.5px] leading-5 text-muted">What an Agent Run must prove, one outcome per line. A passing command alone does not prove the behavior.</p>
+                <textarea
+                  id="definition-of-done"
+                  value={definitionOfDone}
+                  onChange={(event) => setDefinitionOfDone(event.target.value)}
+                  maxLength={2_000}
+                  rows={4}
+                  placeholder="One verifiable outcome per line."
+                  className="mt-3 w-full resize-y rounded-[8px] border border-line-2 bg-canvas px-3 py-2.5 text-sm leading-6 text-ink placeholder:text-muted focus:border-ink focus:outline-none"
+                />
+              </section>
+            </div>
+          </>
+        ) : (
+          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
+            <WorkspaceField files={null} slicePaths={[]} anchorPaths={[]} loading={loading} repoName={null} includedShare={0} />
+            <div className="grid min-h-[320px] place-items-center rounded-card border border-dashed border-line-2 bg-surface p-10 text-center">
+              <div className="flex flex-col items-center">
+                <Mascot mood={loading ? "scan" : "sleep"} size={48} />
+                <p className="mt-5 text-[17px] font-medium text-ink">{loading ? "Reading the Repo" : "No Repo yet"}</p>
+                <p className="mt-1.5 max-w-xs text-[13.5px] leading-5 text-muted">
+                  {loading
+                    ? "Mapping its files and imports. The Slice opens as soon as it is done."
+                    : "Paste a public GitHub Repo above, or open a sample. Its files land here, ranked for your task."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <footer className="border-t border-line">

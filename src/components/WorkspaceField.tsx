@@ -1,8 +1,8 @@
 import { FileField, filesPerMark, markColumns, repoColumns } from "@/components/FileField";
 
 /**
- * The workspace's view of the loaded Repo: the same file field as Fig. 1 on the
- * landing page, drawn from the user's own Repo and Slice. Open (every file
+ * The workspace's view of the loaded Repo: the file field, drawn from the user's
+ * own Repo and Slice. Open (every file
  * under a neutral cover) until a Slice exists; the field scans while work is
  * actually running and stops the moment it finishes.
  */

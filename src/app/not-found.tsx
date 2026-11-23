@@ -1,7 +1,8 @@
 import Link from "next/link";
 
-import { Wordmark } from "@/components/Wordmark";
+import { Mascot } from "@/components/Mascot";
 import { MiniField } from "@/components/MiniField";
+import { Wordmark } from "@/components/Wordmark";
 
 export default function NotFound() {
   return (
@@ -33,7 +34,10 @@ export default function NotFound() {
             </Link>
           </div>
         </div>
-        <MiniField columns={9} rows={6} slice={[10, 11, 19, 20, 28]} hole={40} />
+        <div className="flex flex-col items-start gap-3 lg:items-end">
+          <Mascot mood="look" size={48} />
+          <MiniField columns={9} rows={6} slice={[10, 11, 19, 20, 28]} hole={40} />
+        </div>
       </div>
     </main>
   );

@@ -1,4 +1,4 @@
-import { Scramble } from "@/components/Reveal";
+import { RiseWords, Scramble } from "@/components/Reveal";
 
 /**
  * The print grammar of the public pages: a frame of margin rails, full-width
@@ -46,5 +46,30 @@ export function FigCaption({ n, children }: { n: number; children: React.ReactNo
       <span className="shrink-0 font-medium text-ink">Fig. {n}</span>
       <span>{children}</span>
     </figcaption>
+  );
+}
+
+type HeadingLine = string | { text: string; className: string };
+
+/**
+ * A section's opening: a numbered mono label with a status on the right, a
+ * hairline under both, then a two-line serif heading whose second line is muted.
+ */
+export function SectionHead({ n, label, status, lines }: { n: string; label: string; status?: string; lines: [string, string] }) {
+  const [first, second]: HeadingLine[] = [lines[0], { text: lines[1], className: "text-muted" }];
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-6 border-b border-line pb-3 font-mono text-[11px] font-medium uppercase tracking-[0.12em]">
+        <p className="flex gap-3">
+          <span className="text-ink tabular-nums">{n}</span>
+          <Scramble text={label} className="text-muted" />
+        </p>
+        {status && <p className="hidden text-right text-muted sm:block">{status}</p>}
+      </div>
+      <RiseWords
+        lines={[first, second]}
+        className="mt-8 max-w-4xl font-display text-[clamp(34px,4.6vw,60px)] font-normal leading-[1.02] tracking-[-0.02em] text-ink"
+      />
+    </div>
   );
 }

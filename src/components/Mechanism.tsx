@@ -125,8 +125,8 @@ function useEdgeLines(graphRef: React.RefObject<HTMLDivElement | null>) {
 }
 
 /**
- * Fig. 2: how Locus built the Slice in Fig. 1, played once when it scrolls into
- * view. Server-rendered complete; the beats are classes added on a timer, so
+ * Fig. 2 on the Evidence page: how Locus built the Slice the home page demo
+ * plays, played once when it scrolls into view. Server-rendered complete; the beats are classes added on a timer, so
  * reduced motion and readers without JavaScript see the finished figure.
  */
 export function Mechanism() {

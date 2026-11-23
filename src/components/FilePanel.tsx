@@ -108,7 +108,7 @@ export function FilePanel({
               ? "All files retained · refine the task"
               : displayView === "included"
                 ? "In the Slice · ranked by relevance"
-                : "Outside the slice · available to inspect"}
+                : "Left out · open any file to inspect it"}
           </p>
           {selected && (
             <button
@@ -194,7 +194,7 @@ export function FilePanel({
                       result.anchors.includes(f.rel) ? "text-muted" : "text-muted"
                     }`}
                   >
-                    {result.anchors.includes(f.rel) ? "match" : `${f.dist} hop`}
+                    {result.anchors.includes(f.rel) ? "match" : `${f.dist} ${f.dist === 1 ? "hop" : "hops"}`}
                   </span>
                 )}
                 <span className="flex-1 truncate font-mono text-[12px] text-ink">{f.rel}</span>

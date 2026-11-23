@@ -248,8 +248,8 @@ export function DependencyGraph({
       </div>
 
       <div className="flex flex-col gap-2 border-t border-line px-6 py-4 text-xs text-muted @xl:flex-row @xl:items-center @xl:justify-between">
-        <span>Only direct, explainable stages are shown, with no connector wall.</span>
-        {hiddenSelected > 0 && <span>{hiddenSelected} additional selected files remain in the ranked list.</span>}
+        <span>Each step shows only the files it directly explains.</span>
+        {hiddenSelected > 0 && <span>{hiddenSelected} more Slice {hiddenSelected === 1 ? "file is" : "files are"} in the ranked list.</span>}
       </div>
     </section>
   );
