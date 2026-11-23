@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AgentRunsList } from "@/components/AgentRunsList";
-import { SettingsShell } from "@/components/SettingsShell";
+import { AppShell } from "@/components/AppShell";
+import { frame, Rule } from "@/components/Datasheet";
+import { PageHeader } from "@/components/PageHeader";
 
 export const metadata: Metadata = {
   title: "Agent Runs · Locus",
@@ -14,16 +16,16 @@ export default async function ProjectsPage() {
   if (!userId) redirect("/sign-in");
 
   return (
-    <SettingsShell>
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">Evidence ledger</p>
-      <h1 className="mt-2 font-display text-4xl font-normal tracking-[-0.02em] text-ink">Agent Runs</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-2">
-        Resume active work and inspect factual Slice, Step, check, failure, and token evidence.
-      </p>
-      <div className="mt-7 border-t border-line" />
-      <div className="mt-7">
-        <AgentRunsList />
-      </div>
-    </SettingsShell>
+    <AppShell>
+      <main>
+        <PageHeader app label="Evidence ledger" title="Agent Runs">
+          Resume active work and inspect factual Slice, Step, check, failure, and token evidence.
+        </PageHeader>
+        <Rule />
+        <div className={`${frame} py-10 sm:py-14`}>
+          <AgentRunsList />
+        </div>
+      </main>
+    </AppShell>
   );
 }

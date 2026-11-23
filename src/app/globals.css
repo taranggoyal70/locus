@@ -572,6 +572,15 @@ textarea::placeholder {
   :is(.case-run, .case-mark)[data-kind="excluded"] { --k: GrayText; }
 }
 
+/* Clerk's account sidebar title has no appearance key (ClerkThemed.tsx sets
+   every other title), so it is set here in the serif like the page around it. */
+.cl-userProfile-root .cl-navbar h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
 /* A crosshair where a section rule meets a margin rail (components/Datasheet.tsx). */
 .crosshair {
   position: absolute;
@@ -1478,7 +1487,7 @@ textarea::placeholder {
   min-height: 44px;
   padding: 0 12px;
   border: 1px solid var(--line-2);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   background: var(--canvas);
   cursor: text;
   transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
@@ -1536,7 +1545,7 @@ textarea::placeholder {
   min-width: 72px;
   height: 44px;
   padding: 0 18px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   background: var(--ink);
   color: var(--canvas);
   font-size: 14px;
@@ -1550,12 +1559,13 @@ textarea::placeholder {
   border: 1px solid var(--line-2);
   border-radius: var(--r-sm);
   color: var(--ink-2);
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 18px;
   transition: border-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
 }
 .ws-chip:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); }
-.ws-chip[aria-pressed="true"] { border-color: var(--included); color: var(--included-ink); }
+/* A selected option takes an ink border: orange is kept for the Slice. */
+.ws-chip[aria-pressed="true"] { border-color: var(--ink); background: var(--surface-2); color: var(--ink); }
 .ws-chip:disabled { opacity: 0.5; }
 
 @keyframes pd-caret { 50% { opacity: 0; } }

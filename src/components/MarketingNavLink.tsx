@@ -11,10 +11,15 @@ export function MarketingNavLink({
   href,
   shortcut,
   children,
+  className = "px-2.5",
+  keycapClassName = "",
 }: {
   href: string;
   shortcut: string;
   children: React.ReactNode;
+  /** Horizontal padding and size overrides, for a header short of room. */
+  className?: string;
+  keycapClassName?: string;
 }) {
   const pathname = usePathname();
   const active = pathname === href || (pathname?.startsWith(`${href}/`) ?? false);
@@ -24,13 +29,13 @@ export function MarketingNavLink({
       href={href}
       data-shortcut={shortcut}
       aria-current={active ? "page" : undefined}
-      className={`group inline-flex h-9 items-center gap-2 rounded-chip px-2.5 text-[14px] transition-colors duration-150 ${
+      className={`group inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-chip text-[14px] transition-colors duration-150 ${className} ${
         active ? "text-ink" : "text-ink-2 hover:text-ink"
       }`}
     >
       <span
         aria-hidden="true"
-        className={`keycap transition-colors duration-150 ${
+        className={`keycap transition-colors duration-150 ${keycapClassName} ${
           active ? "border-ink bg-ink text-canvas" : "group-hover:border-ink group-hover:text-ink"
         }`}
       >

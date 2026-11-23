@@ -17,6 +17,8 @@ type AlphaSettingsNoticeProps = {
  *
  * Every branch still declines to advertise a capability that is withheld. The
  * boundary being described is admission, not the capability release.
+ *
+ * Drawn as the page's one ink-bordered object: the terms this account runs under.
  */
 export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
   const body = {
@@ -38,16 +40,16 @@ export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
   }[tier];
 
   return (
-    <section className="rounded-card border border-line-2 bg-surface p-5">
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-muted">
+    <section className="rounded-card border border-ink bg-surface p-6 sm:p-7">
+      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
         Public early access
       </p>
-      <h2 className="mt-2 text-lg font-semibold tracking-[-0.02em] text-ink">
+      <h2 className="mt-4 font-display text-[26px] font-normal leading-[1.1] tracking-[-0.012em] text-ink">
         {tier === "visitor" ? "Agent Runs are not enabled for this account" : "Your current access"}
       </h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-2">{body}</p>
+      <p className="mt-3 max-w-2xl text-[15px] leading-6 text-ink-2">{body}</p>
       {tier !== "visitor" && (
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-2">
+        <p className="mt-4 max-w-2xl border-t border-line pt-4 text-[14px] leading-6 text-ink-2">
           Free execution capacity is shared: the beta runs one Agent Run per UTC day across all
           accounts. Your plan allowance above is what you may hold; the shared pool is what the
           deployment can spend. Connect your own Cloudflare account to run when the shared Run is

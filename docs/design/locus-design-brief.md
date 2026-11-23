@@ -772,3 +772,52 @@ Supabase to Neon (#83).
   Vercel deployment.
 - Screenshot: `public-fig1-live-390-light.jpg` (a typed task, localized in the
   tab).
+
+### The signed-in pages (November 23, 2026)
+
+The public site had the datasheet; the pages behind sign-in still had the
+November 19 token pass and two different shells. They now read as the same
+product.
+
+- **One shell** (`AppShell`): the public header, a size for the app. Serif
+  wordmark, 1 Workspace, 2 Runs and 3 Settings on numbered keycaps that are
+  real shortcuts, Docs as text, then the account button. Margin rails, crosshair
+  rules and the scroll thread as on the public pages; a quiet mono footer. The
+  workspace's 92px left rail and its Map / Setup labels are gone. On phones the
+  keycaps drop and the current page is underlined in ink; below 420px the
+  wordmark keeps only its mark, so the row fits at 320px.
+- **Openings:** every page but the workspace opens on `PageHeader` with `app`,
+  the same label, serif title and lead a size down.
+- **Settings is a numbered sheet** (`SheetSection`): the account's terms (the
+  one ink-bordered object) and its email state side by side, then 01 Capacity,
+  02 Usage, 03 Saved, 04 API and 05 Appearance, label and heading on the left,
+  controls on the right. Usage is the evidence strip (serif figures under an
+  ink rule); saved analyses, API keys and the Cloudflare steps are ruled lists,
+  not cards in cards. An unverified email is ochre (attention), not orange.
+- **Runs:** a ruled ledger beside one evidence panel. States are outlined
+  tags with a dot (`StateTag`); the timeline puts "Working" on its own line
+  instead of truncating it; counts are serif figures; a failed request says
+  "Could not load Runs." instead of a JSON parser error.
+- **Workspace:** the onboarding steps are a numbered strip, not chips that
+  look like buttons; the selected sample takes an ink border (the colour rule);
+  fields and buttons use 4px corners; the meter, the Repo count and the
+  context trace use serif figures and ruled rows. Text below 12px is gone from
+  sans copy.
+- **Clerk:** the account sidebar title is set in the serif by a rule on
+  `.cl-navbar h1`, since Clerk gives it no appearance key.
+- Shared vocabulary: `controls.ts` (buttons, inputs, ruled lists, one date
+  format, "Nov 23, 2026"), `StateTag`, `EmptyState` and `InlineError` (a
+  crimson dot and a sentence, not a filled box).
+- **Checks:** `pnpm lint`, `pnpm typecheck`, `pnpm check:alpha-claims` and
+  `pnpm build` pass. `pnpm test`: 1122 passed.
+- **Browsers,** on a production build with a throwaway dev-instance account
+  and a local PostgreSQL seeded with sample Runs, keys and analyses (and once
+  emptied, for the empty states): every signed-in page at 1440, 390, 360 and
+  320, light and dark, in Chromium and WebKit, and again with reduced motion.
+  No sideways scroll; the header on one line at every width; axe (WCAG 2.2
+  A/AA) clean except Clerk's "Secured by" over the orange stripe Clerk draws on
+  development instances only.
+- **Not checked:** Firefox; Safari on a real phone; production data; Clerk's
+  default avatar is still its purple gradient for accounts without a photo.
+- Screenshots: `app-before-*` and `app-after-*` (workspace, Runs and Settings
+  at 1440 light; the account page at 1440 dark; Settings and Runs on phones).

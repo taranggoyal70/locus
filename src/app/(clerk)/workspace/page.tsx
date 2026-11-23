@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -25,14 +25,9 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
   const initialRunId = requestedRunId && /^[0-9a-f-]{36}$/i.test(requestedRunId)
     ? requestedRunId
     : null;
-  // Resolved alongside the Clerk profile rather than after it. Both are
-  // independent reads on the render path of the product's main screen, and
-  // awaiting them in sequence would add a database round trip to every load.
-  const [user, admission] = await Promise.all([
-    currentUser(),
-    admitOnFirstUse(userId),
-  ]);
-  const accountName = user?.firstName ?? user?.primaryEmailAddress?.emailAddress?.split("@")[0];
+  // The account button in the header shows who is signed in, so the workspace
+  // no longer reads the Clerk profile for a name of its own.
+  const admission = await admitOnFirstUse(userId);
 
   // Read only for an account that can actually start a Run. For everyone else
   // these are two count queries spent on a number no surface displays.
@@ -52,7 +47,6 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
   return (
     <ErrorBoundary>
       <LocusApp
-        accountName={accountName}
         isWorkspace
         initialRunId={initialRunId}
         runAccess={runAccessFromAdmission(admission, usage)}

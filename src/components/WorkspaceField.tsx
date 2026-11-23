@@ -38,16 +38,16 @@ export function WorkspaceField({
     >
       <div className="flex items-start justify-between gap-6 border-b border-line px-5 py-4">
         <div className="min-w-0">
-          <p className="font-mono text-[11px] text-muted">{loading ? "Working" : hasSlice ? "Slice" : "Repo"}</p>
-          <p className="mt-1.5 truncate text-[15px] font-medium text-ink">{repoName ?? "Load a public Repo to begin"}</p>
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{loading ? "Working" : hasSlice ? "Slice" : "Repo"}</p>
+          <p className="mt-2 truncate font-display text-[24px] font-normal leading-[1.1] tracking-[-0.012em] text-ink">{repoName ?? "Load a public Repo to begin"}</p>
         </div>
         {files && (
           <p className="shrink-0 text-right">
-            <span className="text-2xl font-semibold tracking-[-0.03em] text-ink tabular-nums">
-              {hasSlice ? slicePaths.length : files.length}
-              {hasSlice && <span className="text-sm font-medium tracking-normal text-muted"> / {files.length}</span>}
+            <span className="font-display text-[36px] leading-none tracking-[-0.02em] tabular-nums">
+              <span className={hasSlice ? "text-included-ink" : "text-ink"}>{hasSlice ? slicePaths.length : files.length}</span>
+              {hasSlice && <span className="font-sans text-[15px] tracking-normal text-muted"> / {files.length}</span>}
             </span>
-            <span className="block font-mono text-[11px] text-muted">files</span>
+            <span className="mt-1 block font-mono text-[11px] uppercase tracking-[0.08em] text-muted">files</span>
           </p>
         )}
       </div>
@@ -56,7 +56,7 @@ export function WorkspaceField({
         {files ? (
           <FileField columns={columns} />
         ) : (
-          <p className="py-10 text-center text-sm text-muted">Every file in the Repo appears here, one mark each.</p>
+          <p className="py-10 text-center text-[14px] text-muted">Every file in the Repo appears here, one mark each.</p>
         )}
       </div>
 

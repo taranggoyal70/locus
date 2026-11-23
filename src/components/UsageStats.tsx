@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from "react";
 
+import { InlineError } from "@/components/EmptyState";
+
 type UsageData = {
   totalEvents: number;
   byType: Record<string, number>;
   projectCount: number;
   keyCount: number;
 };
+
+/** The public evidence strip: serif figures in a ruled row under an ink rule. */
+const strip = "grid grid-cols-2 border-t border-ink sm:grid-cols-4";
+const cell = "border-b border-line py-5 pr-4 max-sm:even:border-l max-sm:even:pl-4 sm:border-b-0 sm:px-5 sm:first:pl-0 sm:[&:not(:first-child)]:border-l";
 
 export function UsageStats() {
   const [data, setData] = useState<UsageData | null>(null);
@@ -31,8 +37,13 @@ export function UsageStats() {
 
   if (loading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => <div key={i} className="skeleton h-20 rounded-card" />)}
+      <div className={strip}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className={cell}>
+            <div className="skeleton h-10 w-14 rounded-chip" />
+            <div className="skeleton mt-3 h-4 w-24 rounded-chip" />
+          </div>
+        ))}
       </div>
     );
   }
@@ -43,9 +54,9 @@ export function UsageStats() {
   // something.
   if (!data) {
     return (
-      <p className="rounded-card border border-line px-4 py-6 text-center text-sm text-muted">
+      <InlineError className="border-t border-ink pt-5">
         Usage could not be loaded. Your Runs and API activity are unaffected.
-      </p>
+      </InlineError>
     );
   }
 
@@ -57,13 +68,13 @@ export function UsageStats() {
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-4">
+    <dl className={strip}>
       {stats.map((stat) => (
-        <div key={stat.label} className="rounded-card border border-line-2 bg-surface/50 px-4 py-3">
-          <p className="font-mono text-2xl font-semibold tracking-[-0.03em] text-ink">{stat.value}</p>
-          <p className="mt-1 text-xs text-muted">{stat.label}</p>
+        <div key={stat.label} className={`flex flex-col-reverse ${cell}`}>
+          <dt className="mt-2 text-[13px] leading-5 text-ink-2">{stat.label}</dt>
+          <dd className="font-display text-[44px] font-normal leading-none tracking-[-0.02em] text-ink tabular-nums">{stat.value.toLocaleString("en-US")}</dd>
         </div>
       ))}
-    </div>
+    </dl>
   );
 }

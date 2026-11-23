@@ -25,43 +25,53 @@ type OnboardingProps = {
  * would assert against an empty string and pass no matter what the steps said.
  */
 export function OnboardingSteps({ tier, onDismiss }: OnboardingProps) {
-  const runStep = tier === "visitor" ? "3. Request Agent Run access" : "3. Start an Agent Run";
+  const runStep = tier === "visitor" ? "Request Agent Run access" : "Start an Agent Run";
+  const steps = ["Load a public Repo", "Describe the task", runStep, "Review the proposal"];
 
   return (
-    <section aria-label="Getting started" className="mx-auto max-w-7xl px-5 pt-4 sm:px-8">
-      <div className="relative overflow-hidden rounded-card border border-line-2 bg-surface px-5 py-4 sm:px-6">
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="absolute right-3 top-3 rounded-chip px-2 py-1 text-xs text-muted transition hover:text-ink"
-          aria-label="Dismiss"
-        >
-          Dismiss
-        </button>
-        <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
-          Getting started
-        </p>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-ink">
-          Load a public Repo, describe one concrete engineering outcome, and inspect the Included
-          and Excluded evidence before starting a Run.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-3 text-xs">
-          {["1. Load a public Repo", "2. Describe the task", runStep, "4. Review the proposal"].map(
-            (step) => (
-              <span
-                key={step}
-                className="rounded-chip border border-line-2 px-3 py-1.5 text-ink-2"
-              >
-                {step}
-              </span>
-            ),
-          )}
+    <section aria-label="Getting started" className="border-b border-line bg-canvas-2">
+      <div className="mx-auto grid max-w-7xl gap-x-10 gap-y-4 px-5 py-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="min-w-0">
+          <p className="flex items-center justify-between gap-4 lg:justify-start">
+            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">Getting started</span>
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="rounded-chip px-2 py-1 text-[13px] text-muted transition-colors duration-150 hover:text-ink lg:hidden"
+              aria-label="Dismiss"
+            >
+              Dismiss
+            </button>
+          </p>
+          <p className="mt-2 max-w-2xl text-[15px] leading-6 text-ink">
+            Load a public Repo, describe one concrete engineering outcome, and inspect the Included
+            and Excluded evidence before starting a Run.
+          </p>
+          <ol className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px] text-ink-2">
+            {steps.map((step, index) => (
+              <li key={step} className="flex items-baseline gap-2">
+                <span aria-hidden="true" className="font-mono text-[11px] text-muted tabular-nums">0{index + 1}</span>
+                <span aria-hidden="true">{step}</span>
+                <span className="sr-only">{index + 1}. {step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="flex items-center gap-5">
           <Link
             href="/docs"
-            className="rounded-chip border border-ink px-3 py-1.5 text-ink transition-colors hover:bg-surface-2"
+            className="text-[14px] font-medium text-ink underline decoration-line-2 underline-offset-[5px] transition-colors duration-150 hover:decoration-ink"
           >
             Read the API docs
           </Link>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="hidden rounded-chip px-2 py-1 text-[13px] text-muted transition-colors duration-150 hover:text-ink lg:inline-block"
+            aria-label="Dismiss"
+          >
+            Dismiss
+          </button>
         </div>
       </div>
     </section>

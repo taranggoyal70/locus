@@ -55,34 +55,34 @@ export function AgentRunTimeline({
           const complete = active > index || status === "completed" || reviewReady;
           const current = active === index && status !== "completed" && !reviewReady;
           return (
-            <li key={phase.label} className="min-w-0">
-              <div
-                className={`h-1.5 rounded-full ${
-                  complete ? "bg-passed" : current ? "bg-ink" : "bg-excluded"
-                }`}
-              />
+            <li key={phase.label} className="min-w-0" aria-current={current ? "step" : undefined}>
+              <div className={`h-1 ${complete ? "bg-passed" : current ? "bg-ink" : "bg-excluded"}`} />
               <p className={`mt-2 truncate font-mono text-[11px] uppercase tracking-[0.08em] ${
                 current ? "text-ink" : complete ? "text-ink-2" : "text-muted"
               }`}>
-                {phase.label}{current ? " · Working" : ""}
+                {phase.label}
               </p>
+              {/* Its own line, so a narrow phase never truncates the word that matters. */}
+              {current && <p className="truncate font-mono text-[11px] text-muted">Working</p>}
             </li>
           );
         })}
       </ol>
-      <div className="mt-5 space-y-2">
+      <ol className="mt-5 border-t border-line">
         {steps.map((step) => (
-          <div
+          <li
             key={step.id}
-            className="flex items-center justify-between gap-3 border-l-2 border-line-2 py-1 pl-3"
+            className="flex items-center justify-between gap-3 border-b border-line py-2.5"
           >
-            <span className="text-xs text-ink">{step.title}</span>
-            <span className="shrink-0 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+            <span className="text-[14px] text-ink">{step.title}</span>
+            <span className={`shrink-0 font-mono text-[11px] uppercase tracking-[0.08em] ${
+              step.status === "failed" ? "text-failed" : step.status === "completed" ? "text-passed" : step.status === "running" ? "text-ink" : "text-muted"
+            }`}>
               {step.status === "running" ? "Working" : step.status}
             </span>
-          </div>
+          </li>
         ))}
-      </div>
+      </ol>
     </div>
   );
 }
@@ -283,47 +283,49 @@ export function AgentRunPanel({
 
   return (
     <section className="overflow-hidden rounded-card border border-line-2 bg-surface">
-      <div className="border-b border-line px-5 py-4">
-        <div className="flex items-start justify-between gap-5">
-          <div>
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+      <div className="border-b border-line px-6 py-5">
+        <div className="flex flex-wrap-reverse items-start justify-between gap-x-5 gap-y-3">
+          <div className="min-w-0">
+            <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
               Agent Run
             </p>
-            <h2 className="mt-1.5 font-display text-[24px] font-normal leading-tight tracking-[-0.015em] text-ink">
+            <h2 className="mt-2 font-display text-[28px] font-normal leading-tight tracking-[-0.015em] text-ink">
               Turn the Slice into a review-ready proposal.
             </h2>
           </div>
-          <span className="rounded-chip border border-line-2 px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+          <span className="shrink-0 whitespace-nowrap rounded-chip border border-line-2 px-2 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
             external writes off
           </span>
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-6">
         {!snapshot ? (
           <>
-            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-card border border-line bg-line">
+            <dl className="grid grid-cols-3 border-y border-line">
               {[
-                ["In the Slice", `${sliceCount} files`],
-                ["Left out", `${excludedCount} files`],
-                ["Repo", `${sliceCount + excludedCount} files`],
-              ].map(([label, value]) => (
-                <div key={label} className="bg-canvas px-3 py-3">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{label}</p>
-                  <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
+                ["In the Slice", sliceCount, "text-included-ink"],
+                ["Left out", excludedCount, "text-ink"],
+                ["Repo", sliceCount + excludedCount, "text-ink"],
+              ].map(([label, value, tone], index) => (
+                <div key={label} className={`flex flex-col-reverse py-4 ${index > 0 ? "border-l border-line pl-4" : "pr-4"}`}>
+                  <dt className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{label}</dt>
+                  <dd className={`font-display text-[30px] leading-none tracking-[-0.02em] tabular-nums ${tone}`}>
+                    {Number(value).toLocaleString("en-US")} <span className="font-sans text-[13px] tracking-normal text-muted">files</span>
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
             {canConfigureRun && (
               <fieldset className="mt-4 rounded-card border border-line p-3">
-                <legend className="px-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">
+                <legend className="px-1 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
                   Choose capacity
                 </legend>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <label className={`cursor-pointer rounded-chip border p-3 transition ${
                     executionMode === "shared" ? "border-ink bg-surface" : "border-line"
                   }`}>
-                    <span className="flex items-center gap-2 text-xs font-semibold text-ink">
+                    <span className="flex items-center gap-2 text-[13px] font-medium text-ink">
                       <input
                         type="radio"
                         name="execution-mode"
@@ -334,14 +336,14 @@ export function AgentRunPanel({
                       />
                       Use the shared beta Run
                     </span>
-                    <span className="mt-1 block pl-5 text-[11px] leading-4 text-muted">
+                    <span className="mt-1 block pl-5 text-[12px] leading-5 text-muted">
                       Free. One substantial Run per UTC day across Locus. Availability is confirmed when you start.
                     </span>
                   </label>
                   <label className={`cursor-pointer rounded-chip border p-3 transition ${
                     executionMode === "byok" ? "border-ink bg-surface" : "border-line"
                   }`}>
-                    <span className="flex items-center gap-2 text-xs font-semibold text-ink">
+                    <span className="flex items-center gap-2 text-[13px] font-medium text-ink">
                       <input
                         type="radio"
                         name="execution-mode"
@@ -352,7 +354,7 @@ export function AgentRunPanel({
                       />
                       Use my Cloudflare account
                     </span>
-                    <span className="mt-1 block pl-5 text-[11px] leading-4 text-muted">
+                    <span className="mt-1 block pl-5 text-[12px] leading-5 text-muted">
                       {byokConfigured
                         ? "Connected. This Run uses capacity from your account."
                         : "Not connected yet. Setup takes about two minutes."}
@@ -360,14 +362,14 @@ export function AgentRunPanel({
                   </label>
                 </div>
                 {executionMode === "byok" && byokConfigured !== true && (
-                  <Link href="/settings" className="mt-3 inline-block text-[11px] font-medium text-ink underline decoration-line-2 underline-offset-4 transition-colors hover:decoration-ink">
+                  <Link href="/settings" className="mt-3 inline-block text-[12px] font-medium text-ink underline decoration-line-2 underline-offset-4 transition-colors hover:decoration-ink">
                     Connect Cloudflare in Settings →
                   </Link>
                 )}
               </fieldset>
             )}
             {canConfigureRun && (
-              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-card border border-line px-3 py-3 text-[11px] leading-5 text-ink-2">
+              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-card border border-line px-3 py-3 text-[12px] leading-5 text-ink-2">
                 <input
                   type="checkbox"
                   checked={dataPolicyAccepted}
@@ -382,7 +384,7 @@ export function AgentRunPanel({
               </label>
             )}
             {allowanceSpent ? (
-              <p className="mt-4 flex w-full items-center justify-between rounded-chip border border-line-2 px-4 py-3.5 text-sm font-medium text-muted">
+              <p className="mt-4 flex w-full items-center justify-between rounded-chip border border-line-2 px-4 py-3.5 text-[14px] font-medium text-muted">
                 <span>{accessCopy.action}</span>
               </p>
             ) : !canStartRun && accessCopy.href ? (
@@ -391,7 +393,7 @@ export function AgentRunPanel({
               // wearing the costume of a next step.
               <a
                 href={accessCopy.href}
-                className="mt-4 flex w-full items-center justify-between rounded-chip border border-line-2 px-4 py-3.5 text-sm font-medium text-ink transition hover:border-ink/40 hover:text-ink"
+                className="mt-4 flex w-full items-center justify-between rounded-chip border border-line-2 px-4 py-3.5 text-[14px] font-medium text-ink transition hover:border-ink/40 hover:text-ink"
               >
                 <span>{accessCopy.action}</span>
                 <span aria-hidden>→</span>
@@ -401,13 +403,13 @@ export function AgentRunPanel({
                 type="button"
                 onClick={launch}
                 disabled={!canLaunch || launching}
-                className="mt-4 flex w-full items-center justify-between rounded-chip bg-ink px-4 py-3.5 text-sm font-medium text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="mt-4 flex w-full items-center justify-between rounded-chip bg-ink px-4 py-3.5 text-[14px] font-medium text-canvas transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span>{launching ? "Starting durable run…" : accessCopy.action}</span>
                 <span aria-hidden>→</span>
               </button>
             )}
-            <p className="mt-3 text-[11px] leading-5 text-muted">
+            <p className="mt-3 text-[12px] leading-5 text-muted">
               {accessCopy.explanation}
             </p>
           </>
@@ -418,7 +420,7 @@ export function AgentRunPanel({
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
                 {snapshot.run.status.replaceAll("_", " ")}
               </span>
-              <span className="font-mono text-xs font-medium text-included-ink">
+              <span className="font-mono text-[12px] font-medium text-included-ink">
                 {snapshot.tokens.totalTokens.toLocaleString("en-US")} tokens used
               </span>
             </div>
@@ -432,16 +434,16 @@ export function AgentRunPanel({
             {repositoryTruncated && (
               <p
                 role="alert"
-                className="mt-4 rounded-card border border-failed/40 bg-failed/10 px-3 py-3 text-xs leading-5 text-failed"
+                className="mt-4 rounded-card border border-failed/40 bg-failed/10 px-3 py-3 text-[13px] leading-5 text-failed"
               >
                 The repository scan reached the early-access file cap. Some files are outside both
                 the included and excluded lists; review the diff carefully or start a narrower run.
               </p>
             )}
-            {summary?.content && <p className="mt-4 text-sm leading-6 text-ink-2">{summary.content}</p>}
+            {summary?.content && <p className="mt-4 text-[14px] leading-6 text-ink-2">{summary.content}</p>}
             {diff?.content && (
               <details className="mt-4 rounded-card border border-line">
-                <summary className="cursor-pointer px-3 py-3 text-xs font-medium text-ink">
+                <summary className="cursor-pointer px-3 py-3 text-[13px] font-medium text-ink">
                   Review proposed diff
                 </summary>
                 <pre className="max-h-80 overflow-auto border-t border-line p-3 font-mono text-[11px] leading-5 text-ink-2" tabIndex={0}>
@@ -451,14 +453,14 @@ export function AgentRunPanel({
             )}
             {snapshot.run.status === "awaiting_approval" && (
               <fieldset className="mt-4 rounded-card border border-line-2 bg-canvas p-4">
-                <legend className="px-1 text-xs font-semibold text-ink">Review frozen acceptance criteria</legend>
+                <legend className="px-1 text-[13px] font-medium text-ink">Review frozen acceptance criteria</legend>
                 <p className="mt-1 break-all font-mono text-[11px] text-muted">
                   Proposal {snapshot.run.proposal_hash}
                 </p>
                 <div className="mt-3 space-y-3">
                   {reviewCriteria.map((criterion, index) => (
                     <div key={criterion.criterion} className="rounded-chip border border-line px-3 py-2.5">
-                      <label className="flex items-start gap-2 text-xs leading-5 text-ink-2">
+                      <label className="flex items-start gap-2 text-[13px] leading-5 text-ink-2">
                         <input
                           type="checkbox"
                           checked={criterion.satisfied}
@@ -482,7 +484,7 @@ export function AgentRunPanel({
                         maxLength={2_000}
                         aria-label={`Evidence for ${criterion.criterion}`}
                         placeholder="Evidence or reason"
-                        className="mt-2 w-full rounded-chip border border-line bg-surface px-2.5 py-2 text-xs text-ink placeholder:text-muted"
+                        className="mt-2 w-full rounded-chip border border-line bg-surface px-2.5 py-2 text-[13px] text-ink placeholder:text-muted"
                       />
                     </div>
                   ))}
@@ -492,7 +494,7 @@ export function AgentRunPanel({
                     type="button"
                     onClick={() => submitReview("rejected")}
                     disabled={!reviewAvailability.canReject || reviewing !== null}
-                    className="rounded-chip border border-failed/40 px-3 py-2.5 text-xs font-semibold text-failed disabled:opacity-40"
+                    className="rounded-chip border border-failed/40 px-3 py-2.5 text-[13px] font-medium text-failed disabled:opacity-40"
                   >
                     {reviewing === "rejected" ? "Recording…" : "Reject proposal"}
                   </button>
@@ -500,18 +502,18 @@ export function AgentRunPanel({
                     type="button"
                     onClick={() => submitReview("accepted")}
                     disabled={!reviewAvailability.canAccept || reviewing !== null}
-                    className="rounded-chip bg-ink px-3 py-2.5 text-xs font-semibold text-canvas disabled:opacity-40"
+                    className="rounded-chip bg-ink px-3 py-2.5 text-[13px] font-medium text-canvas disabled:opacity-40"
                   >
                     {reviewing === "accepted" ? "Recording…" : "Accept criteria"}
                   </button>
                 </div>
-                <p className="mt-3 text-[11px] leading-4 text-muted">
+                <p className="mt-3 text-[12px] leading-5 text-muted">
                   The decision is bound to this immutable proposal. External GitHub writes remain off.
                 </p>
               </fieldset>
             )}
             {review && (
-              <p className="mt-4 rounded-card border border-line-2 bg-canvas px-4 py-3 text-xs leading-5 text-ink-2">
+              <p className="mt-4 rounded-card border border-line-2 bg-canvas px-4 py-3 text-[13px] leading-5 text-ink-2">
                 Proposal {review.decision} with criterion-level review evidence.
               </p>
             )}
@@ -520,18 +522,18 @@ export function AgentRunPanel({
                 href={pullRequest.url}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 flex w-full items-center justify-between rounded-chip bg-ink px-4 py-3.5 text-sm font-medium text-canvas"
+                className="mt-4 flex w-full items-center justify-between rounded-chip bg-ink px-4 py-3.5 text-[14px] font-medium text-canvas"
               >
                 <span>{pullRequest.label}</span>
                 <span aria-hidden>↗</span>
               </a>
             )}
             {snapshot.run.error && (
-              <p role="alert" className="mt-4 text-xs leading-5 text-failed">{snapshot.run.error}</p>
+              <p role="alert" className="mt-4 text-[13px] leading-5 text-failed">{snapshot.run.error}</p>
             )}
           </>
         )}
-        {error && <p role="alert" className="mt-3 text-xs text-failed">{error}</p>}
+        {error && <p role="alert" className="mt-3 text-[13px] text-failed">{error}</p>}
       </div>
     </section>
   );
