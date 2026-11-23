@@ -8,6 +8,7 @@ import {
   demoRun,
   DURATION,
   frameAt,
+  LAYOUT,
   LIST_ROWS,
   matchedTerms,
   motionAt,
@@ -143,5 +144,14 @@ describe("the home page demo's script", () => {
       }
     }
     expect(motionAt(10, recorded, { still: true }).camera).toMatchObject({ zoom: 1, moving: false });
+  });
+
+  it("keeps the start of the typed task in frame on a phone", () => {
+    // The "TASK" label and its rule come before the typed text.
+    const textStart = LAYOUT.task.x + 60;
+    for (let t = 0; t <= DURATION; t += 0.1) {
+      if (!frameAt(t, recorded).taskFocus) continue;
+      expect(cameraView(motionAt(t, recorded).camera, 1.9).left).toBeLessThanOrEqual(textStart);
+    }
   });
 });
