@@ -304,9 +304,9 @@ export function AgentRunPanel({
           <>
             <div className="grid grid-cols-3 gap-px overflow-hidden rounded-card border border-line bg-line">
               {[
-                ["Context", `${sliceCount} in`],
-                ["Outside", `${excludedCount} out`],
-                ["Ledger", `${sliceCount + excludedCount} files`],
+                ["In the Slice", `${sliceCount} files`],
+                ["Left out", `${excludedCount} files`],
+                ["Repo", `${sliceCount + excludedCount} files`],
               ].map(([label, value]) => (
                 <div key={label} className="bg-canvas px-3 py-3">
                   <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{label}</p>

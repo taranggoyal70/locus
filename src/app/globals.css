@@ -1469,6 +1469,95 @@ textarea::placeholder {
 .pd-dialog::backdrop { background: rgba(10, 10, 9, 0.62); }
 .pd-dialog .pd-frame { box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.6); }
 
+/* The workspace's command bar, drawn like the home page demo's: a field with
+   a mono label, an ink button, quiet chips. */
+.ws-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: var(--canvas);
+  cursor: text;
+  transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+}
+.ws-field:focus-within {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--included) 18%, transparent);
+}
+.ws-field input,
+.ws-field textarea {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 15px;
+  outline: none;
+}
+.ws-field input { height: 42px; }
+.ws-field input::placeholder,
+.ws-field textarea::placeholder { color: var(--muted); }
+.ws-field--task { align-items: flex-start; padding-top: 11px; padding-bottom: 11px; }
+.ws-field--task textarea {
+  min-height: 48px;
+  max-height: 40vh;
+  padding: 0;
+  resize: vertical;
+  font-size: 16px;
+  line-height: 24px;
+}
+.ws-field-label {
+  flex: none;
+  padding-right: 12px;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  line-height: 22px;
+  text-transform: uppercase;
+}
+.ws-field--task .ws-field-label { line-height: 24px; }
+.ws-kbd {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 18px;
+}
+@media (hover: none) { .ws-kbd { display: none; } }
+.ws-button {
+  flex: none;
+  min-width: 72px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--canvas);
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity var(--dur-quick) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+.ws-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.ws-button:not(:disabled):active { transform: scale(0.97); }
+.ws-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 18px;
+  transition: border-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
+}
+.ws-chip:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); }
+.ws-chip[aria-pressed="true"] { border-color: var(--included); color: var(--included-ink); }
+.ws-chip:disabled { opacity: 0.5; }
+
 @keyframes pd-caret { 50% { opacity: 0; } }
 @keyframes pd-term { from { background: transparent; color: inherit; } }
 @keyframes pd-scan { 50% { opacity: 0.08; } }
