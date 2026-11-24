@@ -98,29 +98,29 @@ export function TokenMeter({
   }
 
   return (
-    <div className="rounded-card border border-line-2 bg-surface p-5 shadow-panel">
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Context sent to the agent</p>
-          <p className="mt-1 font-mono text-sm text-ink tabular">
+    <div className="rounded-card border border-line-2 bg-surface p-5 shadow-panel sm:p-6">
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">Context sent to the agent</p>
+          <p className="mt-2 font-mono text-[13px] text-ink tabular-nums">
             {slice.toLocaleString()} <span className="text-muted">/ {total.toLocaleString()} tokens</span>
           </p>
         </div>
         <div className="text-right">
-          <p className={`font-mono text-4xl font-semibold tabular transition-all duration-500 ${sparse ? "text-ink-2" : "text-included-ink"}`}>
+          <p className={`font-display text-[44px] leading-none tracking-[-0.02em] tabular-nums ${sparse ? "text-ink-2" : "text-included-ink"}`}>
             {result ? `${includedShare}%` : "·"}
           </p>
-          <p className="text-[11px] text-muted">included share</p>
+          <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">included share</p>
         </div>
       </div>
-      <div className="mt-4 h-3 overflow-hidden rounded-full bg-canvas">
+      <div className="mt-5 h-2 overflow-hidden rounded-[2px] bg-surface-2">
         <div
-          className={`h-full rounded-full transition-all duration-700 ${sparse ? "bg-muted" : "bg-included"}`}
+          className={`h-full transition-[width] duration-700 ease-[var(--ease-out)] motion-reduce:transition-none ${sparse ? "bg-muted" : "bg-included"}`}
           style={{ width: `${Math.max(2, sliceFrac)}%` }}
         />
       </div>
 
-      <p className="mt-2 text-[11px] text-muted">
+      <p className="mt-2.5 text-[13px] leading-5 text-muted">
         {result?.widened
           ? "The full repository is included. Add a file, symbol, route, or error message to focus the Slice."
           : result
@@ -129,7 +129,7 @@ export function TokenMeter({
       </p>
 
       {sparse && !result?.widened && (
-        <p className="mt-2 rounded-chip border border-widened/30 bg-widened/5 px-2.5 py-1.5 text-[11px] text-widened">
+        <p className="mt-3 border-l-2 border-widened pl-3 text-[13px] leading-5 text-widened">
           Few internal imports resolved, so this Slice may be missing real dependencies and the
           reduction above may be overstated. Treat it as repository structure rather than proven
           localization.
@@ -138,12 +138,14 @@ export function TokenMeter({
 
       {result && repo && (
         <>
-          <div className="mt-4 flex gap-1 rounded-chip border border-line p-1">
+          <div className="mt-5 flex gap-1 rounded-chip border border-line-2 p-0.5" role="group" aria-label="Context format">
             {([["generic", "Generic"], ["claude", "Claude"], ["cursor", "Cursor"]] as const).map(([key, label]) => (
               <button
                 key={key}
+                type="button"
                 onClick={() => setFormat(key)}
-                className={`flex-1 rounded-chip px-2 py-1.5 text-[11px] font-medium transition ${
+                aria-pressed={format === key}
+                className={`flex-1 rounded-[3px] px-2 py-1.5 font-mono text-[12px] transition-colors duration-150 ${
                   format === key ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"
                 }`}
               >
@@ -153,16 +155,18 @@ export function TokenMeter({
           </div>
           <div className="mt-2 flex gap-2">
             <button
+              type="button"
               onClick={copy}
-              className={`inline-flex flex-1 items-center justify-center gap-2 rounded-chip px-4 py-3 text-sm font-medium transition ${
+              className={`inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-chip px-4 text-[15px] font-medium transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97] ${
                 result.widened
-                  ? "border border-line-2 bg-canvas text-ink-2 hover:border-ink/40 hover:text-ink"
-                  : "bg-ink text-canvas shadow-panel hover:bg-ink/90"
+                  ? "border border-line-2 text-ink-2 hover:border-ink hover:text-ink"
+                  : "bg-ink text-canvas hover:bg-ink/88"
               }`}
             >
               {copied ?? (result.widened ? "Copy full repo context" : "Copy context")}
             </button>
             <button
+              type="button"
               onClick={() => {
                 if (!repo || !result) return;
                 const packed = packContext(repo, result, format);
@@ -175,8 +179,9 @@ export function TokenMeter({
                 URL.revokeObjectURL(a.href);
                 trackClient("context_copied", { format, files: packed.files, tokens: packed.tokens, method: "download" });
               }}
-              className="rounded-chip border border-line-2 px-3 py-3 text-sm text-ink-2 transition hover:border-ink/40 hover:text-ink"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-chip border border-line-2 text-[15px] text-ink-2 transition-[border-color,color,transform] duration-150 hover:border-ink hover:text-ink active:scale-[0.97]"
               title="Download as file"
+              aria-label="Download as file"
             >
               ↓
             </button>
@@ -185,16 +190,20 @@ export function TokenMeter({
       )}
       {result && !result.widened && (
         <div className="mt-3 flex items-center justify-center gap-3">
-          <span className="text-[11px] text-muted">Was this context useful?</span>
+          <span className="text-[13px] text-muted">Was this context useful?</span>
           <button
+            type="button"
             onClick={() => { setFeedback("up"); trackClient("context_feedback", { rating: "up", files: result.slice.length, includedTokens: result.sliceTokens, totalTokens: result.totalTokens }); }}
-            className={`rounded-chip px-2 py-1 text-xs transition ${feedback === "up" ? "bg-passed/15 text-passed" : "text-muted hover:text-ink"}`}
+            aria-pressed={feedback === "up"}
+            className={`rounded-chip px-2 py-1 text-[13px] transition-colors duration-150 ${feedback === "up" ? "bg-passed/15 text-passed" : "text-ink-2 hover:text-ink"}`}
           >
             Yes
           </button>
           <button
+            type="button"
             onClick={() => { setFeedback("down"); trackClient("context_feedback", { rating: "down", files: result.slice.length, includedTokens: result.sliceTokens, totalTokens: result.totalTokens }); }}
-            className={`rounded-chip px-2 py-1 text-xs transition ${feedback === "down" ? "bg-failed/15 text-failed" : "text-muted hover:text-ink"}`}
+            aria-pressed={feedback === "down"}
+            className={`rounded-chip px-2 py-1 text-[13px] transition-colors duration-150 ${feedback === "down" ? "bg-failed/15 text-failed" : "text-ink-2 hover:text-ink"}`}
           >
             No
           </button>

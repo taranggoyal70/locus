@@ -1,11 +1,10 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ThemedUserButton } from "@/components/ClerkThemed";
 import { AgentRunPanel } from "@/components/AgentRunPanel";
+import { AppShell } from "@/components/AppShell";
+import { frame } from "@/components/Datasheet";
 import { WorkspaceField } from "@/components/WorkspaceField";
 import { DependencyGraph } from "@/components/DependencyGraph";
 import { FilePanel } from "@/components/FilePanel";
@@ -19,14 +18,12 @@ import { NO_RUN_ACCESS, type RunAccess } from "@/lib/run-access";
 import { buildShareUrl } from "@/lib/share";
 
 type LocusAppProps = {
-  accountName?: string;
   isWorkspace?: boolean;
   initialRunId?: string | null;
   runAccess?: RunAccess;
 };
 
 export function LocusApp({
-  accountName,
   isWorkspace = false,
   initialRunId = null,
   runAccess = NO_RUN_ACCESS,
@@ -129,38 +126,9 @@ export function LocusApp({
     : 0;
 
   return (
-    <div className="min-h-screen bg-canvas text-ink lg:grid lg:grid-cols-[92px_minmax(0,1fr)]">
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-surface px-4 lg:h-screen lg:flex-col lg:border-b-0 lg:border-r lg:px-0 lg:py-5">
-          <Link href="/workspace" aria-label="Locus workspace" className="flex items-center gap-2.5 text-ink lg:flex-col lg:gap-2">
-            {/* The mark carries its own ink tile, so it needs no backing here. */}
-            <Image src="/locus-mark.svg" width={32} height={32} alt="" priority className="mark" />
-            <span className="font-display text-[20px] leading-none tracking-[-0.02em] lg:text-[15px]">Locus</span>
-          </Link>
-
-          <nav className="flex items-center gap-1 text-[12px] font-medium text-muted lg:flex-col lg:gap-1.5" aria-label="App navigation">
-            <Link href="/workspace" aria-current="page" className="rounded-chip bg-surface-2 px-2.5 py-2.5 text-ink sm:px-3 lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
-              Map
-            </Link>
-            <Link href="/projects" className="rounded-chip px-2.5 py-2.5 transition-colors duration-150 hover:text-ink sm:px-3 lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
-              Runs
-            </Link>
-            <Link href="/settings" className="rounded-chip px-2.5 py-2.5 transition-colors duration-150 hover:text-ink sm:px-3 lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
-              Setup
-            </Link>
-            <Link href="/docs" className="hidden rounded-chip px-3 py-2.5 transition-colors duration-150 hover:text-ink md:block lg:grid lg:h-12 lg:w-16 lg:place-items-center lg:px-0">
-              Docs
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-2 lg:flex-col">
-            {accountName && <span className="hidden max-w-16 truncate text-[11px] font-medium text-muted lg:block">{accountName}</span>}
-            <ThemedUserButton />
-          </div>
-      </header>
-
-      <div className="min-w-0">
+    <AppShell>
       {isWorkspace && <OnboardingBanner tier={runAccess.tier} />}
-      <main className="mx-auto max-w-[1440px] px-4 pb-16 pt-5 sm:px-7 lg:px-9 lg:pt-8">
+      <main className={`${frame} pb-16 pt-6 sm:pb-24 sm:pt-8`}>
         <h1 className="sr-only">Workspace</h1>
 
         {/* The command bar: the Repo, then the task. The Slice updates as you type. */}
@@ -190,7 +158,7 @@ export function LocusApp({
               </button>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="mr-1 font-mono text-[11px] text-muted">Samples</span>
+              <span className="mr-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">Samples</span>
               {bundled.map((source) => (
                 <button
                   type="button"
@@ -204,7 +172,7 @@ export function LocusApp({
               ))}
               {recentRepos.length > 0 && (
                 <>
-                  <span className="ml-2 mr-1 font-mono text-[11px] text-muted">Recent</span>
+                  <span className="ml-2 mr-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">Recent</span>
                   {recentRepos.slice(0, 3).map((identifier) => (
                     <button type="button" key={identifier} onClick={() => loadRecent(identifier)} className="ws-chip max-w-[180px] truncate font-mono">
                       {identifier}
@@ -263,7 +231,7 @@ export function LocusApp({
               onUseDemo={() => pickBundled(bundled[0].slug)}
             />
           ) : note ? (
-            <div role="status" className="border-t border-line px-4 py-3 text-xs leading-5 text-ink-2">
+            <div role="status" className="border-t border-line px-4 py-3 text-[13px] leading-5 text-ink-2">
               {note}
             </div>
           ) : null}
@@ -302,9 +270,9 @@ export function LocusApp({
                 runAccess={runAccess}
                 acceptanceCriteria={definitionOfDone.split("\n").map((item) => item.trim()).filter(Boolean)}
               />
-              <section className="rounded-card border border-line-2 bg-surface p-5">
-                <label htmlFor="definition-of-done" className="text-[14px] font-medium text-ink">Definition of done</label>
-                <p className="mt-1 text-[12.5px] leading-5 text-muted">What an Agent Run must prove, one outcome per line. A passing command alone does not prove the behavior.</p>
+              <section className="rounded-card border border-line-2 bg-surface p-5 sm:p-6">
+                <label htmlFor="definition-of-done" className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">Definition of done</label>
+                <p className="mt-2 text-[14px] leading-6 text-ink-2">What an Agent Run must prove, one outcome per line. A passing command alone does not prove the behavior.</p>
                 <textarea
                   id="definition-of-done"
                   value={definitionOfDone}
@@ -312,7 +280,7 @@ export function LocusApp({
                   maxLength={2_000}
                   rows={4}
                   placeholder="One verifiable outcome per line."
-                  className="mt-3 w-full resize-y rounded-[8px] border border-line-2 bg-canvas px-3 py-2.5 text-sm leading-6 text-ink placeholder:text-muted focus:border-ink focus:outline-none"
+                  className="mt-4 w-full resize-y rounded-chip border border-line-2 bg-canvas px-3 py-2.5 text-[14px] leading-6 text-ink transition-colors duration-150 placeholder:text-muted hover:border-ink/40 focus:border-ink"
                 />
               </section>
             </div>
@@ -323,8 +291,8 @@ export function LocusApp({
             <div className="grid min-h-[320px] place-items-center rounded-card border border-dashed border-line-2 bg-surface p-10 text-center">
               <div className="flex flex-col items-center">
                 <Mascot mood={loading ? "scan" : "sleep"} size={48} />
-                <p className="mt-5 text-[17px] font-medium text-ink">{loading ? "Reading the Repo" : "No Repo yet"}</p>
-                <p className="mt-1.5 max-w-xs text-[13.5px] leading-5 text-muted">
+                <p className="mt-5 font-display text-[26px] font-normal leading-[1.1] tracking-[-0.012em] text-ink">{loading ? "Reading the Repo" : "No Repo yet"}</p>
+                <p className="mt-2 max-w-xs text-[14px] leading-6 text-ink-2">
                   {loading
                     ? "Mapping its files and imports. The Slice opens as soon as it is done."
                     : "Paste a public GitHub Repo above, or open a sample. Its files land here, ranked for your task."}
@@ -335,17 +303,6 @@ export function LocusApp({
         )}
       </main>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-[1580px] flex-col gap-3 px-4 py-6 text-xs font-medium text-muted sm:flex-row sm:items-center sm:justify-between sm:px-9">
-          <span>Locus · Slice context, complete work</span>
-          <nav className="flex gap-4">
-            <Link href="/docs" className="hover:text-ink">Docs</Link>
-            <Link href="/privacy" className="hover:text-ink">Privacy</Link>
-            <Link href="/terms" className="hover:text-ink">Terms</Link>
-          </nav>
-        </div>
-      </footer>
-      </div>
-    </div>
+    </AppShell>
   );
 }

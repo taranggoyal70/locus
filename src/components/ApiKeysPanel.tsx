@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { monoLabel, monoMeta, primaryButton, rowAction, ruledList, ruledRow, secondaryButton, shortDate, textInput } from "@/components/controls";
+import { InlineError } from "@/components/EmptyState";
+
 type ApiKey = {
   id: string;
   name: string;
@@ -86,35 +89,34 @@ export function ApiKeysPanel() {
 
   if (loading) {
     return (
-      <div className="space-y-3">
-        {[0, 1].map((i) => <div key={i} className="skeleton h-14 w-full rounded-card" />)}
+      <div className={ruledList}>
+        {[0, 1].map((i) => (
+          <div key={i} className={`py-4 ${ruledRow}`}>
+            <div className="skeleton h-4 w-28 rounded-chip" />
+            <div className="skeleton mt-2.5 h-4 w-48 rounded-chip" />
+          </div>
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {error && (
-        <div className="rounded-chip border border-failed/30 bg-failed/5 px-4 py-2.5 text-xs text-failed">
-          {error}
-        </div>
-      )}
+    <div className="space-y-6">
+      {error && <InlineError>{error}</InlineError>}
 
       {revealedKey && (
-        <div className="rounded-card border border-passed/30 bg-passed/5 p-4">
-          <p className="text-xs font-medium text-passed">Your new API key. Copy it now; it won&apos;t be shown again.</p>
-          <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 overflow-x-auto rounded-chip bg-canvas px-3 py-2 font-mono text-xs text-ink">{revealedKey}</code>
-            <button
-              onClick={copyKey}
-              className="shrink-0 rounded-chip border border-passed/30 px-3 py-2 text-xs font-medium text-passed transition hover:bg-passed/10"
-            >
+        <div className="rounded-card border border-passed/50 bg-surface p-5">
+          <p className="text-[14px] font-medium text-passed">Your new API key. Copy it now; it won&apos;t be shown again.</p>
+          <div className="mt-3 flex items-center gap-2">
+            <code className="h-10 min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-chip border border-line-2 bg-canvas px-3 font-mono text-[13px] leading-10 text-ink" tabIndex={0}>{revealedKey}</code>
+            <button type="button" onClick={copyKey} className={secondaryButton}>
               Copy
             </button>
           </div>
           <button
+            type="button"
             onClick={() => setRevealedKey(null)}
-            className="mt-2 text-xs text-ink-2 hover:text-ink"
+            className="mt-3 text-[13px] text-ink-2 transition-colors duration-150 hover:text-ink"
           >
             Dismiss
           </button>
@@ -122,18 +124,21 @@ export function ApiKeysPanel() {
       )}
 
       <div className="flex gap-2">
+        <label htmlFor="api-key-name" className="sr-only">Key name</label>
         <input
+          id="api-key-name"
           value={newKeyName}
           onChange={(e) => setNewKeyName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !creating && createKey()}
           placeholder="Key name (e.g. CI pipeline)"
           maxLength={100}
-          className="min-w-0 flex-1 rounded-card border border-line-2 bg-canvas px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-included/50 focus:outline-none"
+          className={`flex-1 ${textInput}`}
         />
         <button
+          type="button"
           onClick={createKey}
           disabled={creating}
-          className="shrink-0 rounded-chip bg-ink px-4 py-2.5 text-sm font-medium text-canvas transition hover:bg-ink/90 disabled:opacity-40"
+          className={primaryButton}
         >
           {creating ? "Creating..." : "Create key"}
         </button>
@@ -143,37 +148,39 @@ export function ApiKeysPanel() {
         // A failed load is not an empty list. Showing "no keys yet" to someone
         // whose keys simply did not load invites them to create a duplicate, and
         // for a credentials panel that is the wrong thing to be wrong about.
-        <p className="py-6 text-center text-sm text-muted">
+        <p className="border-t border-ink pt-4 text-[14px] leading-6 text-muted">
           Your existing keys could not be loaded, so none are shown. Reload before creating a new one.
         </p>
       ) : keys.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted">No API keys yet. Create one to start using the Locus API.</p>
+        <p className="border-t border-ink pt-4 text-[14px] leading-6 text-muted">No API keys yet. Create one to start using the Locus API.</p>
       ) : (
-        <div className="divide-y divide-line overflow-hidden rounded-card border border-line-2">
+        <ul className={ruledList}>
           {keys.map((key) => (
-            <div key={key.id} className="flex items-center justify-between px-4 py-3">
+            <li key={key.id} className={`flex items-center justify-between gap-4 py-3.5 ${ruledRow}`}>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">{key.name}</p>
-                <div className="mt-0.5 flex items-center gap-3 text-xs text-muted">
-                  <code className="font-mono">{key.prefix}...</code>
-                  <span>Created {new Date(key.created_at).toLocaleDateString()}</span>
-                  {key.last_used_at && <span>Last used {new Date(key.last_used_at).toLocaleDateString()}</span>}
-                </div>
+                <p className="truncate text-[15px] font-medium text-ink">{key.name}</p>
+                <p className={`mt-1 flex flex-wrap gap-x-4 gap-y-0.5 ${monoMeta}`}>
+                  <code className="text-ink-2">{key.prefix}...</code>
+                  <span>Created {shortDate(key.created_at)}</span>
+                  {key.last_used_at && <span>Last used {shortDate(key.last_used_at)}</span>}
+                </p>
               </div>
               <button
+                type="button"
                 onClick={() => deleteKey(key.id)}
-                className="ml-3 shrink-0 rounded-chip px-3 py-1.5 text-xs text-muted transition hover:bg-failed/10 hover:text-failed"
+                aria-label={`Revoke ${key.name}`}
+                className={rowAction}
               >
                 Revoke
               </button>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
-      <div className="rounded-card border border-line bg-surface/50 p-4">
-        <p className="text-xs font-medium text-ink">Quick start</p>
-        <pre className="mt-2 overflow-x-auto rounded-chip bg-canvas p-3 font-mono text-xs leading-5 text-ink-2" tabIndex={0}>{`curl -X POST ${origin}/api/v1/locate \\
+      <div className="overflow-hidden rounded-card border border-line-2">
+        <p className={`border-b border-line bg-canvas-2 px-4 py-2.5 ${monoLabel}`}>Quick start</p>
+        <pre className="overflow-x-auto bg-surface p-4 font-mono text-[12px] leading-5 text-ink-2" tabIndex={0}>{`curl -X POST ${origin}/api/v1/locate \\
   -H "Authorization: Bearer lk_your_key_here" \\
   -H "Content-Type: application/json" \\
   -d '{"repo": "owner/repo", "task": "fix the login bug"}'`}</pre>

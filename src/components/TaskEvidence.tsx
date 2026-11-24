@@ -113,11 +113,11 @@ export function TaskEvidence({
         <label
           htmlFor="task-evidence-input"
           aria-disabled={Boolean(status) || evidence.length >= MAX_ATTACHMENTS}
-          className="cursor-pointer rounded-chip border border-line-2 px-3 py-2 text-[11px] font-medium text-ink-2 transition hover:border-ink/40 hover:text-ink aria-disabled:pointer-events-none aria-disabled:opacity-40"
+          className="cursor-pointer rounded-chip border border-line-2 px-3 py-2 text-[12px] font-medium text-ink-2 transition hover:border-ink/40 hover:text-ink aria-disabled:pointer-events-none aria-disabled:opacity-40"
         >
           Attach screenshot or document
         </label>
-        <span className="text-[11px] text-muted">PDF, DOCX, text, or image · up to 3</span>
+        <span className="text-[12px] text-muted">PDF, DOCX, text, or image · up to 3</span>
       </div>
 
       {evidence.length > 0 && (
@@ -125,15 +125,15 @@ export function TaskEvidence({
           {evidence.map((item) => (
             <li key={item.id} className="flex items-start justify-between gap-3 rounded-chip border border-line bg-canvas/70 px-3 py-2">
               <details className="min-w-0 flex-1">
-                <summary className="cursor-pointer truncate text-[11px] text-ink">
+                <summary className="cursor-pointer truncate text-[12px] text-ink">
                   {item.name} <span className="text-muted">· {item.kind.toUpperCase()} · {item.characters.toLocaleString()} characters</span>
                 </summary>
                 <p className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap font-mono text-[11px] leading-4 text-ink-2">
                   {item.text.slice(0, 1_200)}{item.text.length > 1_200 ? "…" : ""}
                 </p>
-                {item.truncated && <p className="mt-2 text-[11px] text-widened">Long evidence was safely truncated.</p>}
+                {item.truncated && <p className="mt-2 text-[12px] text-widened">Long evidence was safely truncated.</p>}
               </details>
-              <button type="button" onClick={() => onRemove(item.id)} className="shrink-0 text-[11px] text-muted transition hover:text-ink">
+              <button type="button" onClick={() => onRemove(item.id)} className="shrink-0 text-[12px] text-muted transition hover:text-ink">
                 Remove
               </button>
             </li>
@@ -142,11 +142,11 @@ export function TaskEvidence({
       )}
 
       {(status || error) && (
-        <p role={error ? "alert" : "status"} aria-live="polite" className={`mt-2 text-[11px] ${error ? "text-failed" : "text-ink-2"}`}>
+        <p role={error ? "alert" : "status"} aria-live="polite" className={`mt-2 text-[12px] ${error ? "text-failed" : "text-ink-2"}`}>
           {error ?? status}
         </p>
       )}
-      <p className="mt-2 text-[11px] leading-4 text-muted">
+      <p className="mt-2 text-[12px] leading-5 text-muted">
         Documents are processed in memory. Screenshot OCR runs in your browser. Attachments are not saved.
       </p>
     </div>

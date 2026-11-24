@@ -27,6 +27,7 @@ const ELEMENTS = {
   avatarBox: "h-8 w-8 border border-line-2",
   userButtonPopoverCard: "rounded-card border border-line-2 bg-surface text-ink shadow-panel",
   navbar: "bg-canvas-2",
+  navbarMobileMenuButton: "font-display text-[22px] font-normal tracking-[-0.015em] text-ink",
   scrollBox: "bg-surface",
 } as const;
 

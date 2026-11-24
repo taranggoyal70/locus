@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { ThemedUserProfile } from "@/components/ClerkThemed";
-import { SettingsShell } from "@/components/SettingsShell";
+import { AppShell } from "@/components/AppShell";
+import { frame, Rule } from "@/components/Datasheet";
+import { PageHeader } from "@/components/PageHeader";
 
 export const metadata: Metadata = {
   title: "Account · Locus",
@@ -27,21 +29,17 @@ export default async function AccountSettingsPage() {
   if (!userId) redirect("/sign-in");
 
   return (
-    <SettingsShell>
-      <p className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
-        Account
-      </p>
-      <h1 className="mt-4 font-display text-[clamp(40px,5vw,60px)] font-normal leading-none tracking-[-0.02em] text-ink">
-        Your account
-      </h1>
-      <p className="mt-4 max-w-2xl text-[16px] leading-7 text-ink-2">
-        Email addresses, password, and connected accounts. A verified email address
-        is required to start Agent Runs.
-      </p>
-      <div className="mt-8 border-t border-ink" />
-      <div className="mt-8">
-        <ThemedUserProfile path="/settings/account" />
-      </div>
-    </SettingsShell>
+    <AppShell>
+      <main>
+        <PageHeader app label="Account" title="Your account">
+          Email addresses, password, and connected accounts. A verified email address
+          is required to start Agent Runs.
+        </PageHeader>
+        <Rule />
+        <div className={`${frame} py-10 sm:py-14`}>
+          <ThemedUserProfile path="/settings/account" />
+        </div>
+      </main>
+    </AppShell>
   );
 }

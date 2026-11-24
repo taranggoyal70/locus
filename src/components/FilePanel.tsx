@@ -102,7 +102,7 @@ export function FilePanel({
           <p
             ref={listHeadingRef}
             tabIndex={-1}
-            className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-muted focus:outline-none"
+            className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-muted focus:outline-none"
           >
             {result.widened
               ? "All files retained · refine the task"
@@ -116,7 +116,7 @@ export function FilePanel({
                 setView(selectedView);
                 onSelect(null);
               }}
-              className="shrink-0 text-[11px] text-muted hover:text-ink"
+              className="shrink-0 text-[13px] text-muted transition-colors duration-150 hover:text-ink"
             >
               Back to {selectedView} list
             </button>
@@ -132,28 +132,28 @@ export function FilePanel({
             type="button"
             aria-pressed={displayView === "included"}
             onClick={() => switchView("included")}
-            className={`flex items-center justify-between rounded-chip px-3 py-2 text-left text-[11px] transition ${
+            className={`flex items-center justify-between rounded-chip px-3 py-2 text-left text-[13px] transition-colors duration-150 ${
               displayView === "included"
                 ? "bg-included/[0.09] text-included-ink"
                 : "text-muted hover:text-ink-2"
             }`}
           >
-            <span className="font-semibold">Included</span>
-            <span className="font-mono tabular-nums">{result.slice.length}</span>
+            <span className="font-medium">Included</span>
+            <span className="font-mono text-[12px] tabular-nums">{result.slice.length}</span>
           </button>
           <button
             type="button"
             aria-pressed={displayView === "excluded"}
             disabled={!canShowExcluded}
             onClick={() => switchView("excluded")}
-            className={`flex items-center justify-between rounded-chip px-3 py-2 text-left text-[11px] transition ${
+            className={`flex items-center justify-between rounded-chip px-3 py-2 text-left text-[13px] transition-colors duration-150 ${
               displayView === "excluded"
                 ? "bg-surface-2 text-ink"
                 : "text-muted hover:text-ink-2 disabled:cursor-not-allowed disabled:opacity-40"
             }`}
           >
-            <span className="font-semibold">Excluded</span>
-            <span className="font-mono tabular-nums">{result.excluded.length}</span>
+            <span className="font-medium">Excluded</span>
+            <span className="font-mono text-[12px] tabular-nums">{result.excluded.length}</span>
           </button>
         </div>
       </div>
@@ -164,7 +164,9 @@ export function FilePanel({
             id="file-panel-detail-heading"
             ref={detailHeadingRef}
             tabIndex={-1}
-            className="border-b border-line px-4 py-2 font-mono text-[11px] text-included-ink focus:outline-none"
+            className={`border-b border-line px-4 py-2 font-mono text-[12px] break-all focus:outline-none ${
+              selectedView === "included" ? "text-included-ink" : "text-ink-2"
+            }`}
           >
             {selected}
           </p>
@@ -190,16 +192,14 @@ export function FilePanel({
               >
                 {!result.widened && (
                   <span
-                    className={`w-12 shrink-0 font-mono text-[11px] uppercase tracking-wide ${
-                      result.anchors.includes(f.rel) ? "text-muted" : "text-muted"
-                    }`}
+                    className="w-12 shrink-0 font-mono text-[11px] uppercase tracking-wide text-muted"
                   >
                     {result.anchors.includes(f.rel) ? "match" : `${f.dist} ${f.dist === 1 ? "hop" : "hops"}`}
                   </span>
                 )}
                 <span className="flex-1 truncate font-mono text-[12px] text-ink">{f.rel}</span>
                 {f.recent && (
-                  <span className="shrink-0 rounded-chip bg-surface-2 px-1.5 py-0.5 text-[11px] font-semibold text-ink-2">
+                  <span className="shrink-0 rounded-chip bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] text-ink-2">
                     changed
                   </span>
                 )}
@@ -220,7 +220,7 @@ export function FilePanel({
 
       {activeView === "excluded" && !selected && (
         <div className="border-t border-dashed border-line-2 bg-canvas/30 px-4 py-3">
-          <p className="text-[11px] leading-5 text-muted">
+          <p className="text-[13px] leading-5 text-muted">
             These files were loaded but not sent in the context pack. Opening one is inspection only; it does not change the Slice.
           </p>
         </div>

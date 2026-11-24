@@ -73,3 +73,41 @@ export function SectionHead({ n, label, status, lines }: { n: string; label: str
     </div>
   );
 }
+
+/**
+ * A numbered section of a reference sheet (the signed-in Settings page): the
+ * label, serif heading and description in a column on the left at desktop
+ * widths, the controls on the right. Separate sections with a `Rule`.
+ */
+export function SheetSection({
+  id,
+  n,
+  label,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  n: string;
+  label: string;
+  title: string;
+  description: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      id={id}
+      aria-labelledby={`${id}-title`}
+      className={`${frame} grid scroll-mt-20 gap-8 py-12 sm:py-16 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-14`}
+    >
+      <div className="min-w-0">
+        <SectionLabel n={n} label={label} />
+        <h2 id={`${id}-title`} className="mt-4 font-display text-[clamp(28px,3vw,36px)] font-normal leading-[1.05] tracking-[-0.015em] text-ink">
+          {title}
+        </h2>
+        <p className="mt-3 max-w-sm text-[15px] leading-6 text-ink-2">{description}</p>
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
