@@ -56,7 +56,7 @@ export function AccountEmailPanel({ email, verified }: AccountEmailPanelProps) {
       <h2 className={heading}>
         Verify your email to start Agent Runs
       </h2>
-      <p className="mt-3 max-w-2xl text-[15px] leading-6 text-ink-2">
+      <p className="mt-3 max-w-2xl wrap-anywhere text-[15px] leading-6 text-ink-2">
         {email
           ? `We sent a confirmation to ${email}.`
           : "Your account has no verified email address yet."}{" "}

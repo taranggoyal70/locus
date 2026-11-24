@@ -215,6 +215,10 @@ export function AgentRunsList() {
           <div className="grid min-h-[420px] place-items-center text-[14px] text-muted">
             <span className="flex items-center gap-3"><Mascot mood="scan" size={24} />Loading Run evidence…</span>
           </div>
+        ) : selectedRunId && !selectedSnapshot && error && runs.length > 0 ? (
+          <div className="grid min-h-[420px] place-items-center px-8 py-12">
+            <InlineError>{error}</InlineError>
+          </div>
         ) : selectedSnapshot ? (
           <>
             <div className="border-b border-line p-6 sm:p-7">
@@ -294,7 +298,7 @@ export function AgentRunsList() {
           </div>
         )}
       </section>
-      {error && runs.length > 0 && <InlineError className="lg:col-span-2">{error}</InlineError>}
+      {error && runs.length > 0 && !(selectedRunId && !selectedSnapshot) && <InlineError className="lg:col-span-2">{error}</InlineError>}
     </div>
   );
 }

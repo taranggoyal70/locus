@@ -801,8 +801,9 @@ product.
 - **Workspace:** the onboarding steps are a numbered strip, not chips that
   look like buttons; the selected sample takes an ink border (the colour rule);
   fields and buttons use 4px corners; the meter, the Repo count and the
-  context trace use serif figures and ruled rows. Text below 12px is gone from
-  sans copy.
+  context trace use serif figures and ruled rows. `FilePanel` and
+  `RepoLoadFeedback` are on the same scale: sans text is 12px or more (only
+  mono labels are 11px), and an excluded file's path is no longer orange.
 - **Clerk:** the account sidebar title is set in the serif by a rule on
   `.cl-navbar h1`, since Clerk gives it no appearance key.
 - Shared vocabulary: `controls.ts` (buttons, inputs, ruled lists, one date
@@ -810,14 +811,28 @@ product.
   crimson dot and a sentence, not a filled box).
 - **Checks:** `pnpm lint`, `pnpm typecheck`, `pnpm check:alpha-claims` and
   `pnpm build` pass. `pnpm test`: 1122 passed.
-- **Browsers,** on a production build with a throwaway dev-instance account
-  and a local PostgreSQL seeded with sample Runs, keys and analyses (and once
-  emptied, for the empty states): every signed-in page at 1440, 390, 360 and
-  320, light and dark, in Chromium and WebKit, and again with reduced motion.
-  No sideways scroll; the header on one line at every width; axe (WCAG 2.2
-  A/AA) clean except Clerk's "Secured by" over the orange stripe Clerk draws on
-  development instances only.
-- **Not checked:** Firefox; Safari on a real phone; production data; Clerk's
-  default avatar is still its purple gradient for accounts without a photo.
+- **Copy and behaviour that changed:** the workspace's Map / Setup labels, its
+  footer line and the account name are gone; Run counts read In the Slice /
+  Left out; Settings has new section labels; a "Key name" label. Failed Run
+  requests show a sentence, and failed Run evidence says so in the panel
+  instead of loading forever.
+- **Browsers, signed in** (a throwaway dev-instance account, a local PostgreSQL
+  with sample data): every signed-in page at 1440, 390, 360 and 320, light and
+  dark, Chromium and WebKit. That pass read the document's scroll width, which
+  the shell's `overflow-x-clip` hides, and its axe output was filtered, so it
+  proves less than it first claimed here.
+- **Browsers, again, with the clip off** (a temporary route rendering the same
+  components signed out, with mocked API answers, on a production build): 19
+  states of the workspace, Runs and Settings at the same four widths, both
+  themes, Chromium and WebKit, and Chromium with reduced motion. It measures
+  every element's bounds, the header row with a 28px stand-in for the account
+  button, text sizes, and axe (WCAG 2.0 to 2.2 A/AA) unfiltered. It found one
+  defect, a long unverified email cut off at 320 and 360, fixed here; the rerun
+  reports none.
+- **Not checked:** Firefox (Playwright's build would not launch here); Safari on
+  a real phone; production data; the account page was not in the second pass.
+  Clerk's default avatar is still its purple gradient for accounts without a
+  photo, and Clerk's "Secured by" fails contrast over the stripe it draws on
+  development instances.
 - Screenshots: `app-before-*` and `app-after-*` (workspace, Runs and Settings
   at 1440 light; the account page at 1440 dark; Settings and Runs on phones).
