@@ -10,6 +10,14 @@ test, full browser/accessibility sweep, and soak period are still outstanding.
 This remains a go for the existing public localization surface and a no-go for
 opening `LOCUS_SELF_SERVE`.
 
+**Update 2026-11-25.** The owner opened `LOCUS_SELF_SERVE` ahead of this gate
+and chose to keep it open once a signed-in shared Run succeeded in production
+(below). Rows still marked **FAIL** are outstanding risk accepted by the owner,
+not evidence that they pass. Shared Runs are limited to one per account per UTC
+day within a deployment ceiling of one (`LOCUS_SHARED_DAILY_RUN_LIMIT` unset);
+the operator account in `LOCUS_OWNER_USER_IDS` is exempt so production can be
+verified after the public has used the pool.
+
 ## Evidence retained
 
 - Reviewed base revision before this launch branch: `0f2e15a`.
@@ -46,6 +54,20 @@ opening `LOCUS_SELF_SERVE`.
 - The production homepage and interactive `/demo` story rendered successfully;
   the demo advanced through its complete approval-ready state. Production logs
   contained no error-level or HTTP 500 entries during this verification window.
+- On 2026-11-25 at production revision `b8fb89b` the operator account started
+  shared Run `3a8eef4a-02c2-4cf4-b878-7e3c4f6927aa` from the signed-in desktop
+  workspace on `taranggoyal70/locus`. It fixed the singular token label in
+  `src/components/AgentRunsList.tsx` and added a test. It reached Review-ready
+  in about two minutes using 32,221 of its 100,000 tokens, with proposal hash
+  `59fe3cbb74022fcfcff58c00324d40c85d60bf8c85119c750cfd38eaf898de9a`. The
+  Slice held 38 of 332 files, both target files among them. The patch applied
+  to a clean checkout of `b8fb89b` and the named test file passed (2 tests).
+  External writes stayed off; GitHub delivery is withheld. An earlier shared Run
+  the same day, `e40a882a-52f9-4b98-b1fb-4b476e269758` at `b3f7579`, ended in
+  `verification_error`.
+- `main` is protected: lint-test, typecheck, build, codeql, and gitleaks are
+  required, administrators are included, and force-push and deletion are
+  blocked.
 
 ## Public Agent Run gate
 
@@ -59,14 +81,14 @@ must remain empty until every row is **PASS**.
 | Production database history and security | **PASS** | [Supabase migrations](https://supabase.com/dashboard/project/gwyrfkubdvgemrkkffpr/database/migrations) `001`–`020`; [Security Advisor](https://supabase.com/dashboard/project/gwyrfkubdvgemrkkffpr/advisors/security) zero errors/warnings; [Performance Advisor](https://supabase.com/dashboard/project/gwyrfkubdvgemrkkffpr/advisors/performance) zero findings on 2026-09-07 |
 | Shared Workers AI provider configured | **PASS** | Cloudflare Workers AI Read/Write account token installed as a Vercel Production secret; frozen-model API canary returned HTTP 200 and `success: true` on 2026-09-07; token value not retained |
 | Production health for the reviewed revision | **PASS** | [Production health](https://locus-five-iota.vercel.app/api/health) returned HTTP 200, `status: "ok"`, revision `ee73df1`, `readiness.missing: []`, and `admission: "invite_only"` on 2026-09-07 |
-| Desktop and mobile critical paths | **FAIL** | Production desktop `/` and `/demo` passed, including the complete demo interaction, with no error-level or HTTP 500 logs. Mobile and authenticated workspace/settings/Run-history paths remain to be retained |
+| Desktop and mobile critical paths | **FAIL** | Production desktop `/` and `/demo` passed, including the complete demo interaction, with no error-level or HTTP 500 logs. On 2026-11-25 the signed-in desktop workspace loaded a Repo, localized a task, and took shared Run `3a8eef4a` to Review-ready. Mobile and signed-in settings/Run-history paths remain to be retained |
 | Keyboard and accessibility verification | **FAIL** | Public pages passed on 2026-11-25 at `651300a`: axe-core 4.13.0 (WCAG 2.0 to 2.2 A/AA and best practices) found zero violations on 11 paths at phone and desktop width in both color schemes (44 runs; a control page with planted faults was caught), and Tab reached every control with a visible focus indicator on 6 paths at both widths. Signed-in workspace, settings, and Run history remain to be retained |
 | Performance verification | **FAIL** | Public pages measured on 2026-11-25 at `651300a`, lab, phone width with 4x CPU and 1.6 Mbps/150 ms throttling: worst LCP 1.43 s, worst CLS 0.005, worst total blocking time 251 ms (`/`). Within the Core Web Vitals "good" limits. Launch thresholds have not been agreed and signed-in pages remain to be measured |
 | Alert delivery | **FAIL** | Retain the intentional `test_alert=true` failure notification and the following healthy production-health run |
-| Frozen BYOK and shared-pool canary | **FAIL** | Direct frozen-model provider authentication passed. Still retain signed-in Locus Run IDs, execution modes, proposal hashes, Checks, review evidence, quota denial, and proof of no external write |
+| Frozen BYOK and shared-pool canary | **FAIL** | Shared pool passed on 2026-11-25: Run `3a8eef4a`, `shared`, proposal hash `59fe3cbb…de9a`, its named test passing in the Sandbox and again on a clean checkout, frozen criteria shown for review, no external write. Still retain a BYOK Run and a shared-quota denial |
 | 24–48 hour one-partner canary | **FAIL** | Retain start/end timestamps and zero Critical incidents, evidence mutations, unexplained quota failures, or external writes |
 | Incident and rollback rehearsal | **FAIL** | Retain the operator, timestamps, containment result, compatible deployment revision, health recovery, and lessons |
-| Branch and deployment protection | **FAIL** | Require reviewed CI on `main`, prevent force-push/delete, and restrict production deployment to the approved branch/revision |
+| Branch and deployment protection | **FAIL** | `main` requires lint-test, typecheck, build, codeql, and gitleaks, includes administrators, and blocks force-push and deletion (2026-11-25). Restricting production deployment to the approved branch/revision remains to be retained |
 | Billing-disabled behavior | **FAIL** | Retain signed-in production checks proving no purchase path or paid entitlement is exposed in this launch |
 | Final public capability audit | **FAIL** | Record the released `runStart` capability and prove private reads, teams, delivery, billing, autonomous merge, and autonomous deploy remain disabled |
 
