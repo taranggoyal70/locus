@@ -23,6 +23,15 @@ export function ProposalPatch({ snapshot }: { snapshot: AgentRunSnapshot }) {
   const [copied, setCopied] = useState<"idle" | "copied" | "failed">("idle");
   const [error, setError] = useState<string | null>(null);
   const baseRevision = artifacts.find((artifact) => artifact.kind === "diff")?.base_revision;
+  // Runs from before proposals were hashed have nothing a Review can bind to.
+  if (run.status === "awaiting_approval" && !run.proposal_hash) {
+    return (
+      <p className="rounded-card border border-line-2 bg-canvas px-4 py-3 text-[13px] leading-5 text-ink-2">
+        This Run finished before Locus recorded what a Review approves, so its proposal cannot be
+        accepted or downloaded. Run the task again to get a new one.
+      </p>
+    );
+  }
   if (!baseRevision || !proposalPatchAvailable(run, reviews)) return null;
 
   const accepted = run.status === "completed";

@@ -1,9 +1,11 @@
 import {
   AgentSlice,
+  availableCheckCommands,
   truncateToolOutput,
   validateAgentCommand,
   validateRepoPath,
   type AgentSliceLedger,
+  type RepositoryCheckFacts,
 } from "@/lib/agent/workspace-tools";
 
 export type AgentWorkspaceCommand = {
@@ -148,7 +150,8 @@ const REPLACE_SCRIPT = CONTAINMENT_PRELUDE + [
   'const source=fs.readFileSync(target,"utf8");',
   "const count=source.split(before).length-1;",
   'if(count!==1){console.error(`expected exactly one match, found ${count}`);process.exit(2);}',
-  "fs.writeFileSync(target,source.replace(before,after));",
+  // A function replacement, because a string one expands `$&`, `$1` and `$$`.
+  "fs.writeFileSync(target,source.replace(before,()=>after));",
   'process.stdout.write(`updated ${process.env.LOCUS_PATH}\\n`);',
 ].join("");
 
@@ -229,6 +232,19 @@ const PREPARE_DEPENDENCIES = [
   "else echo 'No supported lockfile; dependency install skipped'; fi",
 ].join(" ");
 
+// The package manager is chosen in the order PREPARE_DEPENDENCIES installs in.
+const READ_CHECK_FACTS_SCRIPT = [
+  'const fs=require("node:fs");',
+  "let manifest={};",
+  'try{manifest=JSON.parse(fs.readFileSync("package.json","utf8"))||{};}catch{}',
+  "const has=(file)=>fs.existsSync(file);",
+  'const packageManager=has("pnpm-lock.yaml")?"pnpm":has("package-lock.json")?"npm":has("yarn.lock")?"yarn":has("bun.lock")||has("bun.lockb")?"bun":"npm";',
+  "const scripts={};",
+  'for(const name of ["test","lint","typecheck","check","build"]){const body=manifest.scripts&&manifest.scripts[name];if(typeof body==="string")scripts[name]=body;}',
+  "const dependencies={...manifest.dependencies,...manifest.devDependencies};",
+  'process.stdout.write(JSON.stringify({packageManager,scripts,hasTypeScriptConfig:has("tsconfig.json"),hasVitest:typeof dependencies.vitest==="string"}));',
+].join("");
+
 export const MAX_REVIEW_DIFF_CHARACTERS = 500_000;
 
 export type AgentChange = {
@@ -245,6 +261,7 @@ export type AgentVerification = {
 export class WorkspaceController {
   private readonly checks: AgentVerification[] = [];
   private networkLocked = false;
+  private availableChecks: string[] | null = null;
 
   constructor(
     private readonly workspace: AgentWorkspace,
@@ -303,6 +320,23 @@ export class WorkspaceController {
     });
     if (result.exitCode !== 0) throw new Error("Sandbox dependency preparation failed");
     return evidence(result);
+  }
+
+  /**
+   * Which approved verification commands this repository has. Once known, a
+   * check outside the list is refused before it can be recorded as evidence.
+   */
+  async detectChecks(abortSignal?: AbortSignal): Promise<string[]> {
+    const result = await this.workspace.run({
+      command: `node -e ${shellQuote(READ_CHECK_FACTS_SCRIPT)}`,
+      abortSignal,
+      timeoutMs: 30_000,
+    });
+    if (result.exitCode !== 0) throw new Error("Sandbox check detection failed");
+    this.availableChecks = availableCheckCommands(
+      JSON.parse(result.stdout) as RepositoryCheckFacts,
+    );
+    return [...this.availableChecks];
   }
 
   async readFile(input: string, options: {
@@ -433,6 +467,14 @@ export class WorkspaceController {
 
   async runCheck(input: string, abortSignal?: AbortSignal): Promise<string> {
     const command = validateAgentCommand(input);
+    if (
+      this.availableChecks
+      && !this.availableChecks.some((check) => command === check || command.startsWith(`${check} `))
+    ) {
+      throw new Error(
+        `This repository has no such check. Available: ${this.availableChecks.join(", ")}`,
+      );
+    }
     // R2: `pnpm test` and `pnpm build` are repository-controlled programs.
     // validateAgentCommand above constrains which command runs, never what the
     // command does — the repository supplies the script body. Once a check

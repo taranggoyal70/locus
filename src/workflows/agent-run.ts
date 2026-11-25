@@ -5,14 +5,14 @@ import {
   buildDeterministicDiff,
   freezeCandidate,
 } from "@/lib/agent/candidate";
-import { runCodingTask } from "@/lib/agent/coding-agent";
+import { AGENT_MAX_STEPS, runCodingTask } from "@/lib/agent/coding-agent";
 import { sendOperationalAlert } from "@/lib/agent/operations";
 import {
-  IncompleteRepositoryError,
   assertCompleteRepository,
   fetchAgentRepository,
 } from "@/lib/agent/github-source";
 import {
+  AGENT_STOPPED,
   agentFailureMessage,
   classifyAgentFailure,
   type AgentFailureKind,
@@ -201,6 +201,10 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       values: { sandbox_id: workspace.id },
     });
     await controller.prepareDependencies();
+    // Before any model token is spent: a proposal needs a passing check, so a
+    // repository with none to run could never produce one.
+    const checks = await controller.detectChecks();
+    if (checks.length === 0) throw new Error(AGENT_STOPPED.noChecksAvailable);
     // R2: bootstrap is the last phase that legitimately needs egress. Revoke
     // it before the agent touches the repository, so every subsequent
     // repository-controlled program — every `pnpm test`, every build script —
@@ -217,6 +221,8 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       edgeDensity: localized.edgeDensity,
       included: localized.included,
       excluded: localized.excluded,
+      checks,
+      maxSteps: AGENT_MAX_STEPS,
     });
     const cumulativeUsage = {
       inputTokens: 0,
@@ -266,9 +272,13 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
         });
       },
     });
-    if (result.verification.length === 0) {
-      throw new Error("Agent did not run an approved verification command");
-    }
+    // R1: capture the candidate exactly once. Everything downstream is derived
+    // from these frozen bytes and the trusted base - never from a second read
+    // of a sandbox tree that repository-controlled verification has already
+    // had the opportunity to rewrite.
+    const changeSet = await controller.changeSet();
+    if (changeSet.length === 0) throw new Error(AGENT_STOPPED.noChanges);
+    if (result.verification.length === 0) throw new Error(AGENT_STOPPED.noCheckRun);
     // The agent's in-loop checks are feedback, not evidence. They ran in the
     // sandbox it was editing, so they describe whatever tree existed at the
     // moment they ran. Which commands to trust comes from here; whether they
@@ -282,12 +292,6 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       localized.baselineTokens,
       localized.includedTokens + widenedTokens,
     );
-    // R1: capture the candidate exactly once. Everything downstream is derived
-    // from these frozen bytes and the trusted base — never from a second read
-    // of a sandbox tree that repository-controlled verification has already
-    // had the opportunity to rewrite.
-    const changeSet = await controller.changeSet();
-    if (changeSet.length === 0) throw new Error("Agent completed without repository changes");
     const candidate = freezeCandidate({
       baseSha: localized.revision,
       changes: changeSet,
@@ -465,11 +469,7 @@ export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<vo
     await executeRunStep(localized);
   } catch (error) {
     const failureKind = classifyAgentFailure(error);
-    // R11: the generic per-kind text would not tell an operator what went
-    // wrong or what to do, so this one failure carries its own message.
-    const message = error instanceof IncompleteRepositoryError
-      ? error.message
-      : agentFailureMessage(failureKind, executionMode);
+    const message = agentFailureMessage(failureKind, executionMode, error);
     await failRunStep(
       input.runId,
       message,

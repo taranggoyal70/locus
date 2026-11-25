@@ -117,7 +117,7 @@ describe("coding agent configuration", () => {
     })).toThrow("Run token budget exhausted");
   });
 
-  it("reserves the final Agent step for the structured proposal", () => {
+  it("reserves the final Agent step for submitting the proposal", () => {
     const base = {
       budgetTokens: 180_000,
       messages: "small prompt",
@@ -129,8 +129,7 @@ describe("coding agent configuration", () => {
     });
     expect(agentStepSettings({ ...base, stepNumber: AGENT_MAX_STEPS - 1 })).toEqual({
       maxOutputTokens: 6_000,
-      activeTools: [],
-      toolChoice: "none",
+      activeTools: ["submit_proposal"],
     });
   });
 
