@@ -1,3 +1,4 @@
+import { SOURCE_EXT_RE } from "@/lib/localizer";
 import type { RepoData } from "@/lib/types";
 
 /**
@@ -19,9 +20,6 @@ export const UPLOAD_MAX_FILES = 200;
 export const UPLOAD_MAX_FILE_BYTES = 100_000;
 export const UPLOAD_MAX_TOTAL_BYTES = 5_000_000;
 export const UPLOAD_MAX_PATH_LENGTH = 400;
-
-/** Mirrors SOURCE_EXT_RE in the localizer. */
-const SOURCE_EXT_RE = /\.(tsx?|jsx?|mts|cts|mjs|cjs|py|vue|svelte|astro)$/;
 
 /** Rejected as a path, not merely ignored: these cannot name a source file. */
 const UNSAFE_SEGMENT = new Set(["", ".", ".."]);

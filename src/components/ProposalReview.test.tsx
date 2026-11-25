@@ -3,6 +3,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { UnpublishedChange } from "@/components/UnpublishedChange";
 import { ProposalPatch, patchCommands } from "@/components/ProposalPatch";
 import { ProposalReview } from "@/components/ProposalReview";
 import type { AgentRunSnapshot } from "@/lib/agent/run-view";
@@ -115,6 +116,17 @@ describe("ProposalPatch", () => {
     ["failed", snapshot("failed")],
   ])("renders nothing for a Run that is %s", (_name, value) => {
     expect(render(<ProposalPatch snapshot={value} />).container.innerHTML).toBe("");
+  });
+
+  it("shows a failed Run's work and check output, with nothing to accept", () => {
+    const value = snapshot("failed");
+    value.run.proposal_hash = null;
+    value.artifacts.push({ id: "t", kind: "test", label: "", content: "npm test exit 1", url: null });
+    const { container } = render(<UnpublishedChange snapshot={value} />);
+    expect(container.textContent).toContain("cannot be accepted or downloaded");
+    expect(container.textContent).toContain("npm test exit 1");
+    expect(container.querySelector("button")).toBeNull();
+    expect(render(<UnpublishedChange snapshot={snapshot("awaiting_approval")} />).container.innerHTML).toBe("");
   });
 
   it("says why a Run from before proposals were hashed cannot be decided", () => {

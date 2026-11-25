@@ -10,6 +10,7 @@ import { EmptyState, InlineError } from "@/components/EmptyState";
 import { Mascot } from "@/components/Mascot";
 import { ProposalPatch } from "@/components/ProposalPatch";
 import { ProposalReview } from "@/components/ProposalReview";
+import { UnpublishedChange } from "@/components/UnpublishedChange";
 import { RunContextLedger } from "@/components/RunContextLedger";
 import { StateTag, type StateTone } from "@/components/StateTag";
 import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
@@ -265,7 +266,7 @@ export function AgentRunsList() {
                 Token usage is factual. Locus does not publish a Savings claim during early access.
               </p>
               {summary?.content && <p className="text-[15px] leading-6 text-ink-2">{summary.content}</p>}
-              {diff?.content && (
+              {diff?.content && selectedSnapshot.run.status !== "failed" && (
                 <details className="group rounded-card border border-line-2">
                   <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-[14px] font-medium text-ink">
                     Review proposed diff
@@ -275,6 +276,7 @@ export function AgentRunsList() {
                 </details>
               )}
               {selectedSnapshot.run.error && <InlineError>{selectedSnapshot.run.error}</InlineError>}
+              <UnpublishedChange key={`unpublished-${selectedSnapshot.run.id}`} snapshot={selectedSnapshot} />
               <ProposalPatch key={selectedSnapshot.run.id} snapshot={selectedSnapshot} />
               {/* The evidence and the decision belong on one page: this used to say
                   "Ready for review" with nothing on it to review with. */}

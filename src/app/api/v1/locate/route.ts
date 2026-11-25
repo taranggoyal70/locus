@@ -3,7 +3,7 @@ import { contentShape } from "@/lib/agent/data-policy";
 
 import { track } from "@/lib/analytics";
 import { authenticateApiKey } from "@/lib/api-auth";
-import { buildGraph, locate } from "@/lib/localizer";
+import { SOURCE_EXT_RE, buildGraph, locate } from "@/lib/localizer";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { readLimitedJson } from "@/lib/request-security";
 import { fileContent, type LocateResult, type RepoData } from "@/lib/types";
@@ -16,9 +16,6 @@ const MAX_FILE_BYTES = 100_000;
 const MAX_TOTAL_BYTES = 5_000_000;
 const FETCH_TIMEOUT_MS = 8_000;
 const DOWNLOAD_CONCURRENCY = 8;
-// Mirrors SOURCE_EXT_RE in the localizer: the hosted API must fetch every
-// extension the Graph can build nodes for, or a Python repository loads as empty.
-const SRC_RE = /\.(tsx?|jsx?|mts|cts|mjs|cjs|py|vue|svelte|astro)$/;
 const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__tests__|e2e)\//i;
 
 function ghHeaders(token?: string) {
@@ -118,7 +115,7 @@ async function fetchRepo(
   const resolvedRevision = String(tree.sha || revision);
 
   const candidates = (tree.tree as { path: string; type: string; size?: number }[])
-    .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
+    .filter((n) => n.type === "blob" && SOURCE_EXT_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
   const files: string[] = [];
   let sourceBytes = 0;
   for (const file of candidates) {
@@ -155,7 +152,9 @@ async function fetchRepo(
     coverage: {
       matchedFiles: candidates.length,
       analyzedFiles: Object.keys(fileMap).length,
-      truncated: files.length < candidates.length,
+      truncated: tree.truncated === true
+        || files.length < candidates.length
+        || Object.keys(fileMap).length < files.length,
       limit: MAX_FILES,
     },
   };

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { secondaryButton } from "@/components/controls";
 import { ProposalPatch } from "@/components/ProposalPatch";
 import { ProposalReview } from "@/components/ProposalReview";
+import { UnpublishedChange } from "@/components/UnpublishedChange";
 import { RunContextLedger } from "@/components/RunContextLedger";
 import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/data-policy";
 import { isActiveRun, isTerminalRun, type RunStatus } from "@/lib/agent/run-state";
@@ -411,7 +412,7 @@ export function AgentRunPanel({
               </p>
             )}
             {summary?.content && <p className="mt-4 text-[14px] leading-6 text-ink-2">{summary.content}</p>}
-            {diff?.content && (
+            {diff?.content && snapshot.run.status !== "failed" && (
               <details className="mt-4 rounded-card border border-line">
                 <summary className="cursor-pointer px-3 py-3 text-[13px] font-medium text-ink">
                   Review proposed diff
@@ -454,6 +455,9 @@ export function AgentRunPanel({
             {snapshot.run.error && (
               <p role="alert" className="mt-4 text-[13px] leading-5 text-failed">{snapshot.run.error}</p>
             )}
+            <div className="mt-4 empty:hidden">
+              <UnpublishedChange snapshot={snapshot} />
+            </div>
             {isTerminalRun(snapshot.run.status) && (
               <button type="button" onClick={startAnother} className={`mt-4 ${secondaryButton}`}>
                 Start another Run

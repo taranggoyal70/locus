@@ -148,6 +148,52 @@ export async function recordWidenAttempts(input: {
   }
 }
 
+/**
+ * Keep what a Run made but could not publish, so a failed check does not cost the
+ * person the work. These artifacts carry no content hash and the Run has no
+ * proposal hash, so nothing can be Reviewed, downloaded as a patch, or delivered
+ * from them, and they expire with the Run.
+ */
+export async function recordUnpublishedChange(input: {
+  runId: string;
+  userId: string;
+  baseRevision: string;
+  diff: string;
+  checks: ReadonlyArray<{ command: string; exitCode: number; output: string }>;
+}): Promise<void> {
+  await tenantDb(input.userId).transaction().execute(async (transaction) => {
+    const run = await transaction
+      .selectFrom("agent_runs")
+      .select("status")
+      .where("id", "=", input.runId)
+      .where("user_id", "=", input.userId)
+      .forUpdate()
+      .executeTakeFirst();
+    // A cancelled Run was discarded on purpose.
+    if (run?.status !== "executing") return;
+    await transaction.insertInto("agent_artifacts").values([
+      {
+        run_id: input.runId,
+        user_id: input.userId,
+        kind: "diff",
+        label: "Unpublished change",
+        content: input.diff,
+        base_revision: input.baseRevision,
+      },
+      ...(input.checks.length === 0 ? [] : [{
+        run_id: input.runId,
+        user_id: input.userId,
+        kind: "test" as const,
+        label: "Check output",
+        content: input.checks
+          .map((check) => `${check.command}\n${check.output}`)
+          .join("\n\n"),
+        base_revision: input.baseRevision,
+      }]),
+    ]).execute();
+  });
+}
+
 export async function publishRunProposal(input: {
   runId: string;
   userId: string;

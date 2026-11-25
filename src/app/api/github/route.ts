@@ -2,23 +2,26 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 import { track } from "@/lib/analytics";
+import { SOURCE_EXT_RE } from "@/lib/localizer";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { sameOriginMutation } from "@/lib/request-security";
 import type { RepoData } from "@/lib/types";
 
-// Fetch a public GitHub repo's TypeScript source into the flat {path: content}
+// Fetch a public GitHub repo's source into the flat {path: content}
 // shape the localizer uses. GitHub API calls cover metadata, ref resolution,
 // tree listing, and recent-change metadata; file contents come from
 // raw.githubusercontent (not API-rate-limited). Capped so arbitrary repos stay
 // responsive.
-const MAX_FILES = 200;
+// Files match the hosted Run, so a Repo a Run accepts is whole here too. Bytes
+// do not: this response carries the source, and a Vercel Function response may
+// not exceed 4.5 MB once JSON escaping is added.
+const MAX_FILES = 500;
 const MAX_FILE_BYTES = 100_000;
-const MAX_TOTAL_BYTES = 5_000_000;
+const MAX_TOTAL_BYTES = 3_800_000;
 const MAX_BODY_BYTES = 1_024;
 const FETCH_TIMEOUT_MS = 8_000;
 const DOWNLOAD_CONCURRENCY = 8;
 const RATE_LIMIT = 6;
-const SRC_RE = /\.(tsx?|jsx?)$/;
 const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__tests__|e2e)\//i;
 
 function ghHeaders() {
@@ -369,7 +372,7 @@ export async function POST(request: Request) {
     }
 
     const candidates = (tree.tree as { path: string; type: string; size?: number }[])
-      .filter((n) => n.type === "blob" && SRC_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
+      .filter((n) => n.type === "blob" && SOURCE_EXT_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
     const files: string[] = [];
     let sourceBytes = 0;
     for (const file of candidates) {
@@ -379,10 +382,8 @@ export async function POST(request: Request) {
       sourceBytes += size;
     }
     if (files.length === 0) {
-      return NextResponse.json({ error: "No JavaScript or TypeScript source found in that repo." }, { status: 400 });
+      return NextResponse.json({ error: "No supported source found in that repo. Locus reads JavaScript, TypeScript, and Python." }, { status: 400 });
     }
-    const truncated = files.length < candidates.length;
-
     const entries = await mapConcurrent(files, DOWNLOAD_CONCURRENCY, async (path) => {
       try {
         const r = await fetchWithTimeout(`https://raw.githubusercontent.com/${owner}/${repo}/${resolvedRevision}/${rawPath(path)}`);
@@ -405,6 +406,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "GitHub returned a file tree, but its source files could not be downloaded." }, { status: 502 });
     }
 
+    const missing = files.length - Object.keys(fileMap).length;
+    const truncated = tree.truncated === true || files.length < candidates.length || missing > 0;
+
     // best-effort recent-change signal from the last few commits
     let recentlyChanged: string[] = [];
     try {
@@ -425,7 +429,7 @@ export async function POST(request: Request) {
         // skip bulk commits — not a targeted-change signal
         if (fs.length && fs.length <= Math.max(2, Math.floor(0.4 * Object.keys(fileMap).length))) {
           for (const f of fs) {
-            if (SRC_RE.test(f.filename) && fileMap[f.filename] !== undefined) changed.add(f.filename);
+            if (SOURCE_EXT_RE.test(f.filename) && fileMap[f.filename] !== undefined) changed.add(f.filename);
           }
         }
       }
@@ -441,13 +445,16 @@ export async function POST(request: Request) {
       recentlyChanged,
       files: fileMap,
     });
-    writeRepoCache(cacheKey, {
-      root,
-      recentlyChanged,
-      files: fileMap,
-      truncated,
-      fileCount,
-    });
+    // A file that failed to download may arrive next time; do not pin its absence.
+    if (missing === 0) {
+      writeRepoCache(cacheKey, {
+        root,
+        recentlyChanged,
+        files: fileMap,
+        truncated,
+        fileCount,
+      });
+    }
     track({
       event: "repo_loaded",
       userId,

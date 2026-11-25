@@ -298,6 +298,33 @@ describe("GitHub repository API call budget", () => {
     expect((await second.json()).repo.files["src/a.ts"]).toBe('export const version = "commit-new";\n');
   });
 
+  it("loads every language the site offers and does not keep a failed download", async () => {
+    let pythonFails = true;
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/repos/owner/repo")) return Response.json({ default_branch: "main" });
+      if (url.endsWith("/commits/main")) {
+        return Response.json({ sha: "commit-py", commit: { tree: { sha: "tree-py" } } });
+      }
+      if (url.includes("/git/trees/")) {
+        return Response.json({
+          tree: ["app/main.py", "app/tool.mjs"].map((path) => ({ path, type: "blob", size: 30 })),
+        });
+      }
+      if (url.endsWith("/app/main.py") && pythonFails) return new Response("busy", { status: 503 });
+      if (url.startsWith("https://raw.")) return new Response("x");
+      return Response.json([]);
+    }));
+
+    const partial = await (await POST(request('{"url":"owner/repo"}', "198.51.100.26"))).json();
+    expect(partial).toMatchObject({ truncated: true, fileCount: 1 });
+
+    pythonFails = false;
+    const whole = await (await POST(request('{"url":"owner/repo"}', "198.51.100.26"))).json();
+    expect(whole).toMatchObject({ truncated: false, fileCount: 2 });
+    expect(Object.keys(whole.repo.files)).toEqual(["app/main.py", "app/tool.mjs"]);
+  });
+
   it("rebuilds request-specific metadata around cached source", async () => {
     const unnamed = await POST(request('{"url":"owner/repo"}', "198.51.100.25"));
     expect(unnamed.status).toBe(200);

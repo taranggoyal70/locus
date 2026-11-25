@@ -88,6 +88,55 @@ describe("agent GitHub source", () => {
   });
 });
 
+describe("agent GitHub source completeness", () => {
+  function serve(files: Record<string, () => Response>) {
+    const fetcher = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.endsWith("/repos/acme/repo")) return Response.json({ default_branch: "main" });
+      if (url.endsWith("/commits/main")) {
+        return Response.json({ sha: "commit-sha", commit: { tree: { sha: "tree-sha" } } });
+      }
+      if (url.includes("/git/trees/tree-sha")) {
+        return Response.json({
+          tree: Object.keys(files).map((path) => ({ path, type: "blob", size: 20 })),
+        });
+      }
+      const path = url.split("/commit-sha/")[1];
+      return files[path]?.() ?? new Response("not found", { status: 404 });
+    });
+    vi.stubGlobal("fetch", fetcher);
+    return fetcher;
+  }
+  const ok = () => new Response("x");
+
+  it("reads every language the Graph reads, and the text beside it", async () => {
+    const paths = ["a.mjs", "b.cjs", "c.mts", "d.cts", "e.py", "f.vue", "g.svelte", "h.astro", "i.tsx", "package.json", "README.md"];
+    serve(Object.fromEntries([...paths, "logo.png"].map((path) => [path, ok])));
+
+    const result = await fetchAgentRepository("acme/repo", "main");
+
+    expect(Object.keys(result.repo.files).sort()).toEqual([...paths].sort());
+  });
+
+  it("retries a download once", async () => {
+    let attempts = 0;
+    serve({
+      "a.ts": ok,
+      "b.ts": () => (++attempts === 1 ? new Response("busy", { status: 503 }) : ok()),
+    });
+
+    expect(Object.keys((await fetchAgentRepository("acme/repo", "main")).repo.files)).toEqual(["a.ts", "b.ts"]);
+  });
+
+  it("stops rather than continuing without a file it could not download", async () => {
+    serve({ "a.ts": ok, "b.ts": () => new Response("busy", { status: 503 }) });
+
+    await expect(fetchAgentRepository("acme/repo", "main")).rejects.toThrow(
+      "GitHub source file b.ts could not be downloaded",
+    );
+  });
+});
+
 // R11: a capped ingestion does not merely give the Agent less context, it
 // gives it a wrong model of the repository. The excluded ledger is built from
 // what was fetched, so a file that never arrived is invisible rather than

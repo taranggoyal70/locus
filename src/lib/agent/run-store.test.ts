@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { failRun, transitionRun } from "@/lib/agent/run-store";
+import { failRun, recordUnpublishedChange, transitionRun } from "@/lib/agent/run-store";
 import { setupTestDatabase } from "@/test/database";
 import { seedRun } from "@/test/fixtures";
 
@@ -71,6 +71,43 @@ describe("transitionRun", () => {
       next: "localizing",
     })).rejects.toThrow("Run could not transition");
     expect((await statusOf(runId)).status).toBe("queued");
+  });
+});
+
+describe("recordUnpublishedChange", () => {
+  const change = {
+    userId: "user_owner",
+    baseRevision: "a".repeat(40),
+    diff: "diff --git a/x b/x",
+    checks: [{ command: "npm test", exitCode: 1, output: "exit 1" }],
+  };
+  const artifactsOf = (runId: string) => database().selectFrom("agent_artifacts")
+    .select(["kind", "content", "content_sha256"]).where("run_id", "=", runId).orderBy("kind").execute();
+
+  it("keeps the diff and check output without anything a Review can bind to", async () => {
+    const runId = await seedRun(database(), "user_owner", { status: "executing" });
+
+    await recordUnpublishedChange({ ...change, runId });
+    await failRun(runId, "Checks failed", "verification_error");
+
+    expect(await artifactsOf(runId)).toEqual([
+      { kind: "diff", content: "diff --git a/x b/x", content_sha256: null },
+      { kind: "test", content: "npm test\nexit 1", content_sha256: null },
+    ]);
+    const run = await database().selectFrom("agent_runs").select(["status", "proposal_hash"])
+      .where("id", "=", runId).executeTakeFirstOrThrow();
+    expect(run).toEqual({ status: "failed", proposal_hash: null });
+  });
+
+  it("keeps nothing for a cancelled Run or for someone else", async () => {
+    const cancelled = await seedRun(database(), "user_owner", { status: "cancelled" });
+    const running = await seedRun(database(), "user_owner", { status: "executing" });
+
+    await recordUnpublishedChange({ ...change, runId: cancelled });
+    await recordUnpublishedChange({ ...change, runId: running, userId: "user_intruder" });
+
+    expect(await artifactsOf(cancelled)).toEqual([]);
+    expect(await artifactsOf(running)).toEqual([]);
   });
 });
 
