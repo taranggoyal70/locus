@@ -2,12 +2,11 @@
 
 # Locus
 
-**Show your coding agent only the code it needs, and prove what it touched.**
+**Give your coding agent focused context. Keep the final say.**
 
-[Live product](https://locus-five-iota.vercel.app) · [Measured results](#measured-results) · [How it works](#how-it-works) · [Quick start](#quick-start) · [CLI and MCP](#use-it-from-an-agent) · [Status and limits](#status-and-limits)
+[Open Locus](https://locus-five-iota.vercel.app/workspace) · [Review the change](#review-the-change) · [Quick start](#quick-start) · [Measured results](#measured-results) · [CLI and MCP](#use-it-from-an-agent)
 
 [![CI](https://github.com/taranggoyal70/locus/actions/workflows/ci.yml/badge.svg)](https://github.com/taranggoyal70/locus/actions/workflows/ci.yml)
-[![Tests: 978 passing](https://img.shields.io/badge/vitest-978%20passing-161513)](#verify-a-checkout)
 [![Held-out recall](https://img.shields.io/badge/held--out%20fix--file%20recall-60%2F60-b0380e)](benchmarks/heldout/README.md)
 [![License: proprietary](https://img.shields.io/badge/license-proprietary-161513)](LICENSE)
 [![Demo](https://img.shields.io/badge/demo-locus--five--iota.vercel.app-161513)](https://locus-five-iota.vercel.app)
@@ -21,18 +20,22 @@
 
 </div>
 
-A coding agent asked to fix one bug usually reads the whole repository. You pay for every token of it, and the
-files that matter are buried in the ones that do not. Locus maps a task in plain language to a **Slice**: the
-files that match it, their dependency closure, their direct consumers and recent cross-cutting changes. When the
-evidence is too weak to commit to a small Slice, it **widens** to the whole repository and says which words it
-could not place, instead of guessing.
+Start with a task and a repository. Locus builds an import graph and selects a **Slice**: matching files,
+their dependencies, direct consumers and relevant recent changes. Every included file has a reason; every
+excluded file stays visible. Weak evidence makes Locus **widen** to the whole loaded repository and return
+terms that can help refine the task. Localization is deterministic and makes **no model calls**.
 
-The Slice then becomes a boundary. **Locus Guard** runs Codex, Claude or any command against only the admitted
-files, rejects a candidate that changes anything outside them, and signs the candidate, its checks, usage and
-the human review into one Ed25519 receipt.
+In the web workspace, an Agent Run can turn that context into a proposed change. You get the diff, check
+output and recorded usage, then answer **“Did the agent do what you asked?”** against your own goals.
+Approve or reject the exact proposal. Download its patch to try it locally before deciding, or take the
+approved change into your own checkout. Locus does not push it to GitHub.
 
-Locus works on JavaScript, TypeScript and Python. It runs as a hosted web app and REST API, as a source CLI, and
-as an MCP server for Claude Code, Codex and Cursor.
+For agents you run yourself, **Locus Guard** adds a separate CLI workflow: constrain target-repository access,
+check the candidate's changed paths, and bind execution evidence and human review into an Ed25519-signed
+receipt. A valid signature establishes integrity and provenance; the reviewer decides whether the change is right.
+
+Use the hosted workspace, REST API, or the local **CLI and MCP server**. The localizer supports JavaScript,
+TypeScript, Python, and imports inside Vue, Svelte and Astro components.
 
 ## What you get
 
@@ -46,6 +49,33 @@ as an MCP server for Claude Code, Codex and Cursor.
 
 All four images are unedited captures of a production build at 1440 px wide, taken on 2026-11-22.
 The hero above is generated from a recorded benchmark run; [asset provenance](assets/readme/README.md).
+
+## Review the change
+
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/review-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/review-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/review-dark.svg">
+  <img src="assets/readme/review-light.svg" width="100%" alt="Locus proposal workflow illustration: read the code diff and recorded check output, review each goal, then approve or reject the exact proposal. Download the change as a patch while reviewing or after acceptance. Nothing is sent to GitHub. This illustrates the shipped workflow; it is not a recorded Agent Run.">
+</picture>
+
+*An illustration of the shipped review and patch-download workflow. The benchmark replay above and the
+product captures are separate evidence; this animation does not represent an executing agent.*
+
+1. **Inspect what changed.** A proposal carries a frozen candidate, a diff and check output. Checks are repeated
+   against the frozen candidate in a clean verification workspace before the proposal reaches review.
+2. **Decide in plain language.** Read the change, tick every goal it meets, and choose **Approve change** or
+   **Reject change**. The saved review binds to that proposal's hash; passing checks alone do not accept it.
+3. **Try it in your own checkout.** **Download change** produces a patch and commands to apply it on a new
+   branch from the recorded base commit. Download is available during review and after acceptance. Rejected,
+   failed or integrity-mismatched proposals have no download.
+
+If a Run stops after making edits, **Unpublished change** preserves its diff and check output for inspection.
+It cannot be accepted or downloaded. Run artifacts are retained for 30 days.
+
+The implementation is inspectable: [review UI](src/components/ProposalReview.tsx),
+[availability rules](src/lib/agent/run-review.ts), [patch construction](src/lib/agent/proposal-patch.ts),
+and the [authenticated download endpoint](src/app/api/agent/runs/%5Bid%5D/patch/route.ts).
 
 ## Measured results
 
@@ -122,6 +152,8 @@ flowchart TB
         Agent["Hosted Agent Run<br/>Workflow + Sandbox"]
         CLI["Source CLI<br/>and MCP server"]
     end
+    Review["Human review<br/>bound to the exact proposal"]
+    Patch["Download a patch<br/>apply in your own checkout"]
     subgraph Guard["Locus Guard"]
         direction LR
         Manifest["Scope manifest<br/>hash kept out of band"]
@@ -131,6 +163,9 @@ flowchart TB
         Manifest --> Runner --> Verify --> Receipt
     end
     Input --> Localizer --> Surfaces
+    Agent --> Review
+    Agent -. "try locally before deciding" .-> Patch
+    Review -->|accepted| Patch
     CLI --> Guard
 ```
 
@@ -139,8 +174,8 @@ flowchart TB
    package names, and Python `import` / `from ... import` into a dependency graph. Third-party packages are never
    edges, and a sparse graph is flagged so a reduction figure is not overstated.
 2. **Anchor the task.** [`locate`](src/lib/localizer.ts) scores every file against the task's words through its
-   path, source text, Next.js route and recent-change history, and keeps up to six anchors. A matching test
-   file also pulls in the implementation it covers.
+   path, source text, Next.js route and recent-change history, and initially selects up to six anchors.
+   A selected test file also pulls in the implementation it covers, so the final anchor set can be larger.
 3. **Close over dependencies.** Each anchor brings its import closure and its direct consumers; anchors rank first
    so they survive a token budget.
 4. **Widen when unsure.** If the best anchor is weak, the whole repository comes back with the unmatched terms,
@@ -151,9 +186,12 @@ flowchart TB
    [ADR 0004](docs/adr/0004-runner-enforces-a-target-repo-boundary.md)).
 
 The hosted Agent path runs the same localizer, then executes a bounded agent loop in a Vercel Sandbox under a
-durable Vercel Workflow, records allowlisted checks, and stops at a review-ready proposal. External GitHub writes
-are disabled. [`bin/core.mjs`](bin/core.mjs) is a dependency-free port of the localizer for the CLI and MCP
-server; a [parity test](tests/localizer-parity.test.mjs) keeps the two identical.
+durable Vercel Workflow. It requires a changed candidate and recorded checks, verifies the frozen bytes in a
+clean workspace, and presents the proposal for human review. Acceptance completes the Run; the owner applies
+the downloaded patch locally. External GitHub writes are disabled.
+
+[`bin/core.mjs`](bin/core.mjs) is a dependency-free port of the localizer for the local CLI and MCP server;
+a [parity test](tests/localizer-parity.test.mjs) checks them against the same inputs.
 
 ### Engineering decisions
 
@@ -180,25 +218,21 @@ server; a [parity test](tests/localizer-parity.test.mjs) keeps the two identical
 
 ## Quick start
 
-Requires **Node.js 22** and **pnpm 11** (`corepack enable`). The CLI and MCP server need no keys and no account.
+The **local CLI and MCP server need only Node.js 22 or newer**. No dependency installation, account, model
+key or network request is needed to localize an existing checkout.
 
 ```bash
 git clone https://github.com/taranggoyal70/locus.git
 cd locus
-pnpm install
 node bin/locus.mjs locate "stripe webhook should retry when the subscription write fails"
 ```
 
-That last command localizes this repository. An excerpt of its real output, which goes on to report 79,238 of
-369,231 estimated tokens:
+That command localizes this checkout and prints the anchors, included files, dependency distances, excluded
+count and estimated context size. Its result changes with the code and recent-change history. Add `--pack`
+for a context block or `--json` for structured output.
 
-```text
-Slice (46 files):
-  src/app/api/billing/webhook/route.test.ts  (dist 0, ~1998 tok)  [changed]
-  src/app/api/billing/webhook/route.ts  (dist 0, ~1092 tok)  [changed]
-  ...
-Excluded: 219 files
-```
+For the web app, install **pnpm 11** (`corepack enable`), run `pnpm install --frozen-lockfile`, and configure
+the services below before starting `pnpm dev`.
 
 | Mode | Command | What runs |
 | :--- | :--- | :--- |
@@ -264,8 +298,13 @@ Rate limit: 30 requests a minute per user. Full reference: [/docs](https://locus
 
 ## Configuration
 
-Copy [`.env.example`](.env.example) to `.env.local`. The web app reports which of these are missing at
+For a complete hosted deployment, copy [`.env.example`](.env.example) to `.env.local`. The web app reports which
+production dependencies are missing at
 [`/api/health`](https://locus-five-iota.vercel.app/api/health).
+
+The local `bin/` CLI needs none of these service credentials. The web workspace uses Clerk and Postgres;
+Agent Runs additionally need the reviewed Cloudflare route and credential encryption. Retention and alerting
+are production-readiness requirements.
 
 | Variable | Required | Purpose |
 | :--- | :---: | :--- |
@@ -314,7 +353,7 @@ delivery and billing for every Tier.
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm lint && pnpm typecheck && pnpm test     # 978 tests, no network or keys
+pnpm lint && pnpm typecheck && pnpm test     # no provider keys; local servers and OS sandbox tests
 pnpm check:merge-markers && pnpm check-sync && pnpm check:alpha-claims
 pnpm evidence:release1                       # the public study report matches its inputs
 pnpm readme:assets --check                   # the README graphics match their data
@@ -354,9 +393,12 @@ docs/adr/, CONTEXT.md       Architecture decisions and the domain language
   an agent finishes more tasks, or spends fewer total tokens per accepted task, waits on the Release 1 study.
 - **Lexical matching.** A task that uses none of the code's vocabulary widens or misses; `--evidence` and the
   refinement terms are the remedy.
-- **The hosted importer is smaller than the CLI.** The web workspace imports public repositories up to 500 source
-  files and 3.8 MB; the REST API, and the CLI and MCP server that call it, stop at 200 files. Agent Runs need a JavaScript or TypeScript
-  test, lint, typecheck or build command, so a Python-only repository can be localized but not run.
+- **Import limits depend on the surface.** The web workspace previews up to 500 supported source files and
+  3.8 MB; the REST API caps imports at 200 files and 5 MB. The local CLI and MCP server in `bin/` read the
+  checkout directly and do not inherit the API's 200-file cap. The separate HTTP client in `cli/` sends selected
+  source to the API and does inherit its limits. Neither client is published to npm.
+- **Agent Runs require runnable checks.** A repository needs a supported JavaScript or TypeScript test, lint,
+  typecheck or build command. Python-only repositories can be localized; hosted Python execution is not supported.
 - **Guard containment** covers macOS and Linux only, does not isolate the network, and proves which files changed,
   not that the change is right.
 - **Uploaded evidence** is processed for text and not intentionally retained, but extracted text becomes part of

@@ -481,7 +481,7 @@ function terminal(run, timeline, theme, { x, y, width, lineHeight, fontSize, cha
     parts.push(
       `<text x="${textX}" y="${lineY}" textLength="${n(length)}" lengthAdjust="spacingAndGlyphs" xml:space="preserve">${prompt}</text>`,
       // Resting position is fully slid, so a static render shows the whole line.
-      `<g style="transform:translateX(${n(length + charWidth)}px)" class="${slide}"><rect x="${textX - 2}" y="${n(lineY - fontSize)}" width="${width - padding}" height="${lineHeight}" fill="${band.canvas}"/><rect class="${timeline.during(elapsed, elapsed + duration + 0.15)}" x="${textX - 2}" y="${n(lineY - fontSize + 2)}" width="${charWidth}" height="${fontSize + 2}" fill="${band.ink}" opacity="0"/></g>`,
+      `<g transform="translate(${n(length + charWidth)} 0)" class="${slide}"><rect x="${textX - 2}" y="${n(lineY - fontSize)}" width="${width - padding}" height="${lineHeight}" fill="${band.canvas}"/><rect class="${timeline.during(elapsed, elapsed + duration + 0.15)}" x="${textX - 2}" y="${n(lineY - fontSize + 2)}" width="${charWidth}" height="${fontSize + 2}" fill="${band.ink}" opacity="0"/></g>`,
     );
     elapsed += duration;
     lineY = n(lineY + lineHeight);
@@ -513,7 +513,7 @@ const BEATS = { typeStart: 0.5, typeEnd: 3.1, liftAt: 3.4, outputAt: 4.5, fixAt:
 function heroText(run) {
   const fixed = run.files.find((file) => file.fixed);
   return {
-    title: "Locus: show your coding agent only the code it needs",
+    title: "Locus: find the code, keep the control",
     desc: `Animated replay of a real held-out benchmark run. Task: "${run.task}" on ${run.repo} at ${run.snapshot}. ` +
       `Each of the ${run.repositoryFiles} marks is a source file, in a column per top-level folder. Locus anchors ${run.files.filter((file) => file.role === "anchor").length} files, ` +
       `adds their dependency closure, and excludes the rest: ${run.sliceFiles} of ${run.repositoryFiles} files, ` +
@@ -541,8 +541,9 @@ function heroDesktop(run, themeName) {
   const height = n(cardBottom + 76);
   const body = [
     wordmark(pad, pad, 40, theme),
-    heading(pad - 3, 206, ["Show your agent only", "the code it needs."], { size: 56, leading: 58, theme }),
-    `<g font-size="20" fill="${theme["ink-2"]}"><text x="${pad}" y="${n(termY - 60)}">Task-scoped context and review evidence</text><text x="${pad}" y="${n(termY - 32)}">for coding agents.</text></g>`,
+    `<text x="${pad}" y="140" font-family="${MONO}" font-size="13" letter-spacing="2" fill="${theme["included-ink"]}">01 / FIND THE WORK</text>`,
+    heading(pad - 3, 206, ["Find the code.", "Keep the control."], { size: 62, leading: 64, theme }),
+    `<g font-size="20" fill="${theme["ink-2"]}"><text x="${pad}" y="${n(termY - 60)}">A task, a focused Slice, and the evidence</text><text x="${pad}" y="${n(termY - 32)}">to see why each file belongs.</text></g>`,
     term.svg,
     card.svg,
     `<text x="${pad}" y="${n(height - 34)}" font-size="15" fill="${theme.muted}">Recorded from a real run. Token counts are Locus's chars/4 estimate.</text>`,
@@ -568,13 +569,107 @@ function heroMobile(run, themeName) {
   const height = n(termY + term.height + 92);
   const body = [
     wordmark(pad, 44, 56, theme),
-    heading(pad - 4, 204, ["Show your agent only", "the code it needs."], { size: 66, leading: 68, theme }),
-    `<text x="${pad}" y="330" font-size="26" fill="${theme["ink-2"]}">Task-scoped context for coding agents.</text>`,
+    `<text x="${pad}" y="128" font-family="${MONO}" font-size="18" letter-spacing="2" fill="${theme["included-ink"]}">01 / FIND THE WORK</text>`,
+    heading(pad - 4, 204, ["Find the code.", "Keep the control."], { size: 74, leading: 76, theme }),
+    `<text x="${pad}" y="340" font-size="25" fill="${theme["ink-2"]}">A focused Slice. Every file explained.</text>`,
     card.svg,
     term.svg,
     `<text x="${pad}" y="${n(height - 42)}" font-size="20" fill="${theme.muted}">Recorded from a real run. Tokens are chars/4 estimates.</text>`,
   ].join("\n");
   return document({ width, height, ...heroText(run), theme, body, css: timeline.css() });
+}
+
+// ---------------------------------------------------------------------------
+// Hosted proposal review: a workflow illustration, never a fabricated Run.
+// Copy and availability come from ProposalReview, ProposalPatch and run-review.
+// It deliberately carries no invented task, passing-check status or metric.
+// ---------------------------------------------------------------------------
+
+function reviewStory(themeName, mobile = false) {
+  const theme = THEMES[themeName];
+  const width = mobile ? 720 : 1280;
+  const height = mobile ? 1340 : 650;
+  const pad = mobile ? 40 : 48;
+  const cardWidth = mobile ? 640 : (width - pad * 2 - 48) / 3;
+  const cardHeight = mobile ? 276 : 270;
+  const cards = [0, 1, 2].map((index) => ({
+    x: mobile ? pad : n(pad + index * (cardWidth + 24)),
+    y: mobile ? 310 + index * 322 : 264,
+  }));
+  const labelSize = mobile ? 19 : 13;
+  const textSize = mobile ? 23 : 17;
+  const titleSize = mobile ? 40 : 30;
+  const inset = mobile ? 32 : 26;
+  const tx = (x, y, content, size = textSize, fill = theme["ink-2"], extra = "") =>
+    `<text x="${n(x)}" y="${n(y)}" font-size="${size}" fill="${fill}" ${extra}>${escapeXml(content)}</text>`;
+  const css = [
+    "@keyframes review-enter{0%,6%{opacity:0;transform:translateY(14px)}15%,100%{opacity:1;transform:translateY(0)}}",
+    "@keyframes review-rail{0%,16%{stroke-dashoffset:1400}72%,100%{stroke-dashoffset:0}}",
+    "@keyframes review-tick{0%,38%{stroke-dashoffset:40}47%,100%{stroke-dashoffset:0}}",
+    "@keyframes review-tick-next{0%,48%{stroke-dashoffset:40}57%,100%{stroke-dashoffset:0}}",
+    "@keyframes review-decision{0%,57%{opacity:.18}66%,100%{opacity:1}}",
+    "@keyframes review-patch{0%,65%{opacity:0;transform:translateY(18px)}77%,100%{opacity:1;transform:translateY(0)}}",
+    ".review-enter{animation:review-enter 8.8s cubic-bezier(.22,1,.36,1) both}",
+    ".review-rail{stroke-dasharray:1400;animation:review-rail 8.8s cubic-bezier(.22,1,.36,1) both}",
+    ".review-tick,.review-tick-next{stroke-dasharray:40;stroke-dashoffset:0;animation:review-tick 8.8s linear both}",
+    ".review-tick-next{animation-name:review-tick-next}",
+    ".review-decision{animation:review-decision 8.8s linear both}",
+    ".review-patch{animation:review-patch 8.8s cubic-bezier(.22,1,.36,1) both}",
+  ].join("");
+  const path = mobile
+    ? `M${pad + 20} 284V${cards[2].y - 16}`
+    : `M${cards[0].x + 20} 234H${n(cards[2].x + cardWidth - 20)}`;
+  const rail = `<path d="${path}" fill="none" stroke="${theme.line}" stroke-width="2"/>` +
+    `<path class="review-rail" d="${path}" fill="none" stroke="${theme.included}" stroke-width="2"/>`;
+  const panel = (index, label, title, content) => {
+    const { x, y } = cards[index];
+    return `<g>${mobile ? "" : `<circle cx="${n(x + 20)}" cy="234" r="4" fill="${theme.included}"/>`}` +
+      `<rect x="${x}" y="${y}" width="${n(cardWidth)}" height="${cardHeight}" rx="6" fill="${theme.surface}" stroke="${theme["line-2"]}"/>` +
+      tx(x + inset, y + 34, label, labelSize, theme.muted, `font-family="${MONO}" letter-spacing="1.3"`) +
+      tx(x + inset - 1, y + 79, title, titleSize, theme.ink, `font-family="${SERIF}" letter-spacing="-.6"`) +
+      content(x + inset, y, cardWidth - inset * 2) + "</g>";
+  };
+  const proposal = panel(0, "01 / THE PROPOSAL", "Read the change.", (x, y, inner) =>
+    `<g class="review-enter">` +
+    `<rect x="${x}" y="${y + 106}" width="${n(inner)}" height="88" rx="4" fill="${theme.canvas}" stroke="${theme.line}"/>` +
+    tx(x + 15, y + 136, "−", 23, theme.muted, `font-family="${MONO}"`) +
+    `<path d="M${x + 43} ${y + 130}h${n(inner * .64)}" stroke="${theme.excluded}" stroke-width="8" stroke-linecap="round"/>` +
+    tx(x + 15, y + 174, "+", 23, theme["included-ink"], `font-family="${MONO}"`) +
+    `<path d="M${x + 43} ${y + 168}h${n(inner * .54)}" stroke="${theme.included}" stroke-width="8" stroke-linecap="round"/>` +
+    tx(x, y + 226, "Diff + recorded check output", textSize) +
+    tx(x, y + 251, "Bound to one proposal hash", mobile ? 19 : 14, theme.muted) + "</g>",
+  );
+  const review = panel(1, "02 / YOUR REVIEW", "Did it do the task?", (x, y, inner) => {
+    const tick = (top, label, cls) =>
+      `<rect x="${x}" y="${top - 19}" width="22" height="22" rx="3" fill="${theme.canvas}" stroke="${theme["line-2"]}"/>` +
+      `<path class="${cls}" d="M${x + 5} ${top - 8}l5 5 8-11" fill="none" stroke="${theme["included-ink"]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` +
+      tx(x + 35, top, label);
+    return tick(y + 126, "Your first goal", "review-tick") + tick(y + 168, "Your next goal", "review-tick-next") +
+      `<g class="review-decision"><rect x="${x}" y="${y + 195}" width="${n(inner)}" height="43" rx="4" fill="${theme.included}"/>` +
+      tx(x + inner / 2, y + 223, "Approve change", textSize, theme.canvas, 'text-anchor="middle" font-weight="600"') + "</g>";
+  });
+  const patch = panel(2, "03 / YOUR COPY", "Take it with you.", (x, y, inner) =>
+    `<g class="review-patch">` +
+    `<path d="M${x + 2} ${y + 108}h32l12 12v49H${x + 2}zM${x + 34} ${y + 108}v13h12" fill="${theme.canvas}" stroke="${theme["line-2"]}" stroke-width="1.5"/>` +
+    `<path d="M${x + 13} ${y + 139}h23m-23 10h16" fill="none" stroke="${theme.included}" stroke-width="3"/>` +
+    tx(x + 60, y + 132, "locus-<run>.patch", mobile ? 24 : 16, theme.ink, `font-family="${MONO}"`) +
+    tx(x + 60, y + 158, "The frozen change", mobile ? 21 : 15, theme.muted) +
+    `<rect x="${x}" y="${y + 195}" width="${n(inner)}" height="43" rx="4" fill="${theme.canvas}" stroke="${theme["line-2"]}"/>` +
+    tx(x + inner / 2, y + 223, "Download change  ↓", textSize, theme.ink, 'text-anchor="middle" font-weight="600"') + "</g>",
+  );
+  const body = [
+    tx(pad, mobile ? 55 : 48, "02 / KEEP THE DECISION", mobile ? 19 : 13, theme["included-ink"], `font-family="${MONO}" letter-spacing="2"`),
+    heading(pad - 2, mobile ? 146 : 116, ["The agent proposes.", "You decide."], { size: mobile ? 70 : 56, leading: mobile ? 76 : 60, theme }),
+    mobile ? "" : tx(width - pad, 160, "Nothing is sent to GitHub.", 18, theme["ink-2"], 'text-anchor="end"'),
+    rail, proposal, review, patch,
+    tx(pad, mobile ? 1282 : 594, "Workflow illustration. No agent is executing.", mobile ? 22 : 16, theme.muted),
+    tx(pad, mobile ? 1314 : 620, "You can also download a proposal to test before deciding.", mobile ? 20 : 15, theme.muted),
+  ].join("\n");
+  return document({
+    width, height, theme, css, body,
+    title: "Locus: the agent proposes, you decide",
+    desc: "Illustration of the shipped hosted proposal workflow, not a recorded Run. Read the code diff and check output, review every stated goal, then approve or reject the exact proposal. Its owner can download a git-apply patch while reviewing it or after acceptance. Nothing is sent to GitHub. A rejected proposal has no download.",
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -698,6 +793,8 @@ function render() {
   for (const themeName of Object.keys(THEMES)) {
     outputs[`hero-${themeName}.svg`] = heroDesktop(run, themeName);
     outputs[`hero-mobile-${themeName}.svg`] = heroMobile(run, themeName);
+    outputs[`review-${themeName}.svg`] = reviewStory(themeName);
+    outputs[`review-mobile-${themeName}.svg`] = reviewStory(themeName, true);
     outputs[`heldout-${themeName}.svg`] = heldoutChart(heldout, themeName);
     outputs[`heldout-mobile-${themeName}.svg`] = heldoutChartMobile(heldout, themeName);
   }
