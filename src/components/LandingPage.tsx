@@ -5,9 +5,11 @@ import { admissionTag } from "@/lib/admission-copy";
 import { frame, Rule, SectionHead } from "@/components/Datasheet";
 import { FeatureGlyph, type GlyphKind } from "@/components/FeatureGlyph";
 import { MarketingShell } from "@/components/MarketingShell";
+import { LocusFigure } from "@/components/LocusFigure";
 import { Mascot } from "@/components/Mascot";
 import { ProductDemo } from "@/components/ProductDemo";
-import { CountUp, RiseWords } from "@/components/Reveal";
+import { CountUp, EnterOnce, RiseWords } from "@/components/Reveal";
+import { TypeLens } from "@/components/TypeLens";
 import { BENCHMARK_CASES, BENCHMARK_SUMMARY } from "@/lib/benchmark-cases";
 import { demoRun } from "@/lib/demo-script";
 import { RECORDED_RESULT, RECORDED_SLICE } from "@/lib/landing-slice";
@@ -106,12 +108,16 @@ export function LandingPage() {
           <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
             <div>
               <p className={monoLabel}>Locus / Context for coding agents</p>
-              <RiseWords
-                as="h1"
-                onLoad
-                lines={["Ship the task.", { text: "Not the repo.", className: "text-muted" }]}
-                className="mt-6 font-display text-[clamp(46px,5.4vw,74px)] font-normal leading-[0.98] tracking-[-0.022em] text-ink"
-              />
+              <div className="mt-6">
+                <TypeLens>
+                  <RiseWords
+                    as="h1"
+                    onLoad
+                    lines={["Ship the task.", { text: "Not the repo.", className: "text-muted" }]}
+                    className="font-display text-[clamp(46px,5.4vw,74px)] font-normal leading-[0.98] tracking-[-0.022em] text-ink"
+                  />
+                </TypeLens>
+              </div>
               <p className="mt-6 max-w-md text-[18px] leading-7 text-ink-2">
                 Paste a public GitHub project. Locus finds the files an AI coding tool needs and shows why.
               </p>
@@ -128,10 +134,19 @@ export function LandingPage() {
           </div>
         </section>
 
-        <Rule />
+        <section data-band="dark" className="overflow-hidden bg-canvas py-16 text-ink sm:py-24">
+          <div className={frame}>
+            <SectionHead n="01" label="The locus" status={`Recorded on ${RECORDED_SLICE.repo}`} lines={["Near the task,", "or left on the rim."]} />
+            <p className="mb-12 mt-6 max-w-xl text-[16px] leading-7 text-ink-2">
+              Every square is one of {RUN.fileCount} files. The Anchors sit in the middle, and each ring is one import further
+              out. When a task is too vague to place, Locus Widens and keeps every file.
+            </p>
+            <LocusFigure />
+          </div>
+        </section>
 
         <section className={`${frame} py-16 sm:py-24`}>
-          <SectionHead n="01" label="How it works" status={`Measured on ${RECORDED_SLICE.repo}`} lines={["From a sentence", "to the files that matter."]} />
+          <SectionHead n="02" label="How it works" status={`Measured on ${RECORDED_SLICE.repo}`} lines={["From a sentence", "to the files that matter."]} />
           <ol className="mt-12 grid border-t border-ink sm:grid-cols-2 lg:grid-cols-5">
             {features.map((feature, index) => (
               <li key={feature.kind} className="feature-col grid grid-cols-[88px_minmax(0,1fr)] gap-x-6 border-b border-line py-8 sm:block sm:px-6 lg:border-b-0 lg:px-5">
@@ -160,7 +175,7 @@ export function LandingPage() {
 
         <section id="evidence" className={`${frame} scroll-mt-16 py-16 sm:py-24`}>
           <SectionHead
-            n="02"
+            n="03"
             label="Evidence"
             status={`${cases} held-out fixes · ${repositories} Repos`}
             lines={fixFileRecallPct === 100 ? ["Every fix file,", "in the Slice."] : ["Fix-file recall,", "case by case."]}
@@ -187,9 +202,9 @@ export function LandingPage() {
                 <p className={monoLabel}>Every case</p>
                 <p className="font-mono text-[11px] text-muted tabular-nums">{cases} fixes</p>
               </div>
-              <ul className="mt-5 space-y-3">
-                {caseRows.map((row) => (
-                  <li key={row.repo} className="grid items-center gap-x-4 gap-y-1.5 sm:grid-cols-[160px_minmax(0,1fr)]">
+              <EnterOnce className="case-strip"><ul className="mt-5 space-y-3">
+                {caseRows.map((row, rowIndex) => (
+                  <li key={row.repo} style={{ "--row": rowIndex } as React.CSSProperties} className="grid items-center gap-x-4 gap-y-1.5 sm:grid-cols-[160px_minmax(0,1fr)]">
                     <span className="truncate font-mono text-[12px] text-ink-2">{row.repo}</span>
                     <span className="flex flex-wrap gap-[5px]">
                       {row.cases.map((item, index) => (
@@ -198,7 +213,7 @@ export function LandingPage() {
                     </span>
                   </li>
                 ))}
-              </ul>
+              </ul></EnterOnce>
               <figcaption className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-4 font-mono text-[11px] text-muted">
                 <span className="flex items-center gap-2"><span className="case-dot" data-kind="found" />Every fix file in the Slice</span>
                 <span className="flex items-center gap-2"><span className="case-dot" data-kind="widened" />Widened to the whole Repo</span>
@@ -215,7 +230,7 @@ export function LandingPage() {
         <Rule />
 
         <section className={`${frame} py-16 sm:py-24`}>
-          <SectionHead n="03" label="Two ways to use it" status={open ? "Free · Self-serve" : "Free · Invite-gated"} lines={["One Slice.", "Two ways to use it."]} />
+          <SectionHead n="04" label="Two ways to use it" status={open ? "Free · Self-serve" : "Free · Invite-gated"} lines={["One Slice.", "Two ways to use it."]} />
           <div className="mt-12 grid overflow-hidden rounded-card border border-ink lg:grid-cols-2">
             <div className="flex flex-col bg-surface p-7 sm:p-10">
               <p className="flex items-center justify-between gap-4">
@@ -306,11 +321,19 @@ export function LandingPage() {
                     </div>
                   ))}
                 </dl>
-                <div aria-hidden="true" className="flex items-center gap-4">
-                  <div className="grid h-[92px] w-[92px] place-items-center rounded-full border border-dashed border-line-2 pt-3">
-                    <Mascot mood="found" size={48} />
-                  </div>
-                  <div className="font-mono text-[11px] leading-5 tracking-[0.08em] text-muted">
+                <div aria-hidden="true" className="flex items-center gap-3">
+                  <EnterOnce className="seal relative grid h-[116px] w-[116px] shrink-0 place-items-center">
+                    <svg viewBox="-64 -64 128 128" className="absolute inset-0">
+                      <circle r={62} fill="none" stroke="var(--line-2)" />
+                      <circle r={42} fill="none" stroke="var(--line-2)" strokeDasharray="3 3" />
+                      <g className="seal-ring">
+                        <path id="seal-path" d="M0 48A48 48 0 1 1 .01 48" fill="none" />
+                        <text><textPath href="#seal-path" textLength={296}>SHADCN-UI/TAXONOMY · LOCALIZED · </textPath></text>
+                      </g>
+                    </svg>
+                    <span className="relative pt-1"><Mascot mood="found" size={44} /></span>
+                  </EnterOnce>
+                  <div className="whitespace-nowrap font-mono text-[11px] leading-5 tracking-[0.04em] text-muted">
                     <p>SLICE {RUN.rows.length} / {RUN.fileCount}</p>
                     <p>ANCHORS {RECORDED_SLICE.anchors.length}</p>
                     <p>WIDEN 0</p>

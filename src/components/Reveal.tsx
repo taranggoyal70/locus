@@ -158,3 +158,40 @@ export function CountUp({ value, suffix = "", className = "" }: { value: number;
     </span>
   );
 }
+
+/**
+ * A number that rolls from the value it showed to its new one. It never plays
+ * on first paint, and with reduced motion it simply changes. React owns the
+ * text, so the roll starts by putting the old value back.
+ */
+export function RollNumber({ value, suffix = "", className = "" }: { value: number; suffix?: string; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const shown = useRef(value);
+  useEffect(() => {
+    const element = ref.current;
+    const from = shown.current;
+    if (!element || from === value) return;
+    if (stillMotion()) {
+      shown.current = value;
+      return;
+    }
+    const start = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, Math.max(0, (now - start) / 700));
+      shown.current = from + (value - from) * (1 - (1 - t) ** 3);
+      element.textContent = format(shown.current, suffix);
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    tick(start);
+    return () => cancelAnimationFrame(frame);
+  }, [value, suffix]);
+  return <span ref={ref} className={className}>{format(value, suffix)}</span>;
+}
+
+/** Adds `is-armed` while a block that started offscreen has not been seen yet. Its CSS decides what that means. */
+export function EnterOnce({ className = "", children }: { className?: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEnterView(ref, armRise, enterRise, 0.4);
+  return <div ref={ref} className={className}>{children}</div>;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 import { useEnterView } from "@/components/Reveal";
 
@@ -101,17 +101,23 @@ export function FeatureGlyph({ kind }: { kind: GlyphKind }) {
   useEnterView(ref, armGlyph, enterGlyph, 0.6);
   const { marks, box } = marksFor(kind);
 
-  const replay = () => {
+  // Pointing anywhere in the feature's column plays its glyph again.
+  useEffect(() => {
     const element = ref.current;
-    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    armGlyph(element);
-    void element.getBoundingClientRect();
-    enterGlyph(element);
-  };
+    const column = element?.closest("li");
+    if (!element || !column || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const replay = () => {
+      armGlyph(element);
+      void element.getBoundingClientRect();
+      enterGlyph(element);
+    };
+    column.addEventListener("pointerenter", replay);
+    return () => column.removeEventListener("pointerenter", replay);
+  }, []);
 
   return (
-    <div ref={ref} className="glyph" onPointerEnter={replay} aria-hidden="true">
-      <svg viewBox={`0 0 ${COLS * CELL - (CELL - SIZE)} ${ROWS * CELL - (CELL - SIZE)}`} className="block h-auto w-[88px]">
+    <div ref={ref} className="glyph" aria-hidden="true">
+      <svg viewBox={`0 0 ${COLS * CELL - (CELL - SIZE)} ${ROWS * CELL - (CELL - SIZE)}`} className="block h-auto w-[88px] lg:w-[120px]">
         {box && <rect className="glyph-box" x={6 * CELL - 2} y={CELL - 2} width={3 * CELL + 2} height={5 * CELL + 2} rx={2} />}
         {marks.map((mark) => (
           <g

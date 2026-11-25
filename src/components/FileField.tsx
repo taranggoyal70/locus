@@ -52,26 +52,42 @@ export function markColumns(
   });
 }
 
+/** Hops from the nearest Anchor for each mark, in the same order as `markColumns`. Null outside the Slice. */
+export function markHops(
+  columns: { label: string; files: readonly string[] }[],
+  hops: ReadonlyMap<string, number>,
+  perMark = 1,
+): (number | null)[][] {
+  return columns.map(({ files }) => {
+    const marks: (number | null)[] = [];
+    for (let i = 0; i < files.length; i += perMark) {
+      const found = files.slice(i, i + perMark).flatMap((path) => hops.get(path) ?? []);
+      marks.push(found.length ? Math.min(...found) : null);
+    }
+    return marks;
+  });
+}
+
 // A column with more than 40 marks widens instead of growing taller, so every
 // column stays about the same height and every mark the same size.
 function marksPerRow(count: number): number {
   return count > 40 ? Math.max(10, Math.ceil(count / 8)) : 5;
 }
 
-export function FileField({ columns }: { columns: FieldColumn[] }) {
+export function FileField({ columns, hops }: { columns: FieldColumn[]; hops?: (number | null)[][] }) {
   const tracks = columns.map(({ marks }) => `${marksPerRow(marks.length) / 5}fr`).join(" ");
   let index = 0;
   return (
     <div aria-hidden="true">
       <div className="grid items-start gap-2.5 sm:gap-4" style={{ gridTemplateColumns: tracks }}>
-        {columns.map((column) => (
+        {columns.map((column, c) => (
           <div
             key={column.label}
             className="grid gap-[3px]"
             style={{ gridTemplateColumns: `repeat(${marksPerRow(column.marks.length)}, minmax(0, 1fr))` }}
           >
             {column.marks.map((kind, i) => (
-              <span key={i} className="aperture-mark" data-kind={kind} style={{ "--i": index++ } as React.CSSProperties} />
+              <span key={i} className="aperture-mark" data-kind={kind} style={{ "--i": index++, "--hop": hops?.[c]?.[i] ?? undefined } as React.CSSProperties} />
             ))}
           </div>
         ))}

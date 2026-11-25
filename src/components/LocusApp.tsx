@@ -120,6 +120,7 @@ export function LocusApp({
   }, [repo, result, task, graph, loadedRepositorySpecifier, saveStatus]);
 
   const includedCount = result?.slice.length ?? 0;
+  const sliceHops = new Map(result?.slice.map(({ path, dist }) => [path, dist]));
   const excludedCount = result?.excluded.length ?? 0;
   const includedShare = result?.totalTokens
     ? Math.round((result.sliceTokens / result.totalTokens) * 100)
@@ -245,6 +246,7 @@ export function LocusApp({
                   files={repo ? Object.keys(repo.files) : null}
                   slicePaths={result.slice.map(({ path }) => path)}
                   anchorPaths={result.anchorPaths}
+                  sliceHops={sliceHops}
                   loading={loading}
                   repoName={repo?.name ?? null}
                   includedShare={includedShare}

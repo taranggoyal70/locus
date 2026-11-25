@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { FIELD, FooterField } from "@/components/FooterField";
+import { FIELD, FooterField, ORIGIN } from "@/components/FooterField";
 import { Mascot, type MascotMood } from "@/components/Mascot";
+import { useEnterView } from "@/components/Reveal";
 
 /**
  * The footer's field, alive: marks near the pointer light up like a Slice and
@@ -19,6 +20,9 @@ import { Mascot, type MascotMood } from "@/components/Mascot";
 const SPEED = 38; // CSS pixels a second
 const MASCOT = 32;
 
+const armWord = (element: HTMLElement) => element.classList.add("is-armed");
+const enterWord = (element: HTMLElement) => element.classList.remove("is-armed");
+
 type Ripple = { col: number; row: number; start: number };
 
 export function FooterScene({ className = "" }: { className?: string }) {
@@ -27,6 +31,8 @@ export function FooterScene({ className = "" }: { className?: string }) {
   const walkerRef = useRef<HTMLDivElement>(null);
   const [mood, setMood] = useState<MascotMood>("idle");
   const [facing, setFacing] = useState<1 | -1>(1);
+  // The name is set column by column the first time the footer comes into view.
+  useEnterView(boxRef, armWord, enterWord, 0.35);
 
   useEffect(() => {
     const box = boxRef.current;
@@ -53,6 +59,7 @@ export function FooterScene({ className = "" }: { className?: string }) {
     let found = 0;
     let shownMood: MascotMood = "idle";
     let visible = false;
+    let greeted = false;
     let frame = 0;
     let last = 0;
 
@@ -135,6 +142,7 @@ export function FooterScene({ className = "" }: { className?: string }) {
       for (let k = ripples.length - 1; k >= 0; k -= 1) {
         const ripple = ripples[k];
         const radius = ((now - ripple.start) / 1000) * 34;
+        if (radius < 0) continue;
         if (radius > FIELD.columns + 10) {
           ripples.splice(k, 1);
           continue;
@@ -144,8 +152,10 @@ export function FooterScene({ className = "" }: { className?: string }) {
           for (let c = Math.floor(ripple.col - radius - 2); c <= ripple.col + radius + 2; c += 1) {
             if (c < 0 || c >= FIELD.columns) continue;
             const d = Math.hypot(c - ripple.col, r - ripple.row);
-            const ring = 1 - Math.abs(d - radius) / 1.6;
             const i = r * FIELD.columns + c;
+            // Uneven, like ink: the wave is printed on the field, not poured over it.
+            const grain = Math.abs(Math.sin(i * 12.9898) * 43758.5453) % 1;
+            const ring = (1 - Math.abs(d - radius) / 1.6) * (0.12 + 0.88 * grain * grain);
             if (ring > 0 && ring * strength > heat[i]) heat[i] = ring * strength;
           }
         }
@@ -204,8 +214,13 @@ export function FooterScene({ className = "" }: { className?: string }) {
     sizeObserver.observe(box);
     const viewObserver = new IntersectionObserver(([entry]) => {
       visible = Boolean(entry?.isIntersecting) && document.visibilityState === "visible";
-      if (visible) start();
-    });
+      if (!visible) return;
+      if (!greeted) {
+        greeted = true;
+        ripples.push({ ...ORIGIN, start: performance.now() + 700 });
+      }
+      start();
+    }, { threshold: 0.35 });
     viewObserver.observe(box);
     const onVisibility = () => {
       visible = document.visibilityState === "visible" && box.getBoundingClientRect().top < window.innerHeight;

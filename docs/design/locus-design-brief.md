@@ -313,7 +313,12 @@ The page reads as a technical sheet, not a stack of cards.
 - **The rule that keeps it honest:** the server renders the final state, and an
   element only animates if it was offscreen at load and later scrolls into
   view. Nothing already on screen ever flashes from shown to hidden.
-- No scroll hijacking, no parallax, no cursor-following effects.
+- No scroll hijacking and no parallax. Pointer effects only where the pointer
+  reveals something made of file marks (the footer's field, the hero's type
+  lens); never a trail or a custom cursor.
+- **Changed November 24, 2026:** a figure may step by itself while it is on
+  screen if it has a Pause control and stops for good once the reader picks
+  something (the Locus dial). It still draws nothing at rest.
 - Animate `transform` and `opacity`; `clip-path` and `stroke-dashoffset` only to
   type or draw; colour only when a state changes.
 - Reduced motion: show the final state immediately. Every state is readable
@@ -836,3 +841,34 @@ product.
   development instances.
 - Screenshots: `app-before-*` and `app-after-*` (workspace, Runs and Settings
   at 1440 light; the account page at 1440 dark; Settings and Runs on phones).
+
+### More motion (November 24, 2026)
+
+The owner asked for more animation and bolder visuals, hand-made rather than
+templated, in the spirit of PigeonBox and Continuity. Both get theirs from one
+motif used at full size. Locus's is the file mark, so everything here is made of
+it: no particles, gradients, glow or stock illustration. Neither site's art,
+layout or wording is copied.
+
+- **The Locus dial** (`LocusFigure`, section 01): a Repo drawn as a locus. All 125
+  files of shadcn-ui/taxonomy open as a grid, then swing along arcs into place:
+  Anchors in the middle, one ring per import, files left out on the rim. Four
+  recorded localizations (`landing-orbits.json`; its test re-runs the engine and
+  fails on drift), the last a vague task that Widens, so the whole Repo floods in.
+  Pointing at a file names it and lights its imports. Places are polar
+  (`locus-layout.ts`), so CSS alone moves the marks.
+- **Type lens** (`TypeLens`): under a mouse, the hero headline breaks into file
+  marks. The heading's text is untouched.
+- **Footer:** the name set in marks, a column at a time, with the Slice in the O
+  and a grainy wave across the Repo. The irregular Slice blob is gone.
+- **Smaller:** the evidence marks fill in, the ticket's seal stamps down and its
+  text turns with the scroll (where scroll timelines exist), a feature's whole
+  column replays its glyph, figures roll between values.
+- **Workspace:** a new Slice lights outward from its Anchors, one import at a time,
+  by the engine's own distances.
+- **Cost:** the dial draws no animation frames between steps, paused or scrolled
+  past (measured: 0 in three seconds each). The footer's scene still runs only
+  while it is on screen, as before.
+- **Reduced motion:** every figure is finished from the start, nothing steps, and
+  the Pause control is hidden because there is nothing to pause.
+- Screenshots: `motion-*.jpg`.
