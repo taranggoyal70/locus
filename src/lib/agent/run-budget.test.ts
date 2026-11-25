@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { IncompleteRepositoryError } from "@/lib/agent/github-source";
 import {
+  AGENT_STOPPED,
   RunBudgetExceededError,
   agentFailureMessage,
   assertWithinRunTokenBudget,
@@ -91,5 +93,41 @@ describe("agent Run token budget", () => {
     expect(agentFailureMessage("provider_error", "byok")).toContain("Cloudflare Workers AI");
     expect(agentFailureMessage("token_budget_exhausted")).toContain("token budget");
     expect(agentFailureMessage("provider_error")).not.toContain("API key");
+  });
+});
+
+describe("failures Locus caused knowingly", () => {
+  // What the workflow catches: a durable step keeps the message, not the class.
+  const wrapped = (message: string) => new Error(
+    `Step "step//./src/workflows/agent-run//executeRunStep" failed after 0 retries: ${message}`,
+  );
+
+  it.each([
+    ["noChanges", "workflow_error"],
+    ["noCheckRun", "verification_error"],
+    ["noChecksAvailable", "verification_error"],
+  ] as const)("says what happened for %s", (name, kind) => {
+    const error = wrapped(AGENT_STOPPED[name]);
+    expect(classifyAgentFailure(error)).toBe(kind);
+    expect(agentFailureMessage(kind, "shared", error)).toBe(AGENT_STOPPED[name]);
+  });
+
+  it("names the check that failed on the frozen candidate", () => {
+    const error = wrapped("Verification failed against the frozen candidate: pnpm test, pnpm lint");
+    expect(classifyAgentFailure(error)).toBe("verification_error");
+    expect(agentFailureMessage("verification_error", "shared", error)).toBe(
+      "The proposed change failed pnpm test, pnpm lint when it was repeated in a clean workspace, so nothing was published.",
+    );
+  });
+
+  it("keeps the incomplete-repository message through the step wrapper", () => {
+    const incomplete = new IncompleteRepositoryError("octo/large");
+    expect(agentFailureMessage("workflow_error", "shared", wrapped(incomplete.message)))
+      .toBe(incomplete.message);
+  });
+
+  it("leaves every other failure to its generic text", () => {
+    expect(agentFailureMessage("provider_error", "shared", wrapped("secret detail")))
+      .toBe(agentFailureMessage("provider_error", "shared"));
   });
 });

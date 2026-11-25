@@ -327,6 +327,65 @@ export function validateAgentCommand(input: string): string {
   return command;
 }
 
+export type RepositoryCheckFacts = {
+  packageManager: "pnpm" | "npm" | "yarn" | "bun";
+  scripts: Record<string, string>;
+  hasTypeScriptConfig: boolean;
+  hasVitest: boolean;
+};
+
+// The scripts each manager may run. These mirror CHECK_COMMANDS, which stays the
+// boundary; this only says which approved commands the repository actually has.
+const CHECK_SCRIPTS: Record<
+  RepositoryCheckFacts["packageManager"],
+  ReadonlyArray<readonly [script: string, command: string]>
+> = {
+  pnpm: [["test", "pnpm test"], ["lint", "pnpm lint"], ["build", "pnpm build"]],
+  npm: [
+    ["test", "npm test"],
+    ["lint", "npm run lint"],
+    ["typecheck", "npm run typecheck"],
+    ["check", "npm run check"],
+    ["build", "npm run build"],
+  ],
+  yarn: [
+    ["test", "yarn test"],
+    ["lint", "yarn lint"],
+    ["typecheck", "yarn typecheck"],
+    ["build", "yarn build"],
+  ],
+  bun: [
+    ["test", "bun run test"],
+    ["lint", "bun run lint"],
+    ["typecheck", "bun run typecheck"],
+    ["build", "bun run build"],
+  ],
+};
+
+/**
+ * The approved commands this repository can run.
+ *
+ * Package manifests are never admitted to the Slice for editing and are usually
+ * outside it for reading, so an Agent left to guess asks for scripts that do not
+ * exist. Every check it runs is repeated against the frozen candidate, so one
+ * wrong guess fails a Run whose change was correct.
+ */
+export function availableCheckCommands(facts: RepositoryCheckFacts): string[] {
+  const commands = CHECK_SCRIPTS[facts.packageManager]
+    .filter(([script]) => {
+      const body = Object.hasOwn(facts.scripts, script) ? facts.scripts[script] : "";
+      // The placeholder `npm init` writes always exits 1.
+      return body.trim() !== "" && !body.includes("no test specified");
+    })
+    .map(([, command]) => command);
+  if (facts.packageManager === "pnpm") {
+    if (facts.hasVitest) commands.push("pnpm exec vitest run");
+    if (facts.hasTypeScriptConfig) commands.push("pnpm exec tsc --noEmit");
+  }
+  if (facts.packageManager === "bun") commands.push("bun test");
+  return commands;
+}
+
 export function truncateToolOutput(value: string, limit = 12_000): string {
   if (value.length <= limit) return value;
   const omitted = value.length - limit;
@@ -342,6 +401,8 @@ type AgentPromptInput = {
   edgeDensity?: number;
   included: string[];
   excluded: string[];
+  checks: string[];
+  maxSteps: number;
 };
 
 function sparseGraphWarning(input: AgentPromptInput): string | null {
@@ -385,9 +446,15 @@ Rules:
 - Start with the included Slice path ledger below. Use read_file for only the files needed.
 - The excluded ledger contains paths only. Use widen_file before reading or editing one.
 - Make the smallest coherent change.
-- Run focused checks first, then the relevant full verification commands.
+- Edit files with replace_text or write_file. Describing a change does not make it.
+- After editing, run at least one approved verification command below with run_checks and fix what fails.
+- Each run_checks command is repeated against the finished change, so every command you run must pass.
 - Never push, deploy, commit, access secrets, or make externally visible changes.
-- Finish with a concise summary, changed files, verification evidence, and remaining risks.
+- You have ${input.maxSteps} steps. Call several tools in one step when they do not depend on each other.
+- Finish by calling submit_proposal. Do not answer in text before the change is made and checked.
+
+Approved verification commands:
+${input.checks.map((command) => `- ${command}`).join("\n")}
 
 Included Slice path ledger:
 ${warning ? `${warning}\n\n` : ""}${included || "(empty)"}

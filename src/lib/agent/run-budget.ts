@@ -80,6 +80,34 @@ export function assertWithinRunTokenBudget(input: {
   }
 }
 
+/**
+ * Run failures Locus caused knowingly, worded for the person reading the Run.
+ * Thrown as-is and recognised by text in `agentFailureMessage`, because a
+ * durable step rethrows its error as a FatalError that keeps only the message.
+ */
+export const AGENT_STOPPED = {
+  noChanges:
+    "The Agent stopped without changing any files, so there is no proposal. Try a more specific task.",
+  noCheckRun:
+    "The Agent changed files but stopped before running a check, so nothing was published.",
+  noChecksAvailable:
+    "This Repo has no test, lint, typecheck, or build command that Locus can run, so the Run stopped before using the model.",
+} as const;
+
+function knownFailureMessage(error: unknown): string | null {
+  const text = error instanceof Error ? error.message : String(error);
+  const stopped = Object.values(AGENT_STOPPED).find((message) => text.includes(message));
+  if (stopped) return stopped;
+  // R11: an incomplete repository names itself and what to do about it.
+  const incomplete = text.match(/Locus could not ingest all of [\s\S]*$/)?.[0];
+  if (incomplete) return incomplete;
+  const failedChecks = text.match(/Verification failed against the frozen candidate: (.+)$/)?.[1];
+  if (failedChecks) {
+    return `The proposed change failed ${failedChecks} when it was repeated in a clean workspace, so nothing was published.`;
+  }
+  return null;
+}
+
 function failureText(error: unknown): string {
   if (!(error instanceof Error)) return String(error).toLowerCase();
   const cause = "cause" in error ? failureText(error.cause) : "";
@@ -94,9 +122,14 @@ export function classifyAgentFailure(error: unknown): AgentFailureKind {
   ) {
     return "quota_exhausted";
   }
-  if (/verification failed|approved verification command/.test(text)) {
+  if (
+    /verification failed|approved verification command/.test(text)
+    || text.includes(AGENT_STOPPED.noCheckRun.toLowerCase())
+    || text.includes(AGENT_STOPPED.noChecksAvailable.toLowerCase())
+  ) {
     return "verification_error";
   }
+  if (text.includes(AGENT_STOPPED.noChanges.toLowerCase())) return "workflow_error";
   if (/sandbox|workspace stopped|workspace provisioning/.test(text)) {
     return "sandbox_error";
   }
@@ -113,7 +146,10 @@ export function classifyAgentFailure(error: unknown): AgentFailureKind {
 export function agentFailureMessage(
   kind: AgentFailureKind,
   executionMode?: "shared" | "byok",
+  error?: unknown,
 ): string {
+  const known = knownFailureMessage(error);
+  if (known) return known;
   if (kind === "quota_exhausted") {
     if (executionMode === "shared") {
       return "The shared Cloudflare Workers AI capacity is exhausted for today. Try again after the UTC reset or connect your own Cloudflare account.";

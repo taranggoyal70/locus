@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  availableCheckCommands,
   AgentSlice,
   MAX_WIDENED_FILES,
   buildAgentPrompt,
@@ -217,6 +218,8 @@ describe("agent context budget", () => {
       baselineTokens: 180_000,
       included,
       excluded: ["src/billing.ts"],
+      checks: ["pnpm test"],
+      maxSteps: 10,
     });
 
     expect(prompt).toContain(included[0]);
@@ -233,6 +236,8 @@ describe("agent context budget", () => {
       baselineTokens: 12_000,
       included: ["src/dashboard.ts"],
       excluded: ["src/billing.ts"],
+      checks: ["pnpm test"],
+      maxSteps: 10,
     });
 
     expect(prompt).toContain("src/dashboard.ts");
@@ -252,6 +257,8 @@ describe("agent context budget", () => {
       edgeDensity: 0,
       included: ["src/dashboard.ts"],
       excluded: ["src/billing.ts"],
+      checks: ["pnpm test"],
+      maxSteps: 10,
     });
 
     expect(prompt).toContain("Warning: few internal imports resolved (0.00 edges/file)");
@@ -393,5 +400,30 @@ describe("AgentSlice widen attempt ledger", () => {
 
     expect(slice.ledger().widenReasons).toEqual([{ path: "src/b.ts", reason: "needed" }]);
     expect(slice.ledger().widenAttempts).toHaveLength(2);
+  });
+});
+
+describe("available checks", () => {
+  const facts = { hasTypeScriptConfig: false, hasVitest: false };
+  const scripts = { test: "x", lint: "x", typecheck: "x", check: "x", build: "x" };
+
+  it.each(["pnpm", "npm", "yarn", "bun"] as const)(
+    "offers %s only commands the allowlist accepts",
+    (packageManager) => {
+      const commands = availableCheckCommands({
+        packageManager, scripts, hasTypeScriptConfig: true, hasVitest: true,
+      });
+      expect(commands.length).toBeGreaterThan(2);
+      for (const command of commands) expect(validateAgentCommand(command)).toBe(command);
+    },
+  );
+
+  it("offers only scripts that exist and can pass", () => {
+    expect(availableCheckCommands({
+      ...facts,
+      packageManager: "npm",
+      scripts: { test: 'echo "Error: no test specified" && exit 1', build: "tsc" },
+    })).toEqual(["npm run build"]);
+    expect(availableCheckCommands({ ...facts, packageManager: "npm", scripts: {} })).toEqual([]);
   });
 });

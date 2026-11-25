@@ -117,6 +117,14 @@ describe("ProposalPatch", () => {
     expect(render(<ProposalPatch snapshot={value} />).container.innerHTML).toBe("");
   });
 
+  it("says why a Run from before proposals were hashed cannot be decided", () => {
+    const value = snapshot("awaiting_approval");
+    value.run.proposal_hash = null;
+    const { container } = render(<ProposalPatch snapshot={value} />);
+    expect(container.textContent).toContain("cannot be accepted or downloaded");
+    expect(container.querySelector("button")).toBeNull();
+  });
+
   it("downloads the patch from the Run's own route", async () => {
     fetchMock.mockResolvedValue({ ok: true, blob: async () => new Blob(["patch"]) });
     vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: () => "blob:x", revokeObjectURL: () => undefined }));
