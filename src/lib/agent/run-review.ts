@@ -20,6 +20,26 @@ export function reviewDecisionAvailability(
   };
 }
 
+/**
+ * Whether a Run has a proposal its owner may take as a patch: one still under
+ * Review, so it can be tried locally before deciding, or one whose accepted
+ * Review is bound to the same proposal. A rejected proposal has none.
+ */
+export function proposalPatchAvailable(
+  run: { status: string; proposal_hash: string | null },
+  reviews: ReadonlyArray<{ decision: string; proposal_hash: string }>,
+): boolean {
+  if (!run.proposal_hash) return false;
+  if (run.status === "awaiting_approval") return true;
+  return run.status === "completed" && reviews.some((review) => (
+    review.decision === "accepted" && review.proposal_hash === run.proposal_hash
+  ));
+}
+
+export function proposalPatchFilename(runId: string): string {
+  return `locus-${runId.replace(/[^a-f0-9]/gi, "").slice(0, 8).toLowerCase()}.patch`;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }

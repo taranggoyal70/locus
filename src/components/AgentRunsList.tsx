@@ -8,6 +8,8 @@ import { AgentRunTimeline } from "@/components/AgentRunPanel";
 import { dangerButton, monoLabel, monoMeta, primaryButton, ruledList, ruledRow, textLink } from "@/components/controls";
 import { EmptyState, InlineError } from "@/components/EmptyState";
 import { Mascot } from "@/components/Mascot";
+import { ProposalPatch } from "@/components/ProposalPatch";
+import { ProposalReview } from "@/components/ProposalReview";
 import { RunContextLedger } from "@/components/RunContextLedger";
 import { StateTag, type StateTone } from "@/components/StateTag";
 import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
@@ -106,6 +108,12 @@ export function AgentRunsList() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("run");
     router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
+  }
+
+  async function refreshRun(runId: string) {
+    const [nextRuns, nextSnapshot] = await Promise.all([fetchRuns(), fetchRun(runId)]);
+    setRuns(nextRuns);
+    setSnapshot(nextSnapshot);
   }
 
   async function cancelRun(runId: string) {
@@ -267,10 +275,19 @@ export function AgentRunsList() {
                 </details>
               )}
               {selectedSnapshot.run.error && <InlineError>{selectedSnapshot.run.error}</InlineError>}
-              {selectedSnapshot.run.status === "awaiting_approval" && (
-                <p className="border-l-2 border-widened pl-4 text-[14px] leading-6 text-ink-2">
-                  Ready for review. External GitHub writes remain disabled during early access.
-                </p>
+              <ProposalPatch key={selectedSnapshot.run.id} snapshot={selectedSnapshot} />
+              {/* The evidence and the decision belong on one page: this used to say
+                  "Ready for review" with nothing on it to review with. */}
+              {selectedSnapshot.run.status === "awaiting_approval"
+                && selectedSnapshot.run.proposal_hash
+                && selectedSnapshot.task && (
+                <ProposalReview
+                  key={selectedSnapshot.run.proposal_hash}
+                  runId={selectedSnapshot.run.id}
+                  proposalHash={selectedSnapshot.run.proposal_hash}
+                  acceptanceCriteria={selectedSnapshot.task.acceptance_criteria}
+                  onDecided={() => refreshRun(selectedSnapshot.run.id)}
+                />
               )}
               {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className={`w-full justify-between ${primaryButton}`}><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
               {isActiveRun(selectedSnapshot.run.status) && (
