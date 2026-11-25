@@ -1,22 +1,29 @@
 # README visual sources
 
-The SVGs are generated from committed data by [`scripts/readme-assets.mjs`](../../scripts/readme-assets.mjs),
+All primary README visuals are animated SVGs generated from committed data and source contracts by
+[`scripts/readme-assets.mjs`](../../scripts/readme-assets.mjs),
 which takes its look from the site's own sources: the colour tokens in
 [`src/app/globals.css`](../../src/app/globals.css), the mark in [`public/locus-mark.svg`](../../public/locus-mark.svg)
 and the Newsreader display face in [`src/assets/fonts`](../../src/assets/fonts), under the SIL Open Font License
-([`OFL.txt`](../../src/assets/fonts/OFL.txt)). The JPEGs are unedited captures of a production build.
+([`OFL.txt`](../../src/assets/fonts/OFL.txt)). The older JPEG captures are archived assets, no longer embedded
+in the primary README.
 
 | Asset | Evidence | Scope |
 | :--- | :--- | :--- |
 | `hero-{dark,light}.svg`, `hero-mobile-{dark,light}.svg` | [`hero-run.json`](hero-run.json), recorded from case `pmndrs/jotai@bc273fd` of the [held-out benchmark](../../benchmarks/heldout/README.md) | One real run, animated. Each mark is one of the 130 source files in the parent snapshot, laid out as the landing page's Fig. 1 lays out a repository: a column for each of the four largest top-level folders and one, `other`, for the rest, each in path order. The lit marks are exactly the files `locate` returned. The case was chosen for sitting at the median reduction (72%), not for looking best. |
 | `review-{dark,light}.svg`, `review-mobile-{dark,light}.svg` | [`ProposalReview`](../../src/components/ProposalReview.tsx), [`ProposalPatch`](../../src/components/ProposalPatch.tsx), [`run-review`](../../src/lib/agent/run-review.ts), and [`proposal-patch`](../../src/lib/agent/proposal-patch.ts) | A workflow illustration, not a recorded Run or a screenshot. The two goal labels are illustrative. There is no invented task, check result, model output or performance number. The animation explains a frozen proposal, an explicit human decision and a portable patch. Download is also available before deciding; a rejected proposal has none. |
 | `heldout-{dark,light}.svg`, `heldout-mobile-{dark,light}.svg` | [`benchmarks/heldout/results.json`](../../benchmarks/heldout/results.json) | Localized-case recall against a random Slice of the same size, with the task as written and with the scope word removed. |
+| `feature-localize-{dark,light}.svg`, mobile variants | [`hero-run.json`](hero-run.json) | Typed task and staged file-list reveal using the recorded jotai Slice. Every displayed file and count comes from that record. |
+| `feature-guard-{dark,light}.svg`, mobile variants | [`MigrationDemo.tsx`](../../src/components/MigrationDemo.tsx), [Guard pilot](../../docs/operations/locus-guard-pilot.md) | Illustration of the fictional Northstar demo. The node positions and seven admitted nodes are read from the component; scope refusal, frozen-candidate evidence and receipt stages are explanatory, not executing Checks or creating signatures. |
+| `feature-evidence-{dark,light}.svg`, mobile variants | [`public-report.json`](../../benchmarks/release1/public-report.json) | Animated protocol reveal with the actual committed gate and result count. Animation never creates submissions, fills an empty progress bar or unlocks an incomplete study. |
+| `feature-api-{dark,light}.svg`, mobile variants | [REST response contract](../../src/app/api/v1/locate/route.ts), [`hero-run.json`](hero-run.json) | Transport illustration with recorded localization data. The response is an abbreviated illustration, not a captured HTTP exchange. No request is sent and no real key is included. |
+| `architecture-{dark,light}.svg`, mobile variants | [`localizer.ts`](../../src/lib/localizer.ts), [hosted Workflow](../../src/workflows/agent-run.ts), [patch endpoint](../../src/app/api/agent/runs/%5Bid%5D/patch/route.ts), [`guard-runner.mjs`](../../bin/guard-runner.mjs) | Animated architecture map. The hosted review/patch path and local Guard/receipt path remain separate. |
 | `landing.jpg`, `guard-demo.jpg`, `evidence.jpg`, `api-docs.jpg` | `pnpm build` and `pnpm start` at revision `61de47c` | Headless Chromium at 1440 px wide in the light theme on 2026-11-22. `guard-demo.jpg` shows the demo panel at its last step and `api-docs.jpg` the Authentication and `POST /api/v1/locate` sections. The demo is an illustrative story about a fictional billing system. |
 
 ## Regenerate
 
 ```bash
-pnpm readme:assets             # rewrite the SVGs from hero-run.json and results.json
+pnpm readme:assets             # regenerate all 32 SVGs from the committed inputs
 pnpm readme:assets --check     # fail if any committed SVG differs; CI runs this
 node scripts/readme-assets.mjs --capture   # re-record hero-run.json (clones jotai)
 ```
@@ -28,16 +35,22 @@ to write if the re-run disagrees with the committed benchmark result.
 
 The animations use CSS keyframes inside the SVG. GitHub serves SVG as an image, which runs CSS animation but no script
 and loads nothing from outside the file, so the display face travels inside each SVG as a data URI, about 56 KB of
-each file; a renderer that ignores it falls back to the system serif. The hero plays once, over 6.4 seconds, and rests on
-its final frame, as Fig. 1 does on the site. Every element's resting style is that frame, and
-`prefers-reduced-motion` stops the animation, so a reader who has asked for less motion, or a renderer that does
-not animate, sees the finished Slice. The review illustration plays once over 8.8 seconds and rests on the complete
-three-stage flow. Its checkmarks illustrate the user's decision, not automated acceptance. It shares the same
-reduced-motion and static-renderer behavior. Both stories have separate light, dark and mobile layouts.
+each file; a renderer that ignores it falls back to the system serif.
+
+All eight visual families have separate desktop/mobile and light/dark layouts. Each repeats on a 12-second
+clock with a readable result hold. Repetition keeps a feature discoverable when a reader scrolls to it after
+the page has loaded; these are replays, not new operations or new results. The four static feature screenshots
+and static architecture diagram have been replaced in the primary README. The benchmark bars reveal their
+recorded values on the same cycle without inventing intermediate measurements.
+
+Every element's resting style is its completed state. `prefers-reduced-motion` disables every animation,
+showing the finished result without repeated reveals. The review checkmarks illustrate the user's decision,
+not automated acceptance. GitHub image embeds cannot provide the app's pause/seek controls or offscreen
+IntersectionObserver behavior, so these lightweight SVGs use CSS only, readable holds and a reduced-motion
+alternative; they never run JavaScript or make provider requests.
 
 To inspect a frame, open the SVG in a browser and run
-`document.getAnimations().forEach((a) => { a.pause(); a.currentTime = 4000; })` with a time from 0 to 6400 ms for
-the localization hero, or 0 to 8800 ms for the review illustration.
+`document.getAnimations().forEach((a) => { a.pause(); a.currentTime = 4000; })` with a time from 0 to 12000 ms.
 
 ## Reproduce the captures
 

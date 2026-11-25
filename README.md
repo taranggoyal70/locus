@@ -15,7 +15,7 @@
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/hero-mobile-dark.svg">
   <source media="(max-width: 600px)" srcset="assets/readme/hero-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.svg">
-  <img src="assets/readme/hero-light.svg" width="100%" alt="Animated replay of a real held-out run on pmndrs/jotai, played once. The task 'vanilla subscriber not notified after nested store.set and sub/unsub inside a write' is typed into locus locate. The repository's 130 source files are drawn as marks in a column per top-level folder; 6 anchors and 11 dependency-closure files light up as the Slice and 113 are excluded: 17 of 130 files, 17.7K of 62.4K estimated tokens, 72% less context. The file the maintainer actually fixed, src/vanilla/internals.ts, is inside the Slice.">
+  <img src="assets/readme/hero-light.svg" width="100%" alt="Looping replay of a real held-out run on pmndrs/jotai. The task 'vanilla subscriber not notified after nested store.set and sub/unsub inside a write' is typed into locus locate. The repository's 130 source files are drawn as marks in a column per top-level folder; 6 anchors and 11 dependency-closure files light up as the Slice and 113 are excluded: 17 of 130 files, 17.7K of 62.4K estimated tokens, 72% less context. The file the maintainer actually fixed, src/vanilla/internals.ts, is inside the Slice.">
 </picture>
 
 </div>
@@ -39,16 +39,55 @@ TypeScript, Python, and imports inside Vue, Svelte and Astro components.
 
 ## What you get
 
-| Localize a public repository | Contain an agent to the Slice |
-| :--- | :--- |
-| [![The Locus landing page: Ship the task. Not the repo. Paste a public GitHub project and Locus finds the files an AI coding tool needs and shows why.](assets/readme/landing.jpg)](https://locus-five-iota.vercel.app) | [![The Locus Guard demo at its last step: a duplicate-invoice task, 7 of 1,842 files needed and 1,835 untouched, and a proof receipt ready for review with tests passed, approved files enforced and the receipt signature verified.](assets/readme/guard-demo.jpg)](https://locus-five-iota.vercel.app/demo) |
-| Paste a public GitHub project and a task; the workspace shows the anchors, the closure and every excluded file with its reason. | Guard approves the files a task needs, blocks the rest, and signs one receipt for the exact fix. The demo tells an illustrative story about a fictional billing system. |
-| **Hold the claim until the evidence exists** | **Call it from code** |
-| [![The Release 1 evidence page: the gate is locked at 0 of 40 valid reviewed arm results, with 20 frozen tasks across 5 public repositories and arm-blinded review.](assets/readme/evidence.jpg)](https://locus-five-iota.vercel.app/evidence/release-1) | [![The API documentation: Bearer-token authentication and POST /api/v1/locate with its request body.](assets/readme/api-docs.jpg)](https://locus-five-iota.vercel.app/docs) |
-| The paired agent study is frozen before it runs, and the public page withholds every outcome metric until all 40 results bind to real Runs and blinded reviews. | `POST /api/v1/locate` returns the Slice, anchors, graph statistics, packed context and refinement guidance for a public repository. |
+Each feature below has its own animated sequence. Replays repeat with a readable result hold, so they still
+move when you reach them while scrolling. Reduced-motion preferences show the complete result instead.
 
-All four images are unedited captures of a production build at 1440 px wide, taken on 2026-11-22.
-The hero above is generated from a recorded benchmark run; [asset provenance](assets/readme/README.md).
+### 01 · Localize a public repository
+
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-localize-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/feature-localize-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-localize-dark.svg">
+  <img src="assets/readme/feature-localize-light.svg" width="100%" alt="Animated recorded localization: a task is typed for pmndrs/jotai; its selected file rows appear with inclusion reasons, ending on 17 included and 113 excluded files. The same recorded result replays.">
+</picture>
+
+A task becomes Anchors, dependencies and a focused Slice. This replays the recorded jotai result used in the hero. [Open the workspace](https://locus-five-iota.vercel.app/workspace).
+
+### 02 · Contain an agent to the Slice
+
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-guard-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/feature-guard-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-guard-dark.svg">
+  <img src="assets/readme/feature-guard-light.svg" width="100%" alt="Looping illustration of Locus Guard: seven admitted nodes light up, an unrelated deploy change is marked outside scope, and the frozen candidate and Ed25519 receipt appear. This is the fictional Northstar workflow, not a running agent.">
+</picture>
+
+The admitted scope becomes the boundary; unrelated changes are refused and the candidate and its evidence are signed. This illustrates the fictional Northstar demo and performs no execution. [Explore Guard](https://locus-five-iota.vercel.app/demo).
+
+### 03 · Hold the claim until the evidence exists
+
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-evidence-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/feature-evidence-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-evidence-dark.svg">
+  <img src="assets/readme/feature-evidence-light.svg" width="100%" alt="Animated reveal of the committed Release 1 protocol and claim gate. Twenty tasks, five repositories, two context arms, and blinded review appear. The counter stays at zero of forty valid results and the claim remains locked. No results are fabricated.">
+</picture>
+
+The protocol is frozen before the study runs. Missing or invalid evidence keeps the claim locked. The animation reads the committed report and never animates the counter into a result the study has not earned. [Inspect the evidence](https://locus-five-iota.vercel.app/evidence/release-1).
+
+### 04 · Call it from code
+
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-api-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/feature-api-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-api-dark.svg">
+  <img src="assets/readme/feature-api-light.svg" width="100%" alt="Looping API transport illustration: an authenticated POST request is typed, then a shortened response reveals the recorded Slice and token counts. No HTTP request is sent by this SVG.">
+</picture>
+
+An authenticated `POST /api/v1/locate` returns the Slice and packed context for your tools. This illustrates the request/response contract using recorded localization data. [Read the API reference](https://locus-five-iota.vercel.app/docs).
+
+[Visual sources and replay behavior](assets/readme/README.md). The localization replay, Guard illustration,
+committed study state and API illustration are labeled separately.
 
 ## Review the change
 
@@ -59,8 +98,8 @@ The hero above is generated from a recorded benchmark run; [asset provenance](as
   <img src="assets/readme/review-light.svg" width="100%" alt="Locus proposal workflow illustration: read the code diff and recorded check output, review each goal, then approve or reject the exact proposal. Download the change as a patch while reviewing or after acceptance. Nothing is sent to GitHub. This illustrates the shipped workflow; it is not a recorded Agent Run.">
 </picture>
 
-*An illustration of the shipped review and patch-download workflow. The benchmark replay above and the
-product captures are separate evidence; this animation does not represent an executing agent.*
+*A repeating illustration of the shipped review and patch-download workflow. It does not represent an
+executing agent or a newly completed task.*
 
 1. **Inspect what changed.** A proposal carries a frozen candidate, a diff and check output. Checks are repeated
    against the frozen candidate in a clean verification workspace before the proposal reaches review.
@@ -90,7 +129,7 @@ and the [authenticated download endpoint](src/app/api/agent/runs/%5Bid%5D/patch/
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/heldout-mobile-dark.svg">
   <source media="(max-width: 600px)" srcset="assets/readme/heldout-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme/heldout-dark.svg">
-  <img src="assets/readme/heldout-light.svg" width="100%" alt="Bar chart of fix-file recall on localized held-out cases. Task as written: Locus Slice 100.0%, random Slice of the same size 27.3%, over 57 localized cases with 3 widened, 72% median context saved. Scope word removed: Locus Slice 93.7%, random Slice 28.2%, over 54 localized cases with 6 widened, 71.5% median context saved.">
+  <img src="assets/readme/heldout-light.svg" width="100%" alt="Animated bar chart of fix-file recall on localized held-out cases. Task as written: Locus Slice 100.0%, random Slice of the same size 27.3%, over 57 localized cases with 3 widened, 72% median context saved. Scope word removed: Locus Slice 93.7%, random Slice 28.2%, over 54 localized cases with 6 widened, 71.5% median context saved.">
 </picture>
 
 ### How the held-out benchmark is built
@@ -127,47 +166,14 @@ and `pnpm benchmark`. Both are deterministic: rerunning them on 2026-11-19 repro
 
 ## How it works
 
-```mermaid
-flowchart TB
-    subgraph Input["Input"]
-        direction LR
-        Task["Task in plain language"]
-        Evidence["Optional evidence:<br/>logs, PDFs, screenshots"]
-        Repo["Public GitHub repo<br/>or local checkout"]
-    end
-    subgraph Localizer["Localizer: deterministic, no model calls"]
-        direction LR
-        Graph["Import graph<br/>TS paths · NodeNext · workspaces · Python"]
-        Anchor["Anchor scoring<br/>paths · source · routes · recency"]
-        Widen{"Evidence<br/>strong enough?"}
-        Closure["Closure +<br/>direct consumers"]
-        Whole["Whole repo +<br/>refinement terms"]
-        Graph --> Anchor --> Widen
-        Widen -->|yes| Closure
-        Widen -->|no| Whole
-    end
-    subgraph Surfaces["Surfaces"]
-        direction LR
-        Web["Web workspace<br/>and REST API"]
-        Agent["Hosted Agent Run<br/>Workflow + Sandbox"]
-        CLI["Source CLI<br/>and MCP server"]
-    end
-    Review["Human review<br/>bound to the exact proposal"]
-    Patch["Download a patch<br/>apply in your own checkout"]
-    subgraph Guard["Locus Guard"]
-        direction LR
-        Manifest["Scope manifest<br/>hash kept out of band"]
-        Runner["Agent in Seatbelt<br/>or Bubblewrap"]
-        Verify["Path gate<br/>+ checks"]
-        Receipt["Ed25519 receipt<br/>+ human review"]
-        Manifest --> Runner --> Verify --> Receipt
-    end
-    Input --> Localizer --> Surfaces
-    Agent --> Review
-    Agent -. "try locally before deciding" .-> Patch
-    Review -->|accepted| Patch
-    CLI --> Guard
-```
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/architecture-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/architecture-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/architecture-dark.svg">
+  <img src="assets/readme/architecture-light.svg" width="100%" alt="Animated architecture illustration: task and repository enter the deterministic graph, Anchor and Closure stages; a Slice feeds hosted Workflow and Sandbox review with patch download, or a separate local CLI Guard path with signed receipts. No execution occurs in the graphic.">
+</picture>
+
+*Architecture illustration. The hosted proposal and CLI Guard paths remain distinct.*
 
 1. **Build the graph.** [`buildGraph`](src/lib/localizer.ts) parses `import`, `require()`, dynamic `import()`,
    tsconfig `paths` and `baseUrl`, NodeNext `.js` specifiers that point at `.ts` files, monorepo workspace
