@@ -9,7 +9,7 @@ describe("public beta documentation", () => {
 
     expect(html).toContain("Experimental localization API");
     expect(html).toContain("verified account can start an Agent Run");
-    expect(html).toContain("one shared Run per UTC day");
+    expect(html).toContain("one shared Run per person per UTC day");
     expect(html).toContain("own Cloudflare Workers AI account");
     expect(html).toContain("review-ready proposal");
     expect(html).toContain("does not currently publish a CLI");

@@ -27,7 +27,7 @@ describe("public copy follows the admission door", () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
     const html = renderToStaticMarkup(<SupportPage />);
     expect(html).not.toContain("invited design partners");
-    expect(html).toContain("shared daily slot");
+    expect(html).toContain("shared daily pool");
   });
 
   it("turns the pricing page into a direct self-serve path when open", () => {
@@ -41,8 +41,8 @@ describe("public copy follows the admission door", () => {
 
   it("does not advertise the per-account allowance as guaranteed capacity", () => {
     vi.stubEnv("LOCUS_SELF_SERVE", "open");
-    // Free execution capacity is one shared Run per UTC day across the whole
-    // deployment, so the Tier's per-account daily number is a ceiling rather
+    // Free execution capacity is at most one shared Run per person per UTC day
+    // from a deployment-wide pool, so the Tier's per-account daily number is a ceiling rather
     // than an allocation and must not be printed as a promise here.
     const daily = runQuotaForTier("free").maxRunsPerRolling24Hours;
     expect(renderToStaticMarkup(<SupportPage />)).not.toContain(`${daily} per day`);

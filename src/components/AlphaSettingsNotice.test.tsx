@@ -60,7 +60,7 @@ describe("shared free execution capacity", () => {
     // Stating only the tier would let a free account read its per-account
     // ceiling as guaranteed shared capacity.
     const html = renderToStaticMarkup(<AlphaSettingsNotice tier="free" />);
-    expect(html).toContain("one Agent Run per UTC day");
+    expect(html).toContain("one Agent Run per UTC day from a");
     expect(html).toContain("Connect your own Cloudflare account");
   });
 

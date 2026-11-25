@@ -308,7 +308,7 @@ export function AgentRunPanel({
                       Use the shared beta Run
                     </span>
                     <span className="mt-1 block pl-5 text-[12px] leading-5 text-muted">
-                      Free. One substantial Run per UTC day across Locus. Availability is confirmed when you start.
+                      Free. One Run per person per UTC day while the shared pool lasts. Availability is confirmed when you start.
                     </span>
                   </label>
                   <label className={`cursor-pointer rounded-chip border p-3 transition ${

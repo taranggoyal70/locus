@@ -271,6 +271,74 @@ describe("controlled-alpha Agent Run starts", () => {
     expect(startMock).not.toHaveBeenCalled();
   });
 
+  it("lets a deployment owner start a shared Run after the daily ceiling is used", async () => {
+    authMock.mockResolvedValue({ userId: PARTNER });
+    vi.stubEnv("LOCUS_OWNER_USER_IDS", `user_other_owner, ${PARTNER}`);
+    const earlier = await seedRun(database(), "user_elsewhere", { status: "completed" });
+    await sql`select * from public.claim_agent_provider_daily_slot(${earlier}::uuid, 'cloudflare-workers-ai', 1)`
+      .execute(database());
+    const ownEarlier = await seedRun(database(), PARTNER, { status: "completed" });
+    await sql`select * from public.claim_agent_provider_daily_slot(${ownEarlier}::uuid, 'cloudflare-workers-ai', 2)`
+      .execute(database());
+
+    const response = await POST(runRequest("shared"));
+
+    expect(response.status).toBe(202);
+    const created = (await runs()).find((run) => run.id !== ownEarlier);
+    expect(created).toMatchObject({ execution_mode: "shared", token_budget: 100_000 });
+    // The owner's Run takes no claim, so it leaves the public pool untouched.
+    expect((await dailyClaims()).map((claim) => claim.run_id).sort()).toEqual([earlier, ownEarlier].sort());
+    expect(await liveLeases()).toEqual([{ run_id: created?.id, model: "cloudflare-workers-ai:shared" }]);
+    expect(startMock).toHaveBeenCalledOnce();
+  });
+
+  it("admits other people up to a raised ceiling", async () => {
+    authMock.mockResolvedValue({ userId: PARTNER });
+    vi.stubEnv("LOCUS_SHARED_DAILY_RUN_LIMIT", "2");
+    const earlier = await seedRun(database(), "user_elsewhere", { status: "completed" });
+    await sql`select * from public.claim_agent_provider_daily_slot(${earlier}::uuid, 'cloudflare-workers-ai', 2)`
+      .execute(database());
+
+    const response = await POST(runRequest("shared"));
+
+    expect(response.status).toBe(202);
+    expect(await dailyClaims()).toHaveLength(2);
+  });
+
+  it("refuses a second shared Run for the same person even when the ceiling has room", async () => {
+    authMock.mockResolvedValue({ userId: PARTNER });
+    vi.stubEnv("LOCUS_SHARED_DAILY_RUN_LIMIT", "5");
+    const ownEarlier = await seedRun(database(), PARTNER, { status: "completed" });
+    await sql`select * from public.claim_agent_provider_daily_slot(${ownEarlier}::uuid, 'cloudflare-workers-ai', 5)`
+      .execute(database());
+
+    const response = await POST(runRequest("shared"));
+
+    expect(response.status).toBe(429);
+    await expect(response.json()).resolves.toEqual({
+      error: "You have used your shared Agent Run for today. Try again after the UTC reset or use your Cloudflare account.",
+    });
+    const retryAfter = Number(response.headers.get("retry-after"));
+    expect(retryAfter).toBeGreaterThan(0);
+    expect(retryAfter).toBeLessThanOrEqual(86_400);
+    expect((await runs()).filter((run) => run.id !== ownEarlier))
+      .toMatchObject([{ status: "failed", failure_kind: "quota_exhausted" }]);
+    expect(await dailyClaims()).toEqual([{ run_id: ownEarlier }]);
+    expect(await liveLeases()).toEqual([]);
+    expect(startMock).not.toHaveBeenCalled();
+  });
+
+  it("fails closed on a malformed shared daily ceiling", async () => {
+    authMock.mockResolvedValue({ userId: PARTNER });
+    vi.stubEnv("LOCUS_SHARED_DAILY_RUN_LIMIT", "lots");
+
+    const response = await POST(runRequest("shared"));
+
+    expect(response.status).toBe(503);
+    expect(await runs()).toEqual([]);
+    expect(await tasks()).toEqual([]);
+  });
+
   it("uses an owner's reviewed connection without spending the shared daily slot", async () => {
     authMock.mockResolvedValue({ userId: PARTNER });
     // Shared capacity is busy; a BYOK Run has its own lane.

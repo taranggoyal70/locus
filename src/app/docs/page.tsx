@@ -28,7 +28,7 @@ export default function DocsPage() {
           Any verified account can start an Agent Run for a public Repo. Each Run works in an
           isolated Sandbox, records allowlisted checks, and stops at a review-ready proposal that
           you can download as a patch and apply to your own checkout.
-          Locus provides one shared Run per UTC day across the beta, or you can connect your own
+          Locus provides one shared Run per person per UTC day while the daily pool lasts, or you can connect your own
           Cloudflare Workers AI account in <Link href="/settings" className="doc-link">Settings</Link>.
           The API below exposes the deterministic localization engine for experimental use.
         </PageHeader>
