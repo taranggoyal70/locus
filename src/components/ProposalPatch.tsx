@@ -27,7 +27,7 @@ export function ProposalPatch({ snapshot }: { snapshot: AgentRunSnapshot }) {
   if (run.status === "awaiting_approval" && !run.proposal_hash) {
     return (
       <p className="rounded-card border border-line-2 bg-canvas px-4 py-3 text-[13px] leading-5 text-ink-2">
-        This Run finished before Locus recorded what a Review approves, so its proposal cannot be
+        This Run finished before Locus kept a fixed copy of each change, so this one cannot be
         accepted or downloaded. Run the task again to get a new one.
       </p>
     );
@@ -44,7 +44,7 @@ export function ProposalPatch({ snapshot }: { snapshot: AgentRunSnapshot }) {
       const response = await fetch(`/api/agent/runs/${run.id}/patch`, { cache: "no-store" });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.error ?? "Could not download the patch.");
+        throw new Error(data?.error ?? "Could not download the change.");
       }
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement("a");
@@ -54,7 +54,7 @@ export function ProposalPatch({ snapshot }: { snapshot: AgentRunSnapshot }) {
       // The browser reads the blob after this handler returns.
       window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not download the patch.");
+      setError(cause instanceof Error ? cause.message : "Could not download the change.");
     } finally {
       setDownloading(false);
     }
@@ -71,14 +71,14 @@ export function ProposalPatch({ snapshot }: { snapshot: AgentRunSnapshot }) {
   }
 
   return (
-    <section aria-label="Proposal patch" className="overflow-hidden rounded-card border border-line-2">
+    <section aria-label="Download the change" className="overflow-hidden rounded-card border border-line-2">
       <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3 p-4">
         <div className="min-w-0 flex-1 basis-56">
-          <p className={monoLabel}>{accepted ? "Accepted change" : "Try it before you decide"}</p>
+          <p className={monoLabel}>{accepted ? "Your approved change" : "Optional: try it first"}</p>
           <p className="mt-1.5 text-[14px] leading-6 text-ink-2">
             {accepted
-              ? "Your change, ready to apply to your own checkout. Locus keeps it for 30 days."
-              : "Apply the proposal to your own checkout and check the criteria there. It is not reviewed yet."}
+              ? "Download it and apply it to your own copy of the Repo. Locus keeps it for 30 days."
+              : "Download the change and apply it to your own copy of the Repo to test it before you decide."}
           </p>
         </div>
         <button
@@ -87,18 +87,24 @@ export function ProposalPatch({ snapshot }: { snapshot: AgentRunSnapshot }) {
           disabled={downloading}
           className={accepted ? primaryButton : secondaryButton}
         >
-          {downloading ? "Preparing…" : "Download patch"}
+          {downloading ? "Preparing…" : "Download change"}
         </button>
       </div>
-      <div className="border-t border-line bg-canvas p-4">
-        <div className="flex items-center justify-between gap-4">
-          <p className={monoLabel}>Then, in your checkout</p>
-          <button type="button" onClick={copy} className="-mr-2 rounded-chip px-2 py-1 text-[13px] text-muted transition-colors duration-150 hover:text-ink">
-            <span aria-live="polite">{copied === "copied" ? "Copied" : copied === "failed" ? "Copy failed" : "Copy"}</span>
-          </button>
+      <details open={accepted} className="group border-t border-line bg-canvas">
+        <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-[13px] font-medium text-ink-2 transition-colors duration-150 hover:text-ink">
+          How to apply it with git
+          <span aria-hidden className="font-mono text-[12px] text-muted transition-transform duration-150 group-open:rotate-90">›</span>
+        </summary>
+        <div className="px-4 pb-4">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-[13px] leading-5 text-muted">In your copy of the Repo, run:</p>
+            <button type="button" onClick={copy} className="-mr-2 rounded-chip px-2 py-1 text-[13px] text-muted transition-colors duration-150 hover:text-ink">
+              <span aria-live="polite">{copied === "copied" ? "Copied" : copied === "failed" ? "Copy failed" : "Copy"}</span>
+            </button>
+          </div>
+          <pre tabIndex={0} aria-label="Commands to apply the change" className="mt-2 overflow-x-auto font-mono text-[12px] leading-6 text-ink">{commands}</pre>
         </div>
-        <pre tabIndex={0} aria-label="Commands to apply the patch" className="mt-2 overflow-x-auto font-mono text-[12px] leading-6 text-ink">{commands}</pre>
-      </div>
+      </details>
       {error && <InlineError className="border-t border-line p-4">{error}</InlineError>}
     </section>
   );

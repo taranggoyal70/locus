@@ -13,6 +13,15 @@ export const RUN_STATUSES = [
 
 export type RunStatus = (typeof RUN_STATUSES)[number];
 
+/** A Run status in the words a person reading the Run would use. */
+export function runStatusLabel(status: string): string {
+  if (status === "awaiting_approval") return "ready for review";
+  // A Run reaches `completed` only through an approved Review.
+  if (status === "completed") return "approved";
+  if (status === "rejected") return "rejected by reviewer";
+  return status.replaceAll("_", " ");
+}
+
 const TERMINAL_STATUSES = new Set<RunStatus>(["completed", "rejected", "failed", "cancelled"]);
 export const ACTIVE_RUN_STATUSES: readonly RunStatus[] = [
   "queued",

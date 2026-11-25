@@ -9,6 +9,18 @@ import {
   type AgentCriterionDecision,
 } from "@/lib/agent/run-review";
 
+/** What the owner decided, said once the decision is saved. */
+export function ReviewOutcome({ decision }: { decision: string }) {
+  if (decision !== "accepted" && decision !== "rejected") return null;
+  return (
+    <p role="status" className="rounded-card border border-line-2 bg-canvas px-4 py-3 text-[14px] leading-6 text-ink-2">
+      {decision === "accepted"
+        ? "You approved this change. Download it below to use it in your own copy of the Repo."
+        : "You rejected this change. Edit the task and start a new Run to try again."}
+    </p>
+  );
+}
+
 /**
  * The criterion-by-criterion Review of one Review-ready proposal. Rendered
  * wherever its evidence is shown. Give it the proposal hash as its key, so
@@ -49,43 +61,49 @@ export function ProposalReview({
         body: JSON.stringify({ proposalHash, decision, criteria }),
       });
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error ?? "Could not record the review.");
+      if (!response.ok) throw new Error(data?.error ?? "Could not save your decision.");
       await onDecided();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not record the review.");
+      setError(cause instanceof Error ? cause.message : "Could not save your decision.");
     } finally {
       setPending(null);
     }
   }
 
+  const remaining = criteria.filter((criterion) => !criterion.satisfied).length;
+  const goalWord = (count: number) => (count === 1 ? "goal" : "goals");
+
   return (
-    <fieldset className="rounded-card border border-line-2 bg-canvas p-4">
-      <legend className="px-1 text-[13px] font-medium text-ink">Review frozen acceptance criteria</legend>
-      <p className="mt-1 break-all font-mono text-[11px] text-muted">Proposal {proposalHash}</p>
-      <div className="mt-3 space-y-3">
+    <fieldset className="min-w-0 rounded-card border border-line-2 bg-canvas p-4">
+      <legend className="px-1 text-[15px] font-medium text-ink">Did the agent do what you asked?</legend>
+      <p className="mt-1 text-[13px] leading-5 text-ink-2">
+        Read the code change above, then tick each goal it meets. Approve when every goal is met,
+        or reject it if something is wrong.
+      </p>
+      <ul className="mt-3 space-y-3">
         {criteria.map((criterion, index) => (
-          <div key={criterion.criterion} className="rounded-chip border border-line px-3 py-2.5">
-            <label className="flex items-start gap-2 text-[13px] leading-5 text-ink-2">
+          <li key={criterion.criterion} className="rounded-chip border border-line px-3 py-2.5">
+            <label className="flex items-start gap-2 text-[14px] leading-5 text-ink">
               <input
                 type="checkbox"
                 checked={criterion.satisfied}
                 onChange={(event) => update(index, { satisfied: event.target.checked })}
-                className="mt-1 size-3.5 accent-[var(--included)]"
+                className="mt-0.5 size-4 shrink-0 accent-[var(--included)]"
               />
-              <span>{criterion.criterion}</span>
+              <span className="min-w-0 [overflow-wrap:anywhere]">{criterion.criterion}</span>
             </label>
             <input
               type="text"
               value={criterion.evidence ?? ""}
               onChange={(event) => update(index, { evidence: event.target.value })}
               maxLength={2_000}
-              aria-label={`Evidence for ${criterion.criterion}`}
-              placeholder="Evidence or reason"
+              aria-label={`Note for ${criterion.criterion}`}
+              placeholder="Optional note"
               className="mt-2 w-full rounded-chip border border-line bg-surface px-2.5 py-2 text-[13px] text-ink placeholder:text-muted"
             />
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <button
           type="button"
@@ -93,19 +111,27 @@ export function ProposalReview({
           disabled={!availability.canReject || pending !== null}
           className={dangerButton}
         >
-          {pending === "rejected" ? "Recording…" : "Reject proposal"}
+          {pending === "rejected" ? "Saving…" : "Reject change"}
         </button>
         <button
           type="button"
           onClick={() => decide("accepted")}
           disabled={!availability.canAccept || pending !== null}
+          aria-describedby={remaining > 0 ? `${runId}-approve-hint` : undefined}
           className={primaryButton}
         >
-          {pending === "accepted" ? "Recording…" : "Accept criteria"}
+          {pending === "accepted" ? "Saving…" : "Approve change"}
         </button>
       </div>
-      <p className="mt-3 text-[12px] leading-5 text-muted">
-        The decision is bound to this immutable proposal. External GitHub writes remain off.
+      <p id={`${runId}-approve-hint`} className="mt-3 text-[12px] leading-5 text-muted" aria-live="polite">
+        {remaining > 0
+          ? criteria.length === 1
+            ? "Tick the goal to approve."
+            : remaining === criteria.length
+              ? "Tick every goal to approve."
+              : `Tick the ${remaining} remaining ${goalWord(remaining)} to approve.`
+          : "Approving marks this Run done and keeps the change for you to download."}
+        {" "}Nothing is sent to GitHub either way.
       </p>
       {error && <InlineError className="mt-3">{error}</InlineError>}
     </fieldset>
