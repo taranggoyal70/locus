@@ -656,7 +656,7 @@ textarea::placeholder {
 }
 
 .aperture:not(.is-open) .aperture-mark:not([data-kind="excluded"]) {
-  animation: aperture-admit var(--dur-panel) var(--ease-out) 700ms both;
+  animation: aperture-admit var(--dur-panel) var(--ease-out) calc(700ms + var(--hop, 0) * 150ms) both;
 }
 
 /* The numbers never overlap: the Repo count leaves before the Slice count lands.
@@ -690,9 +690,16 @@ textarea::placeholder {
 }
 
 @keyframes aperture-admit {
-  from { transform: scale(.6); }
-  to { transform: scale(1); }
+  from { background: var(--excluded); }
+  30% { transform: scale(.5); }
 }
+
+/* An Anchor's centre opens as it is admitted, not before. */
+.aperture:not(.is-open) .aperture-mark[data-kind="anchor"]::before {
+  animation: aperture-centre 160ms linear 820ms backwards;
+}
+
+@keyframes aperture-centre { from { opacity: 0; } }
 
 @keyframes aperture-scan {
   0%, 100% { opacity: .85; }
@@ -1603,6 +1610,68 @@ textarea::placeholder {
 .case-dot[data-kind="widened"] { background: var(--widened); }
 .case-dot[data-kind="missed"] { background: var(--failed); }
 
+/* The Locus figure (components/LocusFigure.tsx). A mark's place is an angle and
+   a radius about the centre, so a change of ring is an arc, not a slide. */
+.orbit-mark {
+  transform: rotate(var(--a)) translateX(var(--r)) rotate(var(--t));
+  transition: transform 1150ms var(--ease-in-out) var(--d), opacity var(--dur-quick) linear;
+}
+.orbit.is-armed .orbit-mark { transform: rotate(var(--ga)) translateX(var(--gr)) rotate(var(--gt)); transition: none; }
+.orbit-hit { fill: transparent; }
+.orbit-square { fill: var(--included); stroke: transparent; transition: fill 420ms linear calc(var(--d) + 240ms), transform var(--dur-quick) var(--ease-out); }
+.orbit-mark[data-kind="out"] .orbit-square { fill: color-mix(in srgb, var(--muted) 52%, var(--canvas)); }
+.orbit-mark[data-kind="in"] .orbit-square, .orbit-mark[data-kind="anchor"] .orbit-square { transform: scale(1.18); }
+.orbit-mark[data-kind="anchor"] .orbit-square { transform: scale(1.65); }
+.orbit-mark:hover .orbit-square { fill: var(--ink); transition-delay: 0ms; transition-duration: var(--dur-press); }
+.orbit-mark[data-kind="in"]:hover .orbit-square, .orbit-mark[data-kind="anchor"]:hover .orbit-square { fill: var(--included); transform: scale(2); }
+.orbit-mark[data-dim] { opacity: .25; }
+.orbit-hole { fill: var(--canvas); opacity: 0; transition: opacity 300ms linear 900ms; }
+.orbit-mark[data-kind="anchor"] .orbit-hole { opacity: 1; }
+.orbit.is-armed .orbit-square { fill: color-mix(in srgb, var(--muted) 52%, var(--canvas)); transform: scale(1.7); transition: none; }
+.orbit.is-armed :is(.orbit-edges, .orbit-ping, .orbit-hole) { visibility: hidden; }
+.orbit-edge {
+  fill: none;
+  stroke: var(--included);
+  stroke-width: 1.25;
+  stroke-dasharray: 1;
+  opacity: .5;
+  transition: opacity var(--dur-quick) linear;
+  animation: orbit-draw 520ms var(--ease-out) calc(1050ms + var(--hop) * 180ms) both;
+}
+.orbit.is-armed .orbit-edge { animation: none; }
+@keyframes orbit-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.orbit-ping { fill: none; stroke: var(--included); opacity: 0; animation: orbit-ping 1100ms var(--ease-out) both; }
+.orbit.is-armed .orbit-ping { animation: none; }
+@keyframes orbit-ping { from { opacity: .9; transform: scale(0); } to { opacity: 0; transform: scale(1); } }
+.orbit-label { fill: var(--muted); font-family: var(--font-mono); font-size: 14px; }
+@media (max-width: 639.98px) { .orbit-label { display: none; } }
+.orbit-progress { position: absolute; inset-inline: 0; bottom: -1px; height: 1px; background: var(--ink); transform-origin: left; }
+.orbit[data-running="true"] .orbit-progress { animation: orbit-progress var(--hold) linear both; }
+@keyframes orbit-progress { from { transform: scaleX(0); } }
+.orbit-pause { width: 8px; height: 10px; border-inline: 3px solid currentColor; }
+.orbit-play { border-block: 5px solid transparent; border-left: 8px solid currentColor; }
+/* The dial turns with the scroll, so it holds still whenever the reader does. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .orbit-bezel, .seal-ring { animation: dial-turn linear both; animation-timeline: view(); }
+    @keyframes dial-turn { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
+  }
+}
+
+/* The evidence strip fills in, row by row, mark by mark. */
+.case-strip .case-dot { transition: transform 360ms var(--ease-out) calc(var(--i, 0) * 45ms + var(--row, 0) * 90ms); }
+.case-strip.is-armed .case-dot { transform: scale(0); transition: none; }
+
+/* The footer's name, set a column at a time. */
+.footer-word { fill: var(--ink); stroke: var(--ink); transition: fill 320ms linear calc(var(--i) * 26ms), stroke 320ms linear calc(var(--i) * 26ms); }
+.footer-scene.is-armed .footer-word { fill: var(--excluded); stroke: var(--excluded); transition: none; }
+
+/* The ticket's seal comes down like a stamp. */
+.seal { transition: transform 420ms var(--ease-out), opacity 120ms linear; }
+.seal.is-armed { transform: scale(1.5) rotate(-16deg); opacity: 0; transition: none; }
+
+.seal-ring text { fill: var(--muted); font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; }
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -1621,11 +1690,14 @@ textarea::placeholder {
 @media (prefers-reduced-motion: reduce) {
   .aperture-mark,
   .rise-w > span,
+  .aperture-mark::before,
   .aperture-mark::after,
   .aperture-count {
     animation: none !important;
     transition: none !important;
   }
+
+  .orbit-toggle, .orbit-ping { display: none; }
 
   *, *::before, *::after {
     scroll-behavior: auto !important;

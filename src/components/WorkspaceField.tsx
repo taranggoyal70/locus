@@ -1,15 +1,18 @@
-import { FileField, filesPerMark, markColumns, repoColumns } from "@/components/FileField";
+import { FileField, filesPerMark, markColumns, markHops, repoColumns } from "@/components/FileField";
+import { RollNumber } from "@/components/Reveal";
 
 /**
  * The workspace's view of the loaded Repo: the file field, drawn from the user's
  * own Repo and Slice. Open (every file
  * under a neutral cover) until a Slice exists; the field scans while work is
- * actually running and stops the moment it finishes.
+ * actually running and stops the moment it finishes. A new Slice lights
+ * outward from its Anchors, one import at a time.
  */
 export function WorkspaceField({
   files,
   slicePaths,
   anchorPaths,
+  sliceHops,
   loading,
   repoName,
   includedShare,
@@ -17,15 +20,16 @@ export function WorkspaceField({
   files: string[] | null;
   slicePaths: string[];
   anchorPaths: string[];
+  /** Imports from the nearest Anchor, by path. */
+  sliceHops?: ReadonlyMap<string, number>;
   loading: boolean;
   repoName: string | null;
   includedShare: number;
 }) {
   const hasSlice = slicePaths.length > 0;
   const perMark = files ? filesPerMark(files.length) : 1;
-  const columns = files
-    ? markColumns(repoColumns(files), new Set(slicePaths), new Set(anchorPaths), perMark)
-    : [];
+  const folders = files ? repoColumns(files) : [];
+  const columns = markColumns(folders, new Set(slicePaths), new Set(anchorPaths), perMark);
 
   return (
     <section
@@ -44,7 +48,7 @@ export function WorkspaceField({
         {files && (
           <p className="shrink-0 text-right">
             <span className="font-display text-[36px] leading-none tracking-[-0.02em] tabular-nums">
-              <span className={hasSlice ? "text-included-ink" : "text-ink"}>{hasSlice ? slicePaths.length : files.length}</span>
+              <span className={hasSlice ? "text-included-ink" : "text-ink"}><RollNumber value={hasSlice ? slicePaths.length : files.length} /></span>
               {hasSlice && <span className="font-sans text-[15px] tracking-normal text-muted"> / {files.length}</span>}
             </span>
             <span className="mt-1 block font-mono text-[11px] uppercase tracking-[0.08em] text-muted">files</span>
@@ -54,7 +58,7 @@ export function WorkspaceField({
 
       <div className="px-5 py-5">
         {files ? (
-          <FileField columns={columns} />
+          <FileField columns={columns} hops={sliceHops && markHops(folders, sliceHops, perMark)} />
         ) : (
           <p className="py-10 text-center text-[14px] text-muted">Every file in the Repo appears here, one mark each.</p>
         )}
