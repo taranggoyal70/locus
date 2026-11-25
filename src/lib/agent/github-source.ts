@@ -1,5 +1,6 @@
 import { normalizePublicGitHubRepository } from "@/lib/agent/vercel-workspace";
 import { SOURCE_EXT_RE } from "@/lib/localizer";
+import { isIgnoredRepoPath } from "@/lib/repo-files";
 import type { RepoData } from "@/lib/types";
 
 // The byte budget is the primary memory bound. Keep enough file slots for
@@ -14,8 +15,6 @@ const DOWNLOAD_ATTEMPTS = 2;
 // Everything the Graph reads, plus the text a change to it often touches.
 const SUPPORTING_FILE = /\.(json|css|scss|md)$/i;
 const isSource = (path: string) => SOURCE_EXT_RE.test(path) || SUPPORTING_FILE.test(path);
-const IGNORE_DIRECTORY =
-  /(^|\/)(node_modules|\.next|dist|build|coverage|\.git|vendor|fixtures?|snapshots?)\//i;
 
 export type PublicGitHubCoordinates = {
   owner: string;
@@ -176,7 +175,7 @@ export async function fetchAgentRepository(
     (entry) =>
       entry.type === "blob"
       && isSource(entry.path)
-      && !IGNORE_DIRECTORY.test(entry.path)
+      && !isIgnoredRepoPath(entry.path)
       && (entry.size ?? 0) <= MAX_FILE_BYTES,
   );
 

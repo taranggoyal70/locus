@@ -11,6 +11,8 @@ vi.mock("@/lib/rate-limit", () => ({ consumeRateLimit: consumeRateLimitMock }));
 vi.mock("@/lib/analytics", () => ({ track: trackMock }));
 
 import { POST } from "@/app/api/github/route";
+import { fetchAgentRepository } from "@/lib/agent/github-source";
+import { SOURCE_EXT_RE } from "@/lib/localizer";
 
 function request(body: string, ip: string, headers: Record<string, string> = {}) {
   return new Request("http://localhost/api/github", {
@@ -382,5 +384,68 @@ describe("GitHub repository API call budget", () => {
     // merely undercount it.
     expect(hit.properties.files).toBe(fresh.properties.files);
     expect(hit.properties.truncated).toBe(fresh.properties.truncated);
+  });
+});
+
+describe("workspace preview and Agent Run read the same Repo files", () => {
+  beforeEach(() => {
+    authMock.mockResolvedValue({ userId: "user_123" });
+    consumeRateLimitMock.mockResolvedValue({ allowed: true, remaining: 5, retryAfterSeconds: 0 });
+  });
+
+  it("builds the Graph from one file set, test directories included", async () => {
+    // The production mismatch: the preview skipped `tests/` while the Run read
+    // it, so the Run recorded 347 Repo files where the workspace showed 332.
+    const tree = [
+      "src/index.ts",
+      "src/index.test.ts",
+      "tests/cli.test.mjs",
+      "test/helpers.py",
+      "e2e/smoke.spec.ts",
+      "__tests__/unit.test.js",
+      "package.json",
+      "README.md",
+      "node_modules/pkg/index.js",
+      "dist/index.js",
+      "coverage/lcov.js",
+      "src/fixtures/sample.ts",
+      "fixtures/data.ts",
+      "src/snapshots/view.ts",
+    ].map((path) => ({ path, type: "blob", size: 40 }));
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/repos/acme/parity")) {
+        return Response.json({ default_branch: "main", description: "Parity fixture" });
+      }
+      if (url.endsWith("/repos/acme/parity/commits/main")) {
+        return Response.json({ sha: "paritysha1234567", commit: { tree: { sha: "paritytree" } } });
+      }
+      if (url.includes("/git/trees/paritytree")) return Response.json({ sha: "paritytree", tree });
+      if (url.startsWith("https://raw.githubusercontent.com/acme/parity/paritysha1234567/")) {
+        return new Response("export const value = 1;\n");
+      }
+      return new Response("not found", { status: 404 });
+    });
+
+    try {
+      const response = await POST(request('{"url":"acme/parity"}', "198.51.100.30"));
+      expect(response.status).toBe(200);
+      const preview = await response.json() as { repo: { files: Record<string, string> } };
+      const run = await fetchAgentRepository("acme/parity", "main");
+
+      const graphFiles = (files: Record<string, string>) =>
+        Object.keys(files).filter((path) => SOURCE_EXT_RE.test(path)).sort();
+      expect(graphFiles(preview.repo.files)).toEqual(graphFiles(run.repo.files));
+      expect(graphFiles(run.repo.files)).toEqual([
+        "__tests__/unit.test.js",
+        "e2e/smoke.spec.ts",
+        "src/index.test.ts",
+        "src/index.ts",
+        "test/helpers.py",
+        "tests/cli.test.mjs",
+      ]);
+    } finally {
+      vi.mocked(globalThis.fetch).mockRestore();
+    }
   });
 });

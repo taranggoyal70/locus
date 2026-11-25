@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { track } from "@/lib/analytics";
 import { SOURCE_EXT_RE } from "@/lib/localizer";
+import { isGraphSourcePath } from "@/lib/repo-files";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { sameOriginMutation } from "@/lib/request-security";
 import type { RepoData } from "@/lib/types";
@@ -22,7 +23,6 @@ const MAX_BODY_BYTES = 1_024;
 const FETCH_TIMEOUT_MS = 8_000;
 const DOWNLOAD_CONCURRENCY = 8;
 const RATE_LIMIT = 6;
-const IGNORE = /(^|\/)(node_modules|\.next|dist|build|\.git|vendor|tests?|__tests__|e2e)\//i;
 
 function ghHeaders() {
   const h: Record<string, string> = { Accept: "application/vnd.github+json" };
@@ -372,7 +372,7 @@ export async function POST(request: Request) {
     }
 
     const candidates = (tree.tree as { path: string; type: string; size?: number }[])
-      .filter((n) => n.type === "blob" && SOURCE_EXT_RE.test(n.path) && !IGNORE.test(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
+      .filter((n) => n.type === "blob" && isGraphSourcePath(n.path) && (n.size ?? 0) <= MAX_FILE_BYTES);
     const files: string[] = [];
     let sourceBytes = 0;
     for (const file of candidates) {
