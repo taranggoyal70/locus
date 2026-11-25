@@ -171,3 +171,30 @@ describe("sparsity signal", () => {
     }
   });
 });
+
+/**
+ * TypeScript allows one `*` in a `paths` target. tsc rejects a target with more
+ * (TS5062), and its resolver fills in only the first `*`, so the literal `*` left
+ * behind matches no file and resolution moves on to the next target. Stripping
+ * every `*` instead would resolve `#lib/util` to `decoy/util.ts`, a file the
+ * Repo's own compiler never reaches through this config, so both implementations
+ * skip such a target. `**` is the glob habit that produces one.
+ */
+describe("tsconfig paths target with more than one wildcard", () => {
+  const starsRepo = {
+    name: "stars", slug: "stars", description: "", root: "",
+    recentlyChanged: [],
+    files: {
+      "tsconfig.json": '{"compilerOptions":{"baseUrl":".","paths":{"#lib/*":["./decoy/**","./src/*"]}}}',
+      "src/app.ts": 'import { u } from "#lib/util";\nexport const a = u;',
+      "src/util.ts": 'export const u = "src";',
+      "decoy/util.ts": 'export const u = "decoy";',
+    },
+  };
+
+  it("skips that target and resolves through the next one, as TypeScript does", () => {
+    for (const [label, build] of [["web", buildGraphWeb], ["cli", buildGraphCli]]) {
+      expect(build(starsRepo).deps["src/app.ts"], label).toEqual(["src/util.ts"]);
+    }
+  });
+});

@@ -225,8 +225,12 @@ function tsconfigAliases(files: Record<string, string>): AliasRule[] {
         if (!Array.isArray(targets)) continue;
         const star = pattern.indexOf("*");
         const resolved = targets
-          .filter((t): t is string => typeof t === "string")
-          .map((t) => normalize(base ? `${base}/${t.replace("*", "")}` : t.replace("*", "")));
+          // TypeScript allows one `*` per target: tsc rejects more (TS5062), and its
+          // resolver fills in only the first, so the literal `*` left behind matches no
+          // file and resolution moves on. Skip such a target the same way instead of
+          // guessing what it meant.
+          .filter((t): t is string => typeof t === "string" && t.indexOf("*") === t.lastIndexOf("*"))
+          .map((t) => normalize(base ? `${base}/${t.replaceAll("*", "")}` : t.replaceAll("*", "")));
         if (!resolved.length) continue;
         aliases.push(
           star === -1
