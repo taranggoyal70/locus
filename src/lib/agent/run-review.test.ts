@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { parseAgentReviewRequest, reviewDecisionAvailability } from "@/lib/agent/run-review";
+import {
+  parseAgentReviewRequest,
+  proposalPatchAvailable,
+  reviewDecisionAvailability,
+} from "@/lib/agent/run-review";
 
 describe("Agent proposal review request", () => {
   const proposalHash = "a".repeat(64);
@@ -56,5 +60,26 @@ describe("Agent proposal review request", () => {
       { criterion: "Tests pass", satisfied: true },
       { criterion: "No regression", satisfied: true },
     ])).toEqual({ canAccept: true, canReject: true });
+  });
+});
+
+describe("proposal patch availability", () => {
+  const proposal_hash = "a".repeat(64);
+  const accepted = { decision: "accepted", proposal_hash };
+
+  it("offers a proposal under Review, and one whose Review accepted it", () => {
+    expect(proposalPatchAvailable({ status: "awaiting_approval", proposal_hash }, [])).toBe(true);
+    expect(proposalPatchAvailable({ status: "completed", proposal_hash }, [accepted])).toBe(true);
+  });
+
+  it.each([
+    ["no proposal", { status: "awaiting_approval", proposal_hash: null }, []],
+    ["a Run still executing", { status: "executing", proposal_hash }, []],
+    ["a rejected proposal", { status: "rejected", proposal_hash }, [{ decision: "rejected", proposal_hash }]],
+    ["a failed Run", { status: "failed", proposal_hash }, [accepted]],
+    ["completion without a Review", { status: "completed", proposal_hash }, []],
+    ["a Review of another proposal", { status: "completed", proposal_hash }, [{ decision: "accepted", proposal_hash: "b".repeat(64) }]],
+  ])("refuses %s", (_name, run, reviews) => {
+    expect(proposalPatchAvailable(run, reviews)).toBe(false);
   });
 });

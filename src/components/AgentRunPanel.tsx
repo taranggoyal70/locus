@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { secondaryButton } from "@/components/controls";
+import { ProposalPatch } from "@/components/ProposalPatch";
+import { ProposalReview } from "@/components/ProposalReview";
 import { RunContextLedger } from "@/components/RunContextLedger";
 import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/data-policy";
-import {
-  reviewDecisionAvailability,
-  type AgentCriterionDecision,
-} from "@/lib/agent/run-review";
-import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
+import { isActiveRun, isTerminalRun, type RunStatus } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentStepView } from "@/lib/agent/run-view";
 import { runAccessCopy, type RunAccess } from "@/lib/run-access";
 
@@ -24,19 +23,6 @@ const PHASES: Array<{ label: string; statuses: RunStatus[] }> = [
 function phaseIndex(status: RunStatus): number {
   if (status === "failed" || status === "cancelled") return -1;
   return Math.max(0, PHASES.findIndex((phase) => phase.statuses.includes(status)));
-}
-
-function syncReviewCriteria(
-  snapshot: AgentRunSnapshot,
-  current: AgentCriterionDecision[],
-): AgentCriterionDecision[] {
-  const frozenCriteria = snapshot.task?.acceptance_criteria;
-  if (!frozenCriteria?.length) return current;
-  const unchanged = current.length === frozenCriteria.length
-    && current.every((item, index) => item.criterion === frozenCriteria[index]);
-  return unchanged
-    ? current
-    : frozenCriteria.map((criterion) => ({ criterion, satisfied: false }));
 }
 
 export function AgentRunTimeline({
@@ -111,14 +97,10 @@ export function AgentRunPanel({
   const [runId, setRunId] = useState<string | null>(initialRunId);
   const [snapshot, setSnapshot] = useState<AgentRunSnapshot | null>(null);
   const [launching, setLaunching] = useState(false);
-  const [reviewing, setReviewing] = useState<"accepted" | "rejected" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dataPolicyAccepted, setDataPolicyAccepted] = useState(false);
   const [executionMode, setExecutionMode] = useState<"shared" | "byok">("shared");
   const [byokConfigured, setByokConfigured] = useState<boolean | null>(null);
-  const [reviewCriteria, setReviewCriteria] = useState<AgentCriterionDecision[]>(
-    () => acceptanceCriteria.map((criterion) => ({ criterion, satisfied: false })),
-  );
   const status = snapshot?.run.status ?? null;
   const shouldPoll = Boolean(runId) && (!status || isActiveRun(status));
 
@@ -158,7 +140,6 @@ export function AgentRunPanel({
         const data = await response.json() as AgentRunSnapshot & { error?: string };
         if (!response.ok) throw new Error(data?.error ?? "Could not refresh the run.");
         setSnapshot(data);
-        setReviewCriteria((current) => syncReviewCriteria(data, current));
         if (isActiveRun(data.run.status)) {
           timeout = setTimeout(poll, 2_000);
         }
@@ -226,35 +207,25 @@ export function AgentRunPanel({
     }
   }
 
-  async function submitReview(decision: "accepted" | "rejected") {
-    if (!runId || !snapshot?.run.proposal_hash || reviewing) return;
-    const availability = reviewDecisionAvailability(reviewCriteria);
-    if (decision === "accepted" && !availability.canAccept) return;
-    if (decision === "rejected" && !availability.canReject) return;
-    setReviewing(decision);
+  async function refreshRun() {
+    if (!runId) return;
+    const response = await fetch(`/api/agent/runs/${runId}`, { cache: "no-store" });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data) throw new Error(data?.error ?? "Could not refresh the Run.");
+    setSnapshot(data);
+  }
+
+  // A finished Run otherwise holds the panel until the page is reloaded without
+  // its id. The task stays as it was, so a rejected or failed attempt can be
+  // reworded and started again.
+  function startAnother() {
+    setRunId(null);
+    setSnapshot(null);
     setError(null);
-    try {
-      const response = await fetch(`/api/agent/runs/${runId}/review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          proposalHash: snapshot.run.proposal_hash,
-          decision,
-          criteria: reviewCriteria,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data?.error ?? "Could not record the review.");
-      const refreshed = await fetch(`/api/agent/runs/${runId}`, { cache: "no-store" });
-      const refreshedData = await refreshed.json();
-      if (!refreshed.ok) throw new Error(refreshedData?.error ?? "Could not refresh the Run.");
-      setSnapshot(refreshedData);
-      setReviewCriteria((current) => syncReviewCriteria(refreshedData, current));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not record the review.");
-    } finally {
-      setReviewing(null);
-    }
+    setDataPolicyAccepted(false);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("run");
+    window.history.replaceState(null, "", url);
   }
 
   const accessCopy = runAccessCopy(runAccess);
@@ -276,7 +247,6 @@ export function AgentRunPanel({
   const summary = snapshot?.artifacts.find((artifact) => artifact.kind === "summary");
   const pullRequest = snapshot?.artifacts.find((artifact) => artifact.kind === "pull_request");
   const review = snapshot?.reviews[0];
-  const reviewAvailability = reviewDecisionAvailability(reviewCriteria);
   const repositoryTruncated = snapshot?.steps.some(
     (step) => step.detail.repositoryTruncated === true,
   ) ?? false;
@@ -308,10 +278,10 @@ export function AgentRunPanel({
                 ["Left out", excludedCount, "text-ink"],
                 ["Repo", sliceCount + excludedCount, "text-ink"],
               ].map(([label, value, tone], index) => (
-                <div key={label} className={`flex flex-col-reverse py-4 ${index > 0 ? "border-l border-line pl-4" : "pr-4"}`}>
+                <div key={label} className={`flex flex-col-reverse justify-end py-4 ${index > 0 ? "border-l border-line pl-4" : "pr-4"}`}>
                   <dt className="mt-1.5 font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{label}</dt>
                   <dd className={`font-display text-[30px] leading-none tracking-[-0.02em] tabular-nums ${tone}`}>
-                    {Number(value).toLocaleString("en-US")} <span className="font-sans text-[13px] tracking-normal text-muted">files</span>
+                    {Number(value).toLocaleString("en-US")} <span className="font-sans text-[13px] tracking-normal text-muted">{value === 1 ? "file" : "files"}</span>
                   </dd>
                 </div>
               ))}
@@ -451,66 +421,19 @@ export function AgentRunPanel({
                 </pre>
               </details>
             )}
-            {snapshot.run.status === "awaiting_approval" && (
-              <fieldset className="mt-4 rounded-card border border-line-2 bg-canvas p-4">
-                <legend className="px-1 text-[13px] font-medium text-ink">Review frozen acceptance criteria</legend>
-                <p className="mt-1 break-all font-mono text-[11px] text-muted">
-                  Proposal {snapshot.run.proposal_hash}
-                </p>
-                <div className="mt-3 space-y-3">
-                  {reviewCriteria.map((criterion, index) => (
-                    <div key={criterion.criterion} className="rounded-chip border border-line px-3 py-2.5">
-                      <label className="flex items-start gap-2 text-[13px] leading-5 text-ink-2">
-                        <input
-                          type="checkbox"
-                          checked={criterion.satisfied}
-                          onChange={(event) => setReviewCriteria((current) => current.map(
-                            (item, itemIndex) => itemIndex === index
-                              ? { ...item, satisfied: event.target.checked }
-                              : item,
-                          ))}
-                          className="mt-1 size-3.5 accent-[var(--included)]"
-                        />
-                        <span>{criterion.criterion}</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={criterion.evidence ?? ""}
-                        onChange={(event) => setReviewCriteria((current) => current.map(
-                          (item, itemIndex) => itemIndex === index
-                            ? { ...item, evidence: event.target.value }
-                            : item,
-                        ))}
-                        maxLength={2_000}
-                        aria-label={`Evidence for ${criterion.criterion}`}
-                        placeholder="Evidence or reason"
-                        className="mt-2 w-full rounded-chip border border-line bg-surface px-2.5 py-2 text-[13px] text-ink placeholder:text-muted"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => submitReview("rejected")}
-                    disabled={!reviewAvailability.canReject || reviewing !== null}
-                    className="rounded-chip border border-failed/40 px-3 py-2.5 text-[13px] font-medium text-failed disabled:opacity-40"
-                  >
-                    {reviewing === "rejected" ? "Recording…" : "Reject proposal"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => submitReview("accepted")}
-                    disabled={!reviewAvailability.canAccept || reviewing !== null}
-                    className="rounded-chip bg-ink px-3 py-2.5 text-[13px] font-medium text-canvas disabled:opacity-40"
-                  >
-                    {reviewing === "accepted" ? "Recording…" : "Accept criteria"}
-                  </button>
-                </div>
-                <p className="mt-3 text-[12px] leading-5 text-muted">
-                  The decision is bound to this immutable proposal. External GitHub writes remain off.
-                </p>
-              </fieldset>
+            <div className="mt-4 empty:hidden">
+              <ProposalPatch key={snapshot.run.id} snapshot={snapshot} />
+            </div>
+            {snapshot.run.status === "awaiting_approval" && snapshot.run.proposal_hash && snapshot.task && (
+              <div className="mt-4">
+                <ProposalReview
+                  key={snapshot.run.proposal_hash}
+                  runId={snapshot.run.id}
+                  proposalHash={snapshot.run.proposal_hash}
+                  acceptanceCriteria={snapshot.task.acceptance_criteria}
+                  onDecided={refreshRun}
+                />
+              </div>
             )}
             {review && (
               <p className="mt-4 rounded-card border border-line-2 bg-canvas px-4 py-3 text-[13px] leading-5 text-ink-2">
@@ -530,6 +453,11 @@ export function AgentRunPanel({
             )}
             {snapshot.run.error && (
               <p role="alert" className="mt-4 text-[13px] leading-5 text-failed">{snapshot.run.error}</p>
+            )}
+            {isTerminalRun(snapshot.run.status) && (
+              <button type="button" onClick={startAnother} className={`mt-4 ${secondaryButton}`}>
+                Start another Run
+              </button>
             )}
           </>
         )}

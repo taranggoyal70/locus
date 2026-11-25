@@ -157,6 +157,15 @@ Check evidence, and factual token usage. It is ready for human inspection but is
 not an approved delivery or a verified Agent Task outcome.
 _Avoid_: completed task, verified change, pull request.
 
+**Proposal patch**:
+A Review-ready proposal rendered as a patch `git apply` accepts, for its owner to
+apply to their own checkout. It is derived from the stored diff and frozen
+candidate, and refused when they disagree. It is a read of the owner's evidence,
+so it is available while the proposal is under Review and after acceptance, and
+needs no **Approval**; a rejected proposal has none. The stored diff is the Review
+format and is not itself a git patch.
+_Avoid_: delivery, pull request, export.
+
 **Review**:
 An immutable, human criterion-by-criterion decision bound to the exact hash of a
 Review-ready proposal. A Review accepts or rejects the Agent Task outcome; it
@@ -298,8 +307,12 @@ _Avoid_: feature flag, toggle, permission.
   verified-only **Savings claim** rules.
 - `src/lib/agent/run-store.ts` — guarded Run mutations and append-only Step writes.
 - `src/lib/agent/run-view.ts` — the shared **Run evidence snapshot** interface.
-- `src/components/AgentRunsList.tsx` — durable Run history, review, resume,
-  cancellation, and approval.
+- `src/components/AgentRunsList.tsx` - durable Run history, review, resume, and
+  cancellation.
+- `src/lib/agent/proposal-patch.ts` - the **Proposal patch**: recovers the trusted
+  base from stored evidence, re-checks it, and writes a git patch.
+- `src/components/ProposalReview.tsx` and `src/components/ProposalPatch.tsx` - the
+  **Review** form and the patch download, shared by the workspace and Run history.
 - `db/migrations/005_agent_runs.sql` — durable Agent Tasks, Runs, Steps,
   Artifacts, and Approvals.
 - `db/migrations/012_release1_run_evidence.sql` — immutable proposal
