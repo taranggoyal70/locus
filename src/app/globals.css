@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Evidence datasheet: Continuity's palette (warm grey paper, warm near-black
+ * Evidence datasheet: one palette (warm grey paper, warm near-black
  * ink, graphite for dark) with one orange signal. Orange marks the Slice;
  * green, ochre, crimson and grey describe a Check's or file's state. Nothing
  * else carries colour. Every role has a light value, a dark-theme value and a
@@ -18,7 +18,7 @@
   --line: rgba(22, 21, 19, 0.09);
   --line-2: rgba(22, 21, 19, 0.17);
 
-  /* ink. Continuity's muted (#7b7871) is 3.9:1 here; this keeps its hue at AA
+  /* ink. The first muted (#7b7871) was 3.9:1 here; this keeps its hue at AA
      on every ground, the recessed ones included. */
   --ink: #161513;
   --ink-2: #44423d;
@@ -74,7 +74,7 @@
   --frame-shadow: 0 32px 64px -30px rgba(0, 0, 0, 0.7);
 }
 
-/* The dark theme: Continuity's graphite. It applies when pinned, or by default
+/* The dark theme: graphite. It applies when pinned, or by default
    when the system asks for dark. */
 :root[data-theme="dark"] {
   color-scheme: dark;
