@@ -30,7 +30,7 @@ const PY_EXT_RE = /\.py$/;
 // blocks hold ordinary imports, so the same pattern finds them and the component
 // tree becomes part of the Graph. Without them a Vue or SvelteKit application
 // loads only its .ts helpers and every component is invisible.
-const SOURCE_EXT_RE = /\.(tsx?|jsx?|mts|cts|mjs|cjs|py|vue|svelte|astro)$/;
+export const SOURCE_EXT_RE = /\.(tsx?|jsx?|mts|cts|mjs|cjs|py|vue|svelte|astro)$/;
 
 function estimateTokens(text: string): number {
   return Math.max(1, Math.round(text.length / 4));

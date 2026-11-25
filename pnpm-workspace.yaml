@@ -42,7 +42,7 @@ overrides:
   'browserslist@<4.28.7': ^4.28.7
   # GHSA-x5fp-wj9c-mxmx and GHSA-4mjr-xmp4-gh2g — resource exhaustion and
   # exception handling defects in the query parser used by workflow's server.
-  'qs@>=2.2.5 <6.16.0': ^6.16.0
+  'qs@>=2.2.5 <6.16.1': ^6.16.1
   # GHSA-6gmq-8vp8-gcm6 — invalid XML entity names could be serialized without
   # well-formedness checks in the DOCX parsing dependency chain.
   '@xmldom/xmldom@>=0.7.0 <=0.8.14': ^0.8.15
@@ -57,3 +57,6 @@ overrides:
   'proxy-addr@<2.0.8': ^2.0.8
   'body-parser@>=2.0.0 <2.4.0': ^2.4.0
   'source-map-js@<1.2.2': 1.2.2
+  # GHSA-g3hv-75wg-m249, globparts denial of service. No patched 9.x or 10.x exists,
+  # so this one crosses a major line; the consumers import the named export only.
+  'minimatch@>=7.0.0 <11.0.1': ^11.0.1

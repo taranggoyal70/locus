@@ -1,4 +1,5 @@
 import { normalizePublicGitHubRepository } from "@/lib/agent/vercel-workspace";
+import { SOURCE_EXT_RE } from "@/lib/localizer";
 import type { RepoData } from "@/lib/types";
 
 // The byte budget is the primary memory bound. Keep enough file slots for
@@ -9,7 +10,10 @@ const MAX_FILE_BYTES = 100_000;
 const MAX_TOTAL_BYTES = 5_000_000;
 const FETCH_TIMEOUT_MS = 10_000;
 const DOWNLOAD_CONCURRENCY = 8;
-const SOURCE_FILE = /\.(tsx?|jsx?|json|css|scss|md)$/i;
+const DOWNLOAD_ATTEMPTS = 2;
+// Everything the Graph reads, plus the text a change to it often touches.
+const SUPPORTING_FILE = /\.(json|css|scss|md)$/i;
+const isSource = (path: string) => SOURCE_EXT_RE.test(path) || SUPPORTING_FILE.test(path);
 const IGNORE_DIRECTORY =
   /(^|\/)(node_modules|\.next|dist|build|coverage|\.git|vendor|fixtures?|snapshots?)\//i;
 
@@ -171,7 +175,7 @@ export async function fetchAgentRepository(
   const candidates = tree.tree.filter(
     (entry) =>
       entry.type === "blob"
-      && SOURCE_FILE.test(entry.path)
+      && isSource(entry.path)
       && !IGNORE_DIRECTORY.test(entry.path)
       && (entry.size ?? 0) <= MAX_FILE_BYTES,
   );
@@ -187,22 +191,18 @@ export async function fetchAgentRepository(
   if (selected.length === 0) throw new Error("No supported source files were found");
 
   const entries = await mapConcurrent(selected, DOWNLOAD_CONCURRENCY, async (path) => {
-    const response = await fetchWithTimeout(
-      `https://raw.githubusercontent.com/${owner}/${repo}/${resolvedRevision}/${rawPath(path)}`,
-    ).catch(() => null);
-    if (!response?.ok) return null;
-    const bytes = await response.arrayBuffer();
-    if (bytes.byteLength > MAX_FILE_BYTES) return null;
-    return [path, new TextDecoder().decode(bytes)] as const;
+    const url = `https://raw.githubusercontent.com/${owner}/${repo}/${resolvedRevision}/${rawPath(path)}`;
+    for (let attempt = 0; attempt < DOWNLOAD_ATTEMPTS; attempt++) {
+      const bytes = await fetchWithTimeout(url)
+        .then((response) => (response.ok ? response.arrayBuffer() : null))
+        .catch(() => null);
+      if (bytes) return [path, new TextDecoder().decode(bytes)] as const;
+    }
+    // R11: skipping it would drop the file from the excluded ledger and the
+    // trusted base while the tree still counted as complete.
+    throw new Error(`GitHub source file ${path} could not be downloaded`);
   });
-
-  const files: Record<string, string> = {};
-  for (const entry of entries) {
-    if (entry) files[entry[0]] = entry[1];
-  }
-  if (Object.keys(files).length === 0) {
-    throw new Error("GitHub source files could not be downloaded");
-  }
+  const files: Record<string, string> = Object.fromEntries(entries);
 
   return {
     repo: {

@@ -350,9 +350,9 @@ docs/adr/, CONTEXT.md       Architecture decisions and the domain language
   an agent finishes more tasks, or spends fewer total tokens per accepted task, waits on the Release 1 study.
 - **Lexical matching.** A task that uses none of the code's vocabulary widens or misses; `--evidence` and the
   refinement terms are the remedy.
-- **The hosted importer is smaller than the CLI.** The web workspace imports public JavaScript and TypeScript
-  repositories up to 200 source files; the CLI, MCP server and REST API use the full localizer, including Python
-  and single-file components.
+- **The hosted importer is smaller than the CLI.** The web workspace imports public repositories up to 500 source
+  files and 3.8 MB; the REST API, and the CLI and MCP server that call it, stop at 200 files. Agent Runs need a JavaScript or TypeScript
+  test, lint, typecheck or build command, so a Python-only repository can be localized but not run.
 - **Guard containment** covers macOS and Linux only, does not isolate the network, and proves which files changed,
   not that the change is right.
 - **Uploaded evidence** is processed for text and not intentionally retained, but extracted text becomes part of

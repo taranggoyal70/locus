@@ -148,6 +148,52 @@ export async function recordWidenAttempts(input: {
   }
 }
 
+/**
+ * Keep what a Run made but could not publish, so a failed check does not cost the
+ * person the work. These artifacts carry no content hash and the Run has no
+ * proposal hash, so nothing can be Reviewed, downloaded as a patch, or delivered
+ * from them, and they expire with the Run.
+ */
+export async function recordUnpublishedChange(input: {
+  runId: string;
+  userId: string;
+  baseRevision: string;
+  diff: string;
+  checks: ReadonlyArray<{ command: string; exitCode: number; output: string }>;
+}): Promise<void> {
+  await tenantDb(input.userId).transaction().execute(async (transaction) => {
+    const run = await transaction
+      .selectFrom("agent_runs")
+      .select("status")
+      .where("id", "=", input.runId)
+      .where("user_id", "=", input.userId)
+      .forUpdate()
+      .executeTakeFirst();
+    // A cancelled Run was discarded on purpose.
+    if (run?.status !== "executing") return;
+    await transaction.insertInto("agent_artifacts").values([
+      {
+        run_id: input.runId,
+        user_id: input.userId,
+        kind: "diff",
+        label: "Unpublished change",
+        content: input.diff,
+        base_revision: input.baseRevision,
+      },
+      ...(input.checks.length === 0 ? [] : [{
+        run_id: input.runId,
+        user_id: input.userId,
+        kind: "test" as const,
+        label: "Check output",
+        content: input.checks
+          .map((check) => `${check.command}\n${check.output}`)
+          .join("\n\n"),
+        base_revision: input.baseRevision,
+      }]),
+    ]).execute();
+  });
+}
+
 export async function publishRunProposal(input: {
   runId: string;
   userId: string;
@@ -237,6 +283,27 @@ export async function decideRunProposal(input: {
     throw new Error("Run proposal decision could not be recorded");
   }
   return { status: result.run_status, reviewId: result.review_id };
+}
+
+/**
+ * Give back the shared daily slot of a Run that never called the model. Claims
+ * otherwise survive failure so retries cannot multiply provider spend; a Run
+ * stopped earlier spent none, and there is one slot a day for everyone. The
+ * account's own rolling Run quota still counts it, which bounds repeats.
+ */
+export async function releaseUnusedDailyClaim(runId: string): Promise<void> {
+  await globalDb("provider daily claims span accounts")
+    .deleteFrom("agent_provider_daily_claims")
+    .where("run_id", "=", runId)
+    .where((where) => where.exists(
+      where.selectFrom("agent_runs")
+        .select("agent_runs.id")
+        .whereRef("agent_runs.id", "=", "agent_provider_daily_claims.run_id")
+        .where("agent_runs.status", "in", ["failed", "cancelled"])
+        .where("agent_runs.input_tokens", "=", 0)
+        .where("agent_runs.output_tokens", "=", 0),
+    ))
+    .execute();
 }
 
 export async function failRun(

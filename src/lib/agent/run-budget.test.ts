@@ -9,6 +9,7 @@ import {
   classifyAgentFailure,
   nextStepBudgetDecision,
   resolveRunTokenBudget,
+  stoppedBeforeModel,
 } from "@/lib/agent/run-budget";
 
 describe("agent Run token budget", () => {
@@ -110,6 +111,12 @@ describe("failures Locus caused knowingly", () => {
     const error = wrapped(AGENT_STOPPED[name]);
     expect(classifyAgentFailure(error)).toBe(kind);
     expect(agentFailureMessage(kind, "shared", error)).toBe(AGENT_STOPPED[name]);
+  });
+
+  it("knows which failures came before any model request", () => {
+    expect(stoppedBeforeModel(wrapped(AGENT_STOPPED.noChecksAvailable))).toBe(true);
+    expect(stoppedBeforeModel(wrapped(AGENT_STOPPED.noCheckRun))).toBe(false);
+    expect(stoppedBeforeModel(wrapped("Sandbox dependency preparation failed"))).toBe(false);
   });
 
   it("names the check that failed on the frozen candidate", () => {

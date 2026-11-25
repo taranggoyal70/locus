@@ -4,6 +4,7 @@ import {
   assertCandidateIntegrity,
   buildDeterministicDiff,
   freezeCandidate,
+  type FrozenCandidate,
 } from "@/lib/agent/candidate";
 import { AGENT_MAX_STEPS, runCodingTask } from "@/lib/agent/coding-agent";
 import { sendOperationalAlert } from "@/lib/agent/operations";
@@ -15,6 +16,7 @@ import {
   AGENT_STOPPED,
   agentFailureMessage,
   classifyAgentFailure,
+  stoppedBeforeModel,
   type AgentFailureKind,
 } from "@/lib/agent/run-budget";
 import { resolveRunAgentModel } from "@/lib/agent/provider";
@@ -28,17 +30,21 @@ import {
   failRun,
   patchRun,
   publishRunProposal,
+  recordUnpublishedChange,
   recordWidenAttempts,
   releaseRunProviderLease,
+  releaseUnusedDailyClaim,
   transitionRun,
 } from "@/lib/agent/run-store";
 import { createVercelWorkspace } from "@/lib/agent/vercel-workspace";
-import { verifyFrozenCandidate } from "@/lib/agent/verification";
+import { verifyFrozenCandidate, type VerificationCheck } from "@/lib/agent/verification";
 import { MAX_REVIEW_DIFF_CHARACTERS, WorkspaceController } from "@/lib/agent/workspace";
 import { AgentSlice, buildAgentPrompt } from "@/lib/agent/workspace-tools";
 import { globalDb } from "@/lib/db";
 import { buildGraph, locate } from "@/lib/localizer";
 import { logger } from "@/lib/logger";
+
+const UNPUBLISHED_CAPTURE_MS = 30_000;
 
 type AgentRunWorkflowInput = {
   runId: string;
@@ -192,6 +198,11 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
   });
   const controller = new WorkspaceController(workspace, slice);
   let editWorkspaceStopped = false;
+  let candidate: FrozenCandidate | null = null;
+  let isolatedChecks: VerificationCheck[] = [];
+  // The base is the tree fetched server-side at the resolved revision, not
+  // anything the sandbox reported about itself.
+  const base = new Map(Object.entries(localized.repo.files));
 
   try {
     await patchRun({
@@ -292,14 +303,11 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       localized.baselineTokens,
       localized.includedTokens + widenedTokens,
     );
-    const candidate = freezeCandidate({
+    candidate = freezeCandidate({
       baseSha: localized.revision,
       changes: changeSet,
     });
 
-    // The base is the tree fetched server-side at the resolved revision, not
-    // anything the sandbox reported about itself.
-    const base = new Map(Object.entries(localized.repo.files));
     const createdPaths = new Set(result.ledger.created);
     for (const file of candidate.files) {
       // A modified file must exist in the trusted base. If it does not, the
@@ -346,6 +354,7 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       localized.runId,
     );
 
+    isolatedChecks = isolated.checks;
     const failedChecks = isolated.checks.filter((check) => check.exitCode !== 0);
     if (failedChecks.length > 0) {
       throw new Error(
@@ -421,6 +430,33 @@ async function executeRunStep(localized: LocalizedRun): Promise<void> {
       },
       localized.runId,
     );
+  } catch (error) {
+    // Best effort: whatever happens here, the Run fails for its own reason.
+    try {
+      const unpublished = candidate ?? freezeCandidate({
+        baseSha: localized.revision,
+        changes: await controller.changeSet(AbortSignal.timeout(UNPUBLISHED_CAPTURE_MS)),
+      });
+      const created = new Set(controller.ledger().created);
+      const known = unpublished.files.every((file) => base.has(file.path) || created.has(file.path));
+      const diff = buildDeterministicDiff(base, unpublished);
+      if (known && diff !== "" && diff.length <= MAX_REVIEW_DIFF_CHARACTERS) {
+        await recordUnpublishedChange({
+          runId: localized.runId,
+          userId: localized.userId,
+          baseRevision: localized.revision,
+          diff,
+          checks: isolatedChecks.length > 0
+            ? isolatedChecks
+            : controller.verification().map(({ command, exitCode, evidence }) => (
+              { command, exitCode, output: evidence }
+            )),
+        });
+      }
+    } catch {
+      logger.error("agent.unpublished_change.not_recorded", {}, localized.runId);
+    }
+    throw error;
   } finally {
     // The edit sandbox is torn down before verification on the success path, so
     // only stop it here if that never happened.
@@ -459,6 +495,16 @@ async function releaseProviderLeaseStep(runId: string): Promise<void> {
   }
 }
 
+async function releaseUnusedDailyClaimStep(runId: string): Promise<void> {
+  "use step";
+
+  try {
+    await releaseUnusedDailyClaim(runId);
+  } catch {
+    logger.error("agent.daily_claim.release_failed", {}, runId);
+  }
+}
+
 export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<void> {
   "use workflow";
 
@@ -476,6 +522,10 @@ export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<vo
       failureKind,
       error instanceof Error ? error.message : String(error),
     );
+    // No mode means localization failed, which is before the model too.
+    if (executionMode === undefined || stoppedBeforeModel(error)) {
+      await releaseUnusedDailyClaimStep(input.runId);
+    }
   } finally {
     await releaseProviderLeaseStep(input.runId);
   }
