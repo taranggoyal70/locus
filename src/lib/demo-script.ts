@@ -177,7 +177,8 @@ const OVERVIEW = { x: STAGE.w / 2, y: STAGE.h / 2, zoom: 1 };
 const SHOTS: Shot[] = [
   { at: 0.5, dur: 0.9, x: 250, y: 70, zoom: 1.7 },
   { at: 3.7, dur: 0.8, x: 330, y: 230, zoom: 1.25 },
-  { at: 4.9, dur: 0.7, x: 420, y: 90, zoom: 1.5 },
+  // Centred left of the field, so a phone's closer shot still starts where the typed task does.
+  { at: 4.9, dur: 0.7, x: 330, y: 90, zoom: 1.5 },
   { at: 8.8, dur: 0.8, x: 326, y: 252, zoom: 1.6 },
   { at: 11.5, dur: 0.8, x: 770, y: 340, zoom: 1.35 },
   { at: 13.3, dur: 0.7, x: 326, y: 470, zoom: 1.6 },
