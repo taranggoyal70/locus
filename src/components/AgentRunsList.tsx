@@ -9,11 +9,11 @@ import { dangerButton, monoLabel, monoMeta, primaryButton, ruledList, ruledRow, 
 import { EmptyState, InlineError } from "@/components/EmptyState";
 import { Mascot } from "@/components/Mascot";
 import { ProposalPatch } from "@/components/ProposalPatch";
-import { ProposalReview } from "@/components/ProposalReview";
+import { ProposalReview, ReviewOutcome } from "@/components/ProposalReview";
 import { UnpublishedChange } from "@/components/UnpublishedChange";
 import { RunContextLedger } from "@/components/RunContextLedger";
 import { StateTag, type StateTone } from "@/components/StateTag";
-import { isActiveRun, type RunStatus } from "@/lib/agent/run-state";
+import { isActiveRun, runStatusLabel, type RunStatus } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentRunSummary } from "@/lib/agent/run-view";
 
 async function fetchRuns(signal?: AbortSignal): Promise<AgentRunSummary[]> {
@@ -39,9 +39,7 @@ async function requestRunCancellation(runId: string): Promise<void> {
 }
 
 export function alphaRunStatusLabel(status: string): string {
-  if (status === "awaiting_approval") return "ready for review";
-  if (status === "rejected") return "rejected by reviewer";
-  return status.replaceAll("_", " ");
+  return runStatusLabel(status);
 }
 
 function statusTone(status: string): StateTone {
@@ -269,7 +267,7 @@ export function AgentRunsList() {
               {diff?.content && selectedSnapshot.run.status !== "failed" && (
                 <details className="group rounded-card border border-line-2">
                   <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-3 text-[14px] font-medium text-ink">
-                    Review proposed diff
+                    Show the code change
                     <span aria-hidden className="font-mono text-[12px] text-muted transition-transform duration-150 group-open:rotate-90">›</span>
                   </summary>
                   <pre className="max-h-80 overflow-auto border-t border-line bg-canvas p-4 font-mono text-[12px] leading-5 text-ink-2" tabIndex={0}>{diff.content}</pre>
@@ -277,9 +275,9 @@ export function AgentRunsList() {
               )}
               {selectedSnapshot.run.error && <InlineError>{selectedSnapshot.run.error}</InlineError>}
               <UnpublishedChange key={`unpublished-${selectedSnapshot.run.id}`} snapshot={selectedSnapshot} />
-              <ProposalPatch key={selectedSnapshot.run.id} snapshot={selectedSnapshot} />
               {/* The evidence and the decision belong on one page: this used to say
-                  "Ready for review" with nothing on it to review with. */}
+                  "Ready for review" with nothing on it to review with. The decision
+                  comes before the optional download, which is a way to check it. */}
               {selectedSnapshot.run.status === "awaiting_approval"
                 && selectedSnapshot.run.proposal_hash
                 && selectedSnapshot.task && (
@@ -291,6 +289,8 @@ export function AgentRunsList() {
                   onDecided={() => refreshRun(selectedSnapshot.run.id)}
                 />
               )}
+              {selectedSnapshot.reviews[0] && <ReviewOutcome decision={selectedSnapshot.reviews[0].decision} />}
+              <ProposalPatch key={selectedSnapshot.run.id} snapshot={selectedSnapshot} />
               {pullRequest?.url && <a href={pullRequest.url} target="_blank" rel="noreferrer" className={`w-full justify-between ${primaryButton}`}><span>{pullRequest.label}</span><span aria-hidden>↗</span></a>}
               {isActiveRun(selectedSnapshot.run.status) && (
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line pt-5">

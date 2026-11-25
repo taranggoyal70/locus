@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 
 import { secondaryButton } from "@/components/controls";
 import { ProposalPatch } from "@/components/ProposalPatch";
-import { ProposalReview } from "@/components/ProposalReview";
+import { ProposalReview, ReviewOutcome } from "@/components/ProposalReview";
 import { UnpublishedChange } from "@/components/UnpublishedChange";
 import { RunContextLedger } from "@/components/RunContextLedger";
 import { CONTROLLED_ALPHA_DATA_POLICY_VERSION } from "@/lib/agent/data-policy";
-import { isActiveRun, isTerminalRun, type RunStatus } from "@/lib/agent/run-state";
+import { isActiveRun, isTerminalRun, runStatusLabel, type RunStatus } from "@/lib/agent/run-state";
 import type { AgentRunSnapshot, AgentStepView } from "@/lib/agent/run-view";
 import { runAccessCopy, type RunAccess } from "@/lib/run-access";
 
@@ -157,6 +157,24 @@ export function AgentRunPanel({
       if (timeout) clearTimeout(timeout);
     };
   }, [runId, shouldPoll]);
+
+  // A Run awaiting review can be decided in another tab or on the Runs page.
+  // Re-read it when this tab comes back so it never keeps offering a decision
+  // that has already been made.
+  useEffect(() => {
+    if (!runId || status !== "awaiting_approval") return;
+    function refreshWhenVisible() {
+      if (document.visibilityState !== "visible") return;
+      void fetch(`/api/agent/runs/${runId}`, { cache: "no-store" })
+        .then(async (response) => (response.ok ? response.json() as Promise<AgentRunSnapshot> : null))
+        .then((data) => {
+          if (data?.run) setSnapshot(data);
+        })
+        .catch(() => undefined);
+    }
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => document.removeEventListener("visibilitychange", refreshWhenVisible);
+  }, [runId, status]);
 
   async function launch() {
     if (
@@ -389,7 +407,7 @@ export function AgentRunPanel({
             <AgentRunTimeline status={snapshot.run.status} steps={snapshot.steps} />
             <div className="mt-5 flex items-center justify-between rounded-card bg-canvas px-3 py-3">
               <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
-                {snapshot.run.status.replaceAll("_", " ")}
+                {runStatusLabel(snapshot.run.status)}
               </span>
               <span className="font-mono text-[12px] font-medium text-included-ink">
                 {snapshot.tokens.totalTokens.toLocaleString("en-US")} tokens used
@@ -415,16 +433,13 @@ export function AgentRunPanel({
             {diff?.content && snapshot.run.status !== "failed" && (
               <details className="mt-4 rounded-card border border-line">
                 <summary className="cursor-pointer px-3 py-3 text-[13px] font-medium text-ink">
-                  Review proposed diff
+                  Show the code change
                 </summary>
                 <pre className="max-h-80 overflow-auto border-t border-line p-3 font-mono text-[11px] leading-5 text-ink-2" tabIndex={0}>
                   {diff.content}
                 </pre>
               </details>
             )}
-            <div className="mt-4 empty:hidden">
-              <ProposalPatch key={snapshot.run.id} snapshot={snapshot} />
-            </div>
             {snapshot.run.status === "awaiting_approval" && snapshot.run.proposal_hash && snapshot.task && (
               <div className="mt-4">
                 <ProposalReview
@@ -437,10 +452,15 @@ export function AgentRunPanel({
               </div>
             )}
             {review && (
-              <p className="mt-4 rounded-card border border-line-2 bg-canvas px-4 py-3 text-[13px] leading-5 text-ink-2">
-                Proposal {review.decision} with criterion-level review evidence.
-              </p>
+              <div className="mt-4">
+                <ReviewOutcome decision={review.decision} />
+              </div>
             )}
+            {/* After the decision: the download is optional before it and the
+                point of the Run after an approval. */}
+            <div className="mt-4 empty:hidden">
+              <ProposalPatch key={snapshot.run.id} snapshot={snapshot} />
+            </div>
             {pullRequest?.url && (
               <a
                 href={pullRequest.url}

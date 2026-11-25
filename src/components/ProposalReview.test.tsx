@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UnpublishedChange } from "@/components/UnpublishedChange";
 import { ProposalPatch, patchCommands } from "@/components/ProposalPatch";
-import { ProposalReview } from "@/components/ProposalReview";
+import { ProposalReview, ReviewOutcome } from "@/components/ProposalReview";
 import type { AgentRunSnapshot } from "@/lib/agent/run-view";
 
 const RUN_ID = "0123abcd-0000-4000-8000-000000000001";
@@ -61,12 +61,12 @@ describe("ProposalReview", () => {
   it("accepts only when every criterion is satisfied, and sends exactly what was decided", async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ status: "completed" }) });
     const onDecided = review();
-    const accept = screen.getByText<HTMLButtonElement>("Accept criteria");
+    const accept = screen.getByText<HTMLButtonElement>("Approve change");
 
     fireEvent.click(screen.getByLabelText("Keeps the query"));
     expect(accept.disabled).toBe(true);
     fireEvent.click(screen.getByLabelText("Tests pass"));
-    fireEvent.change(screen.getByLabelText("Evidence for Tests pass"), { target: { value: "pnpm test" } });
+    fireEvent.change(screen.getByLabelText("Note for Tests pass"), { target: { value: "pnpm test" } });
     expect(accept.disabled).toBe(false);
     fireEvent.click(accept);
 
@@ -83,11 +83,30 @@ describe("ProposalReview", () => {
     });
   });
 
+  it("asks the plain question and says what is left before approval", () => {
+    review();
+    expect(screen.getByText("Did the agent do what you asked?")).toBeTruthy();
+    expect(screen.getByText(/Tick every goal to approve\./)).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Keeps the query"));
+    expect(screen.getByText(/Tick the 1 remaining goal to approve\./)).toBeTruthy();
+    fireEvent.click(screen.getByLabelText("Tests pass"));
+    expect(screen.getByText(/Approving marks this Run done/)).toBeTruthy();
+    expect(screen.queryByText(/Proposal [0-9a-f]{64}/)).toBeNull();
+  });
+
+  it.each([
+    ["accepted", "You approved this change."],
+    ["rejected", "You rejected this change."],
+  ])("says plainly what a %s decision means", (decision, sentence) => {
+    render(<ReviewOutcome decision={decision} />);
+    expect(screen.getByRole("status").textContent).toContain(sentence);
+  });
+
   it("can reject without satisfying anything, and shows a refusal from the server", async () => {
     fetchMock.mockResolvedValue({ ok: false, json: async () => ({ error: "The proposal changed." }) });
     const onDecided = review();
 
-    fireEvent.click(screen.getByText("Reject proposal"));
+    fireEvent.click(screen.getByText("Reject change"));
 
     expect((await screen.findByRole("alert")).textContent).toContain("The proposal changed.");
     expect(onDecided).not.toHaveBeenCalled();
@@ -97,13 +116,16 @@ describe("ProposalReview", () => {
 describe("ProposalPatch", () => {
   it("offers an unreviewed proposal as something to try, not as an accepted change", () => {
     const { container } = render(<ProposalPatch snapshot={snapshot("awaiting_approval")} />);
-    expect(container.textContent).toContain("It is not reviewed yet");
-    expect(container.textContent).not.toContain("Accepted change");
+    expect(container.textContent).toContain("Optional: try it first");
+    expect(container.textContent).not.toContain("Your approved change");
+    // The git commands are tucked away until the owner asks for them.
+    expect(container.querySelector("details")?.open).toBe(false);
   });
 
   it("offers an accepted change with commands from the commit the Run read", () => {
     const { container } = render(<ProposalPatch snapshot={snapshot("completed", "accepted")} />);
-    expect(container.textContent).toContain("Accepted change");
+    expect(container.textContent).toContain("Your approved change");
+    expect(container.querySelector("details")?.open).toBe(true);
     expect(container.textContent).toContain(patchCommands(RUN_ID, BASE));
     expect(patchCommands(RUN_ID, BASE)).toBe(
       "git switch -c locus/0123abcd cccccccccccc\ngit apply --index ~/Downloads/locus-0123abcd.patch",
@@ -146,7 +168,7 @@ describe("ProposalPatch", () => {
     });
     render(<ProposalPatch snapshot={snapshot("completed", "accepted")} />);
 
-    fireEvent.click(screen.getByText("Download patch"));
+    fireEvent.click(screen.getByText("Download change"));
 
     await waitFor(() => expect(downloaded).toBe("locus-0123abcd.patch"));
     expect(fetchMock.mock.calls[0][0]).toBe(`/api/agent/runs/${RUN_ID}/patch`);
@@ -156,7 +178,7 @@ describe("ProposalPatch", () => {
     fetchMock.mockResolvedValue({ ok: false, json: async () => ({ error: "Failed its integrity check." }) });
     render(<ProposalPatch snapshot={snapshot("completed", "accepted")} />);
 
-    fireEvent.click(screen.getByText("Download patch"));
+    fireEvent.click(screen.getByText("Download change"));
 
     expect((await screen.findByRole("alert")).textContent).toContain("Failed its integrity check.");
   });
