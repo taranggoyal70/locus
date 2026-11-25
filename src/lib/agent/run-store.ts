@@ -285,6 +285,27 @@ export async function decideRunProposal(input: {
   return { status: result.run_status, reviewId: result.review_id };
 }
 
+/**
+ * Give back the shared daily slot of a Run that never called the model. Claims
+ * otherwise survive failure so retries cannot multiply provider spend; a Run
+ * stopped earlier spent none, and there is one slot a day for everyone. The
+ * account's own rolling Run quota still counts it, which bounds repeats.
+ */
+export async function releaseUnusedDailyClaim(runId: string): Promise<void> {
+  await globalDb("provider daily claims span accounts")
+    .deleteFrom("agent_provider_daily_claims")
+    .where("run_id", "=", runId)
+    .where((where) => where.exists(
+      where.selectFrom("agent_runs")
+        .select("agent_runs.id")
+        .whereRef("agent_runs.id", "=", "agent_provider_daily_claims.run_id")
+        .where("agent_runs.status", "in", ["failed", "cancelled"])
+        .where("agent_runs.input_tokens", "=", 0)
+        .where("agent_runs.output_tokens", "=", 0),
+    ))
+    .execute();
+}
+
 export async function failRun(
   runId: string,
   message: string,

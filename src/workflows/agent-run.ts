@@ -16,6 +16,7 @@ import {
   AGENT_STOPPED,
   agentFailureMessage,
   classifyAgentFailure,
+  stoppedBeforeModel,
   type AgentFailureKind,
 } from "@/lib/agent/run-budget";
 import { resolveRunAgentModel } from "@/lib/agent/provider";
@@ -32,6 +33,7 @@ import {
   recordUnpublishedChange,
   recordWidenAttempts,
   releaseRunProviderLease,
+  releaseUnusedDailyClaim,
   transitionRun,
 } from "@/lib/agent/run-store";
 import { createVercelWorkspace } from "@/lib/agent/vercel-workspace";
@@ -493,6 +495,16 @@ async function releaseProviderLeaseStep(runId: string): Promise<void> {
   }
 }
 
+async function releaseUnusedDailyClaimStep(runId: string): Promise<void> {
+  "use step";
+
+  try {
+    await releaseUnusedDailyClaim(runId);
+  } catch {
+    logger.error("agent.daily_claim.release_failed", {}, runId);
+  }
+}
+
 export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<void> {
   "use workflow";
 
@@ -510,6 +522,10 @@ export async function agentRunWorkflow(input: AgentRunWorkflowInput): Promise<vo
       failureKind,
       error instanceof Error ? error.message : String(error),
     );
+    // No mode means localization failed, which is before the model too.
+    if (executionMode === undefined || stoppedBeforeModel(error)) {
+      await releaseUnusedDailyClaimStep(input.runId);
+    }
   } finally {
     await releaseProviderLeaseStep(input.runId);
   }

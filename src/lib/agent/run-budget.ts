@@ -94,6 +94,12 @@ export const AGENT_STOPPED = {
     "This Repo has no test, lint, typecheck, or build command that Locus can run, so the Run stopped before using the model.",
 } as const;
 
+/** Whether a Run stopped on purpose before any model request. */
+export function stoppedBeforeModel(error: unknown): boolean {
+  const text = error instanceof Error ? error.message : String(error);
+  return text.includes(AGENT_STOPPED.noChecksAvailable);
+}
+
 function knownFailureMessage(error: unknown): string | null {
   const text = error instanceof Error ? error.message : String(error);
   const stopped = Object.values(AGENT_STOPPED).find((message) => text.includes(message));

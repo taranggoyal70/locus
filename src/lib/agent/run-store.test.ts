@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { failRun, recordUnpublishedChange, transitionRun } from "@/lib/agent/run-store";
+import { failRun, recordUnpublishedChange, releaseUnusedDailyClaim, transitionRun } from "@/lib/agent/run-store";
 import { setupTestDatabase } from "@/test/database";
 import { seedRun } from "@/test/fixtures";
 
@@ -108,6 +108,24 @@ describe("recordUnpublishedChange", () => {
 
     expect(await artifactsOf(cancelled)).toEqual([]);
     expect(await artifactsOf(running)).toEqual([]);
+  });
+});
+
+describe("releaseUnusedDailyClaim", () => {
+  it.each([
+    ["a Run that failed before the model", { status: "failed", input_tokens: 0 }, 0],
+    ["a Run that used the model", { status: "failed", input_tokens: 5 }, 1],
+    ["a Run still going", { status: "localizing", input_tokens: 0 }, 1],
+  ] as const)("for %s", async (_name, values, remaining) => {
+    const runId = await seedRun(database(), "user_owner", values);
+    await database().insertInto("agent_provider_daily_claims").values({
+      run_id: runId, provider: "cloudflare-workers-ai", usage_day: new Date().toISOString().slice(0, 10),
+    }).execute();
+
+    await releaseUnusedDailyClaim(runId);
+
+    expect(await database().selectFrom("agent_provider_daily_claims").select("run_id").execute())
+      .toHaveLength(remaining);
   });
 });
 
