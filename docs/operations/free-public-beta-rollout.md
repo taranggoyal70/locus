@@ -2,8 +2,10 @@
 
 ## Boundary
 
-The hosted beta offers one shared Cloudflare Workers AI Run per UTC day across
-Locus, capped at 100,000 total model tokens. A signed-in user may instead
+The hosted beta offers each account one shared Cloudflare Workers AI Run per UTC
+day, from a deployment-wide pool of `LOCUS_SHARED_DAILY_RUN_LIMIT` Runs (default
+1), each capped at 100,000 total model tokens. Operators listed in
+`LOCUS_OWNER_USER_IDS` skip both daily limits. A signed-in user may instead
 connect their own reviewed Cloudflare credential. This is a capacity-limited
 beta, not an unlimited free service.
 

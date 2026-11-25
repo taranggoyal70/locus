@@ -88,8 +88,8 @@ export function CloudflareConnectionPanel() {
         </p>
         <h3 className="mt-4 font-display text-[26px] font-normal leading-[1.1] tracking-[-0.012em] text-ink">Connect Cloudflare Workers AI</h3>
         <p className="mt-3 max-w-2xl text-[15px] leading-6 text-ink-2">
-          When your account has Agent access, Locus offers one shared Agent Run per day across the
-          beta. Connect your own Cloudflare account to avoid waiting for that shared slot.
+          When your account has Agent access, Locus offers one shared Agent Run per person per day
+          while the beta&apos;s daily pool lasts. Connect your own Cloudflare account to avoid waiting for it.
         </p>
 
         <ol className={`mt-6 ${ruledList}`}>

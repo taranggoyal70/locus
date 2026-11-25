@@ -22,7 +22,7 @@ describe("Cloudflare connection setup", () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ configured: false }) });
     const { container } = render(<CloudflareConnectionPanel />);
 
-    expect(screen.getByText(/one shared Agent Run per day across the beta/)).toBeTruthy();
+    expect(screen.getByText(/one shared Agent Run per person per day/)).toBeTruthy();
     expect(screen.getByLabelText("Cloudflare Account ID")).toBeTruthy();
     expect(screen.getByLabelText("Workers AI API token")).toHaveProperty("type", "password");
     expect(container.textContent).toContain("Encrypted before storage");

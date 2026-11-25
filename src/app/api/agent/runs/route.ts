@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { sql } from "kysely";
 import { NextResponse } from "next/server";
 import { start } from "workflow/api";
 
@@ -6,10 +7,12 @@ import { calculateTokenLedger, resolveAgentModel } from "@/lib/agent/coding-agen
 import { cloudflareCredentialStatus } from "@/lib/agent/provider-credential-store";
 import {
   CLOUDFLARE_PROVIDER,
+  isDeploymentOwner,
   providerCapacityKey,
+  resolveSharedDailyRunLimit,
   sharedCloudflareConfigured,
-  SHARED_DAILY_RUN_LIMIT,
   SHARED_RUN_TOKEN_BUDGET,
+  SHARED_RUNS_PER_PERSON_PER_DAY,
 } from "@/lib/agent/provider-config";
 import { resolveRunTokenBudget } from "@/lib/agent/run-budget";
 import {
@@ -37,6 +40,11 @@ import { readLimitedJson, sameOriginMutation } from "@/lib/request-security";
 import { agentRunWorkflow } from "@/workflows/agent-run";
 
 const MAX_BODY_BYTES = 12_000;
+
+function secondsUntilUtcMidnight(now = new Date()): number {
+  const reset = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  return Math.max(1, Math.ceil((reset - now.getTime()) / 1_000));
+}
 
 async function releaseProviderCapacity(runId: string) {
   try {
@@ -132,9 +140,11 @@ export async function POST(request: Request) {
 
   let model: string;
   let tokenBudget: number;
+  let sharedDailyLimit: number;
   try {
     model = resolveAgentModel();
     tokenBudget = resolveRunTokenBudget();
+    sharedDailyLimit = resolveSharedDailyRunLimit();
     if (input.executionMode === "shared") {
       tokenBudget = Math.min(tokenBudget, SHARED_RUN_TOKEN_BUDGET);
     }
@@ -334,11 +344,68 @@ export async function POST(request: Request) {
     );
   }
 
-  if (input.executionMode === "shared") {
+  // Owners are exempt from both daily limits so the operator can verify
+  // production after the public has used the pool. Their Runs take no daily
+  // claim, so they do not shrink what everyone else gets either.
+  if (input.executionMode === "shared" && !isDeploymentOwner(userId)) {
+    // One shared Run per person per UTC day. Read under the provider lease taken
+    // above, which admits one shared Run at a time, so two starts by the same
+    // person cannot both see zero. Claims for Runs that never called the model
+    // are released, so a start that failed early does not use the person's Run.
+    const personal = await capacity
+      .selectFrom("agent_provider_daily_claims as claim")
+      .innerJoin("agent_runs as run", "run.id", "claim.run_id")
+      .select((eb) => eb.fn.countAll<number>().as("count"))
+      .where("claim.provider", "=", CLOUDFLARE_PROVIDER)
+      .where("claim.usage_day", "=", sql<string>`(pg_catalog.now() at time zone 'UTC')::date`)
+      .where("run.user_id", "=", userId)
+      .where("claim.run_id", "!=", run.id)
+      .executeTakeFirst()
+      .then((row) => Number(row?.count ?? 0), () => undefined);
+    if (personal === undefined) {
+      await releaseProviderCapacity(run.id);
+      await transitionRun({
+        runId: run.id,
+        userId,
+        current: "queued",
+        next: "failed",
+        values: {
+          error: "Shared daily capacity could not be verified.",
+          failure_kind: "workflow_error",
+          completed_at: new Date().toISOString(),
+        },
+      });
+      return NextResponse.json(
+        { error: "Shared Agent Run capacity could not be verified." },
+        { status: 503 },
+      );
+    }
+    if (personal >= SHARED_RUNS_PER_PERSON_PER_DAY) {
+      await releaseProviderCapacity(run.id);
+      await transitionRun({
+        runId: run.id,
+        userId,
+        current: "queued",
+        next: "failed",
+        values: {
+          error: "This account has already used today's shared Agent Run.",
+          failure_kind: "quota_exhausted",
+          completed_at: new Date().toISOString(),
+        },
+      });
+      return NextResponse.json(
+        { error: "You have used your shared Agent Run for today. Try again after the UTC reset or use your Cloudflare account." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(secondsUntilUtcMidnight()) },
+        },
+      );
+    }
+
     const daily = await rpc(capacity, "claim_agent_provider_daily_slot", {
       p_run_id: run.id,
       p_provider: CLOUDFLARE_PROVIDER,
-      p_max_daily: SHARED_DAILY_RUN_LIMIT,
+      p_max_daily: sharedDailyLimit,
     }).then((rows) => rows[0], () => undefined);
     if (!daily) {
       await releaseProviderCapacity(run.id);
@@ -366,13 +433,13 @@ export async function POST(request: Request) {
         current: "queued",
         next: "failed",
         values: {
-          error: "Today's shared Agent Run has already been claimed.",
+          error: "Today's shared Agent Run capacity has already been claimed.",
           failure_kind: "quota_exhausted",
           completed_at: new Date().toISOString(),
         },
       });
       return NextResponse.json(
-        { error: "Today's shared Agent Run is used. Try again after the UTC reset or use your Cloudflare account." },
+        { error: "Today's shared Agent Runs are used. Try again after the UTC reset or use your Cloudflare account." },
         {
           status: 429,
           headers: { "Retry-After": String(daily.retry_after_seconds) },

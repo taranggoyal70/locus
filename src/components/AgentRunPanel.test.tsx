@@ -52,7 +52,7 @@ describe("controlled-alpha Agent Run start", () => {
     );
 
     expect(html).toContain("Use the shared beta Run");
-    expect(html).toContain("One substantial Run per UTC day across Locus");
+    expect(html).toContain("One Run per person per UTC day while the shared pool lasts");
     expect(html).toContain("Use my Cloudflare account");
     expect(html).toContain("processed by Cloudflare Workers AI");
     expect(html).toContain("private, confidential, or personal data");

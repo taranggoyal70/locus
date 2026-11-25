@@ -279,6 +279,8 @@ Copy [`.env.example`](.env.example) to `.env.local`. The web app reports which o
 | `OPS_EXTERNAL_HEALTHCHECK` or `OPS_ALERT_WEBHOOK_URL` | One | Operational alerting: `github_actions` for the committed monitor, or an HTTPS webhook |
 | `ALPHA_ALLOWED_USER_IDS` | No | Clerk user IDs admitted to the comped `partner` Tier |
 | `LOCUS_SELF_SERVE`, `LOCUS_SELF_SERVE_MAX_ACCOUNTS` | No | `open` admits verified accounts to the `free` Tier, up to an optional ceiling |
+| `LOCUS_SHARED_DAILY_RUN_LIMIT` | No | Shared Runs the deployment admits per UTC day across all accounts; 1 to 100, default 1. Each account still gets at most one |
+| `LOCUS_OWNER_USER_IDS` | No | Clerk user IDs of the operators, whose shared Runs skip both daily limits |
 | `LOCUS_RUN_TOKEN_BUDGET` | No | Token budget for Runs on a user's own credentials; 10,000 to 240,000, default 180,000 |
 | `LOCUS_API_ALLOWED_ORIGINS` | No | Browser origins allowed to call the REST API with CORS |
 | `GITHUB_TOKEN` | No | Higher GitHub API limits when importing public repositories |
@@ -345,8 +347,8 @@ docs/adr/, CONTEXT.md       Architecture decisions and the domain language
 
 ## Status and limits
 
-- **Public beta.** Any verified account can localize a public repository. Agent Runs share one daily slot across
-  the beta unless you connect your own Cloudflare account. Non-public Repos, GitHub writes and billing are
+- **Public beta.** Any verified account can localize a public repository. Each account gets one shared Agent Run
+  per UTC day while the daily pool lasts, or can connect its own Cloudflare account. Non-public Repos, GitHub writes and billing are
   withheld in code.
 - **Task success is unmeasured.** The benchmarks above measure whether the right files are in the Slice. Whether
   an agent finishes more tasks, or spends fewer total tokens per accepted task, waits on the Release 1 study.

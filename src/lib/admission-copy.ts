@@ -24,8 +24,9 @@ import type { AdmissionReason } from "@/lib/admission";
 /** A short tag for a hero or a status strip. */
 export function admissionTag(selfServeOpen: boolean): string {
   // The open variant states the shared pool rather than the Tier allowance.
-  // Free execution capacity is one Run per UTC day across the whole deployment,
-  // so quoting the per-account number here would read as a guarantee it is not.
+  // Free execution capacity is at most one shared Run per person per UTC day,
+  // from a small deployment-wide pool, so quoting the per-account number here
+  // would read as a guarantee it is not.
   return selfServeOpen
     ? "Public early access · public Repos only · one shared Agent Run daily"
     : "Public early access · public Repos only · Agent Runs invite-gated";
@@ -54,7 +55,7 @@ export function admissionHeadline(selfServeOpen: boolean): string {
   // and swallowed the whole first screen. A headline states the boundary; the
   // paragraph under it explains the gate.
   return selfServeOpen
-    ? "Repo localization is open. Agent Runs use one shared daily slot."
+    ? "Repo localization is open. Agent Runs use a shared daily pool."
     : "Repo localization is open. Agent Runs are invite-gated.";
 }
 
@@ -85,8 +86,8 @@ export function signUpDescription(selfServeOpen: boolean): string {
   //
   // A Tier grants up to `runQuotaForTier("free").maxRunsPerRolling24Hours`
   // Runs in the rolling window, but
-  // free execution capacity is one shared Run per UTC day across the entire
-  // deployment. Printing the per-account number on a sign-up page would promise
+  // free execution capacity is at most one shared Run per person per UTC day,
+  // from a small pool for the entire deployment. Printing the per-account number on a sign-up page would promise
   // capacity that does not exist — the Tier is a ceiling on what one account may
   // hold, not an allocation it is guaranteed to get.
   return selfServeOpen
@@ -107,7 +108,7 @@ export function signInDescription(selfServeOpen: boolean): string {
 /** The support page's availability line. */
 export function supportAvailability(selfServeOpen: boolean): string {
   return selfServeOpen
-    ? "Locus is in public early access. Agent Runs use one shared daily slot, or capacity you "
+    ? "Locus is in public early access. Agent Runs use a shared daily pool, or capacity you "
       + "connect yourself."
     : "Locus is in public early access, with Agent Runs limited to invited design partners.";
 }

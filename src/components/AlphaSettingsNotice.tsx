@@ -50,10 +50,10 @@ export function AlphaSettingsNotice({ tier }: AlphaSettingsNoticeProps) {
       <p className="mt-3 max-w-2xl text-[15px] leading-6 text-ink-2">{body}</p>
       {tier !== "visitor" && (
         <p className="mt-4 max-w-2xl border-t border-line pt-4 text-[14px] leading-6 text-ink-2">
-          Free execution capacity is shared: the beta runs one Agent Run per UTC day across all
-          accounts. Your plan allowance above is what you may hold; the shared pool is what the
-          deployment can spend. Connect your own Cloudflare account to run when the shared Run is
-          already used.
+          Free execution capacity is shared: each account gets one Agent Run per UTC day from a
+          small pool for all accounts. Your plan allowance above is what you may hold; the shared
+          pool is what the deployment can spend. Connect your own Cloudflare account to run when
+          your shared Run or the pool is already used.
         </p>
       )}
     </section>
