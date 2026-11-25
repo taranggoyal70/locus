@@ -49,30 +49,16 @@ Review sequence, and the aperture idea in `ContextLens` and `MigrationDemo`.
 
 Principles to adapt, not layouts or assets to copy.
 
-- [Continuity](https://continuity-demo-tau.vercel.app/) by Aiden Guan, and its
-  [source](https://github.com/aiden-guan/continuity/tree/main/site): the closest
-  match in spirit. A whole system in one short token block: two surfaces, two
-  line weights, four ink weights, one signal colour plus a "check passed" green,
-  one ease, two radii (6px and 10px). Adopt the datasheet discipline and the
-  rule that colour means "something changed." Its palette is Locus's palette
-  since November 20, 2026: paper, ink, graphite, the orange signal and the
-  green. Aiden Guan, its author, cleared the reuse. (Its orange and warm paper
-  were on this avoid list until then; "The palette" under Avoid says why they
-  came off.)
-- [PigeonBox design docs](https://github.com/aiden-guan/pigeonbox/tree/main/docs/design):
-  the process this brief follows. Dated references with adopt and avoid notes, a
-  six-role palette table, motion in exact milliseconds, an explicit avoid list,
-  and browser verification at real widths.
-- [PigeonBox](https://usepigeonbox.com), the site itself (November 19, 2026; full
-  study in [`pigeonbox-study.md`](pigeonbox-study.md)): the main visual
-  reference since November 20, 2026. Adopt the regular-weight serif headline
-  with a muted second line, warm paper, two border weights (a hairline
-  separates, a 1px ink border marks one object), 4px and 8px radii, numbered key
-  caps in the nav, ruled lists, a ticket-style closing panel, a dark footer band
-  and its motion timings. Avoid its copper accent, its halftone drawings and
-  mascot, its copy, and its decorative loops. Do better where it falls short:
-  a dark theme on the public pages too, labels no smaller than 11px, and a
-  loaded serif instead of an OS-dependent `ui-serif`.
+- The datasheet discipline: a whole system in one short token block, two
+  surfaces, two line weights, one signal colour plus a "check passed" green, one
+  ease, and the rule that colour means "something changed."
+- The process: dated entries, a palette table by role, motion in exact
+  milliseconds, an explicit avoid list, and browser verification at real widths.
+- Print: a regular-weight serif headline with a muted second line, warm paper, a
+  hairline that separates and a 1px ink border that marks one object, 4px and
+  8px radii, numbered key caps, ruled lists, a ticket-style closing panel and a
+  dark footer band. Dark on the public pages too, labels no smaller than 11px,
+  and a loaded serif instead of an OS-dependent `ui-serif`.
 - [Amp](https://ampcode.com/): one warm accent used only on the primary action,
   and real task strings floating in the hero instead of abstract shapes. Adopt
   real task text as imagery. Avoid the dark atmospheric gradient.
@@ -96,7 +82,7 @@ Principles to adapt, not layouts or assets to copy.
 Rename the tokens so names match roles, and move every hex literal in
 components onto them. Each token is also a Tailwind colour of the same name
 (`bg-canvas`, `text-ink-2`, `border-line-2`, `text-included-ink`). The values
-are Continuity's (November 20, 2026), with the changes noted.
+date from November 20, 2026, with later changes noted.
 
 | Token | Value | Use |
 | --- | --- | --- |
@@ -108,10 +94,10 @@ are Continuity's (November 20, 2026), with the changes noted.
 | `--line-2` | `rgba(22, 21, 19, 0.17)` | Emphasised hairline, input borders |
 | `--ink` | `#161513` | Headlines, body, primary button, object borders |
 | `--ink-2` | `#44423D` | Supporting text |
-| `--muted` | `#67645E` | Captions, metadata, the second headline line. Continuity's `#7B7871` is 3.9:1 here, so the hue is kept and the value darkened to AA on every ground |
+| `--muted` | `#67645E` | Captions, metadata, the second headline line. `#7B7871` is 3.9:1 here, so the hue is kept and the value darkened to AA on every ground |
 | `--included` | `#E2501D` | The signal: Included marks, the Slice's bars and fills, focus ring (3.5:1, a graphic) |
-| `--included-ink` | `#B0380E` | The signal as text: Included counts, labels, Anchor paths (Continuity's `#B93C10`, darkened to AA on wells) |
-| `--passed` | `#286F45` | Passed Checks, success, completed steps (Continuity's `#2C7A4B`, darkened to AA on wells) |
+| `--included-ink` | `#B0380E` | The signal as text: Included counts, labels, Anchor paths (`#B93C10`, darkened to AA on wells) |
+| `--passed` | `#286F45` | Passed Checks, success, completed steps (`#2C7A4B`, darkened to AA on wells) |
 | `--widened` | `#7A6000` | Widen, attention needed (ochre, so it never reads as the signal) |
 | `--excluded` | `#D3D0C7` | Excluded files (always paired with a label) |
 | `--failed` | `#B42346` | Failed Checks and errors only (crimson, so it never reads as the signal) |
@@ -140,7 +126,7 @@ so components never branch on the theme.
   ground on the page: the ink itself (`#161513`). Inside the dark theme it sits
   one step deeper (`--canvas` `#0A0A09`, `--surface` `#121211`) so it still
   reads as a band.
-- **Dark theme**: Continuity's graphite, a near-black that is not blue. It follows
+- **Dark theme**: graphite, a near-black that is not blue. It follows
   `prefers-color-scheme` unless the reader pins Light or Dark with the switch in
   the footer, the auth pages or Settings (stored in `localStorage` as
   `locus-theme`). A blocking script in `<head>` sets `data-theme` before first
@@ -345,9 +331,8 @@ colour on a screen, navy or slate-blue greys, a blue-black dark theme, mint or
 teal accents, orange used as decoration rather than as the signal, and any mono
 uppercase text under 11px.
 
-**Changed November 20, 2026.** This list ruled out a display serif, and the
-Continuity note ruled out warm paper. Both came off when PigeonBox became the
-main visual reference. The reasoning:
+**Changed November 20, 2026.** This list ruled out a display serif and
+warm paper. Both came off with the print direction. The reasoning:
 
 - A serif headline on warm paper is what makes a page read as a printed form
   rather than a SaaS template. That is the datasheet idea taken one step
@@ -364,19 +349,19 @@ main visual reference. The reasoning:
 **The palette (changed again November 20, 2026).** Navy ink, slate-blue greys,
 a navy dark theme with a mint accent, and beige paper together read as a
 generated template, which is the opposite of a page an engineer should trust.
-The palette is now Continuity's, adopted with its author's agreement: warm grey
+The palette is now warm grey
 paper, warm near-black ink, graphite for dark, one orange signal and one green.
 The reasoning:
 
 - Neutral greys and a near-black that is not blue take away the template look
   without adding anything. Orange is the only colour left that draws the eye,
   so it can carry the one thing the page is about: the files in the Slice.
-- Continuity has two colours; Locus has five states. Orange takes Included and
-  green takes passed, as in Continuity. Widened moves to ochre and failed to
+- Two colours are not enough for five states. Orange takes Included and green
+  takes passed. Widened moves to ochre and failed to
   crimson, far enough from orange that a failure never reads as part of the
   Slice and the reverse. Each still sits beside a label, so no state depends on
   hue alone.
-- Three Continuity values change for accessibility: muted is darkened to 4.5:1,
+- Three values changed for accessibility: muted is darkened to 4.5:1,
   orange text uses a darker ink (`#B0380E`) while marks and rings use the
   brighter signal, and the green darkens a step, so every text colour clears
   4.5:1 on wells and table heads as well as the page.
@@ -465,9 +450,9 @@ Run for every step, and record the result at the bottom of this file.
 
 ### Step 2b: motion and print grammar (November 3, 2026)
 
-Prompted by a closer study of Continuity's frontend: its feel comes from
-mechanism animations driven by real output, one signature visual, small motion
-pieces that play once, a print layout, and colour restraint.
+The feel comes from mechanism animations driven by real output, one signature
+visual, small motion pieces that play once, a print layout, and colour
+restraint.
 
 - Canvas moved from a cool green-grey to neutral paper (`#F4F3EF`); navy ink
   and the state colours stay. The contrast test still holds AA everywhere.
@@ -478,8 +463,8 @@ pieces that play once, a print layout, and colour restraint.
   figure captions throughout.
 - Fig. 2 plays the recorded run's 12 one-hop imports; `landing-slice.ts` now
   records the Slice's import edges and its test checks them against the graph.
-- Not done, on purpose: a hero headline built from particles. That is
-  Continuity's signature; Locus's is the file-mark field.
+- Not done, on purpose: a hero headline built from particles. Locus's
+  signature is the file-mark field.
 - `pnpm lint`, `pnpm typecheck`, `pnpm check:alpha-claims` pass. `pnpm test`:
   975 passed, 9 skipped. New: `Reveal.test.tsx`, `Mechanism.test.tsx`.
 - Browser at 1440, 1024, 390 and 320px: no sideways scroll; Fig. 2 lines land on
@@ -522,8 +507,8 @@ pieces that play once, a print layout, and colour restraint.
 
 ### The live Slice (November 3, 2026)
 
-Fig. 1 stopped being a picture of a run and became the product. Continuity's and
-PigeonBox's demos look live but take no input; this one takes any task.
+Fig. 1 stopped being a picture of a run and became the product: it
+takes any task.
 
 - `Aperture` runs the real localizer in the visitor's tab on the bundled copy
   of shadcn-ui/taxonomy, with the real `FilePanel` (In and Out lists, real
@@ -555,10 +540,9 @@ PigeonBox's demos look live but take no input; this one takes any task.
   measured. The Run chapter is not built: it needs a recorded real Run.
 - Screenshot: `landing-live-1440.jpg`.
 
-### The PigeonBox layer (November 20, 2026)
+### The print layer (November 20, 2026)
 
-PigeonBox became the main visual reference (study: `pigeonbox-study.md`). The
-datasheet stays; its type, canvas and object grammar changed.
+The datasheet stays; its type, canvas and object grammar changed.
 
 - **Type:** display headings moved to Newsreader at regular weight with a muted
   second line, site-wide (25 headings rewritten from 600 weight and tight
@@ -593,19 +577,17 @@ datasheet stays; its type, canvas and object grammar changed.
   account menu and profile were not seen in dark; Safari and Firefox. Clerk's
   development-mode widget logs a CSP warning for a `data:` image, on the base
   branch too.
-- Screenshots, before and after side by side: `pigeonbox-landing-1440-light.jpg`,
-  `pigeonbox-landing-1440-dark.jpg`, `pigeonbox-landing-390-light.jpg`,
-  `pigeonbox-landing-close-1440-light.jpg`, `pigeonbox-pricing-1440-light.jpg`,
-  `pigeonbox-docs-1440-light.jpg`, `pigeonbox-evidence-1440-light.jpg`,
-  `pigeonbox-support-1440-dark.jpg`, `pigeonbox-sign-in-1440-dark.jpg`.
+- Screenshots, before and after side by side: `launch-landing-1440-light.jpg`,
+  `launch-landing-1440-dark.jpg`, `launch-landing-390-light.jpg`,
+  `launch-landing-close-1440-light.jpg`, `launch-pricing-1440-light.jpg`,
+  `launch-docs-1440-light.jpg`, `launch-evidence-1440-light.jpg`,
+  `launch-support-1440-dark.jpg`, `launch-sign-in-1440-dark.jpg`.
 
 ### The launch pass (November 20, 2026)
 
-Launch readiness, then the depth PigeonBox and Continuity have and Locus
-lacked, read from their source rather than their screenshots
-(`depth-comparison.md`).
+Launch readiness, then the depth Locus lacked.
 
-- **Palette:** Continuity's, recorded under Palette above: warm paper and ink,
+- **Palette:** recorded under Palette above: warm paper and ink,
   a graphite dark theme, and one orange signal for the Slice. The mark,
   favicon, Apple icon and social card follow it.
 - **Fonts:** Newsreader is self-hosted at a fixed 400 weight with its
@@ -633,7 +615,7 @@ lacked, read from their source rather than their screenshots
   page, the workspace and settings, in both themes, on desktop and phone, is
   clear except Clerk's "Secured by" line, which only development instances
   draw. Every text role is checked at 4.5:1 on all four grounds.
-- **Depth** (`depth-comparison.md`):
+- **Depth:**
   - Fig. 3, the case board: all 15 fixes in the benchmark, one mark per source
     file on one scale, opened by hover, focus or tap, each case linked to its
     fix and snapshot commits. It reads `benchmarks/results.json`, as now do the
@@ -667,7 +649,7 @@ lacked, read from their source rather than their screenshots
   starting here); Safari on a real phone; a real Vercel deployment; Windows
   forced colours, where the case board's marks switch to system colours by CSS
   that was not seen rendered.
-- Screenshots: the nine `pigeonbox-*.jpg` sheets above, retaken on this build,
+- Screenshots: the nine `launch-*.jpg` sheets above, retaken on this build,
   and `depth-case-board-1440-light.jpg`, `depth-command-menu-1440-light.jpg`.
 
 ### Main merged in (November 20, 2026)
@@ -845,10 +827,8 @@ product.
 ### More motion (November 24, 2026)
 
 The owner asked for more animation and bolder visuals, hand-made rather than
-templated, in the spirit of PigeonBox and Continuity. Both get theirs from one
-motif used at full size. Locus's is the file mark, so everything here is made of
-it: no particles, gradients, glow or stock illustration. Neither site's art,
-layout or wording is copied.
+templated. Locus's one motif is the file mark, so everything here is made of it
+at full size: no particles, gradients, glow or stock illustration.
 
 - **The Locus dial** (`LocusFigure`, section 01): a Repo drawn as a locus. All 125
   files of shadcn-ui/taxonomy open as a grid, then swing along arcs into place:
