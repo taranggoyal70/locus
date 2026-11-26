@@ -100,7 +100,7 @@ export function createInteractionScenes({ projectRoot, document, themes, serif, 
     const p = (place) => { const xy = point(place); return { x: n(map.x + xy.x * map.scale), y: n(map.y + xy.y * map.scale) }; };
     const targets = [files.indexOf("components/editor.tsx"), records[1].anchors[0], files.indexOf("app/(dashboard)/dashboard/billing/page.tsx"), -1];
     const neighbors = targets.map((target, i) => new Set(records[i].edges.filter(([a, b]) => a === target || b === target).flatMap(([a, b]) => [a, b])));
-    const shortPath = (file) => file.length <= 32 ? file : "…/" + file.split("/").slice(-2).join("/");
+    const shortPath = (file) => file.length <= 26 ? file : "…/" + file.split("/").slice(-2).join("/");
     let body = header(theme, mobile, "INSPECT THE SLICE / FOUR RECORDED TASKS", "One repo. Four tasks.", "Watch the same files move. Each task changes what belongs in the Slice.");
     records.forEach((entry, i) => {
       const y = taskY + i * row;
