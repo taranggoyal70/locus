@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 
 import { buildGraph, loadLocalRepo, locate } from "../bin/core.mjs";
 import { ensureClone, withSnapshot } from "./benchmark-heldout.mjs";
+import { createInteractionScenes } from "./readme-interactions.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const assetDir = path.join(projectRoot, "assets/readme");
@@ -207,6 +208,10 @@ class Timeline {
 
   draw(start, end, length) {
     return this.#add(`0%,${pct(start)}%{stroke-dashoffset:${length}}${pct(end)}%,100%{stroke-dashoffset:0}`);
+  }
+
+  keyframes(body) {
+    return this.#add(body);
   }
 
   css() {
@@ -765,91 +770,6 @@ function featureLocalize(run, themeName, mobile) {
   });
 }
 
-function featureGuard(themeName, mobile) {
-  const source = fs.readFileSync(path.join(projectRoot, "src/components/MigrationDemo.tsx"), "utf8");
-  const nodes = [...source.matchAll(/\[(\d+), (\d+), (true|false)\]/g)].map(([, x, y, admitted]) => ({ x: Number(x), y: Number(y), admitted: admitted === "true" }));
-  if (nodes.length !== 20 || nodes.filter((node) => node.admitted).length !== 7) throw new Error("The Guard illustration changed; review the README scene against MigrationDemo.tsx.");
-  return featureFrame(themeName, mobile, {
-    label: "LOCUS GUARD / ILLUSTRATED WORKFLOW", title: "Keep the agent in bounds.",
-    subtitle: "Admit the files. Refuse unrelated changes. Bind the evidence.",
-    leftLabel: "01 / THE ADMITTED SCOPE", rightLabel: "02 / THE CANDIDATE + RECEIPT",
-    caption: "Illustrated Guard sequence from the fictional Northstar demo. No agent, check or signature is executing in this SVG.",
-  }, (box, theme, timeline, small) => {
-    const scaleX = (box.width - 24) / 440;
-    return nodes.map((node, i) => {
-      const x = box.x + node.x * scaleX;
-      const y = box.y + 62 + node.y * .39;
-      const color = node.admitted ? theme.included : theme.excluded;
-      return `<rect class="${timeline.reveal(.5 + i * .04)}" x="${n(x)}" y="${n(y)}" width="19" height="19" rx="3" fill="${color}"/>`;
-    }).join("") + sceneText(box.x, box.y + 256, "7 admitted · excluded paths stay out", theme, { size: small ? 23 : 20, color: theme["included-ink"] });
-  }, (box, theme, timeline, small) => {
-    const size = small ? 22 : 19;
-    const steps = [
-      [2.7, "Unrelated deploy change", "outside scope"],
-      [4.1, "Frozen candidate", "diff + check evidence"],
-      [5.7, "Ed25519 receipt", "binds the exact bytes"],
-    ];
-    return steps.map(([at, label, detail], i) => {
-      const y = box.y + 86 + i * 70;
-      return `<g class="${timeline.reveal(at)}">` +
-        `<circle cx="${box.x + 10}" cy="${y - 7}" r="9" fill="none" stroke="${i === 0 ? theme.widened : theme.included}" stroke-width="2"/>` +
-        sceneText(box.x + 34, y, label, theme, { size, color: theme.ink }) +
-        sceneText(box.x + 34, y + 27, detail, theme, { size: small ? 19 : 16, color: i === 0 ? theme.widened : theme.muted }) + "</g>";
-    }).join("");
-  });
-}
-
-function featureEvidence(report, themeName, mobile) {
-  return featureFrame(themeName, mobile, {
-    label: "RELEASE 1 / COMMITTED STUDY STATE", title: "The evidence sets the limit.",
-    subtitle: "The claim stays locked until every required result is valid.",
-    leftLabel: "01 / THE FROZEN PROTOCOL", rightLabel: "02 / THE PUBLIC CLAIM GATE",
-    caption: "Replays the committed report. The motion reveals protocol checks; it never adds submissions or manufactures study outcomes.",
-  }, (box, theme, timeline, small) => {
-    const lines = [
-      `${report.study.caseCount} frozen tasks`,
-      `${report.study.repositoryCount} public repositories`,
-      `${report.study.armCount} context arms`,
-      report.study.blindedReview ? "Arm-blinded human review" : "Human review",
-    ];
-    return lines.map((line, i) => `<g class="${timeline.reveal(.6 + i * .7)}">` +
-      `<path d="M${box.x} ${box.y + 78 + i * 48}h16" stroke="${theme.included}" stroke-width="2"/>` +
-      sceneText(box.x + 30, box.y + 85 + i * 48, line, theme, { size: small ? 24 : 22, color: theme.ink }) + "</g>").join("");
-  }, (box, theme, timeline, small) => {
-    const locked = !report.gatePassed;
-    return `<g class="${timeline.reveal(3.5)}">` +
-      `<rect x="${box.x}" y="${box.y + 69}" width="108" height="29" rx="4" fill="${theme.canvas}" stroke="${theme.line}"/>` +
-      sceneText(box.x + 54, box.y + 90, locked ? "LOCKED" : "PASSED", theme, { size: 16, mono: true, anchor: "middle", color: locked ? theme.widened : theme["included-ink"] }) +
-      `<text x="${box.x}" y="${box.y + 176}" font-family="${SERIF}" font-size="76" fill="${theme.ink}">${report.progress.validResults}<tspan fill="${theme.muted}" font-size="38"> / ${report.progress.expectedResults}</tspan></text>` +
-      sceneText(box.x, box.y + 213, "valid reviewed arm results", theme, { size: small ? 24 : 21 }) +
-      `<rect x="${box.x}" y="${box.y + 237}" width="${box.width}" height="6" rx="3" fill="${theme["surface-2"]}"/>` +
-      (report.progress.validResults > 0 ? `<rect x="${box.x}" y="${box.y + 237}" width="${n(box.width * report.progress.validResults / report.progress.expectedResults)}" height="6" rx="3" fill="${theme.included}"/>` : "") + "</g>";
-  });
-}
-
-function featureApi(run, themeName, mobile) {
-  return featureFrame(themeName, mobile, {
-    label: "REST API / REQUEST + RESPONSE ILLUSTRATION", title: "A Slice your tools can use.",
-    subtitle: "One authenticated request. Structured context your tools can use.",
-    leftLabel: "01 / POST /api/v1/locate", rightLabel: "02 / RESPONSE EXCERPT",
-    caption: "Transport illustration using the recorded jotai localization. No HTTP request is sent; the response is a shortened illustration.",
-  }, (box, theme, timeline, small) => {
-    const size = small ? 20 : 17;
-    const request = `repo: ${run.repo}\ntask: ${run.task}`;
-    return sceneText(box.x, box.y + 82, "Authorization: Bearer $LOCUS_API_KEY", theme, { size: small ? 19 : 17, mono: true, color: theme.muted }) +
-      typedSceneLines(request, { ...box, y: box.y + 127 }, theme, timeline, small, { start: .6, end: 3.4 }) +
-      sceneText(box.x, box.y + 273, "Public Repo + task → localization", theme, { size, color: theme.muted });
-  }, (box, theme, timeline, small) => `<g class="${timeline.reveal(4)}">` +
-    sceneLines(box.x, box.y + 87, [
-      '"slice": [',
-      `  { "path": "${run.files.find((file) => file.fixed).path}" },`,
-      `  … ${run.sliceFiles} files in this recorded Slice`,
-      '],',
-      `"tokens": { "included": ${run.sliceTokens},`,
-      `            "total": ${run.repositoryTokens} }`,
-    ], theme, { size: small ? 20 : 19, leading: 31, mono: true, color: theme.ink }) + "</g>");
-}
-
 function architectureScene(themeName, mobile) {
   const node = (box, theme, timeline, small, labels, start) => labels.map(([title, detail], i) => {
     const y = box.y + 76 + i * 70;
@@ -990,11 +910,11 @@ function heldoutChartMobile(heldout, themeName) {
 // ---------------------------------------------------------------------------
 
 const THEMES = readThemes();
+const interactions = createInteractionScenes({ projectRoot, document, themes: THEMES, serif: SERIF, mono: MONO, Timeline, escapeXml, n, wrap });
 
 function render() {
   const run = JSON.parse(fs.readFileSync(heroRunPath, "utf8"));
   const heldout = JSON.parse(fs.readFileSync(heldoutPath, "utf8"));
-  const report = JSON.parse(fs.readFileSync(path.join(projectRoot, "benchmarks/release1/public-report.json"), "utf8"));
   const outputs = {};
   for (const themeName of Object.keys(THEMES)) {
     outputs[`hero-${themeName}.svg`] = heroDesktop(run, themeName);
@@ -1006,9 +926,9 @@ function render() {
     for (const mobile of [false, true]) {
       const suffix = `${mobile ? "mobile-" : ""}${themeName}.svg`;
       outputs[`feature-localize-${suffix}`] = featureLocalize(run, themeName, mobile);
-      outputs[`feature-guard-${suffix}`] = featureGuard(themeName, mobile);
-      outputs[`feature-evidence-${suffix}`] = featureEvidence(report, themeName, mobile);
-      outputs[`feature-api-${suffix}`] = featureApi(run, themeName, mobile);
+      outputs[`feature-inspect-${suffix}`] = interactions.inspect(themeName, mobile);
+      outputs[`feature-cases-${suffix}`] = interactions.evidence(heldout, themeName, mobile);
+      outputs[`feature-handoff-${suffix}`] = interactions.handoff(themeName, mobile);
       outputs[`architecture-${suffix}`] = architectureScene(themeName, mobile);
     }
   }

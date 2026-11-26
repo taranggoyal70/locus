@@ -39,8 +39,7 @@ TypeScript, Python, and imports inside Vue, Svelte and Astro components.
 
 ## What you get
 
-Each feature below has its own animated sequence. Replays repeat with a readable result hold, so they still
-move when you reach them while scrolling. Reduced-motion preferences show the complete result instead.
+Follow the workflow: find the code, inspect why it belongs, check the evidence, and hand the context to your agent.
 
 ### 01 · Localize a public repository
 
@@ -53,41 +52,40 @@ move when you reach them while scrolling. Reduced-motion preferences show the co
 
 A task becomes Anchors, dependencies and a focused Slice. This replays the recorded jotai result used in the hero. [Open the workspace](https://locus-five-iota.vercel.app/workspace).
 
-### 02 · Contain an agent to the Slice
+### 02 · Inspect why a file belongs
 
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-guard-mobile-dark.svg">
-  <source media="(max-width: 600px)" srcset="assets/readme/feature-guard-mobile-light.svg">
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-guard-dark.svg">
-  <img src="assets/readme/feature-guard-light.svg" width="100%" alt="Looping illustration of Locus Guard: seven admitted nodes light up, an unrelated deploy change is marked outside scope, and the frozen candidate and Ed25519 receipt appear. This is the fictional Northstar workflow, not a running agent.">
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-inspect-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/feature-inspect-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-inspect-dark.svg">
+  <img src="assets/readme/feature-inspect-light.svg" width="100%" alt="Replay of the actual website file-map interaction. The taxonomy repository moves from a grid into import-distance rings. A cursor hovers components/editor.tsx, its connected imports stay highlighted, and the Anchor explanation appears. All positions and links use the website’s recorded localization data.">
 </picture>
 
-The admitted scope becomes the boundary; unrelated changes are refused and the candidate and its evidence are signed. This illustrates the fictional Northstar demo and performs no execution. [Explore Guard](https://locus-five-iota.vercel.app/demo).
+Every square is a file. Hovering one reveals its path, its role and the imports connected to it. This replays the website’s recorded taxonomy example: **14 of 125 files**, with `components/editor.tsx` as an Anchor. [Explore the interactive map](https://locus-five-iota.vercel.app/#try).
 
-### 03 · Hold the claim until the evidence exists
+### 03 · Explore the evidence, case by case
 
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-evidence-mobile-dark.svg">
-  <source media="(max-width: 600px)" srcset="assets/readme/feature-evidence-mobile-light.svg">
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-evidence-dark.svg">
-  <img src="assets/readme/feature-evidence-light.svg" width="100%" alt="Animated reveal of the committed Release 1 protocol and claim gate. Twenty tasks, five repositories, two context arms, and blinded review appear. The counter stays at zero of forty valid results and the claim remains locked. No results are fabricated.">
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-cases-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/feature-cases-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-cases-dark.svg">
+  <img src="assets/readme/feature-cases-light.svg" width="100%" alt="Replay of the website’s benchmark explorer. The cursor selects the jotai repository and a real fix row. The case inspector opens the task, 17 of 130 admitted files, 72 percent estimated context reduction, and the maintainer’s changed file src/vanilla/internals.ts inside the Slice.">
 </picture>
 
-The protocol is frozen before the study runs. Missing or invalid evidence keeps the claim locked. The animation reads the committed report and never animates the counter into a result the study has not earned. [Inspect the evidence](https://locus-five-iota.vercel.app/evidence/release-1).
+Pick a repository and inspect a real fix. The case view shows the original task, the admitted files and whether the maintainer’s changed file was found. **All 60 selected fixes across six third-party repositories are reported**, including widened cases. These are localization results; agent completion is a separate study. [Inspect every case](https://locus-five-iota.vercel.app/evidence/release-1#cases).
 
-### 04 · Call it from code
+### 04 · Hand the context to your agent
 
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-api-mobile-dark.svg">
-  <source media="(max-width: 600px)" srcset="assets/readme/feature-api-mobile-light.svg">
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-api-dark.svg">
-  <img src="assets/readme/feature-api-light.svg" width="100%" alt="Looping API transport illustration: an authenticated POST request is typed, then a shortened response reveals the recorded Slice and token counts. No HTTP request is sent by this SVG.">
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-handoff-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/feature-handoff-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-handoff-dark.svg">
+  <img src="assets/readme/feature-handoff-light.svg" width="100%" alt="Replay of the website’s context handoff. A cursor selects the Claude format, clicks Copy context, receives a copied-files confirmation and pastes an abbreviated context block into a coding-agent view. The recorded taxonomy result has 14 files and 6,448 estimated tokens. No agent request is sent.">
 </picture>
 
-An authenticated `POST /api/v1/locate` returns the Slice and packed context for your tools. This illustrates the request/response contract using recorded localization data. [Read the API reference](https://locus-five-iota.vercel.app/docs).
+Choose Generic, Claude or Cursor, copy the Slice, and bring the brief into your own coding tool. The replay uses the website's taxonomy example: **14 files and 6,448 estimated tokens**. [Try the handoff](https://locus-five-iota.vercel.app/#try). For programmatic use, see the [API and MCP interfaces](#use-it-from-an-agent).
 
-[Visual sources and replay behavior](assets/readme/README.md). The localization replay, Guard illustration,
-committed study state and API illustration are labeled separately.
+[Visual sources and replay behavior](assets/readme/README.md). The cursor movements replay the product’s interactions; the committed data supplies the files and results.
 
 ## Review the change
 

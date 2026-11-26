@@ -14,9 +14,9 @@ in the primary README.
 | `review-{dark,light}.svg`, `review-mobile-{dark,light}.svg` | [`ProposalReview`](../../src/components/ProposalReview.tsx), [`ProposalPatch`](../../src/components/ProposalPatch.tsx), [`run-review`](../../src/lib/agent/run-review.ts), and [`proposal-patch`](../../src/lib/agent/proposal-patch.ts) | A workflow illustration, not a recorded Run or a screenshot. The two goal labels are illustrative. There is no invented task, check result, model output or performance number. The animation explains a frozen proposal, an explicit human decision and a portable patch. Download is also available before deciding; a rejected proposal has none. |
 | `heldout-{dark,light}.svg`, `heldout-mobile-{dark,light}.svg` | [`benchmarks/heldout/results.json`](../../benchmarks/heldout/results.json) | Localized-case recall against a random Slice of the same size, with the task as written and with the scope word removed. |
 | `feature-localize-{dark,light}.svg`, mobile variants | [`hero-run.json`](hero-run.json) | Typed task and staged file-list reveal using the recorded jotai Slice. Every displayed file and count comes from that record. |
-| `feature-guard-{dark,light}.svg`, mobile variants | [`MigrationDemo.tsx`](../../src/components/MigrationDemo.tsx), [Guard pilot](../../docs/operations/locus-guard-pilot.md) | Illustration of the fictional Northstar demo. The node positions and seven admitted nodes are read from the component; scope refusal, frozen-candidate evidence and receipt stages are explanatory, not executing Checks or creating signatures. |
-| `feature-evidence-{dark,light}.svg`, mobile variants | [`public-report.json`](../../benchmarks/release1/public-report.json) | Animated protocol reveal with the actual committed gate and result count. Animation never creates submissions, fills an empty progress bar or unlocks an incomplete study. |
-| `feature-api-{dark,light}.svg`, mobile variants | [REST response contract](../../src/app/api/v1/locate/route.ts), [`hero-run.json`](hero-run.json) | Transport illustration with recorded localization data. The response is an abbreviated illustration, not a captured HTTP exchange. No request is sent and no real key is included. |
+| `feature-inspect-{dark,light}.svg`, mobile variants | [`LocusFigure.tsx`](../../src/components/LocusFigure.tsx), [`locus-layout.ts`](../../src/lib/locus-layout.ts), [`landing-orbits.json`](../../src/lib/landing-orbits.json), bundled [taxonomy Repo](../../public/repos/taxonomy.json) | Replays grid-to-orbit placement, cursor hover, connected-edge highlighting and file explanation. The generator uses the website's recorded file indices, hops and edges, and checks the bundled localizer result against the record before drawing. Its hover target is the actual editor Anchor. |
+| `feature-cases-{dark,light}.svg`, mobile variants | [`CaseBoard.tsx`](../../src/components/CaseBoard.tsx), [`benchmarks/heldout/results.json`](../../benchmarks/heldout/results.json) | Replays selecting the jotai tab and the real bc273fd fix row, with its admitted count, reduction and maintainer-changed file. The unfinished paired agent study remains documented in the technical results section; its zero counter is no longer the feature illustration. |
+| `feature-handoff-{dark,light}.svg`, mobile variants | [`ProductDemo.tsx`](../../src/components/ProductDemo.tsx), [`demo-script.ts`](../../src/lib/demo-script.ts), bundled [taxonomy Repo](../../public/repos/taxonomy.json) | Replays format selection, copy feedback and the abbreviated pasted context in an agent view. The 14 files and 6,448 estimated tokens come from the same bundled localizer run as the website. Cursor movements are presentation; no clipboard or agent request is performed by the SVG. |
 | `architecture-{dark,light}.svg`, mobile variants | [`localizer.ts`](../../src/lib/localizer.ts), [hosted Workflow](../../src/workflows/agent-run.ts), [patch endpoint](../../src/app/api/agent/runs/%5Bid%5D/patch/route.ts), [`guard-runner.mjs`](../../bin/guard-runner.mjs) | Animated architecture map. The hosted review/patch path and local Guard/receipt path remain separate. |
 | `landing.jpg`, `guard-demo.jpg`, `evidence.jpg`, `api-docs.jpg` | `pnpm build` and `pnpm start` at revision `61de47c` | Headless Chromium at 1440 px wide in the light theme on 2026-11-22. `guard-demo.jpg` shows the demo panel at its last step and `api-docs.jpg` the Authentication and `POST /api/v1/locate` sections. The demo is an illustrative story about a fictional billing system. |
 
@@ -28,7 +28,7 @@ pnpm readme:assets --check     # fail if any committed SVG differs; CI runs this
 node scripts/readme-assets.mjs --capture   # re-record hero-run.json (clones jotai)
 ```
 
-The generator has no dependencies and makes no network calls unless `--capture` is passed. `--capture` refuses
+The generator uses only Node built-ins and the local `bin/core.mjs` engine, and makes no network calls unless `--capture` is passed. The interaction replays are rendered by [`readme-interactions.mjs`](../../scripts/readme-interactions.mjs). `--capture` refuses
 to write if the re-run disagrees with the committed benchmark result.
 
 ## Animation
@@ -40,7 +40,8 @@ each file; a renderer that ignores it falls back to the system serif.
 All eight visual families have separate desktop/mobile and light/dark layouts. Each repeats on a 12-second
 clock with a readable result hold. Repetition keeps a feature discoverable when a reader scrolls to it after
 the page has loaded; these are replays, not new operations or new results. The four static feature screenshots
-and static architecture diagram have been replaced in the primary README. The benchmark bars reveal their
+and static architecture diagram have been replaced in the primary README. The feature replays now follow the
+actual website’s file inspection, case selection and context handoff rather than generic protocol diagrams. The benchmark bars reveal their
 recorded values on the same cycle without inventing intermediate measurements.
 
 Every element's resting style is its completed state. `prefers-reduced-motion` disables every animation,
