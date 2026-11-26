@@ -18,9 +18,9 @@
 //
 // SVG-as-image runs no script and loads nothing from outside the file, so the
 // serif is embedded as a data URI and everything else is system fonts and CSS
-// keyframes. The hero plays once and rests on its final frame, as Fig. 1 closes
-// once: every element's resting style is that frame, so a reader with reduced
-// motion, or a renderer without animation, sees the result.
+// keyframes. Each 12-second cycle replays the story and holds its result. Every
+// element's resting style is the completed frame, so reduced motion and static
+// renderers preserve the readable result without travel or repeated reveals.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -28,6 +28,7 @@ import { fileURLToPath } from "node:url";
 
 import { buildGraph, loadLocalRepo, locate } from "../bin/core.mjs";
 import { ensureClone, withSnapshot } from "./benchmark-heldout.mjs";
+import { createInteractionScenes } from "./readme-interactions.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const assetDir = path.join(projectRoot, "assets/readme");
@@ -46,7 +47,7 @@ const SERIF_FILE = path.join(projectRoot, "src/assets/fonts/Newsreader-Display.t
 // The site's --ease-out.
 const EASE_OUT = "cubic-bezier(.22,1,.36,1)";
 
-const DURATION = 6.4; // seconds; the hero plays once
+const DURATION = 12; // seconds; replay, then hold the readable result
 
 // ---------------------------------------------------------------------------
 // The site's palette
@@ -160,7 +161,7 @@ function kiloTokens(value) {
 /**
  * Collects one keyframe rule per distinct timing, so the animation is driven by
  * keyframe percentages and never by animation-delay: a delay would leave the
- * element in its resting (final) style until it fired. Everything plays once.
+ * element in its resting (final) style until it fired. All rules share one loop.
  */
 class Timeline {
   constructor() {
@@ -205,8 +206,16 @@ class Timeline {
     );
   }
 
+  draw(start, end, length) {
+    return this.#add(`0%,${pct(start)}%{stroke-dashoffset:${length}}${pct(end)}%,100%{stroke-dashoffset:0}`);
+  }
+
+  keyframes(body) {
+    return this.#add(body);
+  }
+
   css() {
-    return [...this.rules].map(([body, name]) => `@keyframes ${name}{${body}}.${name}{animation:${name} ${DURATION}s linear both}`).join("");
+    return [...this.rules].map(([body, name]) => `@keyframes ${name}{${body}}.${name}{animation:${name} ${DURATION}s linear infinite both}`).join("");
   }
 }
 
@@ -481,7 +490,7 @@ function terminal(run, timeline, theme, { x, y, width, lineHeight, fontSize, cha
     parts.push(
       `<text x="${textX}" y="${lineY}" textLength="${n(length)}" lengthAdjust="spacingAndGlyphs" xml:space="preserve">${prompt}</text>`,
       // Resting position is fully slid, so a static render shows the whole line.
-      `<g style="transform:translateX(${n(length + charWidth)}px)" class="${slide}"><rect x="${textX - 2}" y="${n(lineY - fontSize)}" width="${width - padding}" height="${lineHeight}" fill="${band.canvas}"/><rect class="${timeline.during(elapsed, elapsed + duration + 0.15)}" x="${textX - 2}" y="${n(lineY - fontSize + 2)}" width="${charWidth}" height="${fontSize + 2}" fill="${band.ink}" opacity="0"/></g>`,
+      `<g transform="translate(${n(length + charWidth)} 0)" class="${slide}"><rect x="${textX - 2}" y="${n(lineY - fontSize)}" width="${width - padding}" height="${lineHeight}" fill="${band.canvas}"/><rect class="${timeline.during(elapsed, elapsed + duration + 0.15)}" x="${textX - 2}" y="${n(lineY - fontSize + 2)}" width="${charWidth}" height="${fontSize + 2}" fill="${band.ink}" opacity="0"/></g>`,
     );
     elapsed += duration;
     lineY = n(lineY + lineHeight);
@@ -513,7 +522,7 @@ const BEATS = { typeStart: 0.5, typeEnd: 3.1, liftAt: 3.4, outputAt: 4.5, fixAt:
 function heroText(run) {
   const fixed = run.files.find((file) => file.fixed);
   return {
-    title: "Locus: show your coding agent only the code it needs",
+    title: "Locus: find the code, keep the control",
     desc: `Animated replay of a real held-out benchmark run. Task: "${run.task}" on ${run.repo} at ${run.snapshot}. ` +
       `Each of the ${run.repositoryFiles} marks is a source file, in a column per top-level folder. Locus anchors ${run.files.filter((file) => file.role === "anchor").length} files, ` +
       `adds their dependency closure, and excludes the rest: ${run.sliceFiles} of ${run.repositoryFiles} files, ` +
@@ -541,8 +550,9 @@ function heroDesktop(run, themeName) {
   const height = n(cardBottom + 76);
   const body = [
     wordmark(pad, pad, 40, theme),
-    heading(pad - 3, 206, ["Show your agent only", "the code it needs."], { size: 56, leading: 58, theme }),
-    `<g font-size="20" fill="${theme["ink-2"]}"><text x="${pad}" y="${n(termY - 60)}">Task-scoped context and review evidence</text><text x="${pad}" y="${n(termY - 32)}">for coding agents.</text></g>`,
+    `<text x="${pad}" y="140" font-family="${MONO}" font-size="13" letter-spacing="2" fill="${theme["included-ink"]}">01 / FIND THE WORK</text>`,
+    heading(pad - 3, 206, ["Find the code.", "Keep the control."], { size: 62, leading: 64, theme }),
+    `<g font-size="20" fill="${theme["ink-2"]}"><text x="${pad}" y="${n(termY - 60)}">A task, a focused Slice, and the evidence</text><text x="${pad}" y="${n(termY - 32)}">to see why each file belongs.</text></g>`,
     term.svg,
     card.svg,
     `<text x="${pad}" y="${n(height - 34)}" font-size="15" fill="${theme.muted}">Recorded from a real run. Token counts are Locus's chars/4 estimate.</text>`,
@@ -568,8 +578,9 @@ function heroMobile(run, themeName) {
   const height = n(termY + term.height + 92);
   const body = [
     wordmark(pad, 44, 56, theme),
-    heading(pad - 4, 204, ["Show your agent only", "the code it needs."], { size: 66, leading: 68, theme }),
-    `<text x="${pad}" y="330" font-size="26" fill="${theme["ink-2"]}">Task-scoped context for coding agents.</text>`,
+    `<text x="${pad}" y="128" font-family="${MONO}" font-size="18" letter-spacing="2" fill="${theme["included-ink"]}">01 / FIND THE WORK</text>`,
+    heading(pad - 4, 204, ["Find the code.", "Keep the control."], { size: 74, leading: 76, theme }),
+    `<text x="${pad}" y="340" font-size="25" fill="${theme["ink-2"]}">A focused Slice. Every file explained.</text>`,
     card.svg,
     term.svg,
     `<text x="${pad}" y="${n(height - 42)}" font-size="20" fill="${theme.muted}">Recorded from a real run. Tokens are chars/4 estimates.</text>`,
@@ -578,8 +589,217 @@ function heroMobile(run, themeName) {
 }
 
 // ---------------------------------------------------------------------------
+// Hosted proposal review: a workflow illustration, never a fabricated Run.
+// Copy and availability come from ProposalReview, ProposalPatch and run-review.
+// It deliberately carries no invented task, passing-check status or metric.
+// ---------------------------------------------------------------------------
+
+function reviewStory(themeName, mobile = false) {
+  const theme = THEMES[themeName];
+  const width = mobile ? 720 : 1280;
+  const height = mobile ? 1340 : 650;
+  const pad = mobile ? 40 : 48;
+  const cardWidth = mobile ? 640 : (width - pad * 2 - 48) / 3;
+  const cardHeight = mobile ? 276 : 270;
+  const cards = [0, 1, 2].map((index) => ({
+    x: mobile ? pad : n(pad + index * (cardWidth + 24)),
+    y: mobile ? 310 + index * 322 : 264,
+  }));
+  const labelSize = mobile ? 19 : 13;
+  const textSize = mobile ? 23 : 17;
+  const titleSize = mobile ? 40 : 30;
+  const inset = mobile ? 32 : 26;
+  const tx = (x, y, content, size = textSize, fill = theme["ink-2"], extra = "") =>
+    `<text x="${n(x)}" y="${n(y)}" font-size="${size}" fill="${fill}" ${extra}>${escapeXml(content)}</text>`;
+  const css = [
+    "@keyframes review-enter{0%,6%{opacity:0;transform:translateY(14px)}15%,100%{opacity:1;transform:translateY(0)}}",
+    "@keyframes review-rail{0%,16%{stroke-dashoffset:1400}72%,100%{stroke-dashoffset:0}}",
+    "@keyframes review-tick{0%,38%{stroke-dashoffset:40}47%,100%{stroke-dashoffset:0}}",
+    "@keyframes review-tick-next{0%,48%{stroke-dashoffset:40}57%,100%{stroke-dashoffset:0}}",
+    "@keyframes review-decision{0%,57%{opacity:.18}66%,100%{opacity:1}}",
+    "@keyframes review-patch{0%,65%{opacity:0;transform:translateY(18px)}77%,100%{opacity:1;transform:translateY(0)}}",
+    ".review-enter{animation:review-enter 12s cubic-bezier(.22,1,.36,1) infinite both}",
+    ".review-rail{stroke-dasharray:1400;animation:review-rail 12s cubic-bezier(.22,1,.36,1) infinite both}",
+    ".review-tick,.review-tick-next{stroke-dasharray:40;stroke-dashoffset:0;animation:review-tick 12s linear infinite both}",
+    ".review-tick-next{animation-name:review-tick-next}",
+    ".review-decision{animation:review-decision 12s linear infinite both}",
+    ".review-patch{animation:review-patch 12s cubic-bezier(.22,1,.36,1) infinite both}",
+  ].join("");
+  const path = mobile
+    ? `M${pad + 20} 284V${cards[2].y - 16}`
+    : `M${cards[0].x + 20} 234H${n(cards[2].x + cardWidth - 20)}`;
+  const rail = `<path d="${path}" fill="none" stroke="${theme.line}" stroke-width="2"/>` +
+    `<path class="review-rail" d="${path}" fill="none" stroke="${theme.included}" stroke-width="2"/>`;
+  const panel = (index, label, title, content) => {
+    const { x, y } = cards[index];
+    return `<g>${mobile ? "" : `<circle cx="${n(x + 20)}" cy="234" r="4" fill="${theme.included}"/>`}` +
+      `<rect x="${x}" y="${y}" width="${n(cardWidth)}" height="${cardHeight}" rx="6" fill="${theme.surface}" stroke="${theme["line-2"]}"/>` +
+      tx(x + inset, y + 34, label, labelSize, theme.muted, `font-family="${MONO}" letter-spacing="1.3"`) +
+      tx(x + inset - 1, y + 79, title, titleSize, theme.ink, `font-family="${SERIF}" letter-spacing="-.6"`) +
+      content(x + inset, y, cardWidth - inset * 2) + "</g>";
+  };
+  const proposal = panel(0, "01 / THE PROPOSAL", "Read the change.", (x, y, inner) =>
+    `<g class="review-enter">` +
+    `<rect x="${x}" y="${y + 106}" width="${n(inner)}" height="88" rx="4" fill="${theme.canvas}" stroke="${theme.line}"/>` +
+    tx(x + 15, y + 136, "−", 23, theme.muted, `font-family="${MONO}"`) +
+    `<path d="M${x + 43} ${y + 130}h${n(inner * .64)}" stroke="${theme.excluded}" stroke-width="8" stroke-linecap="round"/>` +
+    tx(x + 15, y + 174, "+", 23, theme["included-ink"], `font-family="${MONO}"`) +
+    `<path d="M${x + 43} ${y + 168}h${n(inner * .54)}" stroke="${theme.included}" stroke-width="8" stroke-linecap="round"/>` +
+    tx(x, y + 226, "Diff + recorded check output", textSize) +
+    tx(x, y + 251, "Bound to one proposal hash", mobile ? 19 : 14, theme.muted) + "</g>",
+  );
+  const review = panel(1, "02 / YOUR REVIEW", "Did it do the task?", (x, y, inner) => {
+    const tick = (top, label, cls) =>
+      `<rect x="${x}" y="${top - 19}" width="22" height="22" rx="3" fill="${theme.canvas}" stroke="${theme["line-2"]}"/>` +
+      `<path class="${cls}" d="M${x + 5} ${top - 8}l5 5 8-11" fill="none" stroke="${theme["included-ink"]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` +
+      tx(x + 35, top, label);
+    return tick(y + 126, "Your first goal", "review-tick") + tick(y + 168, "Your next goal", "review-tick-next") +
+      `<g class="review-decision"><rect x="${x}" y="${y + 195}" width="${n(inner)}" height="43" rx="4" fill="${theme.included}"/>` +
+      tx(x + inner / 2, y + 223, "Approve change", textSize, theme.canvas, 'text-anchor="middle" font-weight="600"') + "</g>";
+  });
+  const patch = panel(2, "03 / YOUR COPY", "Take it with you.", (x, y, inner) =>
+    `<g class="review-patch">` +
+    `<path d="M${x + 2} ${y + 108}h32l12 12v49H${x + 2}zM${x + 34} ${y + 108}v13h12" fill="${theme.canvas}" stroke="${theme["line-2"]}" stroke-width="1.5"/>` +
+    `<path d="M${x + 13} ${y + 139}h23m-23 10h16" fill="none" stroke="${theme.included}" stroke-width="3"/>` +
+    tx(x + 60, y + 132, "locus-<run>.patch", mobile ? 24 : 16, theme.ink, `font-family="${MONO}"`) +
+    tx(x + 60, y + 158, "The frozen change", mobile ? 21 : 15, theme.muted) +
+    `<rect x="${x}" y="${y + 195}" width="${n(inner)}" height="43" rx="4" fill="${theme.canvas}" stroke="${theme["line-2"]}"/>` +
+    tx(x + inner / 2, y + 223, "Download change  ↓", textSize, theme.ink, 'text-anchor="middle" font-weight="600"') + "</g>",
+  );
+  const body = [
+    tx(pad, mobile ? 55 : 48, "02 / KEEP THE DECISION", mobile ? 19 : 13, theme["included-ink"], `font-family="${MONO}" letter-spacing="2"`),
+    heading(pad - 2, mobile ? 146 : 116, ["The agent proposes.", "You decide."], { size: mobile ? 70 : 56, leading: mobile ? 76 : 60, theme }),
+    mobile ? "" : tx(width - pad, 160, "Nothing is sent to GitHub.", 18, theme["ink-2"], 'text-anchor="end"'),
+    rail, proposal, review, patch,
+    tx(pad, mobile ? 1282 : 594, "Workflow illustration. No agent is executing.", mobile ? 22 : 16, theme.muted),
+    tx(pad, mobile ? 1314 : 620, "You can also download a proposal to test before deciding.", mobile ? 20 : 15, theme.muted),
+  ].join("\n");
+  return document({
+    width, height, theme, css, body,
+    title: "Locus: the agent proposes, you decide",
+    desc: "Illustration of the shipped hosted proposal workflow, not a recorded Run. Read the code diff and check output, review every stated goal, then approve or reject the exact proposal. Its owner can download a git-apply patch while reviewing it or after acceptance. Nothing is sent to GitHub. A rejected proposal has no download.",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Feature walkthroughs. Real localization/study data and explicitly illustrated
+// Guard/API transitions remain separate; presentation never invents a result.
+// ---------------------------------------------------------------------------
+
+function sceneText(x, y, value, theme, { size = 18, mono = false, color = theme["ink-2"], anchor = "start" } = {}) {
+  return `<text x="${n(x)}" y="${n(y)}" font-size="${size}" fill="${color}" text-anchor="${anchor}"${mono ? ` font-family="${MONO}"` : ""}>${escapeXml(value)}</text>`;
+}
+
+function sceneLines(x, y, lines, theme, options = {}) {
+  const leading = options.leading ?? (options.size ?? 18) * 1.5;
+  return lines.map((line, i) => sceneText(x, y + i * leading, line, theme, options)).join("");
+}
+
+function typedSceneLines(text, box, theme, timeline, mobile, { start = .5, end = 3 } = {}) {
+  const size = mobile ? 23 : 19;
+  const charWidth = size * .6;
+  const lines = wrap(text, Math.floor(box.width / charWidth));
+  const total = lines.reduce((sum, line) => sum + line.length, 0);
+  let elapsed = start;
+  return lines.map((line, i) => {
+    const duration = (end - start) * line.length / total;
+    const length = n(line.length * charWidth);
+    const cls = timeline.type(elapsed, elapsed + duration, length + charWidth, line.length + 1);
+    const y = n(box.y + i * size * 1.45);
+    elapsed += duration;
+    return sceneText(box.x, y, line, theme, { size, mono: true, color: theme.ink }) +
+      `<g transform="translate(${n(length + charWidth)} 0)" class="${cls}"><rect x="${box.x - 1}" y="${y - size}" width="${box.width + 10}" height="${n(size * 1.5)}" fill="${theme.surface}"/></g>`;
+  }).join("");
+}
+
+function featureFrame(themeName, mobile, spec, leftContent, rightContent) {
+  const theme = THEMES[themeName];
+  const timeline = new Timeline();
+  const width = mobile ? 720 : 1280;
+  const height = mobile ? 1010 : 570;
+  const pad = mobile ? 40 : 48;
+  const boxes = mobile
+    ? [{ x: pad, y: 234, width: 640, height: 300 }, { x: pad, y: 582, width: 640, height: 300 }]
+    : [{ x: pad, y: 198, width: 480, height: 286 }, { x: 560, y: 198, width: 672, height: 286 }];
+  const panel = (box, label, content, id) => {
+    const inset = mobile ? 28 : 24;
+    const inner = { x: box.x + inset, y: box.y, width: box.width - inset * 2, height: box.height };
+    return `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="6" fill="${theme.surface}" stroke="${theme["line-2"]}"/>` +
+      sceneText(inner.x, box.y + 29, label, theme, { size: mobile ? 18 : 13, mono: true, color: theme.muted }) +
+      `<path d="M${box.x} ${box.y + 46}h${box.width}" stroke="${theme.line}"/>` +
+      `<clipPath id="${id}"><rect x="${box.x + 1}" y="${box.y + 48}" width="${box.width - 2}" height="${box.height - 49}"/></clipPath>` +
+      `<g clip-path="url(#${id})">${content(inner, theme, timeline, mobile)}</g>`;
+  };
+  const connector = mobile ? `M${pad + 20} 544v28` : "M536 342h16";
+  const body = [
+    sceneText(pad, mobile ? 54 : 47, spec.label, theme, { size: mobile ? 18 : 13, mono: true, color: theme["included-ink"] }),
+    `<text x="${pad - 2}" y="${mobile ? 124 : 115}" font-family="${SERIF}" font-size="${mobile ? 54 : 56}" letter-spacing="-1.1" fill="${theme.ink}">${escapeXml(spec.title)}</text>`,
+    sceneLines(pad, mobile ? 171 : 156, wrap(spec.subtitle, mobile ? 47 : 110), theme, { size: mobile ? 23 : 19, leading: mobile ? 32 : 28, color: theme.muted }),
+    `<path class="${timeline.draw(2.5, 4, 40)}" d="${connector}" fill="none" stroke="${theme.included}" stroke-width="2.5" stroke-dasharray="40"/>`,
+    panel(boxes[0], spec.leftLabel, leftContent, "feature-left"),
+    panel(boxes[1], spec.rightLabel, rightContent, "feature-right"),
+    sceneLines(pad, mobile ? 941 : 527, wrap(spec.caption, mobile ? 53 : 155), theme, { size: mobile ? 20 : 15, leading: 28, color: theme.muted }),
+  ].join("\n");
+  return document({ width, height, title: spec.title, desc: spec.desc ?? `${spec.subtitle} ${spec.caption}`, theme, body, css: timeline.css() });
+}
+
+function featureLocalize(run, themeName, mobile) {
+  const selected = run.files.filter((file) => file.role !== "excluded");
+  const visible = [...selected.filter((file) => file.fixed), ...selected.filter((file) => !file.fixed)].slice(0, 4);
+  return featureFrame(themeName, mobile, {
+    label: "WORKSPACE / RECORDED LOCALIZATION", title: "Every file has a reason.",
+    subtitle: "The task becomes Anchors, dependencies and an inspectable Slice.",
+    leftLabel: "01 / REPO + TASK", rightLabel: "02 / THE FOCUSED SLICE",
+    caption: `Replay of ${run.repo}@${run.commit}. ${run.sliceFiles}/${run.repositoryFiles} source files; ${run.repositoryFiles - run.sliceFiles} excluded. Token estimates are chars/4.`,
+  }, (box, theme, timeline, small) => [
+    sceneText(box.x, box.y + 85, run.repo, theme, { size: small ? 29 : 26, mono: true, color: theme.ink }),
+    sceneText(box.x, box.y + 126, "Task", theme, { size: small ? 20 : 15, color: theme.muted }),
+    typedSceneLines(run.task, { ...box, y: box.y + 163 }, theme, timeline, small),
+  ].join(""), (box, theme, timeline, small) => {
+    const size = small ? 22 : 21;
+    return visible.map((file, index) => {
+      const y = box.y + 87 + index * 39;
+      const short = file.path.split("/").slice(-2).join("/");
+      return `<g class="${timeline.reveal(3.2 + index * .45)}">` +
+        `<rect x="${box.x}" y="${y - 21}" width="5" height="27" rx="2" fill="${theme.included}"/>` +
+        sceneText(box.x + 19, y, short, theme, { size, mono: true, color: theme.ink }) +
+        (small ? "" : sceneText(box.x + box.width, y, file.role === "anchor" ? "Anchor" : "Closure", theme, { size: 15, anchor: "end", color: theme.muted })) + "</g>";
+    }).join("") + `<g class="${timeline.reveal(5.3)}">` +
+      `<path d="M${box.x} ${box.y + 231}h${box.width}" stroke="${theme.line}"/>` +
+      sceneText(box.x, box.y + 266, `${run.sliceFiles} included · ${run.repositoryFiles - run.sliceFiles} excluded`, theme, { size: small ? 24 : 21, color: theme["included-ink"] }) + "</g>";
+  });
+}
+
+function architectureScene(themeName, mobile) {
+  const node = (box, theme, timeline, small, labels, start) => labels.map(([title, detail], i) => {
+    const y = box.y + 76 + i * 70;
+    return `<g class="${timeline.reveal(start + i * .65)}">` +
+      `<circle cx="${box.x + 8}" cy="${y - 6}" r="6" fill="${theme.included}"/>` +
+      (i < labels.length - 1 ? `<path d="M${box.x + 8} ${y + 6}v39" stroke="${theme.line}" stroke-width="1.5"/>` : "") +
+      sceneText(box.x + 30, y, title, theme, { size: small ? 24 : 23, color: theme.ink }) +
+      sceneText(box.x + 30, y + 28, detail, theme, { size: small ? 19 : 16, color: theme.muted }) + "</g>";
+  }).join("");
+  return featureFrame(themeName, mobile, {
+    label: "ARCHITECTURE / ANIMATED MAP", title: "One localizer. Two paths.",
+    subtitle: "Deterministic context selection feeds hosted Runs or your own agent.",
+    leftLabel: "01 / SHARED LOCALIZER", rightLabel: "02 / CHOOSE HOW TO USE IT",
+    caption: "Architecture illustration. Hosted review/patches and CLI Guard receipts are separate paths; the motion executes neither.",
+  }, (box, theme, timeline, small) => node(box, theme, timeline, small, [
+    ["Task + Repo + evidence", "The input stays inspectable"],
+    ["Graph → Anchors → Closure", "No model calls during localization"],
+    ["Slice or conservative Widen", "Every included and excluded path recorded"],
+  ], .5), (box, theme, timeline, small) => node(box, theme, timeline, small, [
+    ["Hosted: Workflow + Sandbox", "Frozen candidate → checks → human review"],
+    ["Take the proposal as a patch", "Apply it yourself; no GitHub push"],
+    ["CLI: your agent + Locus Guard", "Scope gate → signed receipt + human review"],
+  ], 3.3));
+}
+
+// ---------------------------------------------------------------------------
 // Held-out chart
 // ---------------------------------------------------------------------------
+
+const CHART_MOTION = "@keyframes chart-grow{0%,8%{transform:scaleX(0)}30%,100%{transform:scaleX(1)}}.chart-grow{transform-box:fill-box;transform-origin:left center;animation:chart-grow 12s cubic-bezier(.22,1,.36,1) infinite both}";
 
 function chartGroups(summary) {
   return [
@@ -629,14 +849,14 @@ function heldoutChart(heldout, themeName) {
       const barY = y + index * 36;
       const length = Math.max(4, value * barWidth);
       parts.push(`<rect x="${barX}" y="${barY}" width="${barWidth}" height="24" rx="4" fill="${theme["surface-2"]}"/>`);
-      parts.push(`<rect x="${barX}" y="${barY}" width="${n(length)}" height="24" rx="4" fill="${color}"/>`);
+      parts.push(`<rect class="chart-grow" x="${barX}" y="${barY}" width="${n(length)}" height="24" rx="4" fill="${color}"/>`);
       parts.push(`<text x="${barX + barWidth + 18}" y="${barY + 18}" font-size="17" font-weight="600" fill="${theme.ink}">${percent(value)}</text>`);
       parts.push(`<text x="${barX + barWidth + 98}" y="${barY + 18}" font-size="16" fill="${theme.muted}">${name}</text>`);
     });
     y += 116;
   }
   parts.push(`<text x="64" y="${height - 42}" font-size="15" fill="${theme.muted}">Source: <tspan font-family="${MONO}">benchmarks/heldout/results.json</tspan> (${escapeXml(summary.protocolVersion)}). ${escapeXml(text.note)}</text>`);
-  return document({ width, height, title: "Held-out fix-file recall", desc: text.desc, theme, body: parts.join("\n"), css: "" });
+  return document({ width, height, title: "Held-out fix-file recall", desc: text.desc, theme, body: parts.join("\n"), css: CHART_MOTION });
 }
 
 /** The same chart stacked for a phone: each bar takes the full width, its name and value above it. */
@@ -672,7 +892,7 @@ function heldoutChartMobile(heldout, themeName) {
       parts.push(`<text x="${width - pad}" y="${y}" text-anchor="end" font-size="24" font-weight="600" fill="${theme.ink}">${percent(value)}</text>`);
       y += 14;
       parts.push(`<rect x="${pad}" y="${y}" width="${inner}" height="28" rx="4" fill="${theme["surface-2"]}"/>`);
-      parts.push(`<rect x="${pad}" y="${y}" width="${n(Math.max(4, value * inner))}" height="28" rx="4" fill="${color}"/>`);
+      parts.push(`<rect class="chart-grow" x="${pad}" y="${y}" width="${n(Math.max(4, value * inner))}" height="28" rx="4" fill="${color}"/>`);
       y += 28;
     }
     y += 40;
@@ -684,12 +904,13 @@ function heldoutChartMobile(heldout, themeName) {
     parts.push(`<text x="${pad}" y="${y}" font-size="20" fill="${theme.muted}">${escapeXml(line)}</text>`);
   }
   const height = y + 56;
-  return document({ width, height, title: "Held-out fix-file recall", desc: text.desc, theme, body: parts.join("\n"), css: "" });
+  return document({ width, height, title: "Held-out fix-file recall", desc: text.desc, theme, body: parts.join("\n"), css: CHART_MOTION });
 }
 
 // ---------------------------------------------------------------------------
 
 const THEMES = readThemes();
+const interactions = createInteractionScenes({ projectRoot, document, themes: THEMES, serif: SERIF, mono: MONO, Timeline, escapeXml, n, wrap });
 
 function render() {
   const run = JSON.parse(fs.readFileSync(heroRunPath, "utf8"));
@@ -698,8 +919,18 @@ function render() {
   for (const themeName of Object.keys(THEMES)) {
     outputs[`hero-${themeName}.svg`] = heroDesktop(run, themeName);
     outputs[`hero-mobile-${themeName}.svg`] = heroMobile(run, themeName);
+    outputs[`review-${themeName}.svg`] = reviewStory(themeName);
+    outputs[`review-mobile-${themeName}.svg`] = reviewStory(themeName, true);
     outputs[`heldout-${themeName}.svg`] = heldoutChart(heldout, themeName);
     outputs[`heldout-mobile-${themeName}.svg`] = heldoutChartMobile(heldout, themeName);
+    for (const mobile of [false, true]) {
+      const suffix = `${mobile ? "mobile-" : ""}${themeName}.svg`;
+      outputs[`feature-localize-${suffix}`] = featureLocalize(run, themeName, mobile);
+      outputs[`feature-inspect-${suffix}`] = interactions.inspect(themeName, mobile);
+      outputs[`feature-cases-${suffix}`] = interactions.evidence(heldout, themeName, mobile);
+      outputs[`feature-handoff-${suffix}`] = interactions.handoff(themeName, mobile);
+      outputs[`architecture-${suffix}`] = architectureScene(themeName, mobile);
+    }
   }
   return outputs;
 }
