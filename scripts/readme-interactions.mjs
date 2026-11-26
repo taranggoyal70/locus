@@ -11,30 +11,50 @@ export function createInteractionScenes({ projectRoot, document, themes, serif, 
   const repo = JSON.parse(read("public/repos/taxonomy.json"));
   const records = JSON.parse(read("src/lib/landing-orbits.json"));
   const files = Object.keys(repo.files).sort();
-  const run = locate(records[0].task, repo, buildGraph(repo));
-  const recorded = records[0];
-  if (run.slice.length !== recorded.slice.length || run.sliceTokens !== recorded.sliceTokens || run.totalTokens !== recorded.totalTokens) {
-    throw new Error("README interaction data disagrees with the website's recorded localization.");
-  }
+  const graph = buildGraph(repo);
+  const runs = records.map((entry) => locate(entry.task, repo, graph));
+  const run = runs[0]; // The separate context-handoff replay uses the editor task.
+  records.forEach((entry, i) => {
+    const result = runs[i];
+    const expectedFiles = entry.widened ? files.length : entry.slice.length;
+    if (result.widened !== entry.widened || result.slice.length !== expectedFiles || result.sliceTokens !== entry.sliceTokens || result.totalTokens !== entry.totalTokens) {
+      throw new Error(`README interaction data disagrees with website task ${i + 1}.`);
+    }
+    if (!entry.widened) {
+      const expected = entry.slice.map(([index]) => files[index]).sort();
+      if (JSON.stringify(result.slice.map((file) => file.path).sort()) !== JSON.stringify(expected)) {
+        throw new Error(`README orbit file identities disagree with website task ${i + 1}.`);
+      }
+    }
+  });
   const sourceFiles = JSON.parse(read("src/lib/landing-slice.ts").match(/files:\s*(\[[\s\S]*?\n  \]),/)[1].replace(/,\s*]/g, "]"));
   if (JSON.stringify(sourceFiles) !== JSON.stringify(files)) throw new Error("Orbit file ordering changed; inspect the interaction replay.");
   const layoutSource = read("src/lib/locus-layout.ts");
   const rings = JSON.parse(layoutSource.match(/export const RINGS = (\[[^\]]+\])/)[1]);
   const rim = Number(layoutSource.match(/export const RIM = (\d+)/)[1]);
-  const angleFor = (file) => -90 + file * 360 / files.length;
-  const places = files.map((_, i) => ({ angle: angleFor(i), radius: rim, hop: -1 }));
-  for (const hop of [...new Set(recorded.slice.map(([, hop]) => hop))]) {
-    const group = recorded.slice.filter(([, h]) => h === hop).map(([i]) => i).sort((a, b) => a - b);
-    const step = 360 / group.length;
-    const offset = group.reduce((sum, i, k) => sum + angleFor(i) - k * step, 0) / group.length;
-    group.forEach((i, k) => { places[i] = { angle: offset + k * step, radius: hop === 0 && group.length === 1 ? 0 : rings[Math.min(hop, rings.length - 1)], hop }; });
-  }
-  const point = ({ angle, radius }) => ({ x: radius * Math.cos(angle * Math.PI / 180), y: radius * Math.sin(angle * Math.PI / 180) });
-  const grid = files.map((_, i) => ({ x: ((i % 13) - 6) * 40, y: (Math.floor(i / 13) - (Math.ceil(files.length / 13) - 1) / 2) * 40 }))
-    .map((p) => ({ ...p, angle: Math.atan2(p.y, p.x) * 180 / Math.PI }))
-    .map((p) => ({ ...p, angle: p.angle < -90 ? p.angle + 360 : p.angle })).sort((a, b) => a.angle - b.angle);
-  const hover = files.indexOf("components/editor.tsx");
-  const connected = new Set(recorded.edges.filter(([a, b]) => a === hover || b === hover).flatMap(([a, b]) => [a, b]));
+  const angleFor = (file) => n(-90 + file * 360 / files.length);
+  const point = ({ angle, radius }) => ({ x: n(radius * Math.cos(angle * Math.PI / 180)), y: n(radius * Math.sin(angle * Math.PI / 180)) });
+  // Same golden-angle disc and ring assignment as locus-layout.ts. Widen keeps
+  // all 125 files; the recorded empty slice is not a zero-file result.
+  const disc = files.map((_, i) => {
+    const angle = i * Math.PI * (3 - Math.sqrt(5));
+    const radius = 25.5 * Math.sqrt(i + .4);
+    return { x: radius * Math.cos(angle), y: radius * Math.sin(angle) };
+  }).map(({ x, y }) => ({ angle: Math.atan2(y, x) * 180 / Math.PI, radius: Math.hypot(x, y) }))
+    .map((p) => ({ ...p, angle: p.angle < -90 ? p.angle + 360 : p.angle }))
+    .sort((a, b) => a.angle - b.angle)
+    .map((p, i) => ({ angle: n(p.angle + 360 * Math.round((angleFor(i) - p.angle) / 360)), radius: n(p.radius), hop: 0 }));
+  const layouts = records.map((entry) => {
+    if (entry.widened) return disc;
+    const places = files.map((_, i) => ({ angle: angleFor(i), radius: rim, hop: -1 }));
+    for (const hop of [...new Set(entry.slice.map(([, hop]) => hop))]) {
+      const group = entry.slice.filter(([, h]) => h === hop).map(([i]) => i).sort((a, b) => a - b);
+      const step = 360 / group.length;
+      const offset = group.reduce((sum, i, k) => sum + angleFor(i) - k * step, 0) / group.length;
+      group.forEach((i, k) => { places[i] = { angle: n(offset + k * step), radius: hop === 0 && group.length === 1 ? 0 : rings[Math.min(hop, rings.length - 1)], hop }; });
+    }
+    return places;
+  });
   const number = (value) => value.toLocaleString("en-US");
   const text = (x, y, value, theme, size = 18, options = {}) => `<text x="${n(x)}" y="${n(y)}" font-size="${size}" fill="${options.color ?? theme["ink-2"]}"${options.mono ? ` font-family="${mono}"` : ""}${options.anchor ? ` text-anchor="${options.anchor}"` : ""}>${escapeXml(value)}</text>`;
   const lines = (x, y, values, theme, size = 18, options = {}) => values.map((value, i) => text(x, y + i * (options.leading ?? size * 1.5), value, theme, size, options)).join("");
@@ -54,44 +74,90 @@ export function createInteractionScenes({ projectRoot, document, themes, serif, 
   const finish = (theme, mobile, clock, body, heading, desc, height, extraCss = "") => document({ width: mobile ? 720 : 1280, height, title: heading, desc, theme, body, css: clock.css() + extraCss });
 
   function inspect(themeName, mobile) {
-    const theme = themes[themeName]; const clock = new Timeline();
-    const height = mobile ? 1260 : 710;
-    const pad = mobile ? 40 : 48; const map = mobile ? { x: 360, y: 898, scale: .67 } : { x: 929, y: 411, scale: .66 };
-    const taskY = mobile ? 260 : 215; const taskWidth = mobile ? 640 : 493; const row = mobile ? 56 : 54;
-    let body = header(theme, mobile, "INSPECT THE SLICE / WEBSITE INTERACTION REPLAY", "See why a file belongs.", "Hover a file. Its role and connected imports come into focus.");
+    const theme = themes[themeName]; const clock = new Timeline(24);
+    const height = mobile ? 1320 : 760;
+    const pad = mobile ? 40 : 48;
+    const map = mobile ? { x: 360, y: 982, scale: .77 } : { x: 935, y: 417, scale: .72 };
+    const taskY = mobile ? 260 : 227; const taskWidth = mobile ? 640 : 493; const row = mobile ? 60 : 58;
+    const pct = (seconds) => n(seconds / 24 * 100);
+    // Each task has a six-second chapter. Text changes during the map morph;
+    // edges and hover appear only after the new positions have settled.
+    const window = (index, start = .4, end = 5.3) => {
+      const a = index * 6 + start; const b = index * 6 + end;
+      return clock.keyframes(`0%{opacity:0}${pct(a)}%{opacity:0}${pct(a + .25)}%,${pct(b)}%{opacity:1}${pct(b + .25)}%,100%{opacity:0}`);
+    };
+    const state = (index) => index === 0
+      ? clock.keyframes("0%,22.08%{opacity:1}23.12%,98.33%{opacity:0}99.37%,100%{opacity:1}")
+      : window(index, -.4, 5.3);
+    const sample = (values) => {
+      let keyframes = `0%{${values[0]}}`;
+      for (let i = 0; i < 4; i++) {
+        keyframes += `${pct(i * 6 + 5.3)}%{${values[i]};animation-timing-function:cubic-bezier(.22,1,.36,1)}`;
+        keyframes += `${pct(i === 3 ? 24 : (i + 1) * 6 + .4)}%{${values[(i + 1) % 4]}}`;
+      }
+      return clock.keyframes(keyframes);
+    };
+    const p = (place) => { const xy = point(place); return { x: n(map.x + xy.x * map.scale), y: n(map.y + xy.y * map.scale) }; };
+    const targets = [files.indexOf("components/editor.tsx"), records[1].anchors[0], files.indexOf("app/(dashboard)/dashboard/billing/page.tsx"), -1];
+    const neighbors = targets.map((target, i) => new Set(records[i].edges.filter(([a, b]) => a === target || b === target).flatMap(([a, b]) => [a, b])));
+    const shortPath = (file) => file.length <= 32 ? file : "…/" + file.split("/").slice(-2).join("/");
+    let body = header(theme, mobile, "INSPECT THE SLICE / FOUR RECORDED TASKS", "One repo. Four tasks.", "Watch the same files move. Each task changes what belongs in the Slice.");
     records.forEach((entry, i) => {
       const y = taskY + i * row;
-      body += `<path d="M${pad} ${y - 24}h${taskWidth}" stroke="${i === 0 ? theme.ink : theme.line}"/>`;
-      body += text(pad, y, `0${i + 1}`, theme, mobile ? 17 : 13, { mono: true, color: theme.muted });
-      body += text(pad + 33, y, entry.task, theme, mobile ? 22 : 18, { color: i === 0 ? theme.ink : theme.muted });
-      body += text(pad + taskWidth, y + (mobile ? 24 : 23), entry.widened ? "Widened" : `${entry.slice.length} / ${files.length}`, theme, mobile ? 18 : 14, { mono: true, anchor: "end", color: i === 0 ? theme["included-ink"] : theme.muted });
+      body += `<path d="M${pad} ${y - 25}h${taskWidth}" stroke="${theme.line}"/>`;
+      body += `<g opacity="${i === 0 ? 1 : 0}" class="${state(i)}"><path d="M${pad} ${y - 25}h${taskWidth}" stroke="${theme.included}" stroke-width="2"/><rect x="${pad - 12}" y="${y - 12}" width="3" height="15" rx="1" fill="${theme.included}"/></g>`;
+      body += text(pad, y, `0${i + 1}`, theme, mobile ? 19 : 14, { mono: true, color: theme.muted });
+      body += text(pad + 36, y, entry.task, theme, mobile ? 24 : 19);
+      body += text(pad + taskWidth, y + 25, entry.widened ? "125 / 125 · Widened" : `${entry.slice.length} / ${files.length}`, theme, mobile ? 19 : 15, { mono: true, anchor: "end", color: theme.muted });
     });
-    const metricY = taskY + records.length * row + 44;
-    body += title(pad, metricY, String(run.slice.length), theme, mobile ? 56 : 62) + title(pad + 223, metricY, number(run.sliceTokens), theme, mobile ? 56 : 62);
-    body += text(pad, metricY + 29, "IN THE SLICE", theme, mobile ? 16 : 13, { mono: true, color: theme.muted }) + text(pad + 223, metricY + 29, `TOKENS OF ${number(run.totalTokens)}`, theme, mobile ? 16 : 13, { mono: true, color: theme.muted });
-    body += `<g class="${clock.reveal(4.2)}">` + text(pad, metricY + 79, files[hover], theme, mobile ? 23 : 21, { mono: true, color: theme.ink }) + text(pad, metricY + 109, "Anchor · connected imports highlighted", theme, mobile ? 20 : 17, { color: theme["included-ink"] }) + "</g>";
-    const p = (place) => { const xy = point(place); return { x: n(map.x + xy.x * map.scale), y: n(map.y + xy.y * map.scale) }; };
-    for (const radius of [...rings, rim, 365]) body += `<circle cx="${map.x}" cy="${map.y}" r="${n(radius * map.scale)}" fill="none" stroke="${theme["line-2"]}"${radius === 365 ? ' stroke-dasharray="1 7"' : radius === rim ? "" : ' stroke-dasharray="2 5"'}/>`;
-    body += `<path d="M${map.x - 7} ${map.y}h14m-7-7v14" stroke="${theme.muted}"/>`;
-    for (const [from, to] of recorded.edges) {
-      const a = p(places[from]); const b = p(places[to]); const touched = from === hover || to === hover;
-      body += `<path class="${clock.reveal(touched ? 4 : 2.5)}" d="M${a.x} ${a.y}L${b.x} ${b.y}" stroke="${touched ? theme.included : theme.line}" stroke-width="${touched ? 1.4 : .7}" fill="none"/>`;
-    }
-    files.forEach((file, i) => {
-      const at = p(places[i]); const origin = { x: n(map.x + grid[i].x * map.scale), y: n(map.y + grid[i].y * map.scale) };
-      const turn = n(places[i].angle - 90 * Math.round(places[i].angle / 90));
-      const movement = clock.keyframes(`0%,7%{transform:translate(${origin.x}px,${origin.y}px) rotate(0deg);animation-timing-function:cubic-bezier(.22,1,.36,1)}25%,100%{transform:translate(${at.x}px,${at.y}px) rotate(${turn}deg)}`);
-      const color = places[i].hop < 0 ? theme.excluded : theme.included;
-      const dim = i === hover || connected.has(i) || places[i].hop < 0 ? "" : clock.keyframes("0%,31%{opacity:1}39%,100%{opacity:.22}");
-      body += `<g transform="translate(${at.x} ${at.y}) rotate(${turn})" class="${movement}"><g class="${dim}"${dim ? ' opacity=".22"' : ""}><rect x="-4" y="-4" width="8" height="8" rx="1" fill="${color}"/>${places[i].hop === 0 ? `<rect x="-1.5" y="-1.5" width="3" height="3" fill="${theme.canvas}"/>` : ""}</g></g>`;
+    const metricY = taskY + records.length * row + 42;
+    records.forEach((entry, i) => {
+      const widened = entry.widened; const target = targets[i];
+      body += `<g data-orbit-case="${i + 1}" data-orbit-count="${runs[i].slice.length}" opacity="${i === 0 ? 1 : 0}" class="${state(i)}">`;
+      body += title(pad, metricY, String(runs[i].slice.length), theme, 64) + title(pad + 230, metricY, number(entry.sliceTokens), theme, 64);
+      body += text(pad, metricY + 30, widened ? "WHOLE REPO KEPT" : "IN THE SLICE", theme, mobile ? 18 : 14, { mono: true, color: theme.muted }) + text(pad + 230, metricY + 30, `TOKENS OF ${number(entry.totalTokens)}`, theme, mobile ? 18 : 14, { mono: true, color: theme.muted });
+      body += text(pad, metricY + 83, widened ? "No confident task match." : shortPath(files[target]), theme, mobile ? 25 : 22, { mono: !widened, color: theme.ink });
+      body += lines(pad, metricY + 116, widened ? ["Widened · nothing silently left out.", "Refine the task to get a focused Slice."] : ["Anchor · matches this task.", "Hover keeps its connected imports bright."], theme, mobile ? 23 : 19, { color: theme["included-ink"], leading: 31 });
+      body += "</g>";
     });
-    const hoverPoint = p(places[hover]);
-    body += `<circle class="${clock.reveal(4)}" cx="${hoverPoint.x}" cy="${hoverPoint.y}" r="14" fill="none" stroke="${theme["included-ink"]}" stroke-width="1.5"/>`;
-    const tooltip = { x: mobile ? 295 : 830, y: mobile ? 989 : 565 };
-    body += `<g class="${clock.reveal(4.2)}">${rect(tooltip.x, tooltip.y, mobile ? 330 : 355, 59, theme)}` + text(tooltip.x + 14, tooltip.y + 25, "components/editor.tsx", theme, mobile ? 21 : 19, { mono: true, color: theme.ink }) + text(tooltip.x + 14, tooltip.y + 46, "Anchor · matches this task", theme, mobile ? 17 : 15, { color: theme["included-ink"] }) + "</g>";
-    body += cursor(clock, [[0, pad + 180, taskY + 110], [12, pad + 190, taskY], [24, pad + 190, taskY], [35, hoverPoint.x + 5, hoverPoint.y + 6], [70, hoverPoint.x + 5, hoverPoint.y + 6], [100, hoverPoint.x + 5, hoverPoint.y + 6]], theme, .4, 8.4);
-    body += text(pad, height - 34, "Recorded shadcn-ui/taxonomy example · hover replay", theme, mobile ? 20 : 15, { color: theme.muted });
-    return finish(theme, mobile, clock, body, "See why a file belongs", "Replays the website's orbital file map and hover. Same bundled taxonomy Repo, recorded hop placement and import edges. The highlighted editor file is a task Anchor; connected imports remain bright while other included files dim.", height);
+    const ringOpacity = sample(["opacity:1", "opacity:1", "opacity:1", "opacity:.24"]);
+    body += `<g class="${ringOpacity}">`;
+    for (const radius of [...rings, rim]) body += `<circle cx="${map.x}" cy="${map.y}" r="${n(radius * map.scale)}" fill="none" stroke="${theme["line-2"]}" stroke-dasharray="2 5"/>`;
+    body += `</g><circle cx="${map.x}" cy="${map.y}" r="${n(365 * map.scale)}" fill="none" stroke="${theme["line-2"]}" stroke-dasharray="1 7"/>`;
+    records.forEach((entry, i) => {
+      body += `<g opacity="${i === 0 ? 1 : 0}" class="${window(i, 1.6, 5.1)}">`;
+      for (const [from, to] of entry.edges) {
+        const a = p(layouts[i][from]); const b = p(layouts[i][to]); const touched = from === targets[i] || to === targets[i];
+        body += `<path d="M${a.x} ${a.y}L${b.x} ${b.y}" stroke="${touched ? theme.included : theme.line}" stroke-width="${touched ? 1.5 : .7}" fill="none"/>`;
+      }
+      body += "</g>";
+    });
+    files.forEach((file, fileIndex) => {
+      const transforms = layouts.map((places, i) => {
+        const at = p(places[fileIndex]);
+        const turn = records[i].widened ? 0 : n(places[fileIndex].angle - 90 * Math.round(places[fileIndex].angle / 90));
+        return `transform:translate(${at.x}px,${at.y}px) rotate(${turn}deg)`;
+      });
+      const colors = layouts.map((places) => `fill:${places[fileIndex].hop < 0 ? theme.excluded : theme.included}`);
+      const holes = layouts.map((places, i) => `opacity:${places[fileIndex].hop === 0 && !records[i].widened ? 1 : 0}`);
+      // Dimming happens only during the hover hold, then clears before a morph.
+      const dimming = records.map((entry, i) => {
+        const dim = !entry.widened && layouts[i][fileIndex].hop >= 0 && fileIndex !== targets[i] && !neighbors[i].has(fileIndex);
+        return `${pct(i * 6)}%,${pct(i * 6 + 1.6)}%{opacity:1}${pct(i * 6 + 2)}%,${pct(i * 6 + 4.8)}%{opacity:${dim ? .28 : 1}}${pct(i * 6 + 5.2)}%,${pct(i * 6 + 6)}%{opacity:1}`;
+      }).join("");
+      const at = p(layouts[0][fileIndex]);
+      const turn = n(layouts[0][fileIndex].angle - 90 * Math.round(layouts[0][fileIndex].angle / 90));
+      body += `<g data-orbit-file="${fileIndex}" transform="translate(${at.x} ${at.y}) rotate(${turn})" class="${sample(transforms)}"><g class="${clock.keyframes(dimming)}"><rect x="-4.5" y="-4.5" width="9" height="9" rx="1" fill="${layouts[0][fileIndex].hop < 0 ? theme.excluded : theme.included}" class="${sample(colors)}"/><rect x="-1.7" y="-1.7" width="3.4" height="3.4" fill="${theme.canvas}" opacity="${layouts[0][fileIndex].hop === 0 ? 1 : 0}" class="${sample(holes)}"/></g></g>`;
+    });
+    records.forEach((entry, i) => {
+      if (entry.widened) return;
+      const at = p(layouts[i][targets[i]]);
+      const tooltip = { x: mobile ? 280 : 805, y: mobile ? 1132 : 620, width: mobile ? 390 : 413 };
+      body += `<g opacity="${i === 0 ? 1 : 0}" class="${window(i, 2, 5)}"><circle cx="${at.x}" cy="${at.y}" r="14" fill="none" stroke="${theme["included-ink"]}" stroke-width="1.5"/>${rect(tooltip.x, tooltip.y, tooltip.width, 65, theme)}` + text(tooltip.x + 15, tooltip.y + 27, shortPath(files[targets[i]]), theme, mobile ? 23 : 20, { mono: true, color: theme.ink }) + text(tooltip.x + 15, tooltip.y + 51, "Anchor · connected imports", theme, mobile ? 20 : 17, { color: theme["included-ink"] }) + "</g>";
+      body += cursor(clock, [[0, pad + 160, taskY + i * row], [pct(i * 6 + .4), pad + 190, taskY + i * row], [pct(i * 6 + 1.8), at.x + 5, at.y + 6], [pct(i * 6 + 5), at.x + 5, at.y + 6], [100, at.x + 5, at.y + 6]], theme, i * 6 + .35, i * 6 + 5.1);
+    });
+    body += text(pad, height - 34, "Recorded taxonomy tasks · 6 seconds each · estimated tokens", theme, mobile ? 20 : 15, { color: theme.muted });
+    return finish(theme, mobile, clock, body, "One repo. Four tasks.", "A 24-second replay cycles through all four website tasks using the same 125 taxonomy files: editor 14, webhook 3, billing 23, and Widen 125. Marks morph into each recorded import-distance layout. The vague task keeps every file in a filled disc. Hover highlights actual Anchor connections. Reduced motion shows the finished editor result.", height);
   }
 
   function evidence(heldout, themeName, mobile) {

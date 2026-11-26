@@ -55,13 +55,13 @@ A task becomes Anchors, dependencies and a focused Slice. This replays the recor
 ### 02 · Inspect why a file belongs
 
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-inspect-mobile-dark.svg">
-  <source media="(max-width: 600px)" srcset="assets/readme/feature-inspect-mobile-light.svg">
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-inspect-dark.svg">
-  <img src="assets/readme/feature-inspect-light.svg" width="100%" alt="Replay of the actual website file-map interaction. The taxonomy repository moves from a grid into import-distance rings. A cursor hovers components/editor.tsx, its connected imports stay highlighted, and the Anchor explanation appears. All positions and links use the website’s recorded localization data.">
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-inspect-cycle-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/readme/feature-inspect-cycle-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-inspect-cycle-dark.svg">
+  <img src="assets/readme/feature-inspect-cycle-light.svg" width="100%" alt="A 24-second replay cycles through all four website tasks using the same 125 taxonomy files. The editor selects 14 files, the webhook 3, billing 23, and the vague task Widens to all 125 in a filled disc. The active task, counts, token estimates, map and Anchor hover change together. Reduced motion shows the finished editor result.">
 </picture>
 
-Every square is a file. Hovering one reveals its path, its role and the imports connected to it. This replays the website’s recorded taxonomy example: **14 of 125 files**, with `components/editor.tsx` as an Anchor. [Explore the interactive map](https://locus-five-iota.vercel.app/#try).
+Every square is the same file throughout the loop. All four recorded tasks play for six seconds each: **editor 14 → webhook 3 → billing 23 → Widen 125**. The map reshapes, counts update and an Anchor’s connected imports light up. When the task has no confident match, the whole repository fills the disc. [Explore the interactive map](https://locus-five-iota.vercel.app/#try).
 
 ### 03 · Explore the evidence, case by case
 

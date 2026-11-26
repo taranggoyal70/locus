@@ -18,7 +18,7 @@
 //
 // SVG-as-image runs no script and loads nothing from outside the file, so the
 // serif is embedded as a data URI and everything else is system fonts and CSS
-// keyframes. Each 12-second cycle replays the story and holds its result. Every
+// keyframes. Each cycle replays the story and holds its result. Every
 // element's resting style is the completed frame, so reduced motion and static
 // renderers preserve the readable result without travel or repeated reveals.
 
@@ -150,10 +150,6 @@ function n(value) {
   return Number(value.toFixed(2));
 }
 
-function pct(seconds) {
-  return Number(((seconds / DURATION) * 100).toFixed(2));
-}
-
 function kiloTokens(value) {
   return `${(value / 1000).toFixed(1)}K`;
 }
@@ -164,8 +160,13 @@ function kiloTokens(value) {
  * element in its resting (final) style until it fired. All rules share one loop.
  */
 class Timeline {
-  constructor() {
+  constructor(duration = DURATION) {
+    this.duration = duration;
     this.rules = new Map();
+  }
+
+  pct(seconds) {
+    return Number(((seconds / this.duration) * 100).toFixed(2));
   }
 
   #add(body) {
@@ -178,36 +179,36 @@ class Timeline {
 
   /** Hidden until `at`, then fades in and stays. */
   reveal(at, fade = 0.3) {
-    return this.#add(`0%,${pct(at)}%{opacity:0}${pct(at + fade)}%,100%{opacity:1}`);
+    return this.#add(`0%,${this.pct(at)}%{opacity:0}${this.pct(at + fade)}%,100%{opacity:1}`);
   }
 
   /** At `from` opacity until `at`, then eases out of sight: a cover lifting, a count leaving. */
   lift(at, fade, from = 1) {
-    return this.#add(`0%,${pct(at)}%{opacity:${from};animation-timing-function:${EASE_OUT}}${pct(at + fade)}%,100%{opacity:0}`);
+    return this.#add(`0%,${this.pct(at)}%{opacity:${from};animation-timing-function:${EASE_OUT}}${this.pct(at + fade)}%,100%{opacity:0}`);
   }
 
   /** Drops to `from` at `start`, then eases back to full size at `at`: a Slice mark settling as the covers lift. */
   settle(start, at, duration, from) {
     return this.#add(
-      `0%,${pct(start)}%{transform:scale(1)}${n(pct(start) + 0.01)}%,${pct(at)}%{transform:scale(${from});animation-timing-function:${EASE_OUT}}` +
-      `${pct(at + duration)}%,100%{transform:scale(1)}`,
+      `0%,${this.pct(start)}%{transform:scale(1)}${n(this.pct(start) + 0.01)}%,${this.pct(at)}%{transform:scale(${from});animation-timing-function:${EASE_OUT}}` +
+      `${this.pct(at + duration)}%,100%{transform:scale(1)}`,
     );
   }
 
   /** Visible only between `start` and `end`; hidden at rest. */
   during(start, end) {
-    return this.#add(`0%,${pct(start)}%{opacity:0}${n(pct(start) + 0.01)}%,${pct(end)}%{opacity:1}${n(pct(end) + 0.01)}%,100%{opacity:0}`);
+    return this.#add(`0%,${this.pct(start)}%{opacity:0}${n(this.pct(start) + 0.01)}%,${this.pct(end)}%{opacity:1}${n(this.pct(end) + 0.01)}%,100%{opacity:0}`);
   }
 
   /** Slides a cover right over `length` px in `steps`, which types the text beneath it. */
   type(start, end, length, steps) {
     return this.#add(
-      `0%,${pct(start)}%{transform:translateX(0);animation-timing-function:steps(${steps},end)}${pct(end)}%,100%{transform:translateX(${n(length)}px)}`,
+      `0%,${this.pct(start)}%{transform:translateX(0);animation-timing-function:steps(${steps},end)}${this.pct(end)}%,100%{transform:translateX(${n(length)}px)}`,
     );
   }
 
   draw(start, end, length) {
-    return this.#add(`0%,${pct(start)}%{stroke-dashoffset:${length}}${pct(end)}%,100%{stroke-dashoffset:0}`);
+    return this.#add(`0%,${this.pct(start)}%{stroke-dashoffset:${length}}${this.pct(end)}%,100%{stroke-dashoffset:0}`);
   }
 
   keyframes(body) {
@@ -215,7 +216,7 @@ class Timeline {
   }
 
   css() {
-    return [...this.rules].map(([body, name]) => `@keyframes ${name}{${body}}.${name}{animation:${name} ${DURATION}s linear infinite both}`).join("");
+    return [...this.rules].map(([body, name]) => `@keyframes ${name}{${body}}.${name}{animation:${name} ${this.duration}s linear infinite both}`).join("");
   }
 }
 
@@ -926,7 +927,7 @@ function render() {
     for (const mobile of [false, true]) {
       const suffix = `${mobile ? "mobile-" : ""}${themeName}.svg`;
       outputs[`feature-localize-${suffix}`] = featureLocalize(run, themeName, mobile);
-      outputs[`feature-inspect-${suffix}`] = interactions.inspect(themeName, mobile);
+      outputs[`feature-inspect-cycle-${suffix}`] = interactions.inspect(themeName, mobile);
       outputs[`feature-cases-${suffix}`] = interactions.evidence(heldout, themeName, mobile);
       outputs[`feature-handoff-${suffix}`] = interactions.handoff(themeName, mobile);
       outputs[`architecture-${suffix}`] = architectureScene(themeName, mobile);
